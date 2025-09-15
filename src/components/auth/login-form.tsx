@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from './auth-provider';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Package2 } from 'lucide-react';
 
 export function LoginForm() {
     const { login } = useAuth();
@@ -37,11 +38,14 @@ export function LoginForm() {
     };
 
   return (
-    <Card className="mx-auto max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl">ورود</CardTitle>
+    <Card className="mx-auto max-w-sm w-full">
+      <CardHeader className="items-center text-center">
+        <Link href="/" className="mb-4">
+            <Package2 className="h-8 w-8 text-primary" />
+        </Link>
+        <CardTitle className="text-2xl">خوش آمدید</CardTitle>
         <CardDescription>
-          برای دسترسی به حساب کاربری خود، ایمیل و رمز عبور را وارد کنید
+          برای دسترسی به حساب کاربری خود وارد شوید
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -72,7 +76,7 @@ export function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full mt-2">
             ورود
           </Button>
           <Button variant="outline" className="w-full">

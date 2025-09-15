@@ -34,8 +34,86 @@ export default function ProductsPage() {
     return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
   };
 
+  const renderProductTable = (productList: typeof products) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>محصولات</CardTitle>
+        <CardDescription>
+          محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="hidden w-[100px] sm:table-cell">
+                <span className="sr-only">تصویر</span>
+              </TableHead>
+              <TableHead>نام</TableHead>
+              <TableHead>دسته‌بندی</TableHead>
+              <TableHead className="hidden md:table-cell">
+                توضیحات
+              </TableHead>
+              <TableHead className="text-left">قیمت</TableHead>
+              <TableHead>
+                <span className="sr-only">اقدامات</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {productList.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell className="hidden sm:table-cell">
+                  <Image
+                    alt={product.name}
+                    className="aspect-square rounded-md object-cover"
+                    height="64"
+                    src={product.imageUrl}
+                    width="64"
+                    data-ai-hint="product image"
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{getCategoryName(product.categoryId)}</Badge>
+                </TableCell>
+                <TableCell className="hidden md:table-cell max-w-xs truncate">
+                  {product.description}
+                </TableCell>
+                <TableCell className="text-left">
+                  {formatCurrency(product.price)}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">باز کردن منو</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
+                      <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                      <DropdownMenuItem>حذف</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+      <CardFooter>
+        <div className="text-xs text-muted-foreground">
+          نمایش <strong>1-{productList.length}</strong> از <strong>{productList.length}</strong> محصول
+        </div>
+      </CardFooter>
+    </Card>
+  );
+
+
   return (
-    <Tabs defaultValue="all">
+    <Tabs defaultValue="all" dir="rtl">
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">همه</TabsTrigger>
@@ -43,7 +121,7 @@ export default function ProductsPage() {
             <TabsTrigger key={cat.id} value={cat.id}>{cat.name}</TabsTrigger>
           ))}
         </TabsList>
-        <div className="mr-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1">
             خروجی
           </Button>
@@ -56,81 +134,13 @@ export default function ProductsPage() {
         </div>
       </div>
       <TabsContent value="all">
-        <Card>
-          <CardHeader>
-            <CardTitle>محصولات</CardTitle>
-            <CardDescription>
-              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="hidden w-[100px] sm:table-cell">
-                    <span className="sr-only">تصویر</span>
-                  </TableHead>
-                  <TableHead>نام</TableHead>
-                  <TableHead>دسته‌بندی</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    توضیحات
-                  </TableHead>
-                  <TableHead className="text-left">قیمت</TableHead>
-                  <TableHead>
-                    <span className="sr-only">اقدامات</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="hidden sm:table-cell">
-                      <Image
-                        alt={product.name}
-                        className="aspect-square rounded-md object-cover"
-                        height="64"
-                        src={product.imageUrl}
-                        width="64"
-                        data-ai-hint="product image"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{getCategoryName(product.categoryId)}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell max-w-xs truncate">
-                      {product.description}
-                    </TableCell>
-                    <TableCell className="text-left">
-                      {formatCurrency(product.price)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">باز کردن منو</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                          <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                          <DropdownMenuItem>حذف</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>tau
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-          <CardFooter>
-            <div className="text-xs text-muted-foreground">
-              نمایش <strong>1-{products.length}</strong> از <strong>{products.length}</strong> محصول
-            </div>
-          </CardFooter>
-        </Card>
+        {renderProductTable(products)}
       </TabsContent>
+      {categories.map(cat => (
+        <TabsContent key={cat.id} value={cat.id}>
+            {renderProductTable(products.filter(p => p.categoryId === cat.id))}
+        </TabsContent>
+      ))}
     </Tabs>
   );
 }

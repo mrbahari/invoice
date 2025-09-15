@@ -152,12 +152,12 @@ export default function InvoicePreviewPage() {
                     <TableBody>
                         {invoice.items.map((item, index) => (
                         <TableRow key={index} className="border-b-gray-100">
-                            <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono">{String(index + 1).padStart(2, '0')}</TableCell>
+                            <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono">{String(index + 1).padStart(2, '0').toLocaleString('fa-IR')}</TableCell>
                             <TableCell className="py-3 align-top">
                                 <p className="font-semibold text-gray-800">{item.productName}</p>
                                 <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                             </TableCell>
-                            <TableCell className="text-center py-3 align-top font-bold text-base">{item.quantity}</TableCell>
+                            <TableCell className="text-center py-3 align-top font-bold text-base">{item.quantity.toLocaleString('fa-IR')}</TableCell>
                             <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.unitPrice)}</TableCell>
                             <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.totalPrice)}</TableCell>
                         </TableRow>
@@ -218,6 +218,8 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    
 
     
 

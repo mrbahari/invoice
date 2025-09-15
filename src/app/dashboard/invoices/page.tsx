@@ -1,29 +1,31 @@
 
+'use client';
+
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { invoices } from '@/lib/data';
+import { invoices as allInvoices } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { InvoiceTable } from '@/components/dashboard/invoice-table';
+import { useMemo } from 'react';
 
 export default function InvoicesPage() {
-  const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
-  const pendingInvoices = invoices.filter(inv => inv.status === 'Pending');
-  const overdueInvoices = invoices.filter(inv => inv.status === 'Overdue');
-  const allInvoices = invoices;
 
-  const tabsData = [
-    { value: 'all', label: 'همه', invoices: allInvoices },
-    { value: 'paid', label: 'پرداخت شده', invoices: paidInvoices },
-    { value: 'pending', label: 'در انتظار', invoices: pendingInvoices },
-    { value: 'overdue', label: 'سررسید گذشته', invoices: overdueInvoices, className: 'hidden sm:flex' },
-  ];
+  const paidInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Paid'), [allInvoices]);
+  const pendingInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Pending'), [allInvoices]);
+  const overdueInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Overdue'), [allInvoices]);
+
+  const tabsData = useMemo(() => [
+    { value: 'all', label: `همه (${allInvoices.length})`, invoices: allInvoices },
+    { value: 'paid', label: `پرداخت شده (${paidInvoices.length})`, invoices: paidInvoices },
+    { value: 'pending', label: `در انتظار (${pendingInvoices.length})`, invoices: pendingInvoices },
+    { value: 'overdue', label: `سررسید گذشته (${overdueInvoices.length})`, invoices: overdueInvoices, className: 'hidden sm:flex' },
+  ], [allInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
 
   return (
     <InvoiceTabs
         tabs={tabsData}
         defaultTab="all"
-        tableComponent={<InvoiceTable />}
         pageActions={
             <Link href="/dashboard/invoices/new">
                 <Button size="sm" className="h-8 gap-1">

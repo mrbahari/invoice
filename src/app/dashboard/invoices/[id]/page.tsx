@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   Card,
   CardContent,
@@ -17,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { invoices } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import type { InvoiceStatus } from '@/lib/definitions';
 import { Package2 } from 'lucide-react';
@@ -35,7 +38,8 @@ const statusTranslation: Record<InvoiceStatus, string> = {
     Overdue: 'سررسید گذشته',
 };
 
-export default function InvoicePreviewPage({ params }: { params: { id: string } }) {
+export default function InvoicePreviewPage() {
+  const params = useParams<{ id: string }>();
   const invoice = invoices.find((inv) => inv.id === params.id);
 
   if (!invoice) {

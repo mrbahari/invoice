@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from 'next/link';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,11 +27,39 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { categories, products } from '@/lib/data';
+import { categories as initialCategories, products } from '@/lib/data';
+import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CategoriesPage() {
+  const [categoryList, setCategoryList] = useState(initialCategories);
+  const { toast } = useToast();
+  
   const getProductCount = (categoryId: string) => {
     return products.filter(p => p.categoryId === categoryId).length;
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    // In a real app, you would also make an API call to delete the category
+    const categoryToDelete = categoryList.find(c => c.id === categoryId);
+    initialCategories.splice(initialCategories.findIndex(c => c.id === categoryId), 1);
+    setCategoryList(initialCategories);
+    
+    toast({
+        title: 'دسته‌بندی حذف شد',
+        description: `دسته‌بندی "${categoryToDelete?.name}" با موفقیت حذف شد.`,
+    });
   };
 
   return (
@@ -68,7 +98,7 @@ export default function CategoriesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((category) => (
+            {categoryList.map((category) => (
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
                 <TableCell>{category.storeName}</TableCell>
@@ -80,21 +110,37 @@ export default function CategoriesPage() {
                   {getProductCount(category.id)}
                 </TableCell>
                 <TableCell className="text-left">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">باز کردن منو</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/categories/${category.id}/edit`}>ویرایش</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>حذف</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    <AlertDialog>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">باز کردن منو</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/categories/${category.id}/edit`}>ویرایش</Link>
+                          </DropdownMenuItem>
+                           <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className='text-red-600' onSelect={(e) => e.preventDefault()}>حذف</DropdownMenuItem>
+                          </AlertDialogTrigger>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                          <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              این عمل غیرقابل بازگشت است و دسته‌بندی «{category.name}» را برای همیشه حذف می‌کند.
+                          </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                          <AlertDialogCancel>انصراف</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteCategory(category.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}
@@ -103,7 +149,7 @@ export default function CategoriesPage() {
       </CardContent>
        <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>1-{categories.length}</strong> از <strong>{categories.length}</strong> دسته‌بندی
+          نمایش <strong>1-{categoryList.length}</strong> از <strong>{categoryList.length}</strong> دسته‌بندی
         </div>
       </CardFooter>
     </Card>

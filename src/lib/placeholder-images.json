@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "prod-1",
+      "description": "A modern laptop on a desk",
+      "imageUrl": "https://picsum.photos/seed/101/400/300",
+      "imageHint": "laptop desk"
+    },
+    {
+      "id": "prod-2",
+      "description": "A sleek wireless mouse",
+      "imageUrl": "https://picsum.photos/seed/102/400/300",
+      "imageHint": "wireless mouse"
+    },
+    {
+      "id": "prod-3",
+      "description": "A mechanical keyboard with RGB lighting",
+      "imageUrl": "https://picsum.photos/seed/103/400/300",
+      "imageHint": "mechanical keyboard"
+    },
+    {
+      "id": "prod-4",
+      "description": "A high-resolution monitor",
+      "imageUrl": "https://picsum.photos/seed/104/400/300",
+      "imageHint": "computer monitor"
+    },
+    {
+      "id": "prod-5",
+      "description": "A comfortable office chair",
+      "imageUrl": "https://picsum.photos/seed/105/400/300",
+      "imageHint": "office chair"
+    },
+    {
+      "id": "prod-6",
+      "description": "A set of premium headphones",
+      "imageUrl": "https://picsum.photos/seed/106/400/300",
+      "imageHint": "headphones"
+    }
+  ]
 }

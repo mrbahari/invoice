@@ -1,0 +1,49 @@
+export type Customer = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  purchaseHistory: string; // Simplified for AI prompt
+};
+
+export type Category = {
+  id: string;
+  name: string;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  categoryId: string;
+};
+
+export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue';
+
+export type Invoice = {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  invoiceNumber: string;
+  date: string; // ISO 8601 format
+  dueDate: string; // ISO 8601 format
+  status: InvoiceStatus;
+  items: InvoiceItem[];
+  subtotal: number;
+  discount: number;
+  tax: number; // Assuming a fixed tax rate for simplicity
+  total: number;
+  description: string;
+};
+
+export type InvoiceItem = {
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+};

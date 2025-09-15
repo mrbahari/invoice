@@ -101,7 +101,11 @@ export function InvoiceTable({ invoiceList }: { invoiceList: Invoice[] }) {
                           مشاهده جزئیات
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="w-full cursor-pointer">
+                          ویرایش
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>علامت‌گذاری به عنوان پرداخت شده</DropdownMenuItem>
                       <DropdownMenuItem className="text-red-500">
                         حذف

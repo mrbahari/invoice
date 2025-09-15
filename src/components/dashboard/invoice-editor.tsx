@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice } from '@/lib/definitions';
 import {
@@ -45,17 +45,47 @@ type InvoiceItemState = {
 
 const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
 
-export function InvoiceCreator({ customers, products }: { customers: Customer[]; products: Product[] }) {
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
-  const [items, setItems] = useState<InvoiceItemState[]>([]);
-  const [description, setDescription] = useState('');
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(8); // 8% tax rate
-  const { toast } = useToast();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [suggestedDiscounts, setSuggestedDiscounts] = useState<SuggestOptimalDiscountsOutput | null>(null);
+type InvoiceEditorProps = {
+    customers: Customer[];
+    products: Product[];
+    invoice?: Invoice;
+}
+
+export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorProps) {
   const router = useRouter();
+  const { toast } = useToast();
+  const isEditMode = !!invoice;
+
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(
+    isEditMode ? customers.find(c => c.id === invoice.customerId) : undefined
+  );
+  
+  const [items, setItems] = useState<InvoiceItemState[]>([]);
+  
+  useEffect(() => {
+    if (isEditMode) {
+      const invoiceItems = invoice.items.map(item => {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) return null;
+        return {
+          product,
+          quantity: item.quantity,
+          unit: item.unit,
+        }
+      }).filter((item): item is InvoiceItemState => item !== null);
+      setItems(invoiceItems);
+    }
+  }, [invoice, isEditMode, products]);
+
+
+  const [description, setDescription] = useState(invoice?.description || '');
+  const [discount, setDiscount] = useState(invoice?.discount || 0);
+  const [tax, setTax] = useState(invoice ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 8); // 8% tax rate
+  
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [suggestedDiscounts, setSuggestedDiscounts] = useState<SuggestOptimalDiscountsOutput | null>(null);
+  
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -187,7 +217,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     }
   };
 
-  const handleCreateInvoice = () => {
+  const handleProcessInvoice = () => {
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
       return;
@@ -197,39 +227,64 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
       return;
     }
 
-    setIsCreating(true);
+    setIsProcessing(true);
 
-    // Simulate API call
     setTimeout(() => {
-        const newInvoice: Invoice = {
-            id: `inv-${Math.random().toString(36).substr(2, 9)}`,
-            invoiceNumber: `HIS-${(invoices.length + 1).toString().padStart(3, '0')}`,
-            customerId: selectedCustomer.id,
-            customerName: selectedCustomer.name,
-            customerEmail: selectedCustomer.email,
-            date: new Date().toISOString(),
-            dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(), // Due in 30 days
-            status: 'Pending',
-            items: items.map(item => ({
-                productId: item.product.id,
-                productName: item.product.name,
-                quantity: item.quantity,
-                unit: item.unit,
-                unitPrice: item.product.price,
-                totalPrice: item.product.price * item.quantity,
-            })),
-            subtotal,
-            discount,
-            tax: taxAmount,
-            total,
-            description: description || 'فاکتور ایجاد شده',
-        };
-
-        // This is a mock/simulation. In a real app, you would send this to a server.
-        invoices.unshift(newInvoice);
-
-        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
-        setIsCreating(false);
+        if (isEditMode) {
+            // Update existing invoice
+            const invoiceIndex = invoices.findIndex(inv => inv.id === invoice.id);
+            if (invoiceIndex > -1) {
+                invoices[invoiceIndex] = {
+                    ...invoices[invoiceIndex],
+                    customerId: selectedCustomer.id,
+                    customerName: selectedCustomer.name,
+                    customerEmail: selectedCustomer.email,
+                    items: items.map(item => ({
+                        productId: item.product.id,
+                        productName: item.product.name,
+                        quantity: item.quantity,
+                        unit: item.unit,
+                        unitPrice: item.product.price,
+                        totalPrice: item.product.price * item.quantity,
+                    })),
+                    subtotal,
+                    discount,
+                    tax: taxAmount,
+                    total,
+                    description: description || 'فاکتور ویرایش شده',
+                };
+            }
+             toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
+        } else {
+            // Create new invoice
+            const newInvoice: Invoice = {
+                id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+                invoiceNumber: `HIS-${(invoices.length + 1).toString().padStart(3, '0')}`,
+                customerId: selectedCustomer.id,
+                customerName: selectedCustomer.name,
+                customerEmail: selectedCustomer.email,
+                date: new Date().toISOString(),
+                dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
+                status: 'Pending',
+                items: items.map(item => ({
+                    productId: item.product.id,
+                    productName: item.product.name,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    unitPrice: item.product.price,
+                    totalPrice: item.product.price * item.quantity,
+                })),
+                subtotal,
+                discount,
+                tax: taxAmount,
+                total,
+                description: description || 'فاکتور ایجاد شده',
+            };
+            invoices.unshift(newInvoice);
+            toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
+        }
+        
+        setIsProcessing(false);
         router.push('/dashboard/invoices');
     }, 1000);
   };
@@ -240,7 +295,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>فاکتور</CardTitle>
+            <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
             <CardDescription>
                 اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
             </CardDescription>
@@ -396,8 +451,8 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full" onClick={handleCreateInvoice} disabled={isCreating}>
-                    {isCreating ? 'در حال ایجاد...' : 'ایجاد فاکتور'}
+                <Button className="w-full" onClick={handleProcessInvoice} disabled={isProcessing}>
+                    {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
                 </Button>
             </CardFooter>
         </Card>
@@ -500,5 +555,3 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     </div>
   );
 }
-
-    

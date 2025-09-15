@@ -6,6 +6,7 @@ import { File } from 'lucide-react';
 import { downloadCSV } from '@/lib/utils';
 import type { Invoice } from '@/lib/definitions';
 import { useState } from 'react';
+import { InvoiceTable } from '@/components/dashboard/invoice-table';
 
 type TabData = {
   value: string;
@@ -17,11 +18,11 @@ type TabData = {
 type InvoiceTabsProps = {
   tabs: TabData[];
   defaultTab: string;
-  tableComponent: React.ComponentType<{ invoiceList: Invoice[] }>;
+  tableComponent: React.ReactNode; // Can be anything now, but we'll render our own table
   pageActions: React.ReactNode;
 };
 
-export function InvoiceTabs({ tabs, defaultTab, tableComponent: InvoiceTable, pageActions }: InvoiceTabsProps) {
+export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   const handleExport = () => {

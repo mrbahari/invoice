@@ -2,7 +2,7 @@
 import { Category, Customer, Invoice, Product, InvoiceItem, UnitOfMeasurement } from '@/lib/definitions';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export const categories: Category[] = [
+export let categories: Category[] = [
   { 
     id: 'cat-1', 
     name: 'الکترونیک', 
@@ -61,7 +61,7 @@ const invoiceItems4: InvoiceItem[] = [
     ];
 
 
-export const invoices: Invoice[] = [
+export let invoices: Invoice[] = [
   {
     id: 'inv-001',
     invoiceNumber: 'HIS-001',
@@ -72,9 +72,9 @@ export const invoices: Invoice[] = [
     status: 'Paid',
     items: invoiceItems1,
     subtotal: 3999.96,
-    discount: 200.00,
-    tax: 304.00,
-    total: 4103.96,
+    discount: 0,
+    tax: 0,
+    total: 3999.96,
     description: 'خرید ۲ عدد لپتاپ پرو و ۲ عدد مانیتور 4K.'
   },
   {
@@ -88,8 +88,8 @@ export const invoices: Invoice[] = [
     items: invoiceItems2,
     subtotal: 899.90,
     discount: 0,
-    tax: 72.00,
-    total: 971.90,
+    tax: 0,
+    total: 899.90,
     description: 'سفارش ۵ عدد موس بی‌سیم و ۵ عدد کیبورد مکانیکی.'
   },
   {
@@ -103,8 +103,8 @@ export const invoices: Invoice[] = [
     items: invoiceItems3,
     subtotal: 3990.00,
     discount: 0,
-    tax: 319.20,
-    total: 4309.20,
+    tax: 0,
+    total: 3990.00,
     description: 'سفارش عمده ۱۰ عدد صندلی ارگونومیک برای دفتر جدید.'
   },
   {
@@ -117,9 +117,9 @@ export const invoices: Invoice[] = [
     status: 'Pending',
     items: invoiceItems4,
     subtotal: 249.50,
-    discount: 25.00,
-    tax: 17.96,
-    total: 242.46,
+    discount: 0,
+    tax: 0,
+    total: 249.50,
     description: '۱ عدد هدفون نویز کنسلینگ.'
   },
 ];

@@ -63,7 +63,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
     // Simulate API call
     setTimeout(() => {
-      if (isEditMode) {
+      if (isEditMode && category) {
         // Update existing category
         const categoryIndex = categories.findIndex((c) => c.id === category.id);
         if (categoryIndex > -1) {
@@ -90,7 +90,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
           storePhone,
           logoUrl: logo || '/placeholder-logo.png'
         };
-        categories.push(newCategory);
+        categories.unshift(newCategory);
         toast({
           title: 'دسته‌بندی جدید ایجاد شد',
           description: `دسته‌بندی "${name}" با موفقیت ایجاد شد.`,
@@ -99,6 +99,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
       setIsProcessing(false);
       router.push('/dashboard/categories');
+      router.refresh(); // Refresh the page to show the new category
     }, 1000);
   };
 
@@ -107,7 +108,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>
-            {isEditMode ? `ویرایش دسته‌بندی: ${category.name}` : 'افزودن دسته‌بندی جدید'}
+            {isEditMode ? `ویرایش دسته‌بندی: ${category?.name}` : 'افزودن دسته‌بندی جدید'}
           </CardTitle>
           <CardDescription>
             اطلاعات دسته‌بندی و فروشگاه مربوطه را وارد کنید.

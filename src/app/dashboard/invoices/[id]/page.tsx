@@ -52,8 +52,8 @@ export default function InvoicePreviewPage() {
             <div className="grid gap-0.5">
             <CardTitle className="group flex items-center gap-2 text-lg">
                 <Package2 className="h-6 w-6 text-primary" />
+                 فاکتور {invoice.invoiceNumber}
             </CardTitle>
-            <CardDescription>فاکتور {invoice.invoiceNumber}</CardDescription>
             </div>
             <div className="mr-auto flex items-center gap-2 no-print">
               <InvoiceActions />

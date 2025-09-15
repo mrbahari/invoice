@@ -3,9 +3,30 @@ import { Category, Customer, Invoice, Product, InvoiceItem, UnitOfMeasurement } 
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export const categories: Category[] = [
-  { id: 'cat-1', name: 'الکترونیک' },
-  { id: 'cat-2', name: 'مبلمان اداری' },
-  { id: 'cat-3', name: 'لوازم جانبی' },
+  { 
+    id: 'cat-1', 
+    name: 'الکترونیک', 
+    storeName: 'فروشگاه سپهر الکترونیک', 
+    logoUrl: '/logo-sepehr.png',
+    storeAddress: 'میدان توحید، خیابان ولیعصر، پلاک ۱۲',
+    storePhone: '۰۲۱-۸۸۴۴۴۴۰۰',
+  },
+  { 
+    id: 'cat-2', 
+    name: 'مبلمان اداری',
+    storeName: 'مبلمان اداری آرتین',
+    logoUrl: '/logo-artin.png',
+    storeAddress: 'خیابان سهروردی، برج اداری، طبقه ۴',
+    storePhone: '۰۲۱-۸۸۵۵۵۵۰۰',
+  },
+  { 
+    id: 'cat-3', 
+    name: 'لوازم جانبی',
+    storeName: 'جانبی سنتر',
+    logoUrl: '/logo-janebi.png',
+    storeAddress: 'پاساژ علاالدین، طبقه ۲، پلاک ۴۰۴',
+    storePhone: '۰۲۱-۶۶۷۷۸۸۹۹',
+  },
 ];
 
 export const products: Product[] = [

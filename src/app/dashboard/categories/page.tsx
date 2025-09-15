@@ -1,3 +1,4 @@
+
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,7 +38,7 @@ export default function CategoriesPage() {
             <div>
                 <CardTitle>دسته‌بندی‌ها</CardTitle>
                 <CardDescription>
-                محصولات خود را در دسته‌بندی‌ها سازماندهی کنید.
+                اطلاعات فروشگاه را برای هر دسته‌بندی مدیریت کنید.
                 </CardDescription>
             </div>
             <div className="mr-auto flex items-center gap-2">
@@ -55,6 +56,8 @@ export default function CategoriesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>نام دسته‌بندی</TableHead>
+              <TableHead>نام فروشگاه</TableHead>
+              <TableHead className="hidden sm:table-cell">اطلاعات تماس</TableHead>
               <TableHead className="text-left">محصولات</TableHead>
               <TableHead>
                 <span className="sr-only">اقدامات</span>
@@ -65,6 +68,11 @@ export default function CategoriesPage() {
             {categories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell>{category.storeName}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <div className='text-sm'>{category.storeAddress}</div>
+                  <div className='text-xs text-muted-foreground'>{category.storePhone}</div>
+                </TableCell>
                 <TableCell className="text-left">
                   {getProductCount(category.id)}
                 </TableCell>

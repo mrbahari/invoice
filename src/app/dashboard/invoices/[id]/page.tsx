@@ -13,25 +13,56 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { invoices, products } from '@/lib/data';
+import { invoices, products, categories, customers } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
-import type { InvoiceStatus } from '@/lib/definitions';
-import { Printer, CreditCard, Package2, Phone, Mail, MapPin } from 'lucide-react';
+import { Printer, CreditCard, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
-const statusTranslation: Record<InvoiceStatus, string> = {
-    Paid: 'پرداخت شده',
-    Pending: 'در انتظار',
-    Overdue: 'سررسید گذشته',
-};
+// A simple number to words converter for Persian
+function toWords(num: number): string {
+    const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
+    const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
+    const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
+    const thousands = ["", " هزار", " میلیون", " میلیارد"];
 
-const statusColors: Record<InvoiceStatus, string> = {
-    Paid: 'bg-green-500',
-    Pending: 'bg-yellow-500',
-    Overdue: 'bg-red-500',
+    if (num === 0) return "صفر";
+
+    let word = '';
+    let i = 0;
+
+    while (num > 0) {
+        const chunk = num % 1000;
+        if (chunk > 0) {
+            let chunkWord = '';
+            const h = Math.floor(chunk / 100);
+            const t = Math.floor((chunk % 100) / 10);
+            const u = chunk % 10;
+
+            if (h > 0) {
+                chunkWord += hundreds[h] + (t > 0 || u > 0 ? " و " : "");
+            }
+            if (t === 1) {
+                chunkWord += teens[u];
+            } else {
+                if (t > 1) {
+                    chunkWord += tens[t] + (u > 0 ? " و " : "");
+                }
+                if (u > 0) {
+                    chunkWord += units[u];
+                }
+            }
+            word = chunkWord.trim() + thousands[i] + (word ? " و " : "") + word;
+        }
+        num = Math.floor(num / 1000);
+        i++;
+    }
+
+    return word.trim();
 }
+
 
 export default function InvoicePreviewPage() {
   const params = useParams<{ id: string }>();
@@ -40,6 +71,20 @@ export default function InvoicePreviewPage() {
   if (!invoice) {
     notFound();
   }
+
+  const customer = customers.find(c => c.id === invoice.customerId);
+
+  // Determine the store info based on the category of the first item
+  const firstItem = invoice.items[0];
+  const product = products.find(p => p.id === firstItem.productId);
+  const category = categories.find(c => c.id === product?.categoryId);
+
+  const storeInfo = {
+    name: category?.storeName || "فروشگاه",
+    logoUrl: category?.logoUrl || '/logo-sepehr.png', // default logo
+    address: category?.storeAddress || 'آدرس ثبت نشده',
+    phone: category?.storePhone || 'شماره ثبت نشده',
+  };
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -64,58 +109,62 @@ export default function InvoicePreviewPage() {
             </Button>
         </div>
         <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-preview">
-            <header className="relative bg-white rounded-t-lg overflow-hidden">
-                <div className="absolute top-0 right-0 h-full w-2/3 bg-primary" style={{ clipPath: 'polygon(0 0, 100% 0, 80% 100%, 0% 100%)' }}></div>
-                <div className="relative grid grid-cols-2 p-8">
-                     <div className="text-white">
-                        <Package2 className="h-12 w-12 mb-4" />
-                        <h1 className="text-3xl font-bold mb-1">فاکتور</h1>
-                        <div className="text-sm space-y-1">
-                            <p>شماره فاکتور: {invoice.invoiceNumber}</p>
-                            <p>تاریخ صدور: {new Date(invoice.date).toLocaleDateString('fa-IR')}</p>
-                        </div>
-                    </div>
-                    <div className="text-right flex flex-col justify-end items-end">
-                        <h2 className="text-2xl font-bold text-gray-800">فروشگاه سپهر</h2>
-                        <p className="text-sm text-gray-600">عرضه‌کننده بهترین لوازم خانگی</p>
+            <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4 border-primary">
+                <div className="absolute top-0 right-0 h-full w-full bg-primary/5"></div>
+                <div className="relative p-8">
+                    <div className="h-28 w-full bg-primary absolute top-0 right-0" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 65%, 85% 100%, 0 100%)' }}></div>
+                    <div className="relative flex items-center justify-between">
+                       <div className="flex items-center gap-4">
+                           {/* Using a placeholder for logo */}
+                            <div className="bg-white p-2 rounded-full shadow-md">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor text-primary"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                            </div>
+                           <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
+                       </div>
                     </div>
                 </div>
             </header>
             
             <CardContent className="p-8 bg-white">
-                 <div className="grid grid-cols-2 gap-8 mb-10 text-sm">
-                    <div>
-                        <h3 className="font-semibold text-gray-500 mb-2">صورتحساب برای:</h3>
+                 <div className="grid grid-cols-2 gap-4 mb-10 text-sm border-b pb-6">
+                    <div className="border p-4 rounded-md bg-muted/30">
+                        <h3 className="font-semibold text-gray-500 mb-2.5 border-b pb-2">صورتحساب آقای/خانم:</h3>
                         <p className="font-bold text-lg text-gray-800">{invoice.customerName}</p>
-                        <p className="text-gray-600">{invoice.customerEmail}</p>
+                        {customer && (
+                            <>
+                                <p className="text-gray-600 mt-2">{customer.address}</p>
+                                <p className="text-gray-600 mt-1">{customer.phone}</p>
+                            </>
+                        )}
                     </div>
-                     <div className="text-left flex items-end justify-end">
-                        <div className='text-right'>
-                            <h3 className="font-semibold text-gray-500 mb-2">وضعیت پرداخت:</h3>
-                            <Badge variant="default" className={`text-sm ${statusColors[invoice.status]}`}>
-                                {statusTranslation[invoice.status]}
-                            </Badge>
+                     <div className="space-y-2 text-right text-sm">
+                        <div className="flex justify-between">
+                            <span className='font-semibold'>تاریخ:</span>
+                            <span>{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
                         </div>
-                    </div>
+                        <div className="flex justify-between">
+                            <span className='font-semibold'>توسط:</span>
+                            <span>مدیریت فروش</span>
+                        </div>
+                     </div>
                 </div>
 
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-accent hover:bg-accent/90">
-                            <TableHead className="w-16 text-center text-accent-foreground rounded-r-md">ردیف</TableHead>
-                            <TableHead className="text-accent-foreground">شرح</TableHead>
-                            <TableHead className="w-24 text-center text-accent-foreground">تعداد</TableHead>
-                            <TableHead className="w-32 text-center text-accent-foreground">قیمت واحد</TableHead>
-                            <TableHead className="w-32 text-center text-accent-foreground rounded-l-md">جمع کل</TableHead>
+                        <TableRow className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                            <TableHead className="w-16 text-center rounded-r-md">ردیف</TableHead>
+                            <TableHead>شرح</TableHead>
+                            <TableHead className="w-24 text-center">تعداد</TableHead>
+                            <TableHead className="w-32 text-center">فی</TableHead>
+                            <TableHead className="w-32 text-center rounded-l-md">جمع کل</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {invoice.items.map((item, index) => (
                         <TableRow key={index} className="border-b-gray-100">
-                            <TableCell className="text-center align-top font-medium text-gray-600 pt-4">{String(index + 1).padStart(2, '0')}</TableCell>
+                            <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3">{String(index + 1).padStart(2, '0')}</TableCell>
                             <TableCell className="py-3 align-top">
                                 <p className="font-semibold text-gray-800">{item.productName}</p>
-                                <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                             </TableCell>
                             <TableCell className="text-center py-3 align-top">{item.quantity}</TableCell>
                             <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.unitPrice)}</TableCell>
@@ -125,58 +174,51 @@ export default function InvoicePreviewPage() {
                     </TableBody>
                 </Table>
                 
-                <div className="grid grid-cols-3 mt-10 gap-8">
-                     <div className="col-span-1 space-y-4">
-                        <h4 className="font-semibold text-gray-700">از خرید شما متشکریم!</h4>
-                         <p className="text-xs text-gray-500">
-                           {invoice.description || 'لطفا مبلغ فاکتور را ظرف مدت ۳۰ روز آینده تسویه نمایید. برای اطلاعات بیشتر با ما در تماس باشید.'}
-                         </p>
-                    </div>
-                    <div className="col-span-2">
-                        <div className="w-full max-w-sm ml-auto space-y-2 text-sm">
-                            <div className="flex justify-between items-center py-2 border-b">
+                <div className="flex justify-end mt-4">
+                     <div className="w-full max-w-sm space-y-2 text-sm">
+                          <div className="flex justify-between py-1">
                                 <span className="text-gray-600">جمع جزء:</span>
                                 <span className="font-mono font-medium">{formatCurrency(invoice.subtotal)}</span>
                             </div>
-                            {invoice.discount > 0 && (
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-gray-600">تخفیف:</span>
-                                    <span className="font-mono font-medium text-destructive">-{formatCurrency(invoice.discount)}</span>
-                                </div>
-                            )}
-                            {invoice.tax > 0 && (
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-gray-600">مالیات:</span>
-                                    <span className="font-mono font-medium">{formatCurrency(invoice.tax)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between items-center py-3 px-4 bg-primary text-primary-foreground rounded-md">
-                                <span className="text-base font-bold">جمع کل:</span>
-                                <span className="text-xl font-bold font-mono">{formatCurrency(invoice.total)}</span>
-                            </div>
+                        <div className="flex justify-between py-1 border-t">
+                            <span className="text-base font-bold">جمع کل:</span>
+                            <span className="text-base font-bold font-mono">{formatCurrency(invoice.total)}</span>
                         </div>
-                         <div className="mt-20 text-center">
-                            <div className="inline-block border-t-2 border-gray-300 w-48 pt-2 text-xs text-gray-500">مهر و امضاء</div>
+                     </div>
+                </div>
+
+                 <div className="mt-8 border-t pt-4 text-sm">
+                    <div className="flex justify-between">
+                        <div>
+                            <span className="font-semibold">مبلغ به حروف:</span>
+                            <span className="mr-2 text-gray-700">{toWords(invoice.total)} ریال</span>
+                        </div>
+                        <div className="font-semibold">
+                            جمع کل: .......................................
                         </div>
                     </div>
                 </div>
 
+                <div className="mt-20 text-center">
+                    <div className="inline-block border-t-2 border-gray-300 w-48 pt-2 text-xs text-gray-500">مهر و امضاء فروشگاه</div>
+                </div>
+
             </CardContent>
-            <footer className="relative bg-white rounded-b-lg overflow-hidden">
-                <div className="h-16 bg-primary"></div>
+             <footer className="relative bg-white rounded-b-lg overflow-hidden mt-10">
+                <div className="h-16 bg-primary" style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)' }}></div>
                  <div className="absolute inset-0 p-4 flex items-center justify-center text-white text-xs">
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
                             <Phone size={14} />
-                            <span>۰۲۱-۸۸۴۴۴۴۰۰</span>
+                            <span>{storeInfo.phone}</span>
                         </div>
                          <div className="flex items-center gap-2">
                             <Mail size={14} />
-                            <span>info@sepehr.com</span>
+                            <span>info@{storeInfo.name.split(' ')[0].toLowerCase()}.com</span>
                         </div>
                          <div className="flex items-center gap-2">
                             <MapPin size={14} />
-                            <span>میدان توحید، خیابان ولیعصر، پلاک ۱۲</span>
+                            <span>{storeInfo.address}</span>
                         </div>
                     </div>
                 </div>

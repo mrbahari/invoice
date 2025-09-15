@@ -11,6 +11,10 @@ export type Customer = {
 export type Category = {
   id: string;
   name: string;
+  storeName?: string;
+  logoUrl?: string;
+  storeAddress?: string;
+  storePhone?: string;
 };
 
 export type Product = {

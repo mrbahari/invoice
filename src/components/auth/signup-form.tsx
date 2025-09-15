@@ -27,9 +27,11 @@ export function SignupForm() {
         e.preventDefault();
         // This is a mock signup. In a real app, you'd create a new user.
         if (email && password) {
+            console.error("Email/password signup not implemented. Please use Google Sign-In.");
             toast({
-                title: 'ثبت‌نام با ایمیل',
-                description: 'این قابلیت هنوز پیاده‌سازی نشده است. لطفا با گوگل ثبت‌نام کنید.',
+                variant: 'destructive',
+                title: 'قابلیت در دست ساخت',
+                description: 'ثبت‌نام با ایمیل و رمز عبور هنوز پیاده‌سازی نشده است. لطفاً از طریق گوگل ثبت‌نام کنید.',
             })
         } else {
             toast({

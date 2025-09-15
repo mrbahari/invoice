@@ -15,14 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { invoices } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import type { InvoiceStatus } from '@/lib/definitions';
-import { Printer, CreditCard } from 'lucide-react';
 import { Package2 } from 'lucide-react';
+import { InvoiceActions } from '@/components/dashboard/invoice-actions';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -42,14 +41,6 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
   if (!invoice) {
     notFound();
   }
-  
-  const handlePrint = () => {
-    'use client';
-    if (typeof window !== 'undefined') {
-        window.print();
-    }
-  };
-
 
   return (
     <Card className="overflow-hidden" id="invoice-preview">
@@ -62,18 +53,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
             <CardDescription>فاکتور {invoice.invoiceNumber}</CardDescription>
             </div>
             <div className="mr-auto flex items-center gap-2 no-print">
-            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handlePrint}>
-                <Printer className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                چاپ / PDF
-                </span>
-            </Button>
-            <Button size="sm" className="h-8 gap-1">
-                <CreditCard className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                پرداخت
-                </span>
-            </Button>
+              <InvoiceActions />
             </div>
         </CardHeader>
         <CardContent className="p-6 text-sm">

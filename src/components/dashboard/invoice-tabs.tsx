@@ -18,7 +18,6 @@ type TabData = {
 type InvoiceTabsProps = {
   tabs: TabData[];
   defaultTab: string;
-  tableComponent: React.ReactNode; // Can be anything now, but we'll render our own table
   pageActions: React.ReactNode;
 };
 
@@ -28,7 +27,20 @@ export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps)
   const handleExport = () => {
     const activeInvoices = tabs.find(tab => tab.value === activeTab)?.invoices;
     if (activeInvoices) {
-      downloadCSV(activeInvoices, `invoices-${activeTab}.csv`);
+        const headers = {
+            invoiceNumber: 'شماره فاکتور',
+            customerName: 'نام مشتری',
+            customerEmail: 'ایمیل مشتری',
+            date: 'تاریخ',
+            dueDate: 'تاریخ سررسید',
+            status: 'وضعیت',
+            subtotal: 'جمع جزء',
+            discount: 'تخفیف',
+            tax: 'مالیات',
+            total: 'جمع کل',
+            description: 'توضیحات'
+        };
+      downloadCSV(activeInvoices, `invoices-${activeTab}.csv`, headers);
     }
   };
 

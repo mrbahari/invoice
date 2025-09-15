@@ -14,16 +14,30 @@ export function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-export function downloadCSV(data: any[], filename: string = 'export.csv') {
+export function downloadCSV(data: any[], filename: string = 'export.csv', headers?: Record<string, string>) {
     if (!data || data.length === 0) {
         return;
     }
 
+    const processRow = (row: any) => {
+        const newRow = { ...row };
+        if (newRow.date) newRow.date = new Date(newRow.date).toLocaleDateString('fa-IR');
+        if (newRow.dueDate) newRow.dueDate = new Date(newRow.dueDate).toLocaleDateString('fa-IR');
+        // Remove complex objects for cleaner CSV
+        delete newRow.items;
+        delete newRow.id;
+        delete newRow.customerId;
+        return newRow;
+    };
+    
+    const processedData = data.map(processRow);
+    const headerKeys = headers ? Object.keys(headers) : Object.keys(processedData[0]);
+    const displayHeaders = headers ? Object.values(headers) : headerKeys;
+
     const replacer = (key: any, value: any) => value === null ? '' : value;
-    const header = Object.keys(data[0]);
     const csv = [
-        header.join(','),
-        ...data.map(row => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','))
+        displayHeaders.join(','),
+        ...processedData.map(row => headerKeys.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','))
     ].join('\r\n');
 
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });

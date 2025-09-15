@@ -1,3 +1,4 @@
+
 export type Customer = {
   id: string;
   name: string;
@@ -46,4 +47,11 @@ export type InvoiceItem = {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+};
+
+export type AuthFormValues = {
+  email: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
 };

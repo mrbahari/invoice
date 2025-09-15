@@ -16,29 +16,42 @@ import { useAuth } from './auth-provider';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Package2 } from 'lucide-react';
+import { AuthError } from 'firebase/auth';
 
 export function LoginForm() {
-    const { signInWithGoogle } = useAuth();
+    const { signInWithGoogle, signInWithEmail } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // This is a mock login. In a real app, you'd validate credentials.
-        if (email && password) {
-            console.error("Email/password login not implemented. Please use Google Sign-In.");
-            toast({
-                variant: 'destructive',
-                title: 'قابلیت در دست ساخت',
-                description: 'ورود با ایمیل و رمز عبور هنوز پیاده‌سازی نشده است. لطفاً از طریق گوگل وارد شوید.',
-            })
-        } else {
+        if (!email || !password) {
             toast({
                 variant: 'destructive',
                 title: 'خطا در ورود',
                 description: 'لطفا ایمیل و رمز عبور را وارد کنید.',
-            })
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await signInWithEmail({ email, password });
+        } catch (error) {
+            const authError = error as AuthError;
+            let description = 'خطایی در هنگام ورود رخ داد. لطفا دوباره تلاش کنید.';
+            if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
+                description = 'ایمیل یا رمز عبور وارد شده صحیح نمی‌باشد.';
+            }
+            toast({
+                variant: 'destructive',
+                title: 'خطا در ورود',
+                description,
+            });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -65,6 +78,7 @@ export function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -80,10 +94,11 @@ export function LoginForm() {
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full mt-2">
-              ورود
+            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+              {isLoading ? 'در حال ورود...' : 'ورود'}
             </Button>
           </form>
           <div className="relative">
@@ -96,7 +111,7 @@ export function LoginForm() {
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
+          <Button variant="outline" className="w-full" onClick={signInWithGoogle} disabled={isLoading}>
             ورود با گوگل
           </Button>
         </div>

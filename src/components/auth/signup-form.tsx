@@ -16,29 +16,52 @@ import { useAuth } from './auth-provider';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Package2 } from 'lucide-react';
+import { AuthError } from 'firebase/auth';
 
 export function SignupForm() {
-    const { signInWithGoogle } = useAuth();
+    const { signInWithGoogle, signUpWithEmail } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // This is a mock signup. In a real app, you'd create a new user.
-        if (email && password) {
-            console.error("Email/password signup not implemented. Please use Google Sign-In.");
-            toast({
-                variant: 'destructive',
-                title: 'قابلیت در دست ساخت',
-                description: 'ثبت‌نام با ایمیل و رمز عبور هنوز پیاده‌سازی نشده است. لطفاً از طریق گوگل ثبت‌نام کنید.',
-            })
-        } else {
+        if (!email || !password) {
             toast({
                 variant: 'destructive',
                 title: 'خطا در ثبت نام',
                 description: 'لطفا تمام فیلدها را پر کنید.',
-            })
+            });
+            return;
+        }
+        if (password.length < 6) {
+            toast({
+                variant: 'destructive',
+                title: 'رمز عبور ضعیف',
+                description: 'رمز عبور باید حداقل ۶ کاراکتر باشد.',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await signUpWithEmail({ email, password });
+        } catch (error) {
+            const authError = error as AuthError;
+            let description = 'خطایی در هنگام ثبت‌نام رخ داد. لطفا دوباره تلاش کنید.';
+            if (authError.code === 'auth/email-already-in-use') {
+                description = 'این ایمیل قبلاً ثبت‌نام کرده است.';
+            } else if (authError.code === 'auth/invalid-email') {
+                description = 'فرمت ایمیل وارد شده صحیح نمی‌باشد.';
+            }
+            toast({
+                variant: 'destructive',
+                title: 'خطا در ثبت نام',
+                description,
+            });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -60,11 +83,11 @@ export function SignupForm() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="first-name">نام</Label>
-                    <Input id="first-name" placeholder="ماکس" required />
+                    <Input id="first-name" placeholder="ماکس" required disabled={isLoading} />
                 </div>
                  <div className="grid gap-2">
                     <Label htmlFor="last-name">نام خانوادگی</Label>
-                    <Input id="last-name" placeholder="رابینسون" required />
+                    <Input id="last-name" placeholder="رابینسون" required disabled={isLoading} />
                 </div>
             </div>
             <div className="grid gap-2">
@@ -76,6 +99,7 @@ export function SignupForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
                 />
             </div>
             <div className="grid gap-2">
@@ -86,10 +110,11 @@ export function SignupForm() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
                 />
             </div>
-            <Button type="submit" className="w-full mt-2">
-                ایجاد حساب کاربری
+            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                {isLoading ? 'در حال ایجاد حساب...' : 'ایجاد حساب کاربری'}
             </Button>
             </form>
 
@@ -104,7 +129,7 @@ export function SignupForm() {
                 </div>
             </div>
 
-            <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
+            <Button variant="outline" className="w-full" onClick={signInWithGoogle} disabled={isLoading}>
                 ثبت نام با گوگل
             </Button>
         </div>

@@ -1,15 +1,10 @@
 import {
   Activity,
-  ArrowUpRight,
   CreditCard,
   DollarSign,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
-
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -26,9 +21,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { invoices, customers } from '@/lib/data';
-import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { formatCurrency } from '@/lib/utils';
 import type { InvoiceStatus } from '@/lib/definitions';
+import dynamic from 'next/dynamic';
+
+const OverviewChart = dynamic(
+  () => import('@/components/dashboard/overview-chart').then(mod => mod.OverviewChart),
+  { ssr: false, loading: () => <div style={{height: '350px'}}>در حال بارگذاری نمودار...</div> }
+);
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',

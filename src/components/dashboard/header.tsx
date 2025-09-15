@@ -13,6 +13,7 @@ import {
   Package2,
   PanelLeft,
   Search,
+  LogOut,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -39,6 +40,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { useAuth } from '@/components/auth/auth-provider';
 
 const mobileNavItems = [
     { href: '/dashboard', icon: Home, label: 'داشبورد' },
@@ -64,6 +66,7 @@ function generateBreadcrumbs(pathname: string) {
             case 'customers': name = 'مشتریان'; break;
             case 'categories': name = 'دسته‌بندی‌ها'; break;
             case 'reports': name = 'گزارشات'; break;
+            case 'settings': name = 'تنظیمات'; break;
             default:
                 if (pathSegments[1] === 'invoices' && index === 2) {
                     name = `فاکتور #${pathSegments[2]}`;
@@ -84,6 +87,7 @@ function generateBreadcrumbs(pathname: string) {
 export function Header() {
   const pathname = usePathname();
   const breadcrumbs = generateBreadcrumbs(pathname);
+  const { user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
@@ -113,6 +117,13 @@ export function Header() {
                     {item.label}
                 </Link>
             ))}
+             <Link
+                href="/dashboard/settings"
+                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+            >
+                <Settings className="h-5 w-5" />
+                تنظیمات
+            </Link>
           </nav>
         </SheetContent>
       </Sheet>
@@ -155,7 +166,7 @@ export function Header() {
             className="overflow-hidden rounded-full"
           >
             <Image
-              src="https://picsum.photos/seed/avatar/32/32"
+              src={`https://picsum.photos/seed/${user?.email || 'avatar'}/32/32`}
               width={36}
               height={36}
               alt="آواتار"
@@ -165,12 +176,17 @@ export function Header() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.email || 'حساب کاربری'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>تنظیمات</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/settings">تنظیمات</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>خروج</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>
+            <LogOut className="ml-2 h-4 w-4" />
+            خروج
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

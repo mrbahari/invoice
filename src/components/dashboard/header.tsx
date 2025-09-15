@@ -122,20 +122,19 @@ export function Header() {
               <Link href="/dashboard">خانه</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
           {breadcrumbs.map((crumb, index) => (
-            <BreadcrumbItem key={index}>
-              {!crumb.isLast ? (
-                <>
-                  <BreadcrumbLink asChild>
-                    <Link href={crumb.href}>{crumb.name}</Link>
-                  </BreadcrumbLink>
-                  <BreadcrumbSeparator />
-                </>
-              ) : (
-                <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
+            <React.Fragment key={index}>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                {!crumb.isLast ? (
+                    <BreadcrumbLink asChild>
+                        <Link href={crumb.href}>{crumb.name}</Link>
+                    </BreadcrumbLink>
+                ) : (
+                    <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
+                )}
+                </BreadcrumbItem>
+            </React.Fragment>
           ))}
         </BreadcrumbList>
       </Breadcrumb>

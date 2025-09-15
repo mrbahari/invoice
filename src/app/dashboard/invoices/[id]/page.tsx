@@ -25,7 +25,7 @@ function toWords(num: number): string {
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
     const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
-    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
+    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتاد", "نهصد"];
     const thousands = ["", " هزار", " میلیون", " میلیارد"];
 
     if (num === 0) return "صفر";
@@ -165,37 +165,26 @@ export default function InvoicePreviewPage() {
                     </TableBody>
                 </Table>
                 
-                <div className="flex justify-end mt-4">
-                     <div className="w-full max-w-sm space-y-2 text-sm">
-                          <div className="flex justify-between py-1">
-                                <span className="text-gray-600">جمع جزء:</span>
-                                <span className="font-mono font-medium">{formatCurrency(invoice.subtotal)}</span>
-                            </div>
-                        <div className="flex justify-between py-1 border-t">
-                            <span className="text-base font-bold">جمع کل:</span>
-                            <span className="text-base font-bold font-mono">{formatCurrency(invoice.total)}</span>
-                        </div>
-                     </div>
-                </div>
-
-                 <div className="mt-8 border-t pt-4 text-sm">
-                    <div className="flex justify-between">
-                        <div>
+                 <div className="mt-8 border-t pt-6 text-sm">
+                    <div className="flex justify-between items-start">
+                        <div className="w-2/3 pr-4">
                             <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
-                            <span className="mr-2 text-gray-700">{toWords(invoice.total)} ریال</span>
+                            <p className="mt-1 text-gray-700 font-medium">{toWords(invoice.total)} ریال</p>
+                             <div className="mt-20 text-center">
+                                <div className="inline-block border-t-2 border-gray-300 w-48 pt-2 text-xs text-gray-500">مهر و امضاء فروشگاه</div>
+                            </div>
                         </div>
-                        <div className="font-semibold text-gray-500">
-                            جمع کل: .......................................
+                        <div className="w-1/3 space-y-2">
+                             <div className="flex justify-between items-center bg-primary/5 p-3 rounded-md">
+                                <span className="text-base font-bold text-primary">جمع کل:</span>
+                                <span className="text-base font-bold font-mono text-primary">{formatCurrency(invoice.total)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-20 text-center">
-                    <div className="inline-block border-t-2 border-gray-300 w-48 pt-2 text-xs text-gray-500">مهر و امضاء فروشگاه</div>
-                </div>
-
             </CardContent>
-             <footer className="relative bg-white rounded-b-lg overflow-hidden mt-10">
+             <footer className="relative bg-white rounded-b-lg mt-10">
                 <div className="h-16 bg-primary" style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)' }}></div>
                  <div className="absolute inset-0 p-4 flex items-center justify-center text-white text-xs">
                     <div className="flex items-center gap-6">
@@ -218,3 +207,5 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    

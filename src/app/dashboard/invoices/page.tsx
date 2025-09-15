@@ -1,5 +1,6 @@
-import { MoreHorizontal, PlusCircle, File } from 'lucide-react';
 import Link from 'next/link';
+import { PlusCircle } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,8 @@ import { invoices } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MoreHorizontal } from 'lucide-react';
+import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -129,47 +132,30 @@ export default function InvoicesPage() {
   const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
   const pendingInvoices = invoices.filter(inv => inv.status === 'Pending');
   const overdueInvoices = invoices.filter(inv => inv.status === 'Overdue');
+  const allInvoices = invoices;
+
+  const tabsData = [
+    { value: 'all', label: 'همه', invoices: allInvoices },
+    { value: 'paid', label: 'پرداخت شده', invoices: paidInvoices },
+    { value: 'pending', label: 'در انتظار', invoices: pendingInvoices },
+    { value: 'overdue', label: 'سررسید گذشته', invoices: overdueInvoices, className: 'hidden sm:flex' },
+  ]
 
   return (
-    <Tabs defaultValue="all">
-      <div className="flex items-center">
-        <TabsList>
-          <TabsTrigger value="all">همه</TabsTrigger>
-          <TabsTrigger value="paid">پرداخت شده</TabsTrigger>
-          <TabsTrigger value="pending">در انتظار</TabsTrigger>
-          <TabsTrigger value="overdue" className="hidden sm:flex">
-            سررسید گذشته
-          </TabsTrigger>
-        </TabsList>
-        <div className="mr-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              خروجی
-            </span>
-          </Button>
-          <Link href="/dashboard/invoices/new">
-            <Button size="sm" className="h-8 gap-1">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                ایجاد فاکتور
-              </span>
-            </Button>
-          </Link>
-        </div>
-      </div>
-      <TabsContent value="all">
-        <InvoiceTable invoiceList={invoices} />
-      </TabsContent>
-       <TabsContent value="paid">
-        <InvoiceTable invoiceList={paidInvoices} />
-      </TabsContent>
-      <TabsContent value="pending">
-        <InvoiceTable invoiceList={pendingInvoices} />
-      </TabsContent>
-      <TabsContent value="overdue">
-        <InvoiceTable invoiceList={overdueInvoices} />
-      </TabsContent>
-    </Tabs>
+    <InvoiceTabs
+        tabs={tabsData}
+        defaultTab="all"
+        tableComponent={InvoiceTable}
+        pageActions={
+            <Link href="/dashboard/invoices/new">
+                <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    ایجاد فاکتور
+                </span>
+                </Button>
+            </Link>
+        }
+    />
   );
 }

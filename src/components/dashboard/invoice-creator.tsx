@@ -12,13 +12,6 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -29,20 +22,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { PlusCircle, Sparkles, Trash2 } from 'lucide-react';
+import { PlusCircle, Sparkles, Trash2, Search, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { generateInvoiceDescription, GenerateInvoiceDescriptionInput } from '@/ai/flows/generate-invoice-description';
 import { suggestOptimalDiscounts, SuggestOptimalDiscountsInput, SuggestOptimalDiscountsOutput } from '@/ai/flows/suggest-optimal-discounts';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Image from 'next/image';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '../ui/separator';
 
 type InvoiceItem = {
   product: Product;
@@ -50,9 +39,8 @@ type InvoiceItem = {
 };
 
 export function InvoiceCreator({ customers, products }: { customers: Customer[]; products: Product[] }) {
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>();
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
   const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(8); // 8% tax rate
@@ -60,9 +48,17 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
   const [isGenerating, setIsGenerating] = useState(false);
   const [suggestedDiscounts, setSuggestedDiscounts] = useState<SuggestOptimalDiscountsOutput | null>(null);
 
-  const selectedCustomer = useMemo(
-    () => customers.find((c) => c.id === selectedCustomerId),
-    [selectedCustomerId, customers]
+  const [productSearch, setProductSearch] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+
+  const filteredProducts = useMemo(() =>
+    products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())),
+    [products, productSearch]
+  );
+
+  const filteredCustomers = useMemo(() =>
+    customers.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase())),
+    [customers, customerSearch]
   );
 
   const subtotal = useMemo(
@@ -89,7 +85,10 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
   };
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1) {
+        handleRemoveItem(productId);
+        return;
+    };
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.product.id === productId ? { ...item, quantity: newQuantity } : item
@@ -168,17 +167,20 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
 
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 md:gap-8">
-      <div className="md:col-span-2">
+    <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+      <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>اقلام فاکتور</CardTitle>
-            <CardDescription>محصولات را به فاکتور اضافه کنید.</CardDescription>
+            <CardTitle>فاکتور</CardTitle>
+            <CardDescription>
+                اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="grid gap-6">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
                   <TableHead>محصول</TableHead>
                   <TableHead className="w-[100px] text-center">تعداد</TableHead>
                   <TableHead className="w-[120px] text-left">قیمت واحد</TableHead>
@@ -190,6 +192,15 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 {items.length > 0 ? (
                   items.map((item) => (
                     <TableRow key={item.product.id}>
+                      <TableCell className="hidden md:table-cell">
+                        <Image
+                            src={item.product.imageUrl}
+                            alt={item.product.name}
+                            width={64}
+                            height={64}
+                            className="rounded-md object-cover"
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{item.product.name}</TableCell>
                       <TableCell>
                         <Input
@@ -210,70 +221,14 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      هنوز محصولی اضافه نشده است.
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-          <CardFooter className="justify-start">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline">
-                  <PlusCircle className="ml-2 h-4 w-4" />
-                  افزودن محصول
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[300px] p-0">
-                <Command>
-                  <CommandInput placeholder="جستجوی محصول..." />
-                  <CommandList>
-                    <CommandEmpty>محصولی یافت نشد.</CommandEmpty>
-                    <CommandGroup>
-                      {products.map((product) => (
-                        <CommandItem
-                          key={product.id}
-                          value={product.name}
-                          onSelect={() => {
-                            handleAddProduct(product);
-                            setOpen(false);
-                          }}
-                        >
-                          {product.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </CardFooter>
-        </Card>
-      </div>
-      <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>جزئیات فاکتور</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6">
             <div className="grid gap-2">
-              <Label>مشتری</Label>
-              <Select onValueChange={setSelectedCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="یک مشتری انتخاب کنید" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-             <div className="grid gap-2">
                 <div className="flex justify-between items-center">
                     <Label htmlFor="description">توضیحات</Label>
                     <Button variant="ghost" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}>
@@ -283,76 +238,163 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 </div>
                 <Textarea id="description" placeholder="فاکتور برای..." value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="discount">تخفیف (تومان)</Label>
-                <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value))} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="tax">مالیات (%)</Label>
-                <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value))} />
-              </div>
-            </div>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full" onClick={handleSuggestDiscounts} disabled={isGenerating}>
-                    <Sparkles className="ml-2 h-4 w-4" />
-                    {isGenerating ? 'در حال تحلیل...' : 'پیشنهاد تخفیف با هوش مصنوعی'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                  {suggestedDiscounts ? (
-                     <div className="grid gap-4">
-                        <div className="space-y-2">
-                            <h4 className="font-medium leading-none">پیشنهادات تخفیف</h4>
-                            <p className="text-sm text-muted-foreground">
-                                بر اساس سابقه مشتری و اقلام سبد خرید.
-                            </p>
-                        </div>
-                        {suggestedDiscounts.suggestedDiscounts.length > 0 ? (
-                             <ul className="grid gap-2">
-                                {suggestedDiscounts.suggestedDiscounts.map((s, i) => (
-                                    <li key={i} className="text-sm border-r-2 pr-3 border-primary">
-                                        <p className="font-semibold">{s.discountPercentage}% تخفیف</p>
-                                        <p className="text-muted-foreground">{s.reason}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">در حال حاضر تخفیف خاصی پیشنهاد نمی‌شود.</p>
-                        )}
-                     </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">برای دریافت پیشنهادات تخفیف مبتنی بر هوش مصنوعی کلیک کنید.</div>
-                  )}
-              </PopoverContent>
-            </Popover>
-
-
-            <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                    <span>جمع جزء</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>تخفیف</span>
-                    <span className="text-destructive">-{formatCurrency(discount)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>مالیات ({tax}%)</span>
-                    <span>{formatCurrency(subtotal * (tax/100) - (discount > 0 ? discount * (tax/100) : 0))}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-base pt-2 border-t">
-                    <span>جمع کل</span>
-                    <span>{formatCurrency(total)}</span>
-                </div>
-            </div>
           </CardContent>
-          <CardFooter>
-            <Button className="w-full">ایجاد فاکتور</Button>
-          </CardFooter>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>پرداخت</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="discount">تخفیف (تومان)</Label>
+                    <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value))} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="tax">مالیات (%)</Label>
+                    <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value))} />
+                  </div>
+                </div>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full" onClick={handleSuggestDiscounts} disabled={isGenerating}>
+                            <Sparkles className="ml-2 h-4 w-4" />
+                            {isGenerating ? 'در حال تحلیل...' : 'پیشنهاد تخفیف با هوش مصنوعی'}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        {suggestedDiscounts ? (
+                            <div className="grid gap-4">
+                            <div className="space-y-2">
+                                <h4 className="font-medium leading-none">پیشنهادات تخفیف</h4>
+                                <p className="text-sm text-muted-foreground">
+                                    بر اساس سابقه مشتری و اقلام سبد خرید.
+                                </p>
+                            </div>
+                            {suggestedDiscounts.suggestedDiscounts.length > 0 ? (
+                                <ul className="grid gap-2">
+                                    {suggestedDiscounts.suggestedDiscounts.map((s, i) => (
+                                        <li key={i} className="text-sm border-r-2 pr-3 border-primary">
+                                            <p className="font-semibold">{s.discountPercentage}% تخفیف</p>
+                                            <p className="text-muted-foreground">{s.reason}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">در حال حاضر تخفیف خاصی پیشنهاد نمی‌شود.</p>
+                            )}
+                            </div>
+                        ) : (
+                            <div className="text-sm text-muted-foreground">برای دریافت پیشنهادات تخفیف مبتنی بر هوش مصنوعی کلیک کنید.</div>
+                        )}
+                    </PopoverContent>
+                </Popover>
+
+                <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                        <span>جمع جزء</span>
+                        <span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>تخفیف</span>
+                        <span className="text-destructive">-{formatCurrency(discount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>مالیات ({tax}%)</span>
+                        <span>{formatCurrency(subtotal * (tax/100) - (discount > 0 ? discount * (tax/100) : 0))}</span>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="flex justify-between font-semibold text-base pt-2">
+                        <span>جمع کل</span>
+                        <span>{formatCurrency(total)}</span>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Button className="w-full">ایجاد فاکتور</Button>
+            </CardFooter>
+        </Card>
+      </div>
+
+      <div className="grid auto-rows-max items-start gap-4 md:gap-8">
+        <Card>
+            <CardHeader>
+                <CardTitle>مشتریان</CardTitle>
+                <CardDescription>یک مشتری برای این فاکتور انتخاب کنید.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                <div className="relative">
+                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                </div>
+                 {selectedCustomer && (
+                     <Card className="bg-muted/50">
+                        <CardContent className="p-3 flex items-center gap-3">
+                             <Avatar className="h-9 w-9">
+                                <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/36/36`} alt="آواتار" />
+                                <AvatarFallback>{selectedCustomer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium">{selectedCustomer.name}</p>
+                                <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
+                            </div>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedCustomer(undefined)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardContent>
+                     </Card>
+                )}
+                <ScrollArea className="h-48">
+                    <div className="grid gap-2">
+                    {filteredCustomers.map(customer => (
+                        <Button
+                            key={customer.id}
+                            variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                            className="justify-start"
+                            onClick={() => setSelectedCustomer(customer)}
+                            disabled={!!selectedCustomer}
+                        >
+                            {customer.name}
+                        </Button>
+                    ))}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>محصولات</CardTitle>
+                <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                <div className="relative">
+                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                </div>
+                <ScrollArea className="h-96">
+                    <div className="grid gap-4">
+                    {filteredProducts.map(product => (
+                        <div key={product.id} className="flex items-center gap-4">
+                            <Image
+                                src={product.imageUrl}
+                                alt={product.name}
+                                width={64}
+                                height={64}
+                                className="rounded-md object-cover"
+                            />
+                            <div className="flex-1 text-sm">
+                                <p className="font-medium">{product.name}</p>
+                                <p className="text-muted-foreground">{formatCurrency(product.price)}</p>
+                            </div>
+                            <Button size="icon" variant="outline" onClick={() => handleAddProduct(product)}>
+                                <PlusCircle className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    </div>
+                </ScrollArea>
+            </CardContent>
         </Card>
       </div>
     </div>

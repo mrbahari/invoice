@@ -49,17 +49,23 @@ export function SignupForm() {
         <Link href="/" className="mb-4">
             <Package2 className="h-8 w-8 text-primary" />
         </Link>
-        <CardTitle className="text-xl">ثبت نام</CardTitle>
+        <CardTitle className="text-2xl">ایجاد حساب</CardTitle>
         <CardDescription>
-          برای ایجاد حساب کاربری اطلاعات خود را وارد کنید
+          برای شروع اطلاعات خود را وارد کنید
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4">
             <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid gap-2">
-                <Label htmlFor="first-name">نام</Label>
-                <Input id="first-name" placeholder="ماکس" required />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="first-name">نام</Label>
+                    <Input id="first-name" placeholder="ماکس" required />
+                </div>
+                 <div className="grid gap-2">
+                    <Label htmlFor="last-name">نام خانوادگی</Label>
+                    <Input id="last-name" placeholder="رابینسون" required />
+                </div>
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="email">ایمیل</Label>
@@ -82,7 +88,7 @@ export function SignupForm() {
                     onChange={(e) => setPassword(e.target.value)}
                 />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full mt-2">
                 ایجاد حساب کاربری
             </Button>
             </form>

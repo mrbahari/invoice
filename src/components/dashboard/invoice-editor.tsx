@@ -24,15 +24,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Sparkles, Trash2, Search, X } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { generateInvoiceDescription, GenerateInvoiceDescriptionInput } from '@/ai/flows/generate-invoice-description';
-import { suggestOptimalDiscounts, SuggestOptimalDiscountsInput, SuggestOptimalDiscountsOutput } from '@/ai/flows/suggest-optimal-discounts';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { categories, invoices } from '@/lib/data';
@@ -82,10 +79,7 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
   const [discount, setDiscount] = useState(invoice?.discount || 0);
   const [tax, setTax] = useState(invoice ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 8); // 8% tax rate
   
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [suggestedDiscounts, setSuggestedDiscounts] = useState<SuggestOptimalDiscountsOutput | null>(null);
-  
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -150,71 +144,6 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
 
   const handleRemoveItem = (productId: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
-  };
-  
-  const handleGenerateDescription = async () => {
-    if (items.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'هیچ آیتمی در فاکتور وجود ندارد',
-        description: 'لطفاً برای تولید توضیحات، محصولات را اضافه کنید.',
-      });
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      const input: GenerateInvoiceDescriptionInput = {
-        products: items.map(item => ({
-          name: item.product.name,
-          quantity: item.quantity,
-        })),
-      };
-      const result = await generateInvoiceDescription(input);
-      setDescription(result.description);
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'خطای هوش مصنوعی',
-        description: 'تولید توضیحات با شکست مواجه شد.',
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleSuggestDiscounts = async () => {
-    if (!selectedCustomer || items.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'اطلاعات ناقص',
-        description: 'لطفا برای پیشنهاد تخفیف، یک مشتری انتخاب کرده و محصولات را اضافه کنید.',
-      });
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      const input: SuggestOptimalDiscountsInput = {
-        customerId: selectedCustomer.id,
-        customerPurchaseHistory: selectedCustomer.purchaseHistory,
-        products: items.map(item => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            price: item.product.price,
-        })),
-      };
-      const result = await suggestOptimalDiscounts(input);
-      setSuggestedDiscounts(result);
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'خطای هوش مصنوعی',
-        description: 'پیشنهاد تخفیف با شکست مواجه شد.',
-      });
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   const handleProcessInvoice = () => {
@@ -371,10 +300,6 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
             <div className="grid gap-2">
                 <div className="flex justify-between items-center">
                     <Label htmlFor="description">توضیحات</Label>
-                    <Button variant="ghost" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}>
-                        <Sparkles className="ml-2 h-4 w-4" />
-                        {isGenerating ? 'در حال تولید...' : 'تولید با هوش مصنوعی'}
-                    </Button>
                 </div>
                 <Textarea id="description" placeholder="فاکتور برای..." value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
@@ -395,40 +320,6 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
                     <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value) || 0)} />
                   </div>
                 </div>
-                 <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full" onClick={handleSuggestDiscounts} disabled={isGenerating}>
-                            <Sparkles className="ml-2 h-4 w-4" />
-                            {isGenerating ? 'در حال تحلیل...' : 'پیشنهاد تخفیف با هوش مصنوعی'}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                        {suggestedDiscounts ? (
-                            <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <h4 className="font-medium leading-none">پیشنهادات تخفیف</h4>
-                                <p className="text-sm text-muted-foreground">
-                                    بر اساس سابقه مشتری و اقلام سبد خرید.
-                                </p>
-                            </div>
-                            {suggestedDiscounts.suggestedDiscounts.length > 0 ? (
-                                <ul className="grid gap-2">
-                                    {suggestedDiscounts.suggestedDiscounts.map((s, i) => (
-                                        <li key={i} className="text-sm border-r-2 pr-3 border-primary">
-                                            <p className="font-semibold">{s.discountPercentage}% تخفیف</p>
-                                            <p className="text-muted-foreground">{s.reason}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">در حال حاضر تخفیف خاصی پیشنهاد نمی‌شود.</p>
-                            )}
-                            </div>
-                        ) : (
-                            <div className="text-sm text-muted-foreground">برای دریافت پیشنهادات تخفیف مبتنی بر هوش مصنوعی کلیک کنید.</div>
-                        )}
-                    </PopoverContent>
-                </Popover>
 
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -555,3 +446,5 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
     </div>
   );
 }
+
+    

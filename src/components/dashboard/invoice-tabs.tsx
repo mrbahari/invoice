@@ -45,7 +45,7 @@ export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps)
   };
 
   return (
-    <Tabs defaultValue={defaultTab} onValueChange={setActiveTab}>
+    <Tabs defaultValue={defaultTab} onValueChange={setActiveTab} dir="rtl">
       <div className="flex items-center">
         <TabsList>
           {tabs.map(tab => (
@@ -54,7 +54,7 @@ export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps)
             </TabsTrigger>
           ))}
         </TabsList>
-        <div className="mr-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">

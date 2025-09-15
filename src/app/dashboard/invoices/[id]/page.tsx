@@ -126,25 +126,15 @@ export default function InvoicePreviewPage() {
             </header>
             
             <CardContent className="p-8 bg-white">
-                 <div className="grid grid-cols-2 gap-4 mb-10 text-sm border-b pb-6">
-                    <div className="border p-4 rounded-md bg-muted/30">
-                        <h3 className="font-semibold text-gray-500 mb-2.5 border-b pb-2">صورتحساب آقای/خانم:</h3>
-                        <p className="font-bold text-lg text-gray-800">{invoice.customerName}</p>
-                        {customer && (
-                            <>
-                                <p className="text-gray-600 mt-2">{customer.address}</p>
-                                <p className="text-gray-600 mt-1">{customer.phone}</p>
-                            </>
-                        )}
+                 <div className="flex justify-between items-start text-sm border-b pb-6 mb-10">
+                    <div>
+                        <span className="font-semibold text-gray-500">صورتحساب آقای/خانم:</span>
+                        <p className="font-bold text-lg text-gray-800 mt-1">{invoice.customerName}</p>
                     </div>
-                     <div className="space-y-2 text-right text-sm">
-                        <div className="flex justify-between">
+                    <div className="text-left">
+                        <div className="flex justify-end">
                             <span className='font-semibold'>تاریخ:</span>
-                            <span>{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className='font-semibold'>توسط:</span>
-                            <span>مدیریت فروش</span>
+                            <span className="mr-2">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
                         </div>
                      </div>
                 </div>

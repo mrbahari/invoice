@@ -79,7 +79,7 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
 
   const [description, setDescription] = useState(invoice?.description || '');
   const [discount, setDiscount] = useState(invoice?.discount || 0);
-  const [tax, setTax] = useState(invoice ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 8); // 8% tax rate
+  const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
   
   const [isProcessing, setIsProcessing] = useState(false);
 

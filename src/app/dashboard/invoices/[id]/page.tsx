@@ -128,14 +128,18 @@ export default function InvoicePreviewPage() {
                     <span className="text-muted-foreground">جمع جزء</span>
                     <span>{formatCurrency(invoice.subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">تخفیف</span>
-                    <span>-{formatCurrency(invoice.discount)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">مالیات</span>
-                    <span>{formatCurrency(invoice.tax)}</span>
-                </div>
+                {invoice.discount > 0 && (
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">تخفیف</span>
+                        <span>-{formatCurrency(invoice.discount)}</span>
+                    </div>
+                )}
+                {invoice.tax > 0 && (
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">مالیات</span>
+                        <span>{formatCurrency(invoice.tax)}</span>
+                    </div>
+                )}
                 <Separator className="my-2" />
                 <div className="flex justify-between font-semibold text-lg">
                     <span>جمع کل</span>
@@ -146,3 +150,5 @@ export default function InvoicePreviewPage() {
     </Card>
   );
 }
+
+    

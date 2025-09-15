@@ -1,23 +1,33 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
-const data = [
-  { name: 'فروردین', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'اردیبهشت', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'خرداد', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'تیر', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'مرداد', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'شهریور', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'مهر', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'آبان', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'آذر', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'دی', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'بهمن', total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: 'اسفند', total: Math.floor(Math.random() * 5000) + 1000 },
+const initialData = [
+  { name: 'فروردین', total: 0 },
+  { name: 'اردیبهشت', total: 0 },
+  { name: 'خرداد', total: 0 },
+  { name: 'تیر', total: 0 },
+  { name: 'مرداد', total: 0 },
+  { name: 'شهریور', total: 0 },
+  { name: 'مهر', total: 0 },
+  { name: 'آبان', total: 0 },
+  { name: 'آذر', total: 0 },
+  { name: 'دی', total: 0 },
+  { name: 'بهمن', total: 0 },
+  { name: 'اسفند', total: 0 },
 ];
 
 export function OverviewChart() {
+  const [data, setData] = useState(initialData);
+
+  useEffect(() => {
+    setData(initialData.map(item => ({
+      ...item,
+      total: Math.floor(Math.random() * 5000) + 1000,
+    })));
+  }, []);
+
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={data} layout="vertical">
@@ -27,7 +37,7 @@ export function OverviewChart() {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value}`}
+          tickFormatter={(value) => `${value}`}
         />
         <YAxis
           type="category"

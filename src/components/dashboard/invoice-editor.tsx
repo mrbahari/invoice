@@ -32,7 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { categories, invoices, customers as initialCustomers } from '@/lib/data';
+import { categories, invoices, customers } from '@/lib/data';
 
 type InvoiceItemState = {
   product: Product;
@@ -230,9 +230,9 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
         }
         
         // This is a mock implementation. In a real app, you would also update the customer list on the server.
-        const customerExists = initialCustomers.some(c => c.id === selectedCustomer.id);
+        const customerExists = customers.some(c => c.id === selectedCustomer.id);
         if (!customerExists) {
-            initialCustomers.push(selectedCustomer);
+            customers.push(selectedCustomer);
         }
 
         setIsProcessing(false);
@@ -482,3 +482,5 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
     </div>
   );
 }
+
+    

@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/table';
 import { invoices } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
-import type { InvoiceStatus } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus } from '@/lib/definitions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const statusStyles: Record<InvoiceStatus, string> = {
@@ -40,8 +40,96 @@ const statusTranslation: Record<InvoiceStatus, string> = {
     Overdue: 'سررسید گذشته',
 };
 
+function InvoiceTable({ invoiceList }: { invoiceList: Invoice[] }) {
+  return (
+     <Card>
+      <CardHeader className="px-7">
+        <CardTitle>فاکتورها</CardTitle>
+        <CardDescription>
+          فاکتورهای اخیر فروشگاه شما.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>مشتری</TableHead>
+              <TableHead className="hidden sm:table-cell">
+                شماره فاکتور
+              </TableHead>
+              <TableHead className="hidden sm:table-cell">وضعیت</TableHead>
+              <TableHead className="hidden md:table-cell">تاریخ</TableHead>
+              <TableHead className="text-left">مبلغ</TableHead>
+              <TableHead>
+                <span className="sr-only">اقدامات</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {invoiceList.map((invoice) => (
+              <TableRow key={invoice.id}>
+                <TableCell>
+                  <div className="font-medium">{invoice.customerName}</div>
+                  <div className="hidden text-sm text-muted-foreground md:inline">
+                    {invoice.customerEmail}
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {invoice.invoiceNumber}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
+                    {statusTranslation[invoice.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {new Date(invoice.date).toLocaleDateString('fa-IR')}
+                </TableCell>
+                <TableCell className="text-left">
+                  {formatCurrency(invoice.total)}
+                </TableCell>
+                <TableCell className="text-left">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">باز کردن منو</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/invoices/${invoice.id}`} className="w-full cursor-pointer">
+                          مشاهده جزئیات
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                      <DropdownMenuItem>علامت‌گذاری به عنوان پرداخت شده</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-500">
+                        حذف
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+       <CardFooter>
+        <div className="text-xs text-muted-foreground">
+          نمایش <strong>1-{invoiceList.length}</strong> از <strong>{invoiceList.length}</strong> فاکتور
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
 
 export default function InvoicesPage() {
+  const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
+  const pendingInvoices = invoices.filter(inv => inv.status === 'Pending');
+  const overdueInvoices = invoices.filter(inv => inv.status === 'Overdue');
+
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
@@ -71,85 +159,16 @@ export default function InvoicesPage() {
         </div>
       </div>
       <TabsContent value="all">
-        <Card>
-          <CardHeader className="px-7">
-            <CardTitle>فاکتورها</CardTitle>
-            <CardDescription>
-              فاکتورهای اخیر فروشگاه شما.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>مشتری</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    شماره فاکتور
-                  </TableHead>
-                  <TableHead className="hidden sm:table-cell">وضعیت</TableHead>
-                  <TableHead className="hidden md:table-cell">تاریخ</TableHead>
-                  <TableHead className="text-left">مبلغ</TableHead>
-                  <TableHead>
-                    <span className="sr-only">اقدامات</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <div className="font-medium">{invoice.customerName}</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        {invoice.customerEmail}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {invoice.invoiceNumber}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                        {statusTranslation[invoice.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {new Date(invoice.date).toLocaleDateString('fa-IR')}
-                    </TableCell>
-                    <TableCell className="text-left">
-                      {formatCurrency(invoice.total)}
-                    </TableCell>
-                    <TableCell className="text-left">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">باز کردن منو</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                           <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/invoices/${invoice.id}`} className="w-full cursor-pointer">
-                              مشاهده جزئیات
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>ویرایش</DropdownMenuItem>
-                          <DropdownMenuItem>علامت‌گذاری به عنوان پرداخت شده</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-500">
-                            حذف
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-           <CardFooter>
-            <div className="text-xs text-muted-foreground">
-              نمایش <strong>1-{invoices.length}</strong> از <strong>{invoices.length}</strong> فاکتور
-            </div>
-          </CardFooter>
-        </Card>
+        <InvoiceTable invoiceList={invoices} />
+      </TabsContent>
+       <TabsContent value="paid">
+        <InvoiceTable invoiceList={paidInvoices} />
+      </TabsContent>
+      <TabsContent value="pending">
+        <InvoiceTable invoiceList={pendingInvoices} />
+      </TabsContent>
+      <TabsContent value="overdue">
+        <InvoiceTable invoiceList={overdueInvoices} />
       </TabsContent>
     </Tabs>
   );

@@ -158,8 +158,8 @@ export default function InvoicePreviewPage() {
                                 <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                             </TableCell>
                             <TableCell className="text-center py-3 align-top font-bold text-base">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                            <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.unitPrice)}</TableCell>
-                            <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.totalPrice)}</TableCell>
+                            <TableCell className="text-center py-3 align-top font-mono text-base">{formatCurrency(item.unitPrice)}</TableCell>
+                            <TableCell className="text-center py-3 align-top font-mono text-base">{formatCurrency(item.totalPrice)}</TableCell>
                         </TableRow>
                         ))}
                     </TableBody>
@@ -218,9 +218,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    

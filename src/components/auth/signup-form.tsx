@@ -54,6 +54,10 @@ export function SignupForm() {
                 description = 'این ایمیل قبلاً ثبت‌نام کرده است.';
             } else if (authError.code === 'auth/invalid-email') {
                 description = 'فرمت ایمیل وارد شده صحیح نمی‌باشد.';
+            } else if (authError.code === 'auth/weak-password') {
+                description = 'رمز عبور باید حداقل ۶ کاراکتر باشد.';
+            } else if (authError.code === 'auth/configuration-not-found') {
+                description = 'ثبت نام با ایمیل و رمزعبور در پروژه شما فعال نشده است. لطفا تنظیمات Firebase را بررسی کنید.';
             }
             toast({
                 variant: 'destructive',

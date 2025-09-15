@@ -25,7 +25,7 @@ function toWords(num: number): string {
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
     const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
-    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتاد", "نهصد"];
+    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
     const thousands = ["", " هزار", " میلیون", " میلیارد"];
 
     if (num === 0) return "صفر";
@@ -50,7 +50,7 @@ function toWords(num: number): string {
                 if (t > 1) {
                     chunkWord += tens[t] + (u > 0 ? " و " : "");
                 }
-                if (u > 0) {
+                if (u > 0 && t !== 1) {
                     chunkWord += units[u];
                 }
             }
@@ -170,9 +170,6 @@ export default function InvoicePreviewPage() {
                         <div className="w-2/3 pr-4">
                             <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
                             <p className="mt-1 text-gray-700 font-medium">{toWords(invoice.total)} ریال</p>
-                             <div className="mt-20 text-center">
-                                <div className="inline-block border-t-2 border-gray-300 w-48 pt-2 text-xs text-gray-500">مهر و امضاء فروشگاه</div>
-                            </div>
                         </div>
                         <div className="w-1/3 space-y-2">
                              <div className="flex justify-between items-center bg-primary/5 p-3 rounded-md">
@@ -207,5 +204,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    

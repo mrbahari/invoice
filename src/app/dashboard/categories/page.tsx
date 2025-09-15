@@ -1,4 +1,5 @@
 
+import Link from 'next/link';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,12 +43,14 @@ export default function CategoriesPage() {
                 </CardDescription>
             </div>
             <div className="mr-auto flex items-center gap-2">
-            <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                افزودن دسته‌بندی
-                </span>
-            </Button>
+            <Link href="/dashboard/categories/new">
+              <Button size="sm" className="h-8 gap-1">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  افزودن دسته‌بندی
+                  </span>
+              </Button>
+            </Link>
             </div>
         </div>
       </CardHeader>
@@ -86,7 +89,9 @@ export default function CategoriesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                      <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/categories/${category.id}/edit`}>ویرایش</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>حذف</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

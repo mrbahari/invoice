@@ -43,6 +43,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { categories } from '@/lib/data';
 
 const mobileNavItems = [
     { href: '/dashboard', icon: Home, label: 'داشبورد' },
@@ -58,20 +59,24 @@ function generateBreadcrumbs(pathname: string) {
     const breadcrumbs = pathSegments.map((segment, index) => {
         const href = '/' + pathSegments.slice(0, index + 1).join('/');
         const isLast = index === pathSegments.length - 1;
-        let name = segment;
+        let name: string = segment;
         
         switch (segment) {
             case 'dashboard': name = 'خانه'; break;
             case 'invoices': name = 'فاکتورها'; break;
             case 'new': name = 'جدید'; break;
+            case 'edit': name = 'ویرایش'; break;
             case 'products': name = 'محصولات'; break;
             case 'customers': name = 'مشتریان'; break;
             case 'categories': name = 'دسته‌بندی‌ها'; break;
             case 'reports': name = 'گزارشات'; break;
             case 'settings': name = 'تنظیمات'; break;
             default:
-                if (pathSegments[1] === 'invoices' && index === 2) {
+                if (pathSegments[1] === 'invoices' && index === 2 && !isLast) {
                     name = `فاکتور #${pathSegments[2]}`;
+                } else if (pathSegments[1] === 'categories' && index === 2 && !isLast) {
+                    const category = categories.find(c => c.id === segment);
+                    name = category ? `دسته ${category.name}` : segment;
                 } else {
                     name = segment.charAt(0).toUpperCase() + segment.slice(1);
                 }

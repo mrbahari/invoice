@@ -27,10 +27,11 @@ export function LoginForm() {
         e.preventDefault();
         // This is a mock login. In a real app, you'd validate credentials.
         if (email && password) {
-            // login(email); // This needs to be replaced with Firebase email/password auth if needed
-             toast({
-                title: 'ورود با ایمیل',
-                description: 'این قابلیت هنوز پیاده‌سازی نشده است. لطفا با گوگل وارد شوید.',
+            console.error("Email/password login not implemented. Please use Google Sign-In.");
+            toast({
+                variant: 'destructive',
+                title: 'قابلیت در دست ساخت',
+                description: 'ورود با ایمیل و رمز عبور هنوز پیاده‌سازی نشده است. لطفاً از طریق گوگل وارد شوید.',
             })
         } else {
             toast({

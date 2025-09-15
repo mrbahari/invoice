@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement } from '@/lib/definitions';
+import { useRouter } from 'next/navigation';
+import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -34,7 +35,7 @@ import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { categories } from '@/lib/data';
+import { categories, invoices } from '@/lib/data';
 
 type InvoiceItemState = {
   product: Product;
@@ -52,7 +53,9 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
   const [tax, setTax] = useState(8); // 8% tax rate
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [suggestedDiscounts, setSuggestedDiscounts] = useState<SuggestOptimalDiscountsOutput | null>(null);
+  const router = useRouter();
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -74,11 +77,14 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     [items]
   );
 
-  const total = useMemo(() => {
+  const taxAmount = useMemo(() => {
     const discountedSubtotal = subtotal - discount;
-    const taxAmount = discountedSubtotal * (tax / 100);
-    return discountedSubtotal + taxAmount;
+    return discountedSubtotal * (tax / 100);
   }, [subtotal, discount, tax]);
+
+  const total = useMemo(() => {
+    return subtotal - discount + taxAmount;
+  }, [subtotal, discount, taxAmount]);
 
   const handleAddProduct = (product: Product) => {
     setItems((prevItems) => {
@@ -181,6 +187,53 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     }
   };
 
+  const handleCreateInvoice = () => {
+    if (!selectedCustomer) {
+      toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
+      return;
+    }
+    if (items.length === 0) {
+      toast({ variant: 'destructive', title: 'فاکتور خالی است', description: 'لطفاً حداقل یک محصول به فاکتور اضافه کنید.' });
+      return;
+    }
+
+    setIsCreating(true);
+
+    // Simulate API call
+    setTimeout(() => {
+        const newInvoice: Invoice = {
+            id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+            invoiceNumber: `HIS-${(invoices.length + 1).toString().padStart(3, '0')}`,
+            customerId: selectedCustomer.id,
+            customerName: selectedCustomer.name,
+            customerEmail: selectedCustomer.email,
+            date: new Date().toISOString(),
+            dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(), // Due in 30 days
+            status: 'Pending',
+            items: items.map(item => ({
+                productId: item.product.id,
+                productName: item.product.name,
+                quantity: item.quantity,
+                unit: item.unit,
+                unitPrice: item.product.price,
+                totalPrice: item.product.price * item.quantity,
+            })),
+            subtotal,
+            discount,
+            tax: taxAmount,
+            total,
+            description: description || 'فاکتور ایجاد شده',
+        };
+
+        // This is a mock/simulation. In a real app, you would send this to a server.
+        invoices.unshift(newInvoice);
+
+        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
+        setIsCreating(false);
+        router.push('/dashboard/invoices');
+    }, 1000);
+  };
+
 
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
@@ -280,11 +333,11 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="discount">تخفیف (تومان)</Label>
-                    <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value))} />
+                    <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="tax">مالیات (%)</Label>
-                    <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value))} />
+                    <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value) || 0)} />
                   </div>
                 </div>
                  <Popover>
@@ -333,7 +386,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                     </div>
                     <div className="flex justify-between">
                         <span>مالیات ({tax}%)</span>
-                        <span>{formatCurrency(subtotal * (tax/100) - (discount > 0 ? discount * (tax/100) : 0))}</span>
+                        <span>{formatCurrency(taxAmount)}</span>
                     </div>
                     <Separator className="my-2" />
                     <div className="flex justify-between font-semibold text-base pt-2">
@@ -343,7 +396,9 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full">ایجاد فاکتور</Button>
+                <Button className="w-full" onClick={handleCreateInvoice} disabled={isCreating}>
+                    {isCreating ? 'در حال ایجاد...' : 'ایجاد فاکتور'}
+                </Button>
             </CardFooter>
         </Card>
       </div>
@@ -445,3 +500,5 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     </div>
   );
 }
+
+    

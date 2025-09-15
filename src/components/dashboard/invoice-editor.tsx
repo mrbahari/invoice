@@ -62,7 +62,7 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
   const [items, setItems] = useState<InvoiceItemState[]>([]);
   
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && invoice) {
       const invoiceItems = invoice.items.map(item => {
         const product = products.find(p => p.id === item.productId);
         if (!product) return null;
@@ -74,7 +74,7 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
       }).filter((item): item is InvoiceItemState => item !== null);
       setItems(invoiceItems);
     }
-  }, [invoice, isEditMode, products]);
+  }, [invoice?.id]);
 
 
   const [description, setDescription] = useState(invoice?.description || '');
@@ -482,5 +482,7 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
     </div>
   );
 }
+
+    
 
     

@@ -133,8 +133,8 @@ export default function InvoicePreviewPage() {
                     </div>
                     <div className="text-left">
                         <div className="flex justify-end">
-                            <span className='font-semibold'>تاریخ:</span>
-                            <span className="mr-2">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
+                            <span className='font-semibold text-gray-500'>تاریخ:</span>
+                            <span className="mr-2 font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
                         </div>
                      </div>
                 </div>
@@ -152,11 +152,12 @@ export default function InvoicePreviewPage() {
                     <TableBody>
                         {invoice.items.map((item, index) => (
                         <TableRow key={index} className="border-b-gray-100">
-                            <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3">{String(index + 1).padStart(2, '0')}</TableCell>
+                            <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono">{String(index + 1).padStart(2, '0')}</TableCell>
                             <TableCell className="py-3 align-top">
                                 <p className="font-semibold text-gray-800">{item.productName}</p>
+                                <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                             </TableCell>
-                            <TableCell className="text-center py-3 align-top">{item.quantity}</TableCell>
+                            <TableCell className="text-center py-3 align-top font-mono">{item.quantity}</TableCell>
                             <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.unitPrice)}</TableCell>
                             <TableCell className="text-center py-3 align-top font-mono">{formatCurrency(item.totalPrice)}</TableCell>
                         </TableRow>
@@ -180,10 +181,10 @@ export default function InvoicePreviewPage() {
                  <div className="mt-8 border-t pt-4 text-sm">
                     <div className="flex justify-between">
                         <div>
-                            <span className="font-semibold">مبلغ به حروف:</span>
+                            <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
                             <span className="mr-2 text-gray-700">{toWords(invoice.total)} ریال</span>
                         </div>
-                        <div className="font-semibold">
+                        <div className="font-semibold text-gray-500">
                             جمع کل: .......................................
                         </div>
                     </div>
@@ -217,3 +218,5 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    

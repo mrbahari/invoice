@@ -91,6 +91,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
                 <TableRow>
                 <TableHead>قلم</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">تعداد</TableHead>
+                <TableHead className="hidden sm:table-cell">واحد</TableHead>
                 <TableHead className="text-left">قیمت</TableHead>
                 <TableHead className="text-left">جمع</TableHead>
                 </TableRow>
@@ -100,6 +101,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
                 <TableRow key={index}>
                     <TableCell className="font-medium">{item.productName}</TableCell>
                     <TableCell className="hidden sm:table-cell text-center">{item.quantity}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{item.unit}</TableCell>
                     <TableCell className="text-left">{formatCurrency(item.unitPrice)}</TableCell>
                     <TableCell className="text-left">{formatCurrency(item.totalPrice)}</TableCell>
                 </TableRow>

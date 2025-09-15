@@ -41,12 +41,15 @@ export type Invoice = {
   description: string;
 };
 
+export type UnitOfMeasurement = 'عدد' | 'متر طول' | 'متر مربع' | 'بسته';
+
 export type InvoiceItem = {
   productId: string;
   productName: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  unit: UnitOfMeasurement;
 };
 
 export type AuthFormValues = {

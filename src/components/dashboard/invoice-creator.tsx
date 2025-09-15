@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Customer, Product } from '@/lib/definitions';
+import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -32,15 +33,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '../ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { categories } from '@/lib/data';
 
-type InvoiceItem = {
+type InvoiceItemState = {
   product: Product;
   quantity: number;
+  unit: UnitOfMeasurement;
 };
+
+const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
 
 export function InvoiceCreator({ customers, products }: { customers: Customer[]; products: Product[] }) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
-  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [items, setItems] = useState<InvoiceItemState[]>([]);
   const [description, setDescription] = useState('');
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(8); // 8% tax rate
@@ -50,11 +56,13 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const filteredProducts = useMemo(() =>
-    products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())),
-    [products, productSearch]
-  );
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter(p => selectedCategory === 'all' || p.categoryId === selectedCategory)
+      .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+  }, [products, productSearch, selectedCategory]);
 
   const filteredCustomers = useMemo(() =>
     customers.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase())),
@@ -80,7 +88,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
           item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevItems, { product, quantity: 1 }];
+      return [...prevItems, { product, quantity: 1, unit: 'عدد' }];
     });
   };
 
@@ -92,6 +100,14 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.product.id === productId ? { ...item, quantity: newQuantity } : item
+      )
+    );
+  };
+
+  const handleUnitChange = (productId: string, newUnit: UnitOfMeasurement) => {
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.product.id === productId ? { ...item, unit: newUnit } : item
       )
     );
   };
@@ -182,6 +198,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 <TableRow>
                   <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
                   <TableHead>محصول</TableHead>
+                  <TableHead className="w-[110px]">واحد</TableHead>
                   <TableHead className="w-[100px] text-center">تعداد</TableHead>
                   <TableHead className="w-[120px] text-left">قیمت واحد</TableHead>
                   <TableHead className="w-[120px] text-left">جمع کل</TableHead>
@@ -203,6 +220,21 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                       </TableCell>
                       <TableCell className="font-medium">{item.product.name}</TableCell>
                       <TableCell>
+                          <Select
+                            value={item.unit}
+                            onValueChange={(value: UnitOfMeasurement) => handleUnitChange(item.product.id, value)}
+                          >
+                            <SelectTrigger className="w-[100px]">
+                              <SelectValue placeholder="واحد" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {unitsOfMeasurement.map(unit => (
+                                <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                      </TableCell>
+                      <TableCell>
                         <Input
                           type="number"
                           value={item.quantity}
@@ -221,7 +253,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
                     </TableCell>
                   </TableRow>
@@ -368,9 +400,22 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <div className="relative">
-                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                    </div>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="انتخاب دسته‌بندی" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                            {categories.map((cat: Category) => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <ScrollArea className="h-96">
                     <div className="grid gap-4">

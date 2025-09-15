@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Card,
   CardContent,
@@ -44,6 +42,14 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
   if (!invoice) {
     notFound();
   }
+  
+  const handlePrint = () => {
+    'use client';
+    if (typeof window !== 'undefined') {
+        window.print();
+    }
+  };
+
 
   return (
     <Card className="overflow-hidden" id="invoice-preview">
@@ -56,7 +62,7 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
             <CardDescription>فاکتور {invoice.invoiceNumber}</CardDescription>
             </div>
             <div className="mr-auto flex items-center gap-2 no-print">
-            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => typeof window !== 'undefined' && window.print()}>
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handlePrint}>
                 <Printer className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 چاپ / PDF

@@ -31,7 +31,6 @@ export type Invoice = {
   customerEmail: string;
   invoiceNumber: string;
   date: string; // ISO 8601 format
-  dueDate: string; // ISO 8601 format
   status: InvoiceStatus;
   items: InvoiceItem[];
   subtotal: number;

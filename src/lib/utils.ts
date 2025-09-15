@@ -22,7 +22,6 @@ export function downloadCSV(data: any[], filename: string = 'export.csv', header
     const processRow = (row: any) => {
         const newRow = { ...row };
         if (newRow.date) newRow.date = new Date(newRow.date).toLocaleDateString('fa-IR');
-        if (newRow.dueDate) newRow.dueDate = new Date(newRow.dueDate).toLocaleDateString('fa-IR');
         // Remove complex objects for cleaner CSV
         delete newRow.items;
         delete newRow.id;

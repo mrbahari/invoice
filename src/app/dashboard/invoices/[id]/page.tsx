@@ -4,9 +4,7 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   CardFooter,
 } from '@/components/ui/card';
 import {
@@ -25,6 +23,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { InvoiceStatus } from '@/lib/definitions';
 import { Package2 } from 'lucide-react';
 import { InvoiceActions } from '@/components/dashboard/invoice-actions';
+import { CardTitle } from '@/components/ui/card';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -74,10 +73,6 @@ export default function InvoicePreviewPage() {
                         <li className="flex items-center justify-between">
                             <span className="text-muted-foreground">تاریخ:</span>
                             <span>{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
-                        </li>
-                        <li className="flex items-center justify-between">
-                            <span className="text-muted-foreground">تاریخ سررسید:</span>
-                            <span>{new Date(invoice.dueDate).toLocaleDateString('fa-IR')}</span>
                         </li>
                     </ul>
                 </div>

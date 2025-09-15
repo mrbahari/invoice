@@ -210,7 +210,6 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
                 customerName: selectedCustomer.name,
                 customerEmail: selectedCustomer.email,
                 date: new Date().toISOString(),
-                dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
                 status: 'Pending',
                 items: items.map(item => ({
                     productId: item.product.id,
@@ -349,14 +348,18 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
                         <span>جمع جزء</span>
                         <span>{formatCurrency(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between">
-                        <span>تخفیف</span>
-                        <span className="text-destructive">-{formatCurrency(discount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>مالیات ({tax}%)</span>
-                        <span>{formatCurrency(taxAmount)}</span>
-                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between">
+                          <span>تخفیف</span>
+                          <span className="text-destructive">-{formatCurrency(discount)}</span>
+                      </div>
+                    )}
+                    {tax > 0 && (
+                      <div className="flex justify-between">
+                          <span>مالیات ({tax}%)</span>
+                          <span>{formatCurrency(taxAmount)}</span>
+                      </div>
+                    )}
                     <Separator className="my-2" />
                     <div className="flex justify-between font-semibold text-base pt-2">
                         <span>جمع کل</span>
@@ -479,5 +482,3 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
     </div>
   );
 }
-
-    

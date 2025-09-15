@@ -33,7 +33,6 @@ export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps)
             customerName: 'نام مشتری',
             customerEmail: 'ایمیل مشتری',
             date: 'تاریخ',
-            dueDate: 'تاریخ سررسید',
             status: 'وضعیت',
             subtotal: 'جمع جزء',
             discount: 'تخفیف',

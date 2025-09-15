@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Package2 } from 'lucide-react';
 
 export function LoginForm() {
-    const { login } = useAuth();
+    const { signInWithGoogle } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { toast } = useToast();
@@ -27,7 +27,11 @@ export function LoginForm() {
         e.preventDefault();
         // This is a mock login. In a real app, you'd validate credentials.
         if (email && password) {
-            login(email);
+            // login(email); // This needs to be replaced with Firebase email/password auth if needed
+             toast({
+                title: 'ورود با ایمیل',
+                description: 'این قابلیت هنوز پیاده‌سازی نشده است. لطفا با گوگل وارد شوید.',
+            })
         } else {
             toast({
                 variant: 'destructive',
@@ -49,40 +53,52 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">ایمیل</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <div className="flex items-center">
-              <Label htmlFor="password">رمز عبور</Label>
-              <Link href="#" className="mr-auto inline-block text-sm underline">
-                رمز عبور خود را فراموش کرده‌اید؟
-              </Link>
+        <div className="grid gap-4">
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">ایمیل</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-            <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="grid gap-2">
+              <div className="flex items-center">
+                <Label htmlFor="password">رمز عبور</Label>
+                <Link href="#" className="mr-auto inline-block text-sm underline">
+                  رمز عبور خود را فراموش کرده‌اید؟
+                </Link>
+              </div>
+              <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full mt-2">
+              ورود
+            </Button>
+          </form>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                یا ادامه با
+              </span>
+            </div>
           </div>
-          <Button type="submit" className="w-full mt-2">
-            ورود
-          </Button>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
             ورود با گوگل
           </Button>
-        </form>
+        </div>
         <div className="mt-4 text-center text-sm">
           حساب کاربری ندارید؟{' '}
           <Link href="/signup" className="underline">

@@ -3,14 +3,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-type User = {
-  email: string;
-};
 
 type AuthContextType = {
   user: User | null;
-  login: (email: string) => void;
+  signInWithGoogle: () => Promise<void>;
   logout: () => void;
   loading: boolean;
 };
@@ -24,11 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -43,20 +43,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router, pathname]);
 
-  const login = (email: string) => {
-    const newUser = { email };
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    router.push('/dashboard');
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (error) {
+      console.error("Error signing in with Google", error);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    router.push('/login');
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
   };
 
-  const value = { user, login, logout, loading };
+  const value = { user, signInWithGoogle, logout, loading };
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">در حال بارگذاری...</div>;

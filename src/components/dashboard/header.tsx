@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -41,6 +42,7 @@ import {
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const mobileNavItems = [
     { href: '/dashboard', icon: Home, label: 'داشبورد' },
@@ -88,6 +90,7 @@ export function Header() {
   const pathname = usePathname();
   const breadcrumbs = generateBreadcrumbs(pathname);
   const { user, logout } = useAuth();
+  const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
@@ -165,18 +168,14 @@ export function Header() {
             size="icon"
             className="overflow-hidden rounded-full"
           >
-            <Image
-              src={`https://picsum.photos/seed/${user?.email || 'avatar'}/32/32`}
-              width={36}
-              height={36}
-              alt="آواتار"
-              className="overflow-hidden"
-              data-ai-hint="user avatar"
-            />
+            <Avatar>
+                <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
+                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+            </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/dashboard/settings">تنظیمات</Link>

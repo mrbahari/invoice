@@ -14,3 +14,5 @@ export default function NewInvoicePage() {
     // In a real app, you'd fetch this data from a database
     return <InvoiceEditorDynamic customers={customers} products={products} />;
 }
+
+    

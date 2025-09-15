@@ -32,7 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { categories, invoices } from '@/lib/data';
+import { categories, invoices, customers as initialCustomers } from '@/lib/data';
 
 type InvoiceItemState = {
   product: Product;
@@ -48,13 +48,15 @@ type InvoiceEditorProps = {
     invoice?: Invoice;
 }
 
-export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorProps) {
+export function InvoiceEditor({ customers: initialCustomersProp, products, invoice }: InvoiceEditorProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
+  const [customerList, setCustomerList] = useState<Customer[]>(initialCustomersProp);
+
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(
-    isEditMode ? customers.find(c => c.id === invoice.customerId) : undefined
+    isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined
   );
   
   const [items, setItems] = useState<InvoiceItemState[]>([]);
@@ -92,9 +94,24 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
   }, [products, productSearch, selectedCategory]);
 
   const filteredCustomers = useMemo(() =>
-    customers.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase())),
-    [customers, customerSearch]
+    customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase())),
+    [customerList, customerSearch]
   );
+  
+  const handleAddNewCustomer = () => {
+    const newCustomer: Customer = {
+        id: `cust-${Math.random().toString(36).substr(2, 9)}`,
+        name: customerSearch,
+        email: 'ایمیل ثبت نشده',
+        phone: 'شماره ثبت نشده',
+        address: 'آدرس ثبت نشده',
+        purchaseHistory: 'مشتری جدید',
+    };
+    setCustomerList(prev => [...prev, newCustomer]);
+    setSelectedCustomer(newCustomer);
+    setCustomerSearch(''); // Clear search after adding
+    toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
+  };
 
   const subtotal = useMemo(
     () => items.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
@@ -213,6 +230,12 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
             toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
         }
         
+        // This is a mock implementation. In a real app, you would also update the customer list on the server.
+        const customerExists = initialCustomers.some(c => c.id === selectedCustomer.id);
+        if (!customerExists) {
+            initialCustomers.push(selectedCustomer);
+        }
+
         setIsProcessing(false);
         router.push('/dashboard/invoices');
     }, 1000);
@@ -358,7 +381,7 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
             <CardContent className="grid gap-4">
                 <div className="relative">
                     <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                    <Input placeholder="جستجو یا افزودن مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                 </div>
                  {selectedCustomer && (
                      <Card className="bg-muted/50">
@@ -382,7 +405,7 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
                     {filteredCustomers.map(customer => (
                         <Button
                             key={customer.id}
-                            variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                            variant={selectedCustomer?.id === customer.id ? 'secondary' : 'ghost'}
                             className="justify-start"
                             onClick={() => setSelectedCustomer(customer)}
                             disabled={!!selectedCustomer}
@@ -390,6 +413,16 @@ export function InvoiceEditor({ customers, products, invoice }: InvoiceEditorPro
                             {customer.name}
                         </Button>
                     ))}
+                     {filteredCustomers.length === 0 && customerSearch && !selectedCustomer && (
+                        <Button
+                            variant="ghost"
+                            className="justify-start"
+                            onClick={handleAddNewCustomer}
+                        >
+                           <PlusCircle className="ml-2 h-4 w-4" />
+                           افزودن مشتری جدید: "{customerSearch}"
+                        </Button>
+                    )}
                     </div>
                 </ScrollArea>
             </CardContent>

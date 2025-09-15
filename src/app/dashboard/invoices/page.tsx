@@ -34,31 +34,37 @@ const statusStyles: Record<InvoiceStatus, string> = {
   Pending: 'text-orange-600 bg-orange-500/10',
   Overdue: 'text-red-600 bg-red-500/10',
 };
+const statusTranslation: Record<InvoiceStatus, string> = {
+    Paid: 'پرداخت شده',
+    Pending: 'در انتظار',
+    Overdue: 'سررسید گذشته',
+};
+
 
 export default function InvoicesPage() {
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="paid">Paid</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="all">همه</TabsTrigger>
+          <TabsTrigger value="paid">پرداخت شده</TabsTrigger>
+          <TabsTrigger value="pending">در انتظار</TabsTrigger>
           <TabsTrigger value="overdue" className="hidden sm:flex">
-            Overdue
+            سررسید گذشته
           </TabsTrigger>
         </TabsList>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="mr-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1">
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
+              خروجی
             </span>
           </Button>
           <Link href="/dashboard/invoices/new">
             <Button size="sm" className="h-8 gap-1">
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Create Invoice
+                ایجاد فاکتور
               </span>
             </Button>
           </Link>
@@ -67,24 +73,24 @@ export default function InvoicesPage() {
       <TabsContent value="all">
         <Card>
           <CardHeader className="px-7">
-            <CardTitle>Invoices</CardTitle>
+            <CardTitle>فاکتورها</CardTitle>
             <CardDescription>
-              Recent invoices from your store.
+              فاکتورهای اخیر فروشگاه شما.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
+                  <TableHead>مشتری</TableHead>
                   <TableHead className="hidden sm:table-cell">
-                    Invoice #
+                    شماره فاکتور
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell">Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="hidden sm:table-cell">وضعیت</TableHead>
+                  <TableHead className="hidden md:table-cell">تاریخ</TableHead>
+                  <TableHead className="text-left">مبلغ</TableHead>
                   <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">اقدامات</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -102,33 +108,33 @@ export default function InvoicesPage() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                        {invoice.status}
+                        {statusTranslation[invoice.status]}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {new Date(invoice.date).toLocaleDateString()}
+                      {new Date(invoice.date).toLocaleDateString('fa-IR')}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-left">
                       {formatCurrency(invoice.total)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-left">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">باز کردن منو</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
+                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/invoices/${invoice.id}`} className="w-full cursor-pointer">
-                              View Details
+                              مشاهده جزئیات
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Mark as Paid</DropdownMenuItem>
+                          <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                          <DropdownMenuItem>علامت‌گذاری به عنوان پرداخت شده</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-500">
-                            Delete
+                            حذف
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -140,7 +146,7 @@ export default function InvoicesPage() {
           </CardContent>
            <CardFooter>
             <div className="text-xs text-muted-foreground">
-              Showing <strong>1-{invoices.length}</strong> of <strong>{invoices.length}</strong> invoices
+              نمایش <strong>1-{invoices.length}</strong> از <strong>{invoices.length}</strong> فاکتور
             </div>
           </CardFooter>
         </Card>

@@ -40,36 +40,44 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 
 const mobileNavItems = [
-    { href: '/dashboard', icon: Home, label: 'Dashboard' },
-    { href: '/dashboard/invoices', icon: FileText, label: 'Invoices' },
-    { href: '/dashboard/products', icon: Package, label: 'Products' },
-    { href: '/dashboard/customers', icon: Users, label: 'Customers' },
-    { href: '/dashboard/categories', icon: Shapes, label: 'Categories' },
-    { href: '/dashboard/reports', icon: LineChart, label: 'Reports' },
+    { href: '/dashboard', icon: Home, label: 'داشبورد' },
+    { href: '/dashboard/invoices', icon: FileText, label: 'فاکتورها' },
+    { href: '/dashboard/products', icon: Package, label: 'محصولات' },
+    { href: '/dashboard/customers', icon: Users, label: 'مشتریان' },
+    { href: '/dashboard/categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
+    { href: '/dashboard/reports', icon: LineChart, label: 'گزارشات' },
 ];
 
 function generateBreadcrumbs(pathname: string) {
     const pathSegments = pathname.split('/').filter(Boolean);
-    if (pathSegments.length === 0) {
-      return [{ href: '/', name: 'Home', isLast: true }];
-    }
     const breadcrumbs = pathSegments.map((segment, index) => {
-      const href = '/' + pathSegments.slice(0, index + 1).join('/');
-      const isLast = index === pathSegments.length - 1;
-      let name = segment.charAt(0).toUpperCase() + segment.slice(1);
-      if (pathSegments[0] === 'dashboard' && index > 0) {
-        // Handle invoice IDs
-        if (pathSegments[1] === 'invoices' && index === 2) {
-          name = `Invoice #${pathSegments[2]}`;
+        const href = '/' + pathSegments.slice(0, index + 1).join('/');
+        const isLast = index === pathSegments.length - 1;
+        let name = segment;
+        
+        switch (segment) {
+            case 'dashboard': name = 'خانه'; break;
+            case 'invoices': name = 'فاکتورها'; break;
+            case 'new': name = 'جدید'; break;
+            case 'products': name = 'محصولات'; break;
+            case 'customers': name = 'مشتریان'; break;
+            case 'categories': name = 'دسته‌بندی‌ها'; break;
+            case 'reports': name = 'گزارشات'; break;
+            default:
+                if (pathSegments[1] === 'invoices' && index === 2) {
+                    name = `فاکتور #${pathSegments[2]}`;
+                } else {
+                    name = segment.charAt(0).toUpperCase() + segment.slice(1);
+                }
         }
-      }
-      return { href, name, isLast };
+        return { href, name, isLast };
     });
-    if (breadcrumbs.length > 0 && breadcrumbs[0].name === 'Dashboard') {
-       breadcrumbs[0].name = 'Home';
-       breadcrumbs[0].href = '/';
+
+    if (breadcrumbs.length > 0 && breadcrumbs[0].name === 'خانه') {
+        breadcrumbs[0].href = '/dashboard';
     }
-    return breadcrumbs;
+    
+    return breadcrumbs.slice(1); // Remove "Dashboard"
 }
 
 export function Header() {
@@ -82,17 +90,17 @@ export function Header() {
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
+            <span className="sr-only">باز کردن منو</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="sm:max-w-xs">
+        <SheetContent side="right" className="sm:max-w-xs">
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="#"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
             >
               <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-              <span className="sr-only">Hisaabgar</span>
+              <span className="sr-only">حسابگر</span>
             </Link>
             {mobileNavItems.map((item) => (
                 <Link
@@ -109,6 +117,12 @@ export function Header() {
       </Sheet>
       <Breadcrumb className="hidden md:flex">
         <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard">خانه</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
           {breadcrumbs.map((crumb, index) => (
             <BreadcrumbItem key={index}>
               {!crumb.isLast ? (
@@ -126,11 +140,11 @@ export function Header() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="relative ml-auto flex-1 md:grow-0">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search..."
-          className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+          placeholder="جستجو..."
+          className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
         />
       </div>
       <DropdownMenu>
@@ -144,19 +158,19 @@ export function Header() {
               src="https://picsum.photos/seed/avatar/32/32"
               width={36}
               height={36}
-              alt="Avatar"
+              alt="آواتار"
               className="overflow-hidden"
               data-ai-hint="user avatar"
             />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuLabel>حساب کاربری</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
+          <DropdownMenuItem>تنظیمات</DropdownMenuItem>
+          <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem>خروج</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

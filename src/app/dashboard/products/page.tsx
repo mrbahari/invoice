@@ -31,26 +31,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ProductsPage() {
   const getCategoryName = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId)?.name || 'Uncategorized';
+    return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
   };
 
   return (
     <Tabs defaultValue="all">
       <div className="flex items-center">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="all">همه</TabsTrigger>
           {categories.map(cat => (
             <TabsTrigger key={cat.id} value={cat.id}>{cat.name}</TabsTrigger>
           ))}
         </TabsList>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="mr-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1">
-            Export
+            خروجی
           </Button>
           <Button size="sm" className="h-8 gap-1">
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Product
+              افزودن محصول
             </span>
           </Button>
         </div>
@@ -58,9 +58,9 @@ export default function ProductsPage() {
       <TabsContent value="all">
         <Card>
           <CardHeader>
-            <CardTitle>Products</CardTitle>
+            <CardTitle>محصولات</CardTitle>
             <CardDescription>
-              Manage your products and view their sales performance.
+              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -68,16 +68,16 @@ export default function ProductsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="hidden w-[100px] sm:table-cell">
-                    <span className="sr-only">Image</span>
+                    <span className="sr-only">تصویر</span>
                   </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>نام</TableHead>
+                  <TableHead>دسته‌بندی</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Description
+                    توضیحات
                   </TableHead>
-                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-left">قیمت</TableHead>
                   <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">اقدامات</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -101,7 +101,7 @@ export default function ProductsPage() {
                     <TableCell className="hidden md:table-cell max-w-xs truncate">
                       {product.description}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-left">
                       {formatCurrency(product.price)}
                     </TableCell>
                     <TableCell>
@@ -109,16 +109,16 @@ export default function ProductsPage() {
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">باز کردن منو</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Delete</DropdownMenuItem>
+                          <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
+                          <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                          <DropdownMenuItem>حذف</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
+                    </TableCell>tau
                   </TableRow>
                 ))}
               </TableBody>
@@ -126,7 +126,7 @@ export default function ProductsPage() {
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
-              Showing <strong>1-{products.length}</strong> of <strong>{products.length}</strong> products
+              نمایش <strong>1-{products.length}</strong> از <strong>{products.length}</strong> محصول
             </div>
           </CardFooter>
         </Card>

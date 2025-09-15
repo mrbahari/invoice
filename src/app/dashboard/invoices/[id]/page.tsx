@@ -30,6 +30,12 @@ const statusStyles: Record<InvoiceStatus, string> = {
   Overdue: 'text-red-600 bg-red-500/10',
 };
 
+const statusTranslation: Record<InvoiceStatus, string> = {
+    Paid: 'پرداخت شده',
+    Pending: 'در انتظار',
+    Overdue: 'سررسید گذشته',
+};
+
 export default function InvoicePreviewPage({ params }: { params: { id: string } }) {
   const invoice = invoices.find((inv) => inv.id === params.id);
 
@@ -43,62 +49,62 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
             <div className="grid gap-0.5">
             <CardTitle className="group flex items-center gap-2 text-lg">
                 <Package2 className="h-6 w-6" />
-                Hisaabgar
+                حسابگر
             </CardTitle>
-            <CardDescription>Invoice {invoice.invoiceNumber}</CardDescription>
+            <CardDescription>فاکتور {invoice.invoiceNumber}</CardDescription>
             </div>
-            <div className="ml-auto flex items-center gap-2 no-print">
+            <div className="mr-auto flex items-center gap-2 no-print">
             <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => typeof window !== 'undefined' && window.print()}>
                 <Printer className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Print / PDF
+                چاپ / PDF
                 </span>
             </Button>
             <Button size="sm" className="h-8 gap-1">
                 <CreditCard className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Pay Now
+                پرداخت
                 </span>
             </Button>
             </div>
         </CardHeader>
         <CardContent className="p-6 text-sm">
             <div className="grid gap-3">
-            <div className="font-semibold">Invoice Details</div>
+            <div className="font-semibold">جزئیات فاکتور</div>
             <ul className="grid gap-3">
                 <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Billed to</span>
+                <span className="text-muted-foreground">صورتحساب برای</span>
                 <span>{invoice.customerName}</span>
                 </li>
                 <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Date</span>
-                <span>{new Date(invoice.date).toLocaleDateString()}</span>
+                <span className="text-muted-foreground">تاریخ</span>
+                <span>{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
                 </li>
                 <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Due Date</span>
-                <span>{new Date(invoice.dueDate).toLocaleDateString()}</span>
+                <span className="text-muted-foreground">تاریخ سررسید</span>
+                <span>{new Date(invoice.dueDate).toLocaleDateString('fa-IR')}</span>
                 </li>
                 <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">وضعیت</span>
                 <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                    {invoice.status}
+                    {statusTranslation[invoice.status]}
                 </Badge>
                 </li>
             </ul>
             </div>
             <Separator className="my-4" />
             <div className="grid gap-3">
-            <div className="font-semibold">Description</div>
+            <div className="font-semibold">توضیحات</div>
             <p className="text-muted-foreground">{invoice.description}</p>
             </div>
             <Separator className="my-4" />
             <Table>
             <TableHeader>
                 <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">Qty</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead>قلم</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">تعداد</TableHead>
+                <TableHead className="text-left">قیمت</TableHead>
+                <TableHead className="text-left">جمع</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -106,31 +112,31 @@ export default function InvoicePreviewPage({ params }: { params: { id: string } 
                 <TableRow key={index}>
                     <TableCell className="font-medium">{item.productName}</TableCell>
                     <TableCell className="hidden sm:table-cell text-center">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.totalPrice)}</TableCell>
+                    <TableCell className="text-left">{formatCurrency(item.unitPrice)}</TableCell>
+                    <TableCell className="text-left">{formatCurrency(item.totalPrice)}</TableCell>
                 </TableRow>
                 ))}
             </TableBody>
             </Table>
         </CardContent>
         <CardFooter className="flex flex-row items-center border-t bg-muted/50 px-6 py-3">
-            <div className="ml-auto text-right text-sm text-muted-foreground">
-            <div className="flex justify-end gap-x-4">
-                <span>Subtotal</span>
+            <div className="mr-auto text-left text-sm text-muted-foreground">
+            <div className="flex justify-start gap-x-4">
                 <span className="font-medium w-24 text-foreground">{formatCurrency(invoice.subtotal)}</span>
+                <span>جمع جزء</span>
             </div>
-            <div className="flex justify-end gap-x-4">
-                <span>Discount</span>
+            <div className="flex justify-start gap-x-4">
                 <span className="font-medium w-24 text-foreground">{formatCurrency(invoice.discount)}</span>
+                <span>تخفیف</span>
             </div>
-            <div className="flex justify-end gap-x-4">
-                <span>Tax</span>
+            <div className="flex justify-start gap-x-4">
                 <span className="font-medium w-24 text-foreground">{formatCurrency(invoice.tax)}</span>
+                <span>مالیات</span>
             </div>
             <Separator className="my-2" />
-            <div className="flex justify-end gap-x-4 font-semibold text-base">
-                <span>Total</span>
+            <div className="flex justify-start gap-x-4 font-semibold text-base">
                 <span className="w-24 text-foreground">{formatCurrency(invoice.total)}</span>
+                <span>جمع کل</span>
             </div>
             </div>
         </CardFooter>

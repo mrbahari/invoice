@@ -105,8 +105,8 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     if (items.length === 0) {
       toast({
         variant: 'destructive',
-        title: 'No items in invoice',
-        description: 'Please add products to generate a description.',
+        title: 'هیچ آیتمی در فاکتور وجود ندارد',
+        description: 'لطفاً برای تولید توضیحات، محصولات را اضافه کنید.',
       });
       return;
     }
@@ -124,8 +124,8 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
       console.error(error);
       toast({
         variant: 'destructive',
-        title: 'AI Error',
-        description: 'Failed to generate description.',
+        title: 'خطای هوش مصنوعی',
+        description: 'تولید توضیحات با شکست مواجه شد.',
       });
     } finally {
       setIsGenerating(false);
@@ -136,8 +136,8 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
     if (!selectedCustomer || items.length === 0) {
       toast({
         variant: 'destructive',
-        title: 'Missing Information',
-        description: 'Please select a customer and add items to suggest discounts.',
+        title: 'اطلاعات ناقص',
+        description: 'لطفا برای پیشنهاد تخفیف، یک مشتری انتخاب کرده و محصولات را اضافه کنید.',
       });
       return;
     }
@@ -158,8 +158,8 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
       console.error(error);
       toast({
         variant: 'destructive',
-        title: 'AI Error',
-        description: 'Failed to suggest discounts.',
+        title: 'خطای هوش مصنوعی',
+        description: 'پیشنهاد تخفیف با شکست مواجه شد.',
       });
     } finally {
       setIsGenerating(false);
@@ -172,17 +172,17 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
       <div className="md:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Items</CardTitle>
-            <CardDescription>Add products to the invoice.</CardDescription>
+            <CardTitle>اقلام فاکتور</CardTitle>
+            <CardDescription>محصولات را به فاکتور اضافه کنید.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="w-[100px] text-center">Quantity</TableHead>
-                  <TableHead className="w-[120px] text-right">Unit Price</TableHead>
-                  <TableHead className="w-[120px] text-right">Total</TableHead>
+                  <TableHead>محصول</TableHead>
+                  <TableHead className="w-[100px] text-center">تعداد</TableHead>
+                  <TableHead className="w-[120px] text-left">قیمت واحد</TableHead>
+                  <TableHead className="w-[120px] text-left">جمع کل</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -199,8 +199,8 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                           className="w-20 text-center mx-auto"
                         />
                       </TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.product.price)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.product.price * item.quantity)}</TableCell>
+                      <TableCell className="text-left">{formatCurrency(item.product.price)}</TableCell>
+                      <TableCell className="text-left">{formatCurrency(item.product.price * item.quantity)}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
@@ -211,7 +211,7 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No products added yet.
+                      هنوز محصولی اضافه نشده است.
                     </TableCell>
                   </TableRow>
                 )}
@@ -222,15 +222,15 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Product
+                  <PlusCircle className="ml-2 h-4 w-4" />
+                  افزودن محصول
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0">
                 <Command>
-                  <CommandInput placeholder="Search product..." />
+                  <CommandInput placeholder="جستجوی محصول..." />
                   <CommandList>
-                    <CommandEmpty>No product found.</CommandEmpty>
+                    <CommandEmpty>محصولی یافت نشد.</CommandEmpty>
                     <CommandGroup>
                       {products.map((product) => (
                         <CommandItem
@@ -255,14 +255,14 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
       <div>
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Details</CardTitle>
+            <CardTitle>جزئیات فاکتور</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-6">
             <div className="grid gap-2">
-              <Label>Customer</Label>
+              <Label>مشتری</Label>
               <Select onValueChange={setSelectedCustomerId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a customer" />
+                  <SelectValue placeholder="یک مشتری انتخاب کنید" />
                 </SelectTrigger>
                 <SelectContent>
                   {customers.map((customer) => (
@@ -275,22 +275,22 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
             </div>
              <div className="grid gap-2">
                 <div className="flex justify-between items-center">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">توضیحات</Label>
                     <Button variant="ghost" size="sm" onClick={handleGenerateDescription} disabled={isGenerating}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {isGenerating ? 'Generating...' : 'AI Generate'}
+                        <Sparkles className="ml-2 h-4 w-4" />
+                        {isGenerating ? 'در حال تولید...' : 'تولید با هوش مصنوعی'}
                     </Button>
                 </div>
-                <Textarea id="description" placeholder="Invoice for..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                <Textarea id="description" placeholder="فاکتور برای..." value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="discount">Discount ($)</Label>
+                <Label htmlFor="discount">تخفیف (تومان)</Label>
                 <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value))} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="tax">Tax (%)</Label>
+                <Label htmlFor="tax">مالیات (%)</Label>
                 <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value))} />
               </div>
             </div>
@@ -298,34 +298,34 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full" onClick={handleSuggestDiscounts} disabled={isGenerating}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    {isGenerating ? 'Analyzing...' : 'AI Discount Suggestions'}
+                    <Sparkles className="ml-2 h-4 w-4" />
+                    {isGenerating ? 'در حال تحلیل...' : 'پیشنهاد تخفیف با هوش مصنوعی'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80">
                   {suggestedDiscounts ? (
                      <div className="grid gap-4">
                         <div className="space-y-2">
-                            <h4 className="font-medium leading-none">Discount Suggestions</h4>
+                            <h4 className="font-medium leading-none">پیشنهادات تخفیف</h4>
                             <p className="text-sm text-muted-foreground">
-                                Based on customer history and cart items.
+                                بر اساس سابقه مشتری و اقلام سبد خرید.
                             </p>
                         </div>
                         {suggestedDiscounts.suggestedDiscounts.length > 0 ? (
                              <ul className="grid gap-2">
                                 {suggestedDiscounts.suggestedDiscounts.map((s, i) => (
-                                    <li key={i} className="text-sm border-l-2 pl-3 border-primary">
-                                        <p className="font-semibold">{s.discountPercentage}% off</p>
+                                    <li key={i} className="text-sm border-r-2 pr-3 border-primary">
+                                        <p className="font-semibold">{s.discountPercentage}% تخفیف</p>
                                         <p className="text-muted-foreground">{s.reason}</p>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-sm text-muted-foreground">No specific discounts suggested at this time.</p>
+                            <p className="text-sm text-muted-foreground">در حال حاضر تخفیف خاصی پیشنهاد نمی‌شود.</p>
                         )}
                      </div>
                   ) : (
-                    <div className="text-sm text-muted-foreground">Click the button to get AI-powered discount suggestions.</div>
+                    <div className="text-sm text-muted-foreground">برای دریافت پیشنهادات تخفیف مبتنی بر هوش مصنوعی کلیک کنید.</div>
                   )}
               </PopoverContent>
             </Popover>
@@ -333,25 +333,25 @@ export function InvoiceCreator({ customers, products }: { customers: Customer[];
 
             <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                    <span>Subtotal</span>
+                    <span>جمع جزء</span>
                     <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Discount</span>
+                    <span>تخفیف</span>
                     <span className="text-destructive">-{formatCurrency(discount)}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Tax ({tax}%)</span>
+                    <span>مالیات ({tax}%)</span>
                     <span>{formatCurrency(subtotal * (tax/100) - (discount > 0 ? discount * (tax/100) : 0))}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-base pt-2 border-t">
-                    <span>Total</span>
+                    <span>جمع کل</span>
                     <span>{formatCurrency(total)}</span>
                 </div>
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full">Create Invoice</Button>
+            <Button className="w-full">ایجاد فاکتور</Button>
           </CardFooter>
         </Card>
       </div>

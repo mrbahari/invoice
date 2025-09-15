@@ -36,6 +36,13 @@ const statusStyles: Record<InvoiceStatus, string> = {
   Overdue: 'text-red-600 bg-red-500/10',
 };
 
+const statusTranslation: Record<InvoiceStatus, string> = {
+    Paid: 'پرداخت شده',
+    Pending: 'در انتظار',
+    Overdue: 'سررسید گذشته',
+};
+
+
 export default function DashboardPage() {
   const totalRevenue = invoices.reduce((acc, inv) => acc + inv.total, 0);
   const totalSales = invoices.length;
@@ -47,49 +54,49 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">درآمد کل</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              ۲۰.۱% + از ماه گذشته
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">مجموع فروش</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{totalSales}</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% from last month
+              ۱۸۰.۱% + از ماه گذشته
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">مجموع مشتریان</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{totalCustomers}</div>
             <p className="text-xs text-muted-foreground">
-              +19% from last month
+              ۱۹% + از ماه گذشته
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+            <CardTitle className="text-sm font-medium">فعال در حال حاضر</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">+۵۷۳</div>
             <p className="text-xs text-muted-foreground">
-              +201 since last hour
+               ۲۰۱+ از ساعت گذشته
             </p>
           </CardContent>
         </Card>
@@ -97,27 +104,27 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-            <CardDescription>An overview of sales for the last 6 months.</CardDescription>
+            <CardTitle>نمای کلی فروش</CardTitle>
+            <CardDescription>نمای کلی از فروش در ۶ ماه گذشته.</CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent className="pr-2">
             <OverviewChart />
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Recent Invoices</CardTitle>
+            <CardTitle>فاکتورهای اخیر</CardTitle>
             <CardDescription>
-              You have {invoices.filter(inv => inv.status === 'Pending').length} pending invoices.
+              شما {invoices.filter(inv => inv.status === 'Pending').length} فاکتور در انتظار پرداخت دارید.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead className='text-right'>Amount</TableHead>
-                  <TableHead className='text-center'>Status</TableHead>
+                  <TableHead>مشتری</TableHead>
+                  <TableHead className='text-left'>مبلغ</TableHead>
+                  <TableHead className='text-center'>وضعیت</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,10 +136,10 @@ export default function DashboardPage() {
                         {invoice.customerEmail}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
+                    <TableCell className="text-left">{formatCurrency(invoice.total)}</TableCell>
                     <TableCell className='text-center'>
                       <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                        {invoice.status}
+                        {statusTranslation[invoice.status]}
                       </Badge>
                     </TableCell>
                   </TableRow>

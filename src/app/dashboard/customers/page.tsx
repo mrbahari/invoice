@@ -40,19 +40,19 @@ export default function CustomersPage() {
       <CardHeader>
         <div className='flex items-center justify-between'>
             <div>
-                <CardTitle>Customers</CardTitle>
+                <CardTitle>مشتریان</CardTitle>
                 <CardDescription>
-                Manage your customers and view their purchase history.
+                مشتریان خود را مدیریت کرده و سابقه خرید آنها را مشاهده کنید.
                 </CardDescription>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="mr-auto flex items-center gap-2">
                 <Button size="sm" variant="outline" className="h-8 gap-1">
-                    Export
+                    خروجی
                 </Button>
                 <Button size="sm" className="h-8 gap-1">
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Customer
+                    افزودن مشتری
                     </span>
                 </Button>
             </div>
@@ -62,12 +62,12 @@ export default function CustomersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead className="hidden sm:table-cell">Contact</TableHead>
-              <TableHead className="hidden sm:table-cell text-center">Orders</TableHead>
-              <TableHead className="hidden md:table-cell text-right">Total Spent</TableHead>
+              <TableHead>مشتری</TableHead>
+              <TableHead className="hidden sm:table-cell">تماس</TableHead>
+              <TableHead className="hidden sm:table-cell text-center">سفارش‌ها</TableHead>
+              <TableHead className="hidden md:table-cell text-left">مجموع خرج شده</TableHead>
               <TableHead>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">اقدامات</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -80,7 +80,7 @@ export default function CustomersPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
-                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="Avatar" data-ai-hint="person avatar" />
+                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" data-ai-hint="person avatar" />
                         <AvatarFallback>{nameInitials}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">{customer.name}</div>
@@ -93,7 +93,7 @@ export default function CustomersPage() {
                   <TableCell className="hidden sm:table-cell text-center">
                     {orderCount}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-right">
+                  <TableCell className="hidden md:table-cell text-left">
                     {formatCurrency(totalSpent)}
                   </TableCell>
                   <TableCell>
@@ -101,14 +101,14 @@ export default function CustomersPage() {
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">باز کردن منو</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
+                        <DropdownMenuItem>مشاهده جزئیات</DropdownMenuItem>
+                        <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                        <DropdownMenuItem>حذف</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -120,7 +120,7 @@ export default function CustomersPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          Showing <strong>1-{customers.length}</strong> of <strong>{customers.length}</strong> customers
+          نمایش <strong>1-{customers.length}</strong> از <strong>{customers.length}</strong> مشتریان
         </div>
       </CardFooter>
     </Card>

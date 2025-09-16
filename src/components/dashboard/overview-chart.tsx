@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { parseISO, format, subMonths, startOfMonth, isAfter } from 'date-fns-jalali';
+import { parseISO, format } from 'date-fns-jalali';
 import type { Invoice } from '@/lib/definitions';
 import { formatCurrency } from '@/lib/utils';
 
@@ -14,77 +14,21 @@ type OverviewChartProps = {
 
 export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) {
   const data = useMemo(() => {
-    const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-    
-    if (period === 'today' || period === '7d') {
-      // Group by day logic remains the same
-      const dailyData = invoices.reduce<Record<string, number>>((acc, invoice) => {
-        const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
-        if (!acc[day]) {
-          acc[day] = 0;
-        }
-        acc[day] += invoice.total;
-        return acc;
-      }, {});
-
-      return Object.entries(dailyData)
-        .map(([date, total]) => ({
-          name: format(parseISO(date), 'MM/dd'),
-          total,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    // --- Monthly Data Logic ---
-    
-    // 1. Group actual sales by month
-    const monthlySales = invoices.reduce<Record<string, number>>((acc, invoice) => {
-        const monthKey = format(parseISO(invoice.date), 'yyyy-MM');
-        if (!acc[monthKey]) {
-            acc[monthKey] = 0;
-        }
-        acc[monthKey] += invoice.total;
-        return acc;
+    const dailyData = invoices.reduce<Record<string, number>>((acc, invoice) => {
+      const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
+      if (!acc[day]) {
+        acc[day] = 0;
+      }
+      acc[day] += invoice.total;
+      return acc;
     }, {});
 
-    // 2. Determine date range
-    const now = new Date();
-    const threeMonthsAgo = startOfMonth(subMonths(now, 2)); 
-    
-    let earliestDate = threeMonthsAgo;
-    if (invoices.length > 0) {
-        const earliestInvoiceDate = invoices.reduce((earliest, inv) => {
-            const invDate = parseISO(inv.date);
-            return invDate < earliest ? invDate : earliest;
-        }, now);
-        
-        if (isAfter(threeMonthsAgo, earliestInvoiceDate)) {
-            earliestDate = startOfMonth(earliestInvoiceDate);
-        }
-    }
-
-    // 3. Generate all months in the range
-    const allMonths: { name: string; total: number }[] = [];
-    let currentMonth = earliestDate;
-
-    while (currentMonth <= now) {
-        const monthKey = format(currentMonth, 'yyyy-MM');
-        const monthIndex = currentMonth.getMonth();
-
-        allMonths.push({
-            name: `${monthNames[monthIndex]}`,
-            total: monthlySales[monthKey] || 0,
-        });
-
-        // Move to the next month
-        currentMonth.setMonth(currentMonth.getMonth() + 1);
-
-        // Safety break to prevent infinite loops
-        if(allMonths.length > 36) break;
-    }
-
-    return allMonths;
-
+    return Object.entries(dailyData)
+      .map(([date, total]) => ({
+        name: format(parseISO(date), 'MM/dd'),
+        total,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [invoices, period]);
 
 

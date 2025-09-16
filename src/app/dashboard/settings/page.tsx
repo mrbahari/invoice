@@ -21,13 +21,24 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { initialCategories, initialCustomers, initialInvoices, initialProducts } from '@/lib/data';
+import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  
+  const [, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [, setCustomers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
+  const [, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
 
   const handleResetData = () => {
-    // In a real application, you would make an API call to reset server data.
-    // For this prototype, we'll just simulate it and show a confirmation.
+    setCategories(initialCategories);
+    setCustomers(initialCustomers);
+    setProducts(initialProducts);
+    setInvoices(initialInvoices);
+
     toast({
       title: 'اطلاعات بازنشانی شد',
       description: 'تمام داده‌های نمونه برنامه به حالت اولیه بازگشتند.',
@@ -67,12 +78,12 @@ export default function SettingsPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
                   <AlertDialogDescription>
-                    این عمل غیرقابل بازگشت است و تمام داده‌های شما را برای همیشه حذف می‌کند.
+                    این عمل، تمام دسته‌بندی‌ها، محصولات، مشتریان و فاکتورهای شما را به حالت اولیه بازنشانی می‌کند.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>انصراف</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleResetData}>ادامه</AlertDialogAction>
+                  <AlertDialogAction onClick={handleResetData} className='bg-destructive hover:bg-destructive/90'>بازنشانی</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

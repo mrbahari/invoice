@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2, Search, X } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -198,9 +198,13 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
              toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
         } else {
+            const firstItemCategory = categories.find(c => c.id === items[0].product.categoryId);
+            const storeName = firstItemCategory?.storeName || 'Store';
+            const prefix = getStorePrefix(storeName);
+
             const newInvoice: Invoice = {
                 id: `inv-${Math.random().toString(36).substr(2, 9)}`,
-                invoiceNumber: `HIS-${(invoices.length + 1).toString().padStart(3, '0')}`,
+                invoiceNumber: `${prefix}-${(invoices.length + 1).toString().padStart(3, '0')}`,
                 customerId: selectedCustomer.id,
                 customerName: selectedCustomer.name,
                 customerEmail: selectedCustomer.email,
@@ -248,8 +252,8 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                   <TableHead>نام کالا</TableHead>
                   <TableHead className="w-[110px]">واحد</TableHead>
                   <TableHead className="w-[100px] text-center">مقدار</TableHead>
-                  <TableHead className="w-[120px] text-left">قیمت</TableHead>
-                  <TableHead className="w-[120px] text-left">جمع کل</TableHead>
+                  <TableHead className="w-[120px] text-right">قیمت</TableHead>
+                  <TableHead className="w-[120px] text-right">جمع کل</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -290,8 +294,8 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                           className="w-20 text-center mx-auto"
                         />
                       </TableCell>
-                      <TableCell className="text-left">{formatCurrency(item.product.price)}</TableCell>
-                      <TableCell className="text-left">{formatCurrency(item.product.price * item.quantity)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.product.price)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.product.price * item.quantity)}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
                           <Trash2 className="h-4 w-4 text-muted-foreground" />

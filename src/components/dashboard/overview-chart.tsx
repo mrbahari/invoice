@@ -49,7 +49,7 @@ export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) 
 
     // 2. Determine date range
     const now = new Date();
-    const threeMonthsAgo = startOfMonth(subMonths(now, 2)); // Start of 3 months ago
+    const threeMonthsAgo = startOfMonth(subMonths(now, 2)); 
     
     let earliestDate = threeMonthsAgo;
     if (invoices.length > 0) {
@@ -67,7 +67,7 @@ export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) 
     const allMonths: { name: string; total: number }[] = [];
     let currentMonth = earliestDate;
 
-    while (isAfter(now, currentMonth) || currentMonth.getMonth() === now.getMonth()) {
+    while (currentMonth <= now) {
         const monthKey = format(currentMonth, 'yyyy-MM');
         const monthIndex = currentMonth.getMonth();
 
@@ -77,16 +77,9 @@ export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) 
         });
 
         // Move to the next month
-        const nextMonthDate = new Date(currentMonth);
-        nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-        
-        // Break loop if next month is in the future and not the same year
-        if (nextMonthDate > now && nextMonthDate.getFullYear() > now.getFullYear()) {
-             break;
-        }
-        currentMonth = nextMonthDate;
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
 
-        // Safety break
+        // Safety break to prevent infinite loops
         if(allMonths.length > 36) break;
     }
 

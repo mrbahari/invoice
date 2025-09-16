@@ -137,6 +137,7 @@ export default function InvoicePreviewPage() {
                                             width={110}
                                             height={110}
                                             className="object-cover rounded-full"
+                                            unoptimized
                                         />
                                    )}
                                 </div>

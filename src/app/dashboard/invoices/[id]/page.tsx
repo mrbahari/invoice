@@ -71,8 +71,11 @@ export default function InvoicePreviewPage() {
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   
   const invoice = invoices.find((inv) => inv.id === params.id);
+  const customer = customers.find((c) => c.id === invoice?.customerId);
+
 
   if (!invoice) {
     notFound();
@@ -136,6 +139,7 @@ export default function InvoicePreviewPage() {
                         <div>
                             <span className="font-semibold text-gray-500">صورتحساب آقای/خانم:</span>
                             <p className="font-bold text-lg text-gray-800 mt-1">{invoice.customerName}</p>
+                             {customer?.phone && <p className="text-sm text-gray-600 mt-1">شماره تماس: {customer.phone}</p>}
                         </div>
                         <div className="text-left">
                             <div className="flex justify-end">

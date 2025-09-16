@@ -119,22 +119,25 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentInvoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <div className="font-medium">{invoice.customerName}</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        {invoice.customerEmail}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-left">{formatCurrency(invoice.total)}</TableCell>
-                    <TableCell className='text-center'>
-                      <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                        {statusTranslation[invoice.status]}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {recentInvoices.map((invoice) => {
+                  const customer = customers.find(c => c.id === invoice.customerId);
+                  return (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <div className="font-medium">{invoice.customerName}</div>
+                        <div className="hidden text-sm text-muted-foreground md:inline">
+                          {customer?.phone || invoice.customerEmail}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-left">{formatCurrency(invoice.total)}</TableCell>
+                      <TableCell className='text-center'>
+                        <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
+                          {statusTranslation[invoice.status]}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

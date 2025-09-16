@@ -200,7 +200,7 @@ export default function InvoicePreviewPage() {
                             </div>
                              <div className="flex items-center gap-2">
                                 <Mail size={14} />
-                                <span>info@{storeInfo.name.split(' ')[0].toLowerCase()}.com</span>
+                                <span>info@{storeInfo.name.split(' ')[0].toLowerCase()}.ir</span>
                             </div>
                              <div className="flex items-center gap-2">
                                 <MapPin size={14} />

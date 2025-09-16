@@ -24,65 +24,47 @@ import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 
 function toWords(num: number): string {
-    if (num === 0) return 'صفر';
+    const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
+    const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
+    const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
+    const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
 
-    const ones = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
-    const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
-    const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
-    const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
-    const thousands = ['', 'هزار', 'میلیون', 'میلیارد', 'تریلیون'];
+    if (num === 0) return "صفر";
+    if (num < 0) return "منفی " + toWords(Math.abs(num));
 
-    let numStr = String(Math.floor(num));
-    if (numStr === '0') return 'صفر';
+    let word = "";
+    let i = 0;
 
-    const chunks: string[] = [];
-    while (numStr.length > 0) {
-        chunks.push(numStr.slice(-3));
-        numStr = numStr.slice(0, -3);
-    }
-    
-    if (chunks.length > thousands.length) {
-        return "عدد بسیار بزرگ است";
-    }
-
-    const words = chunks.map((chunk, i) => {
-        if (chunk === '000') return '';
-        let n = Number(chunk);
-        if (n === 0) return '';
-        
-        let chunkWords: string[] = [];
-        
-        let hundred = Math.floor(n / 100);
-        if (hundred > 0) {
-            chunkWords.push(hundreds[hundred]);
-        }
-        
-        let rest = n % 100;
-        if (rest > 0) {
-            if (chunkWords.length > 0) chunkWords.push('و');
-            if (rest < 10) {
-                chunkWords.push(ones[rest]);
-            } else if (rest < 20) {
-                chunkWords.push(teens[rest - 10]);
-            } else {
-                let ten = Math.floor(rest / 10);
-                chunkWords.push(tens[ten]);
-                let unit = rest % 10;
-                if (unit > 0) {
-                    chunkWords.push('و');
-                    chunkWords.push(ones[unit]);
+    while (num > 0) {
+        let chunk = num % 1000;
+        if (chunk > 0) {
+            let chunkWord = "";
+            let h = Math.floor(chunk / 100);
+            if (h > 0) {
+                chunkWord += hundreds[h];
+                if (chunk % 100 > 0) chunkWord += " و ";
+            }
+            let t = chunk % 100;
+            if (t > 0) {
+                if (t < 10) {
+                    chunkWord += units[t];
+                } else if (t < 20) {
+                    chunkWord += teens[t - 10];
+                } else {
+                    chunkWord += tens[Math.floor(t / 10)];
+                    if (t % 10 > 0) {
+                        chunkWord += " و " + units[t % 10];
+                    }
                 }
             }
+            word = chunkWord + thousands[i] + (word ? " و " : "") + word;
         }
-        
-        let finalChunk = chunkWords.join(' ');
-        if (i > 0 && finalChunk) {
-           finalChunk += ` ${thousands[i]}`;
-        }
-        return finalChunk;
-    }).filter(Boolean);
+        num = Math.floor(num / 1000);
+        i++;
+    }
 
-    return words.reverse().join(' و ');
+    return word.trim();
 }
 
 
@@ -162,7 +144,7 @@ export default function InvoicePreviewPage() {
                                 </div>
                                <div className="px-4 py-1 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}80`}}>
                                 <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
-                                {category?.name && <p className="text-sm text-white/90 mt-1">{category.name}</p>}
+                                {category?.description && <p className="text-sm text-white/90 mt-1">{category.description}</p>}
                                </div>
                            </div>
                         </div>
@@ -264,3 +246,5 @@ export default function InvoicePreviewPage() {
     
 
 }
+
+    

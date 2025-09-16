@@ -81,7 +81,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
           storeName,
           storeAddress,
           storePhone,
-          logoUrl: logo || '/placeholder-logo.png'
+          logoUrl: logo || `https://picsum.photos/seed/${Math.random()}/48/48`
         };
         setCategories(prev => [newCategory, ...prev]);
         toast({

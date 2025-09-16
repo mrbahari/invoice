@@ -29,49 +29,58 @@ function toWords(num: number): string {
 
     const units = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
     const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
-    const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+    const tens = ['', 'ده', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
     const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
     const thousands = ['', ' هزار', ' میلیون', ' میلیارد', ' تریلیون'];
 
-    const parts: string[] = [];
+    let numStr = num.toString();
+    if (numStr === '0') return 'صفر';
+    
+    const chunks = [];
+    while (numStr.length > 0) {
+        chunks.push(numStr.slice(Math.max(0, numStr.length - 3)));
+        numStr = numStr.slice(0, Math.max(0, numStr.length - 3));
+    }
 
-    function convertThreeDigits(n: number): string {
-        if (n === 0) return '';
-        const partsArr: string[] = [];
-        if (n >= 100) {
-            partsArr.push(hundreds[Math.floor(n / 100)]);
+    if (chunks.length > thousands.length) {
+        return "عدد بسیار بزرگ است";
+    }
+
+    const words = chunks.map((chunk, i) => {
+        if (chunk === '000') return '';
+        let chunkWords = [];
+        let n = parseInt(chunk);
+        
+        const hundred = Math.floor(n / 100);
+        if (hundred > 0) {
+            chunkWords.push(hundreds[hundred]);
             n %= 100;
         }
-        if (n >= 10) {
-          if (n < 20) {
-              partsArr.push(teens[n - 10]);
-              n = 0;
-          } else {
-              partsArr.push(tens[Math.floor(n / 10)]);
-              n %= 10;
-          }
-        }
+
         if (n > 0) {
-            partsArr.push(units[n]);
+            if (n < 10) {
+                chunkWords.push(units[n]);
+            } else if (n < 20) {
+                chunkWords.push(teens[n - 10]);
+            } else {
+                const ten = Math.floor(n / 10);
+                chunkWords.push(tens[ten]);
+                const unit = n % 10;
+                if (unit > 0) {
+                    chunkWords.push(units[unit]);
+                }
+            }
         }
-        return partsArr.join(' و ');
-    }
-
-    if (num === 0) return 'صفر';
-
-    let i = 0;
-    while (num > 0) {
-        const chunk = num % 1000;
-        if (chunk > 0) {
-            const chunkWord = convertThreeDigits(chunk);
-            const part = i > 0 ? `${chunkWord}${thousands[i]}` : chunkWord;
-            parts.unshift(part);
+        
+        let finalChunk = chunkWords.join(' و ');
+        if (i > 0 && finalChunk) {
+           return finalChunk + thousands[i];
         }
-        num = Math.floor(num / 1000);
-        i++;
-    }
+        return finalChunk;
 
-    return parts.join(' و ');
+    });
+
+    return words.filter(Boolean).reverse().join(' و ');
 }
 
 
@@ -136,13 +145,13 @@ export default function InvoicePreviewPage() {
                         <div className="h-28 w-full absolute top-0 right-0" style={{ backgroundColor: storeInfo.themeColor }}></div>
                         <div className="relative flex items-center justify-center">
                            <div className="flex items-center gap-4">
-                                <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
+                                <div className="bg-white p-2 rounded-full shadow-md w-20 h-20 flex items-center justify-center">
                                    {storeInfo.logoUrl ? (
                                         <Image
                                             src={storeInfo.logoUrl}
                                             alt={`${storeInfo.name} logo`}
-                                            width={64}
-                                            height={64}
+                                            width={80}
+                                            height={80}
                                             className="object-cover rounded-full"
                                         />
                                    ) : (

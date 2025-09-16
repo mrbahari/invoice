@@ -18,11 +18,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
 import { initialCategories } from '@/lib/data';
-import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check } from 'lucide-react';
+import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench } from 'lucide-react';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
+import { Textarea } from '../ui/textarea';
 
 type CategoryFormProps = {
   category?: Category;
@@ -37,6 +38,10 @@ const iconList = [
     { name: 'Food', component: Utensils },
     { name: 'Car', component: Car },
     { name: 'Health', component: HeartPulse },
+    { name: 'Book', component: Book },
+    { name: 'Home', component: Home },
+    { name: 'Work', component: Briefcase },
+    { name: 'Tools', component: Wrench },
 ];
 
 const colorPalette = [
@@ -48,6 +53,10 @@ const colorPalette = [
     '#dc2626', // Red 600
     '#059669', // Emerald 600
     '#ea580c', // Orange 600
+    '#2563eb', // Blue 600
+    '#c2410c', // Orange 700
+    '#16a34a', // Green 600
+    '#9333ea', // Purple 600
 ];
 
 export function CategoryForm({ category }: CategoryFormProps) {
@@ -57,6 +66,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
   const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [name, setName] = useState(category?.name || '');
+  const [description, setDescription] = useState(category?.description || '');
   const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
@@ -76,10 +86,10 @@ export function CategoryForm({ category }: CategoryFormProps) {
   };
   
   const handleIconSelect = (IconComponent: React.ElementType) => {
-    const svgString = ReactDOMServer.renderToString(
+    const svgString = ReactDOMServer.renderToStaticMarkup(
       <IconComponent color={themeColor} size={48} />
     );
-    const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
     setLogo(dataUrl);
   };
 
@@ -103,7 +113,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
             c.id === category.id 
-            ? { ...c, name, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
+            ? { ...c, name, description, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
             : c
         ));
         toast({
@@ -114,6 +124,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
         const newCategory: Category = {
           id: `cat-${Math.random().toString(36).substr(2, 9)}`,
           name,
+          description,
           storeName,
           storeAddress,
           storePhone,
@@ -153,6 +164,15 @@ export function CategoryForm({ category }: CategoryFormProps) {
               placeholder="مثال: الکترونیک"
               required
             />
+          </div>
+          <div className="grid gap-3">
+              <Label htmlFor="description">توضیحات</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="توضیحات مختصری در مورد دسته‌بندی بنویسید..."
+              />
           </div>
           <div className="grid gap-3">
             <Label htmlFor="store-name">نام فروشگاه</Label>
@@ -197,7 +217,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                       layout="fill"
                       objectFit="contain"
                       className="rounded-md border p-2"
-                      key={themeColor} // Force re-render on color change
+                      key={logo} 
                     />
                     <Button
                       type="button"
@@ -240,8 +260,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                         key={index}
                         onClick={() => handleIconSelect(icon.component)}
                         className={cn(
-                          'flex items-center justify-center p-2 border rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
-                          logo?.includes(btoa(ReactDOMServer.renderToString(<icon.component color={themeColor} size={48} />))) && 'bg-accent text-accent-foreground ring-2 ring-primary'
+                          'flex items-center justify-center p-2 border rounded-md hover:bg-accent hover:text-accent-foreground transition-colors'
                         )}
                         title={icon.name}
                       >
@@ -287,5 +306,3 @@ export function CategoryForm({ category }: CategoryFormProps) {
     </form>
   );
 }
-
-    

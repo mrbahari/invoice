@@ -11,6 +11,7 @@ export type Customer = {
 export type Category = {
   id: string;
   name: string;
+  description?: string;
   storeName?: string;
   logoUrl?: string;
   storeAddress?: string;

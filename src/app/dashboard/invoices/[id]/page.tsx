@@ -25,61 +25,61 @@ import html2canvas from 'html2canvas';
 
 // A correct number to words converter for Persian
 function toWords(num: number): string {
+    if (num === 0) return 'صفر';
+
     const units = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
     const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
-    const tens = ['', 'ده', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+    const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
     const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
     const thousands = ['', ' هزار', ' میلیون', ' میلیارد', ' تریلیون'];
 
-    let numStr = Math.floor(num).toString();
-    if (num === 0) return 'صفر';
-
-    let len = numStr.length;
-    let chunks = [];
-    while (len > 0) {
-        chunks.push(numStr.substring(Math.max(0, len - 3), len));
-        len -= 3;
-    }
-
-    if (chunks.length === 0) return '';
-    if (chunks.length > thousands.length) return 'عدد بسیار بزرگ است';
-    
-    let words: string[] = [];
-    for (let i = chunks.length - 1; i >= 0; i--) {
-        let chunk = parseInt(chunks[i]);
-        if (chunk === 0) continue;
-
-        let chunkWords: string[] = [];
+    function convertThreeDigits(n: number): string {
+        if (n === 0) return '';
         
-        let h = Math.floor(chunk / 100);
+        let word = '';
+        const h = Math.floor(n / 100);
+        const rem = n % 100;
+
         if (h > 0) {
-            chunkWords.push(hundreds[h]);
+            word += hundreds[h];
         }
 
-        let rem = chunk % 100;
         if (rem > 0) {
+            if (word.length > 0) word += ' و ';
             if (rem < 10) {
-                chunkWords.push(units[rem]);
+                word += units[rem];
             } else if (rem < 20) {
-                chunkWords.push(teens[rem - 10]);
+                word += teens[rem - 10];
             } else {
-                let t = Math.floor(rem / 10);
-                let u = rem % 10;
-                chunkWords.push(tens[t]);
+                const t = Math.floor(rem / 10);
+                const u = rem % 10;
+                word += tens[t];
                 if (u > 0) {
-                    chunkWords.push(units[u]);
+                    word += ' و ' + units[u];
                 }
             }
         }
-        
-        let finalChunkWord = chunkWords.join(' و ');
-        if (i > 0) {
-            finalChunkWord += thousands[i];
-        }
-        words.push(finalChunkWord);
+        return word;
     }
 
-    return words.join(' و ');
+    let numStr = Math.floor(num).toString();
+    let result: string[] = [];
+    let chunkIndex = 0;
+
+    while (numStr.length > 0) {
+        let chunk = parseInt(numStr.slice(Math.max(0, numStr.length - 3)));
+        if (chunk > 0) {
+            let chunkWord = convertThreeDigits(chunk);
+            if (chunkIndex > 0) {
+                chunkWord += thousands[chunkIndex];
+            }
+            result.unshift(chunkWord);
+        }
+        numStr = numStr.slice(0, Math.max(0, numStr.length - 3));
+        chunkIndex++;
+    }
+
+    return result.join(' و ');
 }
 
 
@@ -258,6 +258,8 @@ export default function InvoicePreviewPage() {
 
 
 
+
+    
 
     
 

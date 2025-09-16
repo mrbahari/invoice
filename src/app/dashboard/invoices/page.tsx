@@ -8,10 +8,24 @@ import { initialInvoices } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Invoice } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus } from '@/lib/definitions';
+import { useToast } from '@/hooks/use-toast';
 
 export default function InvoicesPage() {
-  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const { toast } = useToast();
+
+  const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
+    setAllInvoices(prev => 
+      prev.map(inv => 
+        inv.id === invoiceId ? { ...inv, status } : inv
+      )
+    );
+    toast({
+      title: 'وضعیت فاکتور به‌روزرسانی شد',
+      description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status}" تغییر یافت.`,
+    });
+  };
 
   const paidInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Paid'), [allInvoices]);
   const pendingInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Pending'), [allInvoices]);
@@ -28,6 +42,7 @@ export default function InvoicesPage() {
     <InvoiceTabs
         tabs={tabsData}
         defaultTab="all"
+        onStatusChange={handleUpdateStatus}
         pageActions={
             <Link href="/dashboard/invoices/new">
                 <Button size="sm" className="h-8 gap-1">

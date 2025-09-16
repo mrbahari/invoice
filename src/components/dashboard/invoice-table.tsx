@@ -39,7 +39,12 @@ const statusTranslation: Record<InvoiceStatus, string> = {
     Overdue: 'سررسید گذشته',
 };
 
-export function InvoiceTable({ invoiceList }: { invoiceList: Invoice[] }) {
+type InvoiceTableProps = {
+  invoiceList: Invoice[];
+  onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
+};
+
+export function InvoiceTable({ invoiceList, onStatusChange }: InvoiceTableProps) {
   return (
      <Card>
       <CardHeader className="px-7">
@@ -106,7 +111,11 @@ export function InvoiceTable({ invoiceList }: { invoiceList: Invoice[] }) {
                           ویرایش
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>علامت‌گذاری به عنوان پرداخت شده</DropdownMenuItem>
+                      {invoice.status !== 'Paid' && (
+                        <DropdownMenuItem onClick={() => onStatusChange(invoice.id, 'Paid')}>
+                          علامت‌گذاری به عنوان پرداخت شده
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem className="text-red-500">
                         حذف
                       </DropdownMenuItem>

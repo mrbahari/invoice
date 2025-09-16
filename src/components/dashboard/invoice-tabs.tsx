@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { File } from 'lucide-react';
 import { downloadCSV } from '@/lib/utils';
-import type { Invoice } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus } from '@/lib/definitions';
 import { useState } from 'react';
 import { InvoiceTable } from '@/components/dashboard/invoice-table';
 
@@ -20,9 +20,10 @@ type InvoiceTabsProps = {
   tabs: TabData[];
   defaultTab: string;
   pageActions: React.ReactNode;
+  onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
 };
 
-export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps) {
+export function InvoiceTabs({ tabs, defaultTab, pageActions, onStatusChange }: InvoiceTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   const handleExport = () => {
@@ -66,7 +67,7 @@ export function InvoiceTabs({ tabs, defaultTab, pageActions }: InvoiceTabsProps)
       </div>
       {tabs.map(tab => (
         <TabsContent key={tab.value} value={tab.value}>
-          <InvoiceTable invoiceList={tab.invoices} />
+          <InvoiceTable invoiceList={tab.invoices} onStatusChange={onStatusChange} />
         </TabsContent>
       ))}
     </Tabs>

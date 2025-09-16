@@ -10,6 +10,7 @@ export const initialCategories: Category[] = [
     logoUrl: 'https://picsum.photos/seed/sepehr/48/48',
     storeAddress: 'میدان توحید، خیابان ولیعصر، پلاک ۱۲',
     storePhone: '۰۲۱-۸۸۴۴۴۴۰۰',
+    themeColor: '#4f46e5', // Indigo
   },
   { 
     id: 'cat-2', 
@@ -18,6 +19,7 @@ export const initialCategories: Category[] = [
     logoUrl: 'https://picsum.photos/seed/artin/48/48',
     storeAddress: 'خیابان سهروردی، برج اداری، طبقه ۴',
     storePhone: '۰۲۱-۸۸۵۵۵۵۰۰',
+    themeColor: '#0d9488', // Teal
   },
   { 
     id: 'cat-3', 
@@ -26,6 +28,7 @@ export const initialCategories: Category[] = [
     logoUrl: 'https://picsum.photos/seed/janebi/48/48',
     storeAddress: 'پاساژ علاالدین، طبقه ۲، پلاک ۴۰۴',
     storePhone: '۰۲۱-۶۶۷۷۸۸۹۹',
+    themeColor: '#db2777', // Pink
   },
 ];
 

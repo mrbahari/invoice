@@ -87,11 +87,14 @@ export default function InvoicePreviewPage() {
   const product = products.find(p => p.id === firstItem.productId);
   const category = categories.find(c => c.id === product?.categoryId);
 
+  const defaultThemeColor = 'hsl(var(--primary))';
+  
   const storeInfo = {
     name: category?.storeName || "فروشگاه",
     logoUrl: category?.logoUrl,
     address: category?.storeAddress || 'آدرس ثبت نشده',
     phone: category?.storePhone || 'شماره ثبت نشده',
+    themeColor: category?.themeColor || defaultThemeColor,
   };
 
   const handleDownloadImage = () => {
@@ -120,9 +123,9 @@ export default function InvoicePreviewPage() {
                 </Button>
             </div>
             <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-card">
-                <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4 border-primary">
+                <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4" style={{ borderColor: storeInfo.themeColor }}>
                     <div className="p-8">
-                        <div className="h-28 w-full bg-primary absolute top-0 right-0"></div>
+                        <div className="h-28 w-full absolute top-0 right-0" style={{ backgroundColor: storeInfo.themeColor }}></div>
                         <div className="relative flex items-center justify-between">
                            <div className="flex items-center gap-4">
                                 <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
@@ -135,10 +138,10 @@ export default function InvoicePreviewPage() {
                                             className="object-contain"
                                         />
                                    ) : (
-                                       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor text-primary"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor" style={{ color: storeInfo.themeColor }}><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
                                    )}
                                 </div>
-                               <div className="bg-primary/50 px-4 py-1 rounded-md">
+                               <div className="px-4 py-1 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}80`}}>
                                 <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
                                </div>
                            </div>
@@ -150,7 +153,7 @@ export default function InvoicePreviewPage() {
                      <div className="flex justify-between items-start text-sm border-b pb-6 mb-10">
                         <div className="flex items-baseline gap-4">
                             <span className="font-semibold text-gray-500 whitespace-nowrap">صورتحساب آقای/خانم:</span>
-                            <div className="flex flex-col items-start gap-1">
+                            <div className="flex items-center gap-2">
                                 <span className="font-bold text-lg text-gray-800">{invoice.customerName}</span>
                                 {customer?.phone && (
                                   <div className="flex items-center gap-1.5 text-sm text-gray-600">
@@ -170,18 +173,18 @@ export default function InvoicePreviewPage() {
 
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                                <TableHead className="w-16 text-center rounded-r-md">ردیف</TableHead>
-                                <TableHead>شرح</TableHead>
-                                <TableHead className="w-24 text-center">تعداد</TableHead>
-                                <TableHead className="w-32 text-center">فی</TableHead>
-                                <TableHead className="w-32 text-center rounded-l-md">جمع کل</TableHead>
+                            <TableRow className="hover:bg-primary/90 text-primary-foreground" style={{ backgroundColor: storeInfo.themeColor }}>
+                                <TableHead className="w-16 text-center rounded-r-md text-white">ردیف</TableHead>
+                                <TableHead className='text-white'>شرح</TableHead>
+                                <TableHead className="w-24 text-center text-white">تعداد</TableHead>
+                                <TableHead className="w-32 text-center text-white">فی</TableHead>
+                                <TableHead className="w-32 text-center rounded-l-md text-white">جمع کل</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {invoice.items.map((item, index) => (
                             <TableRow key={index} className="border-b-gray-100">
-                                <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono">{String(index + 1).padStart(2, '0').toLocaleString('fa-IR')}</TableCell>
+                                <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono" style={{ backgroundColor: `${storeInfo.themeColor}1A`, color: storeInfo.themeColor}}>{String(index + 1).padStart(2, '0').toLocaleString('fa-IR')}</TableCell>
                                 <TableCell className="py-3 align-top">
                                     <p className="font-semibold text-gray-800">{item.productName}</p>
                                     <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
@@ -204,9 +207,9 @@ export default function InvoicePreviewPage() {
                                 </div>
                             </div>
                             <div className="w-1/3 space-y-2">
-                                 <div className="flex justify-between items-center bg-primary/5 p-3 rounded-md">
-                                    <span className="text-base font-bold text-primary">جمع کل:</span>
-                                    <span className="text-base font-bold font-mono text-primary">{formatCurrency(invoice.total)}</span>
+                                 <div className="flex justify-between items-center p-3 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}1A` }}>
+                                    <span className="text-base font-bold" style={{ color: storeInfo.themeColor }}>جمع کل:</span>
+                                    <span className="text-base font-bold font-mono" style={{ color: storeInfo.themeColor }}>{formatCurrency(invoice.total)}</span>
                                 </div>
                             </div>
                         </div>
@@ -214,7 +217,7 @@ export default function InvoicePreviewPage() {
 
                 </CardContent>
                  <footer className="relative bg-white rounded-b-lg">
-                    <div className="h-16 bg-primary"></div>
+                    <div className="h-16" style={{ backgroundColor: storeInfo.themeColor }}></div>
                      <div className="absolute inset-0 p-4 flex items-center justify-center text-white text-xs">
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2">

@@ -15,6 +15,7 @@ export type Category = {
   logoUrl?: string;
   storeAddress?: string;
   storePhone?: string;
+  themeColor?: string;
 };
 
 export type Product = {

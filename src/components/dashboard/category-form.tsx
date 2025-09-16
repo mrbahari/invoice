@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
 import { initialCategories } from '@/lib/data';
-import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse } from 'lucide-react';
+import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check } from 'lucide-react';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
@@ -39,6 +39,19 @@ const iconList = [
     { name: 'Health', component: HeartPulse },
 ];
 
+const colorPalette = [
+    '#4f46e5', // Indigo 600
+    '#db2777', // Pink 600
+    '#0d9488', // Teal 600
+    '#ca8a04', // Yellow 600
+    '#6d28d9', // Violet 700
+    '#dc2626', // Red 600
+    '#059669', // Emerald 600
+    '#ea580c', // Orange 600
+];
+
+const defaultColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+
 export function CategoryForm({ category }: CategoryFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -50,6 +63,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
+  const [themeColor, setThemeColor] = useState<string>(category?.themeColor || defaultColor);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +79,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   
   const handleIconSelect = (IconComponent: React.ElementType) => {
     const svgString = ReactDOMServer.renderToString(
-      <IconComponent color="hsl(var(--primary))" size={48} />
+      <IconComponent color={themeColor} size={48} />
     );
     const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
     setLogo(dataUrl);
@@ -91,7 +105,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
             c.id === category.id 
-            ? { ...c, name, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl } 
+            ? { ...c, name, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
             : c
         ));
         toast({
@@ -105,7 +119,8 @@ export function CategoryForm({ category }: CategoryFormProps) {
           storeName,
           storeAddress,
           storePhone,
-          logoUrl: finalLogoUrl
+          logoUrl: finalLogoUrl,
+          themeColor,
         };
         setCategories(prev => [newCategory, ...prev]);
         toast({
@@ -170,6 +185,9 @@ export function CategoryForm({ category }: CategoryFormProps) {
               placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴"
             />
           </div>
+          
+          <Separator />
+
           <div className="grid gap-4">
               <Label>لوگوی فروشگاه</Label>
               <div className='flex items-start gap-6'>
@@ -181,6 +199,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                       layout="fill"
                       objectFit="contain"
                       className="rounded-md border p-2"
+                      key={themeColor} // Force re-render on color change
                     />
                     <Button
                       type="button"
@@ -224,7 +243,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                         onClick={() => handleIconSelect(icon.component)}
                         className={cn(
                           'flex items-center justify-center p-2 border rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
-                          logo?.includes(btoa(ReactDOMServer.renderToString(<icon.component color="hsl(var(--primary))" size={48} />))) && 'bg-accent text-accent-foreground ring-2 ring-primary'
+                          logo?.includes(btoa(ReactDOMServer.renderToString(<icon.component color={themeColor} size={48} />))) && 'bg-accent text-accent-foreground ring-2 ring-primary'
                         )}
                         title={icon.name}
                       >
@@ -234,6 +253,26 @@ export function CategoryForm({ category }: CategoryFormProps) {
                 </div>
               </div>
           </div>
+          
+          <Separator />
+
+          <div className="grid gap-3">
+              <Label>رنگ تم فاکتور</Label>
+              <div className="flex flex-wrap gap-2">
+                  {colorPalette.map(color => (
+                      <button
+                          key={color}
+                          type="button"
+                          className="w-8 h-8 rounded-full border flex items-center justify-center"
+                          style={{ backgroundColor: color }}
+                          onClick={() => setThemeColor(color)}
+                      >
+                          {themeColor === color && <Check className="w-5 h-5 text-white" />}
+                      </button>
+                  ))}
+              </div>
+          </div>
+
         </CardContent>
         <CardFooter className="justify-end">
           <Button type="submit" disabled={isProcessing}>

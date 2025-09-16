@@ -1,4 +1,6 @@
 
+'use client';
+
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,12 +26,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { customers, invoices } from '@/lib/data';
+import { customers as initialCustomers, invoices } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function CustomersPage() {
+  const [customerList, setCustomerList] = useState(initialCustomers);
+
   const getCustomerStats = (customerId: string) => {
     const customerInvoices = invoices.filter(inv => inv.customerId === customerId);
     const totalSpent = customerInvoices.reduce((acc, inv) => acc + inv.total, 0);
@@ -76,7 +81,7 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.map((customer) => {
+            {customerList.map((customer) => {
               const { totalSpent, orderCount } = getCustomerStats(customer.id);
               const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
               return (
@@ -124,7 +129,7 @@ export default function CustomersPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>1-{customers.length}</strong> از <strong>{customers.length}</strong> مشتریان
+          نمایش <strong>1-{customerList.length}</strong> از <strong>{customerList.length}</strong> مشتریان
         </div>
       </CardFooter>
     </Card>

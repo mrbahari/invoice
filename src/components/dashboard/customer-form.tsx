@@ -81,7 +81,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
       }
 
       setIsProcessing(false);
-      router.refresh();
       router.push('/dashboard/customers');
     }, 1000);
   };

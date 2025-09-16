@@ -4,15 +4,16 @@
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { initialInvoices } from '@/lib/data';
+import { initialInvoices, initialCustomers } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Invoice, InvoiceStatus } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 
 export default function InvoicesPage() {
   const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const { toast } = useToast();
 
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
@@ -50,6 +51,7 @@ export default function InvoicesPage() {
   return (
     <InvoiceTabs
         tabs={tabsData}
+        customers={customers}
         defaultTab="all"
         onStatusChange={handleUpdateStatus}
         onDeleteInvoice={handleDeleteInvoice}

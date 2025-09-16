@@ -26,7 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
-import type { Invoice, InvoiceStatus } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,11 +52,12 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 
 type InvoiceTableProps = {
   invoiceList: Invoice[];
+  customers: Customer[];
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
   onDeleteInvoice: (invoiceId: string) => void;
 };
 
-export function InvoiceTable({ invoiceList, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
+export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
   return (
      <Card>
       <CardHeader className="px-7">
@@ -75,19 +76,21 @@ export function InvoiceTable({ invoiceList, onStatusChange, onDeleteInvoice }: I
               </TableHead>
               <TableHead className="hidden sm:table-cell">وضعیت</TableHead>
               <TableHead className="hidden md:table-cell">تاریخ</TableHead>
-              <TableHead className="text-left">مبلغ</TableHead>
+              <TableHead className="text-right">مبلغ</TableHead>
               <TableHead>
                 <span className="sr-only">اقدامات</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoiceList.map((invoice) => (
+            {invoiceList.map((invoice) => {
+              const customer = customers.find(c => c.id === invoice.customerId);
+              return (
               <TableRow key={invoice.id}>
                 <TableCell>
                   <div className="font-medium">{invoice.customerName}</div>
                   <div className="hidden text-sm text-muted-foreground md:inline">
-                    {invoice.customerEmail}
+                    {customer?.phone || 'شماره ثبت نشده'}
                   </div>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
@@ -101,7 +104,7 @@ export function InvoiceTable({ invoiceList, onStatusChange, onDeleteInvoice }: I
                 <TableCell className="hidden md:table-cell">
                   {new Date(invoice.date).toLocaleDateString('fa-IR')}
                 </TableCell>
-                <TableCell className="text-left">
+                <TableCell className="text-right">
                   {formatCurrency(invoice.total)}
                 </TableCell>
                 <TableCell className="text-left">
@@ -151,7 +154,7 @@ export function InvoiceTable({ invoiceList, onStatusChange, onDeleteInvoice }: I
                   </AlertDialog>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </CardContent>

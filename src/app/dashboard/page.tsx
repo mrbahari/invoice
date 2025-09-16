@@ -114,7 +114,7 @@ export default function DashboardPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>مشتری</TableHead>
-                  <TableHead className='text-left'>مبلغ</TableHead>
+                  <TableHead className='text-right'>مبلغ</TableHead>
                   <TableHead className='text-center'>وضعیت</TableHead>
                 </TableRow>
               </TableHeader>
@@ -126,10 +126,10 @@ export default function DashboardPage() {
                       <TableCell>
                         <div className="font-medium">{invoice.customerName}</div>
                         <div className="hidden text-sm text-muted-foreground md:inline">
-                          {customer?.phone || invoice.customerEmail}
+                          {customer?.phone || 'شماره ثبت نشده'}
                         </div>
                       </TableCell>
-                      <TableCell className="text-left">{formatCurrency(invoice.total)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
                       <TableCell className='text-center'>
                         <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
                           {statusTranslation[invoice.status]}

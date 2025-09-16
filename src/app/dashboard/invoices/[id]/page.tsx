@@ -134,7 +134,7 @@ export default function InvoicePreviewPage() {
                                         alt={`${storeInfo.name} logo`}
                                         width={150}
                                         height={150}
-                                        className="object-cover rounded-full"
+                                        className="object-contain"
                                         unoptimized
                                     />
                                )}
@@ -173,9 +173,10 @@ export default function InvoicePreviewPage() {
                         <TableHeader>
                             <TableRow className="hover:bg-primary/90 text-primary-foreground" style={{ backgroundColor: storeInfo.themeColor }}>
                                 <TableHead className="w-16 text-center rounded-r-md text-white">ردیف</TableHead>
-                                <TableHead className='text-white'>شرح</TableHead>
-                                <TableHead className="w-24 text-center text-white">تعداد</TableHead>
-                                <TableHead className="w-32 text-right text-white">فی</TableHead>
+                                <TableHead className='text-right text-white'>نام کالا</TableHead>
+                                <TableHead className="w-24 text-center text-white">واحد</TableHead>
+                                <TableHead className="w-24 text-center text-white">مقدار</TableHead>
+                                <TableHead className="w-32 text-right text-white">قیمت</TableHead>
                                 <TableHead className="w-32 text-right rounded-l-md text-white">جمع کل</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -183,10 +184,11 @@ export default function InvoicePreviewPage() {
                             {invoice.items.map((item, index) => (
                             <TableRow key={index} className="border-b-gray-100">
                                 <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono" style={{ backgroundColor: `${storeInfo.themeColor}1A`, color: storeInfo.themeColor}}>{String(index + 1).padStart(2, '0').toLocaleString('fa-IR')}</TableCell>
-                                <TableCell className="py-3 align-top">
+                                <TableCell className="py-3 align-top text-right">
                                     <p className="font-semibold text-gray-800">{item.productName}</p>
                                     <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                                 </TableCell>
+                                <TableCell className="text-center py-3 align-top font-bold text-base font-mono">{item.unit}</TableCell>
                                 <TableCell className="text-center py-3 align-top font-bold text-base font-mono">{item.quantity.toLocaleString('fa-IR')}</TableCell>
                                 <TableCell className="text-right py-3 align-top font-mono text-base">{formatCurrency(item.unitPrice)}</TableCell>
                                 <TableCell className="text-right py-3 align-top font-mono text-base">{formatCurrency(item.totalPrice)}</TableCell>

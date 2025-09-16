@@ -245,10 +245,10 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
-                  <TableHead>محصول</TableHead>
+                  <TableHead>نام کالا</TableHead>
                   <TableHead className="w-[110px]">واحد</TableHead>
-                  <TableHead className="w-[100px] text-center">تعداد</TableHead>
-                  <TableHead className="w-[120px] text-left">قیمت واحد</TableHead>
+                  <TableHead className="w-[100px] text-center">مقدار</TableHead>
+                  <TableHead className="w-[120px] text-left">قیمت</TableHead>
                   <TableHead className="w-[120px] text-left">جمع کل</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>

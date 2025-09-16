@@ -25,13 +25,13 @@ import html2canvas from 'html2canvas';
 
 // A simple number to words converter for Persian
 function toWords(num: number): string {
+    if (num === 0) return "صفر";
+
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
     const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
     const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
     const thousands = ["", " هزار", " میلیون", " میلیارد"];
-
-    if (num === 0) return "صفر";
 
     let word = '';
     let i = 0;
@@ -92,8 +92,8 @@ export default function InvoicePreviewPage() {
   const storeInfo = {
     name: category?.storeName || "فروشگاه",
     logoUrl: category?.logoUrl,
-    address: category?.storeAddress || 'آدرس ثبت نشده',
-    phone: category?.storePhone || 'شماره ثبت نشده',
+    address: category?.storeAddress || '',
+    phone: category?.storePhone || '',
     themeColor: category?.themeColor || defaultThemeColor,
   };
 
@@ -217,18 +217,18 @@ export default function InvoicePreviewPage() {
                     <div className="h-16" style={{ backgroundColor: storeInfo.themeColor }}></div>
                      <div className="absolute inset-0 p-4 flex items-center justify-center text-white text-xs">
                         <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2">
-                                <Phone size={14} />
-                                <span className="font-mono">{storeInfo.phone.toLocaleString('fa-IR')}</span>
-                            </div>
-                             <div className="flex items-center gap-2">
-                                <Mail size={14} />
-                                <span>info@{storeInfo.name.replace(/\s+/g, '-').toLowerCase()}.com</span>
-                            </div>
-                             <div className="flex items-center gap-2">
-                                <MapPin size={14} />
-                                <span>{storeInfo.address}</span>
-                            </div>
+                            {storeInfo.phone && (
+                              <div className="flex items-center gap-2">
+                                  <Phone size={14} />
+                                  <span className="font-mono">{storeInfo.phone.toLocaleString('fa-IR')}</span>
+                              </div>
+                            )}
+                             {storeInfo.address && (
+                               <div className="flex items-center gap-2">
+                                  <MapPin size={14} />
+                                  <span>{storeInfo.address}</span>
+                              </div>
+                             )}
                         </div>
                     </div>
                 </footer>
@@ -237,7 +237,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    
-
-    

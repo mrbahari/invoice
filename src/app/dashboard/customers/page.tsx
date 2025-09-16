@@ -1,7 +1,7 @@
 
 'use client';
 
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { customers as initialCustomers, invoices } from '@/lib/data';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -42,6 +42,16 @@ export default function CustomersPage() {
     return { totalSpent, orderCount };
   };
 
+  const handleExport = () => {
+    const headers = {
+        name: 'نام',
+        email: 'ایمیل',
+        phone: 'تلفن',
+        address: 'آدرس'
+    };
+    downloadCSV(customerList, 'customers.csv', headers);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -53,8 +63,11 @@ export default function CustomersPage() {
                 </CardDescription>
             </div>
             <div className="mr-auto flex items-center gap-2">
-                <Button size="sm" variant="outline" className="h-8 gap-1">
-                    خروجی
+                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                    <File className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        خروجی
+                    </span>
                 </Button>
                 <Link href="/dashboard/customers/new">
                   <Button size="sm" className="h-8 gap-1">

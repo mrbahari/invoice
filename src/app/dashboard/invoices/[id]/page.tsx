@@ -201,7 +201,7 @@ export default function InvoicePreviewPage() {
                         <div className="flex justify-between items-start">
                             <div className="w-2/3 pr-4">
                                 <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
-                                <p className="mt-1 text-gray-700 font-medium">{toWords(Math.floor(invoice.total))} ریال</p>
+                                <p className="mt-1 text-gray-700 font-medium">{toWords(Math.floor(invoice.total / 10))} تومان</p>
                             </div>
                             <div className="w-1/3 space-y-2">
                                  <div className="flex justify-between items-center p-3 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}1A` }}>
@@ -237,3 +237,5 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    

@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
 import { initialCategories } from '@/lib/data';
-import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench } from 'lucide-react';
+import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench, Palette, GraduationCap, Banknote, Sprout } from 'lucide-react';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,10 @@ const iconList = [
     { name: 'Home', component: Home },
     { name: 'Work', component: Briefcase },
     { name: 'Tools', component: Wrench },
+    { name: 'Design', component: Palette },
+    { name: 'Education', component: GraduationCap },
+    { name: 'Finance', component: Banknote },
+    { name: 'Nature', component: Sprout },
 ];
 
 const colorPalette = [
@@ -57,6 +61,10 @@ const colorPalette = [
     '#c2410c', // Orange 700
     '#16a34a', // Green 600
     '#9333ea', // Purple 600
+    '#475569', // Slate 600
+    '#0891b2', // Cyan 600
+    '#c026d3', // Fuchsia 600
+    '#65a30d', // Lime 600
 ];
 
 export function CategoryForm({ category }: CategoryFormProps) {
@@ -71,7 +79,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
-  const [themeColor, setThemeColor] = useState<string>(category?.themeColor || 'hsl(var(--primary))');
+  const [themeColor, setThemeColor] = useState<string>(category?.themeColor || '#4f46e5');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -87,8 +95,9 @@ export function CategoryForm({ category }: CategoryFormProps) {
   
   const handleIconSelect = (IconComponent: React.ElementType) => {
     const svgString = ReactDOMServer.renderToStaticMarkup(
-      <IconComponent color={themeColor} size={48} />
-    );
+      <IconComponent color={themeColor} size={48} strokeWidth={2} />
+    ).replace('stroke="currentColor"', `stroke="${themeColor}"`);
+    
     const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
     setLogo(dataUrl);
   };
@@ -108,7 +117,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
     setIsProcessing(true);
 
     setTimeout(() => {
-      const finalLogoUrl = logo || `https://picsum.photos/seed/${Math.random()}/48/48`;
+      const finalLogoUrl = logo || `https://picsum.photos/seed/${Math.random()}/110/110`;
       
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
@@ -218,6 +227,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                       objectFit="contain"
                       className="rounded-md border p-2"
                       key={logo} 
+                      unoptimized
                     />
                     <Button
                       type="button"
@@ -248,7 +258,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
               
               <div className="relative">
                 <Separator className="my-2" />
-                <span className="absolute top-1/2 right-1/2 -translate-y-1/2 -translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">یا</span>
+                <span className="absolute top-1/2 right-1/2 -translate-y-1/2 translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">یا</span>
               </div>
               
               <div>
@@ -275,12 +285,12 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
           <div className="grid gap-3">
               <Label>رنگ تم فاکتور</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-8 gap-2">
                   {colorPalette.map(color => (
                       <button
                           key={color}
                           type="button"
-                          className="w-8 h-8 rounded-full border flex items-center justify-center"
+                          className="w-full h-8 rounded-md border flex items-center justify-center"
                           style={{ backgroundColor: color }}
                           onClick={() => setThemeColor(color)}
                       >
@@ -306,3 +316,5 @@ export function CategoryForm({ category }: CategoryFormProps) {
     </form>
   );
 }
+
+    

@@ -23,64 +23,60 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 
-// A simple number to words converter for Persian
+// A correct number to words converter for Persian
 function toWords(num: number): string {
-    if (num === 0) return "صفر";
-    if (num < 0) return "منفی " + toWords(Math.abs(num));
+    if (num === 0) return 'صفر';
+    
+    const units = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
+    const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
+    const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+    const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
+    const thousands = ['', 'هزار', 'میلیون', 'میلیارد'];
 
-    const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
-    const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
-    const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
-    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
-    const thousands = ["", "هزار", "میلیون", "میلیارد", "تریلیون"];
+    let number = Math.floor(num);
+    if (number === 0) return 'صفر';
 
-    let word = "";
+    let result = '';
     let i = 0;
 
-    const processChunk = (n: number) => {
-        if (n === 0) return "";
-        let chunkWord = "";
-        
-        const h = Math.floor(n / 100);
-        const remainder = n % 100;
-        const t = Math.floor(remainder / 10);
-        const u = remainder % 10;
+    while (number > 0) {
+        let chunk = number % 1000;
+        if (chunk > 0) {
+            let chunkStr = '';
+            let h = Math.floor(chunk / 100);
+            let rem = chunk % 100;
+            
+            if (h > 0) {
+                chunkStr += hundreds[h];
+                if (rem > 0) chunkStr += ' و ';
+            }
 
-        if (h > 0) {
-            chunkWord += hundreds[h];
-            if (remainder > 0) chunkWord += " و ";
-        }
-        
-        if (remainder > 0) {
-            if (remainder < 10) {
-                chunkWord += units[remainder];
-            } else if (remainder < 20) {
-                chunkWord += teens[remainder - 10];
-            } else {
-                chunkWord += tens[t];
-                if (u > 0) {
-                    chunkWord += " و " + units[u];
+            if (rem > 0) {
+                if (rem < 10) {
+                    chunkStr += units[rem];
+                } else if (rem < 20) {
+                    chunkStr += teens[rem - 10];
+                } else {
+                    let t = Math.floor(rem / 10);
+                    let u = rem % 10;
+                    chunkStr += tens[t];
+                    if (u > 0) {
+                        chunkStr += ' و ' + units[u];
+                    }
                 }
             }
-        }
-        return chunkWord;
-    };
 
-    while (num > 0) {
-        let chunk = num % 1000;
-        if (chunk > 0) {
-            let chunkWord = processChunk(chunk);
-            if (i > 0) {
-                word = chunkWord + " " + thousands[i] + (word ? " و " : "") + word;
+            if (i > 0 && chunkStr) {
+                result = chunkStr + ' ' + thousands[i] + (result ? ' و ' : '') + result;
             } else {
-                word = chunkWord;
+                result = chunkStr + (result ? ' و ' : '') + result;
             }
         }
-        num = Math.floor(num / 1000);
+        number = Math.floor(number / 1000);
         i++;
     }
-
-    return word.trim();
+    
+    return result.trim();
 }
 
 
@@ -258,3 +254,6 @@ export default function InvoicePreviewPage() {
     
 
 
+
+
+    

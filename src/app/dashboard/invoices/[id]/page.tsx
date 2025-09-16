@@ -128,7 +128,7 @@ export default function InvoicePreviewPage() {
                                 <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
                                    {storeInfo.logoUrl ? (
                                         <Image
-                                            src={storeInfo.logoUrl}
+                                            src={storeInfo.logoUrl || ''}
                                             alt={`${storeInfo.name} logo`}
                                             width={48}
                                             height={48}
@@ -237,7 +237,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    
-
-    

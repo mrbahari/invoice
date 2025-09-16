@@ -248,5 +248,5 @@ export function CategoryForm({ category }: CategoryFormProps) {
         </CardFooter>
       </Card>
     </form>
-
-    
+  );
+}

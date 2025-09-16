@@ -16,7 +16,7 @@ import {
 import { initialInvoices, initialProducts, initialCategories, initialCustomers } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
-import { Download, Mail, Phone, MapPin } from 'lucide-react';
+import { Download, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -69,12 +69,13 @@ function toWords(num: number): string {
                 chunkWords.push(tens[ten]);
                 const unit = rest % 10;
                 if (unit > 0) {
+                    chunkWords.push('و');
                     chunkWords.push(units[unit]);
                 }
             }
         }
         
-        let finalChunk = chunkWords.join(' و ');
+        let finalChunk = chunkWords.join(' ');
         if (i > 0 && finalChunk) {
            return finalChunk + thousands[i];
         }
@@ -161,6 +162,7 @@ export default function InvoicePreviewPage() {
                                 </div>
                                <div className="px-4 py-1 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}80`}}>
                                 <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
+                                {category?.name && <p className="text-sm text-white/90 mt-1">{category.name}</p>}
                                </div>
                            </div>
                         </div>
@@ -216,7 +218,7 @@ export default function InvoicePreviewPage() {
                         <div className="flex justify-between items-start">
                             <div className="w-2/3 pr-4">
                                 <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
-                                <p className="mt-1 text-gray-700 font-medium">{toWords(invoice.total)} ریال</p>
+                                <p className="mt-1 text-gray-700 font-medium">{toWords(Math.floor(invoice.total))} ریال</p>
                             </div>
                             <div className="w-1/3 space-y-2">
                                  <div className="flex justify-between items-center p-3 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}1A` }}>

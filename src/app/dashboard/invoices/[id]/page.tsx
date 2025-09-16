@@ -146,7 +146,7 @@ export default function InvoicePreviewPage() {
                                </div>
                            </div>
                            <div className="text-left text-sm text-white">
-                                <div className="font-bold">صورتحساب: <span className="font-mono">{invoice.invoiceNumber}</span></div>
+                                <div className="font-bold">شماره سریال: <span className="font-mono">{invoice.invoiceNumber}</span></div>
                                 <div className="mt-1">تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></div>
                             </div>
                         </div>

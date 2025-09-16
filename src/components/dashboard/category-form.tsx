@@ -50,8 +50,6 @@ const colorPalette = [
     '#ea580c', // Orange 600
 ];
 
-const defaultColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-
 export function CategoryForm({ category }: CategoryFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -63,7 +61,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
-  const [themeColor, setThemeColor] = useState<string>(category?.themeColor || defaultColor);
+  const [themeColor, setThemeColor] = useState<string>(category?.themeColor || 'hsl(var(--primary))');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -289,3 +287,5 @@ export function CategoryForm({ category }: CategoryFormProps) {
     </form>
   );
 }
+
+    

@@ -127,13 +127,13 @@ export default function InvoicePreviewPage() {
                  <header className="relative rounded-t-lg overflow-hidden p-8" style={{ backgroundColor: storeInfo.themeColor }}>
                     <div className="grid grid-cols-2 items-start gap-12">
                         <div className="flex items-center gap-4">
-                            <div className="w-28 h-28 flex items-center justify-center">
+                            <div className="w-40 h-40 flex items-center justify-center">
                                {storeInfo.logoUrl && (
                                     <Image
                                         src={storeInfo.logoUrl}
                                         alt={`${storeInfo.name} logo`}
-                                        width={110}
-                                        height={110}
+                                        width={150}
+                                        height={150}
                                         className="object-cover rounded-full"
                                         unoptimized
                                     />

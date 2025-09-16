@@ -207,11 +207,11 @@ export default function InvoicePreviewPage() {
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2">
                                 <Phone size={14} />
-                                <span>{storeInfo.phone}</span>
+                                <span>{storeInfo.phone.toLocaleString('fa-IR')}</span>
                             </div>
                              <div className="flex items-center gap-2">
                                 <Mail size={14} />
-                                <span>info@{storeInfo.name.split(' ')[0].toLowerCase()}.ir</span>
+                                <span>info@{storeInfo.name.split(' ')[0].toLowerCase()}.com</span>
                             </div>
                              <div className="flex items-center gap-2">
                                 <MapPin size={14} />
@@ -225,5 +225,7 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    
 
     

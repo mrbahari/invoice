@@ -87,28 +87,28 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  body * {
+      visibility: hidden;
+  }
   .no-print {
     display: none !important;
   }
-  body #invoice-preview > *:not(#invoice-card) {
-    visibility: hidden;
-  }
   #invoice-card, #invoice-card * {
-    visibility: visible;
+      visibility: visible;
   }
-  #invoice-preview {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: auto;
+  #invoice-card {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: auto;
+      box-shadow: none;
+      border: none;
+      margin: 0;
+      padding: 0;
   }
-   #invoice-preview #invoice-card {
-    box-shadow: none;
-    border: none;
-    margin: 0;
-    padding: 0;
-   }
 }
+
+    
 
     

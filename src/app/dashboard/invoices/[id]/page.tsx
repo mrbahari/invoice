@@ -161,10 +161,6 @@ export default function InvoicePreviewPage() {
                                 <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
                                </div>
                            </div>
-                           <div className="text-left text-sm text-white">
-                                <div className="font-bold">شماره سریال: <span className="font-mono">{invoice.invoiceNumber}</span></div>
-                                <div className="mt-1">تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></div>
-                            </div>
                         </div>
                     </div>
                 </header>
@@ -182,8 +178,9 @@ export default function InvoicePreviewPage() {
                                 )}
                             </div>
                         </div>
-                        <div className="text-left">
-                            {/* This section is moved to header */}
+                        <div className="text-left text-gray-600">
+                            <div className="font-bold">شماره سریال: <span className="font-mono">{invoice.invoiceNumber}</span></div>
+                            <div className="mt-1">تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></div>
                          </div>
                     </div>
 
@@ -258,6 +255,8 @@ export default function InvoicePreviewPage() {
 
 
 
+
+    
 
     
 

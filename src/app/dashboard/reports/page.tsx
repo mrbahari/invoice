@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { subDays, startOfMonth, format, parseISO } from 'date-fns';
+import { subDays, startOfMonth, format, parseISO } from 'date-fns-jalali';
 import {
   Card,
   CardContent,

@@ -87,28 +87,29 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  
   body * {
-      visibility: hidden;
+    visibility: hidden;
   }
+
   .no-print {
     display: none !important;
   }
+  
   #invoice-card, #invoice-card * {
-      visibility: visible;
+    visibility: visible;
   }
+
   #invoice-card {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: auto;
-      box-shadow: none;
-      border: none;
-      margin: 0;
-      padding: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
   }
 }
-
-    
-
     

@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,18 +29,35 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { initialProducts, initialCategories } from '@/lib/data';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
+import { useState } from 'react';
 
 export default function ProductsPage() {
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [activeTab, setActiveTab] = useState('all');
 
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
+  };
+
+  const handleExport = () => {
+    const dataToExport = activeTab === 'all'
+      ? products
+      : products.filter(p => p.categoryId === activeTab);
+
+    const headers = {
+      name: 'نام محصول',
+      description: 'توضیحات',
+      price: 'قیمت',
+      categoryId: 'شناسه دسته‌بندی',
+    };
+    
+    downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
 
   const renderProductTable = (productList: typeof products) => (
@@ -122,7 +139,7 @@ export default function ProductsPage() {
 
 
   return (
-    <Tabs defaultValue="all" dir="rtl">
+    <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">همه</TabsTrigger>
@@ -131,8 +148,11 @@ export default function ProductsPage() {
           ))}
         </TabsList>
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            خروجی
+          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+            <File className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+              خروجی
+            </span>
           </Button>
           <Link href="/dashboard/products/new">
             <Button size="sm" className="h-8 gap-1">

@@ -96,9 +96,11 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const handleIconSelect = (IconComponent: React.ElementType) => {
     const svgString = ReactDOMServer.renderToStaticMarkup(
       <IconComponent color={themeColor} size={48} strokeWidth={2} />
-    ).replace('stroke="currentColor"', `stroke="${themeColor}"`);
+    );
+    const finalSvg = svgString.replace('stroke="currentColor"', `stroke="${themeColor}"`);
     
-    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
+    // In order for the data URL to be correctly formed, we need to properly encode the SVG string.
+    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(finalSvg)))}`;
     setLogo(dataUrl);
   };
 

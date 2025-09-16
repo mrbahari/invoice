@@ -26,40 +26,51 @@ import html2canvas from 'html2canvas';
 // A correct number to words converter for Persian
 function toWords(num: number): string {
     if (num === 0) return 'صفر';
-    const and = ' و ';
+
     const units = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
     const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
     const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
     const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
     const thousands = ['', ' هزار', ' میلیون', ' میلیارد', ' تریلیون'];
 
-    function convert(n: number): string {
-        if (n < 10) return units[n];
-        if (n < 20) return teens[n - 10];
-        if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 > 0 ? and + units[n % 10] : '');
-        if (n < 1000) return hundreds[Math.floor(n / 100)] + (n % 100 > 0 ? and + convert(n % 100) : '');
-        return '';
+    const parts: string[] = [];
+
+    function convertThreeDigits(n: number): string {
+        if (n === 0) return '';
+        const partsArr: string[] = [];
+        if (n >= 100) {
+            partsArr.push(hundreds[Math.floor(n / 100)]);
+            n %= 100;
+        }
+        if (n >= 20) {
+            partsArr.push(tens[Math.floor(n / 10)]);
+            n %= 10;
+        }
+        if (n >= 10) {
+            partsArr.push(teens[n - 10]);
+            n = 0;
+        }
+        if (n > 0) {
+            partsArr.push(units[n]);
+        }
+        return partsArr.join(' و ');
     }
 
     if (num === 0) return 'صفر';
-    
-    let result = '';
+
     let i = 0;
     while (num > 0) {
         const chunk = num % 1000;
         if (chunk > 0) {
-            const chunkWord = convert(chunk);
-            if (i > 0) {
-                result = chunkWord + thousands[i] + (result ? and + result : '');
-            } else {
-                result = chunkWord;
-            }
+            const chunkWord = convertThreeDigits(chunk);
+            const part = i > 0 ? `${chunkWord}${thousands[i]}` : chunkWord;
+            parts.unshift(part);
         }
         num = Math.floor(num / 1000);
         i++;
     }
 
-    return result;
+    return parts.join(' و ');
 }
 
 
@@ -131,7 +142,7 @@ export default function InvoicePreviewPage() {
                                             alt={`${storeInfo.name} logo`}
                                             width={48}
                                             height={48}
-                                            className="object-contain"
+                                            className="object-cover rounded-full"
                                         />
                                    ) : (
                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor" style={{ color: storeInfo.themeColor }}><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
@@ -230,18 +241,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    
-
-
-
-
-    
-
-    
-
-    
-
-    
-
-    

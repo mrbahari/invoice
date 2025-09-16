@@ -90,10 +90,10 @@
   .no-print {
     display: none !important;
   }
-  body * {
+  body #invoice-preview > *:not(#invoice-card) {
     visibility: hidden;
   }
-  #invoice-preview, #invoice-preview * {
+  #invoice-card, #invoice-card * {
     visibility: visible;
   }
   #invoice-preview {
@@ -102,10 +102,13 @@
     top: 0;
     width: 100%;
     height: auto;
+  }
+   #invoice-preview #invoice-card {
     box-shadow: none;
     border: none;
-  }
-  #invoice-preview .no-print {
-    display: none !important;
-  }
+    margin: 0;
+    padding: 0;
+   }
 }
+
+    

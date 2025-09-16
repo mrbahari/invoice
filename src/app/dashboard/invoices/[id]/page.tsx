@@ -96,20 +96,12 @@ export default function InvoicePreviewPage() {
     }
   };
 
-  const handlePayment = () => {
-    alert('در حال اتصال به درگاه پرداخت...');
-  }
-
   return (
-    <div className="bg-muted p-4 sm:p-8 rounded-lg" id="invoice-preview-container">
+    <div className="bg-muted p-4 sm:p-8 rounded-lg">
         <div className="flex justify-center gap-2 mb-6 no-print">
             <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handlePrint}>
                 <Printer className="h-3.5 w-3.5" />
                 <span>چاپ / PDF</span>
-            </Button>
-            <Button size="sm" className="h-8 gap-1" onClick={handlePayment}>
-                <CreditCard className="h-3.5 w-3.5" />
-                <span>پرداخت</span>
             </Button>
         </div>
         <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-preview">

@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import {
   CreditCard,
   DollarSign,
@@ -90,15 +91,17 @@ export default function DashboardPage() {
         </Card>
       </div>
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle>نمای کلی فروش</CardTitle>
-            <CardDescription>نمای کلی از فروش در ۱۲ ماه گذشته.</CardDescription>
-          </CardHeader>
-          <CardContent className="pr-2">
-            <OverviewChart invoices={invoices} />
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/reports">
+          <Card className="xl:col-span-2 transition-all hover:shadow-lg hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle>نمای کلی فروش</CardTitle>
+              <CardDescription>نمای کلی از فروش در ۱۲ ماه گذشته.</CardDescription>
+            </CardHeader>
+            <CardContent className="pr-2">
+              <OverviewChart invoices={invoices} />
+            </CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardHeader>
             <CardTitle>فاکتورهای اخیر</CardTitle>

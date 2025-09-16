@@ -33,10 +33,10 @@ function toWords(num: number): string {
     const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
     const thousands = ['', ' هزار', ' میلیون', ' میلیارد', ' تریلیون'];
 
-    let numStr = num.toString();
+    let numStr = Math.floor(num).toString();
     if (numStr === '0') return 'صفر';
     
-    const chunks = [];
+    const chunks: string[] = [];
     while (numStr.length > 0) {
         chunks.push(numStr.slice(Math.max(0, numStr.length - 3)));
         numStr = numStr.slice(0, Math.max(0, numStr.length - 3));
@@ -48,24 +48,26 @@ function toWords(num: number): string {
 
     const words = chunks.map((chunk, i) => {
         if (chunk === '000') return '';
-        let chunkWords = [];
-        let n = parseInt(chunk);
+        const n = parseInt(chunk, 10);
+        if (n === 0) return '';
+        
+        let chunkWords: string[] = [];
         
         const hundred = Math.floor(n / 100);
         if (hundred > 0) {
             chunkWords.push(hundreds[hundred]);
-            n %= 100;
         }
 
-        if (n > 0) {
-            if (n < 10) {
-                chunkWords.push(units[n]);
-            } else if (n < 20) {
-                chunkWords.push(teens[n - 10]);
+        const rest = n % 100;
+        if (rest > 0) {
+            if (rest < 10) {
+                chunkWords.push(units[rest]);
+            } else if (rest < 20) {
+                chunkWords.push(teens[rest - 10]);
             } else {
-                const ten = Math.floor(n / 10);
+                const ten = Math.floor(rest / 10);
                 chunkWords.push(tens[ten]);
-                const unit = n % 10;
+                const unit = rest % 10;
                 if (unit > 0) {
                     chunkWords.push(units[unit]);
                 }
@@ -77,7 +79,6 @@ function toWords(num: number): string {
            return finalChunk + thousands[i];
         }
         return finalChunk;
-
     });
 
     return words.filter(Boolean).reverse().join(' و ');
@@ -143,7 +144,7 @@ export default function InvoicePreviewPage() {
                 <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4" style={{ borderColor: storeInfo.themeColor }}>
                     <div className="p-8">
                         <div className="h-28 w-full absolute top-0 right-0" style={{ backgroundColor: storeInfo.themeColor }}></div>
-                        <div className="relative flex items-center justify-center">
+                        <div className="relative flex items-center justify-start">
                            <div className="flex items-center gap-4">
                                 <div className="bg-white p-2 rounded-full shadow-md w-28 h-28 flex items-center justify-center">
                                    {storeInfo.logoUrl ? (
@@ -215,7 +216,7 @@ export default function InvoicePreviewPage() {
                         <div className="flex justify-between items-start">
                             <div className="w-2/3 pr-4">
                                 <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
-                                <p className="mt-1 text-gray-700 font-medium">{toWords(Math.floor(invoice.total))} ریال</p>
+                                <p className="mt-1 text-gray-700 font-medium">{toWords(invoice.total)} ریال</p>
                             </div>
                             <div className="w-1/3 space-y-2">
                                  <div className="flex justify-between items-center p-3 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}1A` }}>
@@ -250,5 +251,7 @@ export default function InvoicePreviewPage() {
         </div>
     </div>
   );
+
+    
 
     

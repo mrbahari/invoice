@@ -36,11 +36,11 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name) {
+    if (!name || !phone) {
       toast({
         variant: 'destructive',
-        title: 'فیلد الزامی خالی است',
-        description: 'لطفاً نام مشتری را وارد کنید.',
+        title: 'فیلدهای الزامی خالی است',
+        description: 'لطفاً نام و شماره تماس مشتری را وارد کنید.',
       });
       return;
     }
@@ -69,7 +69,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           id: `cust-${Math.random().toString(36).substr(2, 9)}`,
           name,
           email: email || 'ایمیل ثبت نشده',
-          phone: phone || 'تلفن ثبت نشده',
+          phone,
           address: address || 'آدرس ثبت نشده',
           purchaseHistory: 'مشتری جدید',
         };
@@ -82,6 +82,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
       setIsProcessing(false);
       router.push('/dashboard/customers');
+      router.refresh(); 
     }, 1000);
   };
 
@@ -126,6 +127,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="مثال: ۰۲۱-۵۵۵۰۱۰۱"
+                required
                 />
             </div>
           </div>

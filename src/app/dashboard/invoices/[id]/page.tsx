@@ -42,13 +42,14 @@ function toWords(num: number): string {
             partsArr.push(hundreds[Math.floor(n / 100)]);
             n %= 100;
         }
-        if (n >= 20) {
-            partsArr.push(tens[Math.floor(n / 10)]);
-            n %= 10;
-        }
         if (n >= 10) {
-            partsArr.push(teens[n - 10]);
-            n = 0;
+          if (n < 20) {
+              partsArr.push(teens[n - 10]);
+              n = 0;
+          } else {
+              partsArr.push(tens[Math.floor(n / 10)]);
+              n %= 10;
+          }
         }
         if (n > 0) {
             partsArr.push(units[n]);
@@ -140,8 +141,8 @@ export default function InvoicePreviewPage() {
                                         <Image
                                             src={storeInfo.logoUrl}
                                             alt={`${storeInfo.name} logo`}
-                                            width={48}
-                                            height={48}
+                                            width={64}
+                                            height={64}
                                             className="object-cover rounded-full"
                                         />
                                    ) : (

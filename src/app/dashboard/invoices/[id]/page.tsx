@@ -140,7 +140,7 @@ export default function InvoicePreviewPage() {
                                )}
                             </div>
                            <div className="px-4 py-1 rounded-md">
-                            <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
+                            <h1 className="text-3xl font-bold text-white">{storeInfo.name}</h1>
                             {category?.description && <p className="text-sm text-white/90 mt-1">{category.description}</p>}
                            </div>
                        </div>

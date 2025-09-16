@@ -124,9 +124,8 @@ export default function InvoicePreviewPage() {
                 </Button>
             </div>
             <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-card">
-                <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4" style={{ borderColor: storeInfo.themeColor }}>
+                 <header className="relative rounded-t-lg overflow-hidden border-b-4" style={{ backgroundColor: storeInfo.themeColor, borderColor: storeInfo.themeColor }}>
                     <div className="p-8">
-                        <div className="h-28 w-full absolute top-0 right-0" style={{ backgroundColor: storeInfo.themeColor }}></div>
                         <div className="relative flex items-center justify-start">
                            <div className="flex items-center gap-4">
                                 <div className="bg-white p-2 rounded-full shadow-md w-28 h-28 flex items-center justify-center">
@@ -141,7 +140,7 @@ export default function InvoicePreviewPage() {
                                         />
                                    )}
                                 </div>
-                               <div className="px-4 py-1 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}80`}}>
+                               <div className="px-4 py-1 rounded-md">
                                 <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
                                 {category?.description && <p className="text-sm text-white/90 mt-1">{category.description}</p>}
                                </div>

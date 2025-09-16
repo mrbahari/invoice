@@ -23,66 +23,66 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 
-// A correct number to words converter for Persian
 function toWords(num: number): string {
     if (num === 0) return 'صفر';
 
-    const units = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
+    const ones = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
     const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
-    const tens = ['', 'ده', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+    const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
     const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
-    const thousands = ['', ' هزار', ' میلیون', ' میلیارد', ' تریلیون'];
+    const thousands = ['', 'هزار', 'میلیون', 'میلیارد', 'تریلیون'];
 
-    let numStr = Math.floor(num).toString();
+    let numStr = String(Math.floor(num));
     if (numStr === '0') return 'صفر';
-    
+
     const chunks: string[] = [];
     while (numStr.length > 0) {
-        chunks.push(numStr.slice(Math.max(0, numStr.length - 3)));
-        numStr = numStr.slice(0, Math.max(0, numStr.length - 3));
+        chunks.push(numStr.slice(-3));
+        numStr = numStr.slice(0, -3);
     }
-
+    
     if (chunks.length > thousands.length) {
         return "عدد بسیار بزرگ است";
     }
 
     const words = chunks.map((chunk, i) => {
         if (chunk === '000') return '';
-        const n = parseInt(chunk, 10);
+        let n = Number(chunk);
         if (n === 0) return '';
         
         let chunkWords: string[] = [];
         
-        const hundred = Math.floor(n / 100);
+        let hundred = Math.floor(n / 100);
         if (hundred > 0) {
             chunkWords.push(hundreds[hundred]);
         }
-
-        const rest = n % 100;
+        
+        let rest = n % 100;
         if (rest > 0) {
+            if (chunkWords.length > 0) chunkWords.push('و');
             if (rest < 10) {
-                chunkWords.push(units[rest]);
+                chunkWords.push(ones[rest]);
             } else if (rest < 20) {
                 chunkWords.push(teens[rest - 10]);
             } else {
-                const ten = Math.floor(rest / 10);
+                let ten = Math.floor(rest / 10);
                 chunkWords.push(tens[ten]);
-                const unit = rest % 10;
+                let unit = rest % 10;
                 if (unit > 0) {
                     chunkWords.push('و');
-                    chunkWords.push(units[unit]);
+                    chunkWords.push(ones[unit]);
                 }
             }
         }
         
         let finalChunk = chunkWords.join(' ');
         if (i > 0 && finalChunk) {
-           return finalChunk + thousands[i];
+           finalChunk += ` ${thousands[i]}`;
         }
         return finalChunk;
-    });
+    }).filter(Boolean);
 
-    return words.filter(Boolean).reverse().join(' و ');
+    return words.reverse().join(' و ');
 }
 
 
@@ -171,21 +171,26 @@ export default function InvoicePreviewPage() {
                 
                 <CardContent className="p-8 bg-white">
                      <div className="flex justify-between items-start text-sm border-b pb-6 mb-10">
-                        <div className="flex items-baseline gap-4">
-                            <span className="font-semibold text-gray-500 whitespace-nowrap">صورتحساب آقای/خانم:</span>
-                            <div>
-                                <p className="font-bold text-lg text-gray-800">{invoice.customerName}</p>
-                                {customer?.phone && (
-                                  <div className="text-sm text-gray-600">
-                                      <span className="font-mono">{customer.phone.toLocaleString('fa-IR')}</span>
-                                  </div>
-                                )}
+                        <div className="w-1/2 space-y-2 text-gray-700">
+                             <div className="flex justify-between">
+                                <span className="font-semibold text-gray-500">شماره سریال:</span>
+                                <span className="font-mono font-bold">{invoice.invoiceNumber}</span>
                             </div>
+                             <div className="flex justify-between">
+                                <span className="font-semibold text-gray-500">تاریخ:</span>
+                                <span className="font-mono font-bold">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-gray-500">آقای/خانم:</span>
+                                <span className="font-bold">{invoice.customerName}</span>
+                            </div>
+                            {customer?.phone && (
+                                <div className="flex justify-between">
+                                    <span className="font-semibold text-gray-500">شماره تماس:</span>
+                                    <span className="font-mono font-bold">{customer.phone.toLocaleString('fa-IR')}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="text-left text-gray-600">
-                            <div className="font-bold">شماره سریال: <span className="font-mono">{invoice.invoiceNumber}</span></div>
-                            <div className="mt-1">تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></div>
-                         </div>
                     </div>
 
                     <Table>
@@ -257,3 +262,5 @@ export default function InvoicePreviewPage() {
     
 
     
+
+}

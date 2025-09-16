@@ -131,7 +131,7 @@ export default function InvoicePreviewPage() {
                                 <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
                                    {storeInfo.logoUrl ? (
                                         <Image
-                                            src={storeInfo.logoUrl || ''}
+                                            src={storeInfo.logoUrl}
                                             alt={`${storeInfo.name} logo`}
                                             width={48}
                                             height={48}
@@ -145,6 +145,10 @@ export default function InvoicePreviewPage() {
                                 <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
                                </div>
                            </div>
+                           <div className="text-left text-sm text-white">
+                                <div className="font-bold">صورتحساب: <span className="font-mono">{invoice.invoiceNumber}</span></div>
+                                <div className="mt-1">تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></div>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -163,10 +167,7 @@ export default function InvoicePreviewPage() {
                             </div>
                         </div>
                         <div className="text-left">
-                            <div className="flex justify-end">
-                                <span className='font-semibold text-gray-500'>تاریخ:</span>
-                                <span className="mr-2 font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
-                            </div>
+                            {/* This section is moved to header */}
                          </div>
                     </div>
 
@@ -236,7 +237,5 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    
 
     

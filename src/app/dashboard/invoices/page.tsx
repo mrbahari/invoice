@@ -26,6 +26,15 @@ export default function InvoicesPage() {
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status}" تغییر یافت.`,
     });
   };
+  
+  const handleDeleteInvoice = (invoiceId: string) => {
+    const invoiceToDelete = allInvoices.find(inv => inv.id === invoiceId);
+    setAllInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+    toast({
+      title: 'فاکتور حذف شد',
+      description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
+    });
+  };
 
   const paidInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Paid'), [allInvoices]);
   const pendingInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Pending'), [allInvoices]);
@@ -43,6 +52,7 @@ export default function InvoicesPage() {
         tabs={tabsData}
         defaultTab="all"
         onStatusChange={handleUpdateStatus}
+        onDeleteInvoice={handleDeleteInvoice}
         pageActions={
             <Link href="/dashboard/invoices/new">
                 <Button size="sm" className="h-8 gap-1">

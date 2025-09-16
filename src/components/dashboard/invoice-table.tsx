@@ -27,6 +27,17 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -42,9 +53,10 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 type InvoiceTableProps = {
   invoiceList: Invoice[];
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
+  onDeleteInvoice: (invoiceId: string) => void;
 };
 
-export function InvoiceTable({ invoiceList, onStatusChange }: InvoiceTableProps) {
+export function InvoiceTable({ invoiceList, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
   return (
      <Card>
       <CardHeader className="px-7">
@@ -93,34 +105,50 @@ export function InvoiceTable({ invoiceList, onStatusChange }: InvoiceTableProps)
                   {formatCurrency(invoice.total)}
                 </TableCell>
                 <TableCell className="text-left">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">باز کردن منو</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/invoices/${invoice.id}`} className="w-full cursor-pointer">
-                          مشاهده جزئیات
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="w-full cursor-pointer">
-                          ویرایش
-                        </Link>
-                      </DropdownMenuItem>
-                      {invoice.status !== 'Paid' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(invoice.id, 'Paid')}>
-                          علامت‌گذاری به عنوان پرداخت شده
+                  <AlertDialog>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">باز کردن منو</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                         <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/invoices/${invoice.id}`} className="w-full cursor-pointer">
+                            مشاهده جزئیات
+                          </Link>
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem className="text-red-500">
-                        حذف
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="w-full cursor-pointer">
+                            ویرایش
+                          </Link>
+                        </DropdownMenuItem>
+                        {invoice.status !== 'Paid' && (
+                          <DropdownMenuItem onClick={() => onStatusChange(invoice.id, 'Paid')}>
+                            علامت‌گذاری به عنوان پرداخت شده
+                          </DropdownMenuItem>
+                        )}
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
+                            حذف
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice.invoiceNumber}» را برای همیشه حذف می‌کند.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDeleteInvoice(invoice.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}

@@ -35,11 +35,24 @@ import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProductsPage() {
-  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [activeTab, setActiveTab] = useState('all');
+  const { toast } = useToast();
 
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
@@ -58,6 +71,15 @@ export default function ProductsPage() {
     };
     
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
+  };
+  
+  const handleDeleteProduct = (productId: string) => {
+    const productToDelete = products.find(p => p.id === productId);
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    toast({
+        title: 'محصول حذف شد',
+        description: `محصول "${productToDelete?.name}" با موفقیت حذف شد.`,
+    });
   };
 
   const renderProductTable = (productList: typeof products) => (
@@ -110,21 +132,37 @@ export default function ProductsPage() {
                   {formatCurrency(product.price)}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">باز کردن منو</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/products/${product.id}/edit`}>ویرایش</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>حذف</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <AlertDialog>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">باز کردن منو</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/products/${product.id}/edit`}>ویرایش</Link>
+                        </DropdownMenuItem>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem className='text-red-600' onSelect={(e) => e.preventDefault()}>حذف</DropdownMenuItem>
+                        </AlertDialogTrigger>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                      <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
+                      </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                      <AlertDialogCancel>انصراف</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}

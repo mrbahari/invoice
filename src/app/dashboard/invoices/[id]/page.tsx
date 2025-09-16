@@ -148,7 +148,7 @@ export default function InvoicePreviewPage() {
                         <div className="w-full space-y-2 text-sm bg-white/10 p-4 rounded-lg backdrop-blur-sm">
                              <div className="flex justify-between text-white">
                                 <span className="font-semibold opacity-80">شماره سریال:</span>
-                                <span className="font-mono font-bold">{invoice.invoiceNumber.toLocaleString('fa-IR')}</span>
+                                <span className="font-mono font-bold">{invoice.invoiceNumber}</span>
                             </div>
                              <div className="flex justify-between text-white">
                                 <span className="font-semibold opacity-80">تاریخ:</span>
@@ -161,7 +161,7 @@ export default function InvoicePreviewPage() {
                             {customer?.phone && (
                                 <div className="flex justify-between text-white">
                                     <span className="font-semibold opacity-80">شماره تماس:</span>
-                                    <span className="font-mono font-bold">{customer.phone.toLocaleString('fa-IR')}</span>
+                                    <span className="font-mono font-bold">{customer.phone}</span>
                                 </div>
                             )}
                         </div>
@@ -183,7 +183,7 @@ export default function InvoicePreviewPage() {
                         <TableBody>
                             {invoice.items.map((item, index) => (
                             <TableRow key={index} className="border-b-gray-100">
-                                <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono" style={{ backgroundColor: `${storeInfo.themeColor}1A`, color: storeInfo.themeColor}}>{String(index + 1).padStart(2, '0').toLocaleString('fa-IR')}</TableCell>
+                                <TableCell className="text-center align-top font-medium bg-primary/10 text-primary pt-3 font-mono" style={{ backgroundColor: `${storeInfo.themeColor}1A`, color: storeInfo.themeColor}}>{String(index + 1).padStart(2, '0')}</TableCell>
                                 <TableCell className="py-3 align-top text-right">
                                     <p className="font-semibold text-gray-800">{item.productName}</p>
                                     <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
@@ -220,7 +220,7 @@ export default function InvoicePreviewPage() {
                             {storeInfo.phone && (
                               <div className="flex items-center gap-2">
                                   <Phone size={14} />
-                                  <span className="font-mono">{storeInfo.phone.toLocaleString('fa-IR')}</span>
+                                  <span className="font-mono">{storeInfo.phone}</span>
                               </div>
                             )}
                              {storeInfo.address && (
@@ -242,3 +242,5 @@ export default function InvoicePreviewPage() {
     
 
 }
+
+    

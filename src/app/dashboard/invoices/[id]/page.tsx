@@ -112,8 +112,8 @@ export default function InvoicePreviewPage() {
 
   return (
     <div id="invoice-preview">
-        <div className="bg-muted p-4 sm:p-8 rounded-lg">
-            <div className="flex justify-center gap-2 mb-6 no-print">
+        <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
+            <div className="flex justify-center gap-2 mb-6">
                 <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleDownloadImage}>
                     <Download className="h-3.5 w-3.5" />
                     <span>دانلود تصویر</span>
@@ -121,9 +121,8 @@ export default function InvoicePreviewPage() {
             </div>
             <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-card">
                 <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4 border-primary">
-                    <div className="absolute top-0 right-0 h-full w-full bg-primary/5"></div>
-                    <div className="relative p-8">
-                        <div className="h-28 w-full bg-primary absolute top-0 right-0" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 65%, 85% 100%, 0 100%)' }}></div>
+                    <div className="p-8">
+                        <div className="h-28 w-full bg-primary absolute top-0 right-0"></div>
                         <div className="relative flex items-center justify-between">
                            <div className="flex items-center gap-4">
                                 <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
@@ -139,7 +138,9 @@ export default function InvoicePreviewPage() {
                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor text-primary"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
                                    )}
                                 </div>
-                               <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
+                               <div className="bg-primary/50 px-4 py-1 rounded-md">
+                                <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
+                               </div>
                            </div>
                         </div>
                     </div>
@@ -185,7 +186,7 @@ export default function InvoicePreviewPage() {
                                     <p className="font-semibold text-gray-800">{item.productName}</p>
                                     <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                                 </TableCell>
-                                <TableCell className="text-center py-3 align-top font-bold text-base">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                                <TableCell className="text-center py-3 align-top font-bold text-base font-mono">{item.quantity.toLocaleString('fa-IR')}</TableCell>
                                 <TableCell className="text-center py-3 align-top font-mono text-base">{formatCurrency(item.unitPrice)}</TableCell>
                                 <TableCell className="text-center py-3 align-top font-mono text-base">{formatCurrency(item.totalPrice)}</TableCell>
                             </TableRow>
@@ -212,13 +213,13 @@ export default function InvoicePreviewPage() {
                     </div>
 
                 </CardContent>
-                 <footer className="relative bg-white rounded-b-lg mt-10">
-                    <div className="h-16 bg-primary" style={{ clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)' }}></div>
+                 <footer className="relative bg-white rounded-b-lg">
+                    <div className="h-16 bg-primary"></div>
                      <div className="absolute inset-0 p-4 flex items-center justify-center text-white text-xs">
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2">
                                 <Phone size={14} />
-                                <span>{storeInfo.phone.toLocaleString('fa-IR')}</span>
+                                <span className="font-mono">{storeInfo.phone.toLocaleString('fa-IR')}</span>
                             </div>
                              <div className="flex items-center gap-2">
                                 <Mail size={14} />
@@ -236,5 +237,7 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    
 
     

@@ -148,7 +148,7 @@ export default function InvoicePreviewPage() {
                         <div className="w-full space-y-2 text-sm bg-white/10 p-4 rounded-lg backdrop-blur-sm">
                              <div className="flex justify-between text-white">
                                 <span className="font-semibold opacity-80">شماره سریال:</span>
-                                <span className="font-mono font-bold">{invoice.invoiceNumber}</span>
+                                <span className="font-mono font-bold">{invoice.invoiceNumber.toLocaleString('fa-IR')}</span>
                             </div>
                              <div className="flex justify-between text-white">
                                 <span className="font-semibold opacity-80">تاریخ:</span>

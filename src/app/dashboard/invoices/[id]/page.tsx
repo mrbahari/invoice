@@ -136,10 +136,12 @@ export default function InvoicePreviewPage() {
                 
                 <CardContent className="p-8 bg-white">
                      <div className="flex justify-between items-start text-sm border-b pb-6 mb-10">
-                        <div>
-                            <span className="font-semibold text-gray-500">صورتحساب آقای/خانم:</span>
-                            <p className="font-bold text-lg text-gray-800 mt-1">{invoice.customerName}</p>
-                             {customer?.phone && <p className="text-sm text-gray-600 mt-1">شماره تماس: {customer.phone}</p>}
+                        <div className="flex items-baseline gap-4">
+                            <span className="font-semibold text-gray-500 whitespace-nowrap">صورتحساب آقای/خانم:</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className="font-bold text-lg text-gray-800">{invoice.customerName}</span>
+                                {customer?.phone && <span className="text-sm text-gray-600">({customer.phone})</span>}
+                            </div>
                         </div>
                         <div className="text-left">
                             <div className="flex justify-end">
@@ -218,5 +220,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    

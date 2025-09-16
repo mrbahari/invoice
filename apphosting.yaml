@@ -5,3 +5,7 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+# Required for Next.js image optimization.
+# https://firebase.google.com/docs/app-hosting/configure#next.js-image-optimization
+imageOptimization:
+  enabled: true

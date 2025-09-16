@@ -145,13 +145,13 @@ export default function InvoicePreviewPage() {
                         <div className="h-28 w-full absolute top-0 right-0" style={{ backgroundColor: storeInfo.themeColor }}></div>
                         <div className="relative flex items-center justify-center">
                            <div className="flex items-center gap-4">
-                                <div className="bg-white p-2 rounded-full shadow-md w-20 h-20 flex items-center justify-center">
+                                <div className="bg-white p-2 rounded-full shadow-md w-28 h-28 flex items-center justify-center">
                                    {storeInfo.logoUrl ? (
                                         <Image
                                             src={storeInfo.logoUrl}
                                             alt={`${storeInfo.name} logo`}
-                                            width={80}
-                                            height={80}
+                                            width={110}
+                                            height={110}
                                             className="object-cover rounded-full"
                                         />
                                    ) : (
@@ -250,4 +250,5 @@ export default function InvoicePreviewPage() {
         </div>
     </div>
   );
-}
+
+    

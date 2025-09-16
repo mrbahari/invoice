@@ -59,11 +59,11 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
     isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined
   );
   
-  const [items, setItems] = useState<InvoiceItemState[]>([]);
-  
-  useEffect(() => {
-    if (isEditMode && invoice) {
-      const invoiceItems = invoice.items.map(item => {
+  const [items, setItems] = useState<InvoiceItemState[]>(() => {
+    if (!isEditMode || !invoice) {
+        return [];
+    }
+    return invoice.items.map(item => {
         const product = products.find(p => p.id === item.productId);
         if (!product) return null;
         return {
@@ -72,11 +72,8 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
           unit: item.unit,
         }
       }).filter((item): item is InvoiceItemState => item !== null);
-      setItems(invoiceItems);
-    }
-  }, [invoice?.id]);
-
-
+  });
+  
   const [description, setDescription] = useState(invoice?.description || '');
   const [discount, setDiscount] = useState(invoice?.discount || 0);
   const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
@@ -229,7 +226,6 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
             toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
         }
         
-        // This is a mock implementation. In a real app, you would also update the customer list on the server.
         const customerExists = customers.some(c => c.id === selectedCustomer.id);
         if (!customerExists) {
             customers.push(selectedCustomer);
@@ -482,7 +478,3 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
     </div>
   );
 }
-
-    
-
-    

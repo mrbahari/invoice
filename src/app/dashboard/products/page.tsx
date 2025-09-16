@@ -28,6 +28,7 @@ import {
 import { products, categories } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
 
 export default function ProductsPage() {
   const getCategoryName = (categoryId: string) => {
@@ -125,12 +126,14 @@ export default function ProductsPage() {
           <Button size="sm" variant="outline" className="h-8 gap-1">
             خروجی
           </Button>
-          <Button size="sm" className="h-8 gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              افزودن محصول
-            </span>
-          </Button>
+          <Link href="/dashboard/products/new">
+            <Button size="sm" className="h-8 gap-1">
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                افزودن محصول
+              </span>
+            </Button>
+          </Link>
         </div>
       </div>
       <TabsContent value="all">

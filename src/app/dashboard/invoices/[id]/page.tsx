@@ -85,7 +85,7 @@ export default function InvoicePreviewPage() {
 
   const storeInfo = {
     name: category?.storeName || "فروشگاه",
-    logoUrl: category?.logoUrl || '/logo-sepehr.png', // default logo
+    logoUrl: category?.logoUrl,
     address: category?.storeAddress || 'آدرس ثبت نشده',
     phone: category?.storePhone || 'شماره ثبت نشده',
   };
@@ -119,9 +119,18 @@ export default function InvoicePreviewPage() {
                     <div className="h-28 w-full bg-primary absolute top-0 right-0" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 65%, 85% 100%, 0 100%)' }}></div>
                     <div className="relative flex items-center justify-between">
                        <div className="flex items-center gap-4">
-                           {/* Using a placeholder for logo */}
-                            <div className="bg-white p-2 rounded-full shadow-md">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor text-primary"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                            <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
+                               {storeInfo.logoUrl ? (
+                                    <Image
+                                        src={storeInfo.logoUrl}
+                                        alt={`${storeInfo.name} logo`}
+                                        width={48}
+                                        height={48}
+                                        className="object-contain"
+                                    />
+                               ) : (
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-anchor text-primary"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                               )}
                             </div>
                            <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
                        </div>

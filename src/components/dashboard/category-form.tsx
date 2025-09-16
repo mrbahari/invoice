@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import ReactDOMServer from 'react-dom/server';
 import {
   Card,
   CardContent,
@@ -17,13 +18,26 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
 import { initialCategories } from '@/lib/data';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse } from 'lucide-react';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { cn } from '@/lib/utils';
+import { Separator } from '../ui/separator';
 
 type CategoryFormProps = {
   category?: Category;
 };
+
+const iconList = [
+    { name: 'Store', component: Building },
+    { name: 'Cart', component: ShoppingCart },
+    { name: 'Laptop', component: Laptop },
+    { name: 'Shirt', component: Shirt },
+    { name: 'Gamepad', component: Gamepad },
+    { name: 'Food', component: Utensils },
+    { name: 'Car', component: Car },
+    { name: 'Health', component: HeartPulse },
+];
 
 export function CategoryForm({ category }: CategoryFormProps) {
   const router = useRouter();
@@ -48,6 +62,14 @@ export function CategoryForm({ category }: CategoryFormProps) {
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleIconSelect = (IconComponent: React.ElementType) => {
+    const svgString = ReactDOMServer.renderToString(
+      <IconComponent color="hsl(var(--primary))" size={48} />
+    );
+    const dataUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+    setLogo(dataUrl);
+  };
 
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -64,10 +86,12 @@ export function CategoryForm({ category }: CategoryFormProps) {
     setIsProcessing(true);
 
     setTimeout(() => {
+      const finalLogoUrl = logo || `https://picsum.photos/seed/${Math.random()}/48/48`;
+      
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
             c.id === category.id 
-            ? { ...c, name, storeName, storeAddress, storePhone, logoUrl: logo || c.logoUrl } 
+            ? { ...c, name, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl } 
             : c
         ));
         toast({
@@ -81,7 +105,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
           storeName,
           storeAddress,
           storePhone,
-          logoUrl: logo || `https://picsum.photos/seed/${Math.random()}/48/48`
+          logoUrl: finalLogoUrl
         };
         setCategories(prev => [newCategory, ...prev]);
         toast({
@@ -146,39 +170,69 @@ export function CategoryForm({ category }: CategoryFormProps) {
               placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴"
             />
           </div>
-          <div className="grid gap-3">
-              <Label htmlFor="logo">لوگوی فروشگاه</Label>
-              {logo ? (
-                <div className="relative w-40 h-40">
-                  <Image
-                    src={logo}
-                    alt="پیش‌نمایش لوگو"
-                    layout="fill"
-                    objectFit="contain"
-                    className="rounded-md border p-2"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                    onClick={() => setLogo(null)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+          <div className="grid gap-4">
+              <Label>لوگوی فروشگاه</Label>
+              <div className='flex items-start gap-6'>
+                {logo ? (
+                  <div className="relative w-24 h-24">
+                    <Image
+                      src={logo}
+                      alt="پیش‌نمایش لوگو"
+                      layout="fill"
+                      objectFit="contain"
+                      className="rounded-md border p-2"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
+                      onClick={() => setLogo(null)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                        <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                    </div>}
+
+                <div className='flex-1 grid gap-4'>
+                    <div className="flex items-center justify-center w-full">
+                      <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
+                          </div>
+                          <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                      </label>
+                    </div> 
                 </div>
-              ) : (
-                <div className="flex items-center justify-center w-full">
-                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">برای آپلود کلیک کنید</span> یا فایل را بکشید و رها کنید</p>
-                          <p className="text-xs text-muted-foreground">SVG, PNG, JPG (حداکثر 800x400px)</p>
-                      </div>
-                      <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
-                  </label>
-                </div> 
-              )}
+              </div>
+              
+              <div className="relative">
+                <Separator className="my-2" />
+                <span className="absolute top-1/2 right-1/2 -translate-y-1/2 -translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">یا</span>
+              </div>
+              
+              <div>
+                <p className="text-sm text-muted-foreground mb-3">یک آیکون انتخاب کنید:</p>
+                <div className="grid grid-cols-8 gap-2">
+                    {iconList.map((icon, index) => (
+                      <button
+                        type="button"
+                        key={index}
+                        onClick={() => handleIconSelect(icon.component)}
+                        className={cn(
+                          'flex items-center justify-center p-2 border rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+                          logo?.includes(btoa(ReactDOMServer.renderToString(<icon.component color="hsl(var(--primary))" size={48} />))) && 'bg-accent text-accent-foreground ring-2 ring-primary'
+                        )}
+                        title={icon.name}
+                      >
+                        <icon.component className="h-6 w-6" />
+                      </button>
+                    ))}
+                </div>
+              </div>
           </div>
         </CardContent>
         <CardFooter className="justify-end">
@@ -194,5 +248,5 @@ export function CategoryForm({ category }: CategoryFormProps) {
         </CardFooter>
       </Card>
     </form>
-  );
-}
+
+    

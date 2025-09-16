@@ -202,9 +202,6 @@ export default function InvoicePreviewPage() {
                             <div className="w-2/3 pr-4">
                                 <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
                                 <p className="mt-1 text-gray-700 font-medium">{toWords(invoice.total)} ریال</p>
-                                <div className="mt-10 pt-4 border-t border-dashed">
-                                    <span className="text-xs text-muted-foreground">جای مهر و امضاء فروشگاه</span>
-                                </div>
                             </div>
                             <div className="w-1/3 space-y-2">
                                  <div className="flex justify-between items-center p-3 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}1A` }}>

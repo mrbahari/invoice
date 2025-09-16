@@ -26,13 +26,8 @@ import {
 import { initialInvoices, initialCustomers } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import type { InvoiceStatus, Invoice, Customer } from '@/lib/definitions';
-import dynamic from 'next/dynamic';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-
-const OverviewChart = dynamic(
-  () => import('@/components/dashboard/overview-chart').then(mod => mod.OverviewChart),
-  { ssr: false, loading: () => <div style={{height: '350px'}}>در حال بارگذاری نمودار...</div> }
-);
+import { OverviewChart } from '@/components/dashboard/overview-chart';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -111,10 +106,10 @@ export default function DashboardPage() {
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle>نمای کلی فروش</CardTitle>
-            <CardDescription>نمای کلی از فروش در ۶ ماه گذشته.</CardDescription>
+            <CardDescription>نمای کلی از فروش در ۱۲ ماه گذشته.</CardDescription>
           </CardHeader>
           <CardContent className="pr-2">
-            <OverviewChart />
+            <OverviewChart invoices={invoices} />
           </CardContent>
         </Card>
         <Card>

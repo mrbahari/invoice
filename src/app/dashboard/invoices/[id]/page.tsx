@@ -25,39 +25,50 @@ import html2canvas from 'html2canvas';
 
 // A simple number to words converter for Persian
 function toWords(num: number): string {
-    if (num === 0) return "صفر";
-
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
-    const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+    const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
     const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
-    const thousands = ["", " هزار", " میلیون", " میلیارد"];
+    const thousands = ["", "هزار", "میلیون", "میلیارد", "تریلیون"];
 
-    let word = '';
+    if (num === 0) return "صفر";
+    if (num < 0) return "منفی " + toWords(Math.abs(num));
+
+    let word = "";
     let i = 0;
 
     while (num > 0) {
-        const chunk = num % 1000;
+        let chunk = num % 1000;
         if (chunk > 0) {
-            let chunkWord = '';
-            const h = Math.floor(chunk / 100);
-            const t = Math.floor((chunk % 100) / 10);
-            const u = chunk % 10;
+            let chunkWord = "";
+            let h = Math.floor(chunk / 100);
+            let t = Math.floor((chunk % 100) / 10);
+            let u = chunk % 10;
 
             if (h > 0) {
-                chunkWord += hundreds[h] + (t > 0 || u > 0 ? " و " : "");
+                chunkWord += hundreds[h];
+                if (t > 0 || u > 0) chunkWord += " و ";
             }
-            if (t === 1) {
-                chunkWord += teens[u];
+            
+            let remainder = chunk % 100;
+            if (remainder > 0) {
+                if (remainder < 10) {
+                    chunkWord += units[remainder];
+                } else if (remainder < 20) {
+                    chunkWord += teens[remainder - 10];
+                } else {
+                    chunkWord += tens[t];
+                    if (u > 0) {
+                        chunkWord += " و " + units[u];
+                    }
+                }
+            }
+
+            if (thousands[i]) {
+                word = chunkWord + " " + thousands[i] + (word ? " و " : "") + word;
             } else {
-                if (t > 1) {
-                    chunkWord += tens[t] + (u > 0 ? " و " : "");
-                }
-                if (u > 0 && t !== 1) {
-                    chunkWord += units[u];
-                }
+                word = chunkWord + (word ? " و " : "") + word;
             }
-            word = chunkWord.trim() + thousands[i] + (word ? " و " : "") + word;
         }
         num = Math.floor(num / 1000);
         i++;

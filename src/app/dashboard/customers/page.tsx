@@ -130,8 +130,9 @@ export default function CustomersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                        <DropdownMenuItem>مشاهده جزئیات</DropdownMenuItem>
-                        <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/customers/${customer.id}/edit`}>ویرایش</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>حذف</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

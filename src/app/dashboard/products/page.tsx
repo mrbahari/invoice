@@ -119,7 +119,9 @@ export default function ProductsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                      <DropdownMenuItem>ویرایش</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/products/${product.id}/edit`}>ویرایش</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>حذف</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

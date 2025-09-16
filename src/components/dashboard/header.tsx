@@ -43,18 +43,11 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { initialCategories } from '@/lib/data';
+import { initialCategories, initialCustomers, initialProducts } from '@/lib/data';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { Category, Customer, Product } from '@/lib/definitions';
 
-const mobileNavItems = [
-    { href: '/dashboard', icon: Home, label: 'داشبورد' },
-    { href: '/dashboard/invoices', icon: FileText, label: 'فاکتورها' },
-    { href: '/dashboard/products', icon: Package, label: 'محصولات' },
-    { href: '/dashboard/customers', icon: Users, label: 'مشتریان' },
-    { href: '/dashboard/categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
-    { href: '/dashboard/reports', icon: LineChart, label: 'گزارشات' },
-];
-
-function generateBreadcrumbs(pathname: string) {
+function generateBreadcrumbs(pathname: string, data: {categories: Category[], customers: Customer[], products: Product[]}) {
     const pathSegments = pathname.split('/').filter(Boolean);
     const breadcrumbs = pathSegments.map((segment, index) => {
         const href = '/' + pathSegments.slice(0, index + 1).join('/');
@@ -72,11 +65,17 @@ function generateBreadcrumbs(pathname: string) {
             case 'reports': name = 'گزارشات'; break;
             case 'settings': name = 'تنظیمات'; break;
             default:
-                if (pathSegments[1] === 'invoices' && index === 2 && !isLast) {
-                    name = `فاکتور #${pathSegments[2]}`;
-                } else if (pathSegments[1] === 'categories' && index === 2 && !isLast) {
-                    const category = initialCategories.find(c => c.id === segment);
+                if (pathSegments[index-1] === 'invoices' && !isLast) {
+                    name = `فاکتور #${pathSegments[index]}`;
+                } else if (pathSegments[index-1] === 'categories' && !isLast) {
+                    const category = data.categories.find(c => c.id === segment);
                     name = category ? `دسته ${category.name}` : segment;
+                } else if (pathSegments[index-1] === 'customers' && !isLast) {
+                    const customer = data.customers.find(c => c.id === segment);
+                    name = customer ? customer.name : segment;
+                } else if (pathSegments[index-1] === 'products' && !isLast) {
+                    const product = data.products.find(p => p.id === segment);
+                    name = product ? product.name : segment;
                 } else {
                     name = segment.charAt(0).toUpperCase() + segment.slice(1);
                 }
@@ -88,13 +87,19 @@ function generateBreadcrumbs(pathname: string) {
         breadcrumbs[0].href = '/dashboard';
     }
     
-    return breadcrumbs.slice(1); // Remove "Dashboard"
+    return breadcrumbs.slice(1);
 }
 
 export function Header() {
   const pathname = usePathname();
-  const breadcrumbs = generateBreadcrumbs(pathname);
   const { user, logout } = useAuth();
+  
+  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  
+  const breadcrumbs = generateBreadcrumbs(pathname, { categories, customers, products });
+
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
 
   return (
@@ -196,3 +201,12 @@ export function Header() {
     </header>
   );
 }
+
+const mobileNavItems = [
+    { href: '/dashboard', icon: Home, label: 'داشبورد' },
+    { href: '/dashboard/invoices', icon: FileText, label: 'فاکتورها' },
+    { href: '/dashboard/products', icon: Package, label: 'محصولات' },
+    { href: '/dashboard/customers', icon: Users, label: 'مشتریان' },
+    { href: '/dashboard/categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
+    { href: '/dashboard/reports', icon: LineChart, label: 'گزارشات' },
+];

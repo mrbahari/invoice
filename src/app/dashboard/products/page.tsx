@@ -1,3 +1,6 @@
+
+'use client';
+
 import Image from 'next/image';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -25,12 +28,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { products, categories } from '@/lib/data';
+import { initialProducts, initialCategories } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Product, Category } from '@/lib/definitions';
 
 export default function ProductsPage() {
+  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
   };

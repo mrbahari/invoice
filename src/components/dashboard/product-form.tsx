@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category } from '@/lib/definitions';
-import { products } from '@/lib/data';
+import { initialProducts } from '@/lib/data';
 import { Upload, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type ProductFormProps = {
   product?: Product;
@@ -39,6 +40,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
+  const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
   const [price, setPrice] = useState(product?.price || 0);
@@ -70,13 +72,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     setIsProcessing(true);
 
-    // Simulate API call
     setTimeout(() => {
       if (isEditMode && product) {
-        const productIndex = products.findIndex((p) => p.id === product.id);
-        if (productIndex > -1) {
-          products[productIndex] = { ...products[productIndex], name, description, price, categoryId, imageUrl: image || products[productIndex].imageUrl, };
-        }
+        setProducts(prev => prev.map(p => 
+            p.id === product.id 
+            ? { ...p, name, description, price, categoryId, imageUrl: image || p.imageUrl }
+            : p
+        ));
         toast({
           title: 'محصول با موفقیت ویرایش شد',
           description: `تغییرات برای محصول "${name}" ذخیره شد.`,
@@ -90,7 +92,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           categoryId,
           imageUrl: image || PlaceHolderImages.find(p => p.id === 'prod-1')!.imageUrl,
         };
-        products.unshift(newProduct);
+        setProducts(prev => [newProduct, ...prev]);
         toast({
           title: 'محصول جدید ایجاد شد',
           description: `محصول "${name}" با موفقیت ایجاد شد.`,

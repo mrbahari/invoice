@@ -27,8 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { categories as initialCategories, products } from '@/lib/data';
-import { useState } from 'react';
+import { initialCategories, initialProducts } from '@/lib/data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,9 +40,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Category, Product } from '@/lib/definitions';
 
 export default function CategoriesPage() {
-  const [categoryList, setCategoryList] = useState(initialCategories);
+  const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const { toast } = useToast();
   
   const getProductCount = (categoryId: string) => {
@@ -51,10 +53,8 @@ export default function CategoriesPage() {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    // In a real app, you would also make an API call to delete the category
     const categoryToDelete = categoryList.find(c => c.id === categoryId);
-    initialCategories.splice(initialCategories.findIndex(c => c.id === categoryId), 1);
-    setCategoryList(initialCategories);
+    setCategoryList(prev => prev.filter(c => c.id !== categoryId));
     
     toast({
         title: 'دسته‌بندی حذف شد',

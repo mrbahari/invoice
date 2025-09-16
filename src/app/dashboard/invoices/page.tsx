@@ -4,12 +4,14 @@
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { invoices as allInvoices } from '@/lib/data';
+import { initialInvoices } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
-import { InvoiceTable } from '@/components/dashboard/invoice-table';
 import { useMemo } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Invoice } from '@/lib/definitions';
 
 export default function InvoicesPage() {
+  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
 
   const paidInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Paid'), [allInvoices]);
   const pendingInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Pending'), [allInvoices]);

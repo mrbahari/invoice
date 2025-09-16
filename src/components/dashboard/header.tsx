@@ -43,7 +43,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { categories } from '@/lib/data';
+import { initialCategories } from '@/lib/data';
 
 const mobileNavItems = [
     { href: '/dashboard', icon: Home, label: 'داشبورد' },
@@ -75,7 +75,7 @@ function generateBreadcrumbs(pathname: string) {
                 if (pathSegments[1] === 'invoices' && index === 2 && !isLast) {
                     name = `فاکتور #${pathSegments[2]}`;
                 } else if (pathSegments[1] === 'categories' && index === 2 && !isLast) {
-                    const category = categories.find(c => c.id === segment);
+                    const category = initialCategories.find(c => c.id === segment);
                     name = category ? `دسته ${category.name}` : segment;
                 } else {
                     name = segment.charAt(0).toUpperCase() + segment.slice(1);

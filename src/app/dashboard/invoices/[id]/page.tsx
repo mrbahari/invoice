@@ -13,12 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { invoices, products, categories, customers } from '@/lib/data';
+import { initialInvoices, initialProducts, initialCategories, initialCustomers } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { Printer, CreditCard, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
 
 // A simple number to words converter for Persian
 function toWords(num: number): string {
@@ -66,13 +68,15 @@ function toWords(num: number): string {
 
 export default function InvoicePreviewPage() {
   const params = useParams<{ id: string }>();
+  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  
   const invoice = invoices.find((inv) => inv.id === params.id);
 
   if (!invoice) {
     notFound();
   }
-
-  const customer = customers.find(c => c.id === invoice.customerId);
 
   // Determine the store info based on the category of the first item
   const firstItem = invoice.items[0];
@@ -170,6 +174,9 @@ export default function InvoicePreviewPage() {
                         <div className="w-2/3 pr-4">
                             <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
                             <p className="mt-1 text-gray-700 font-medium">{toWords(invoice.total)} ریال</p>
+                            <div className="mt-10 pt-4 border-t border-dashed">
+                                <span className="text-xs text-muted-foreground">جای مهر و امضاء فروشگاه</span>
+                            </div>
                         </div>
                         <div className="w-1/3 space-y-2">
                              <div className="flex justify-between items-center bg-primary/5 p-3 rounded-md">

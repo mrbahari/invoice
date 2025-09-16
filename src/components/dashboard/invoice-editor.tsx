@@ -32,7 +32,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { categories, invoices, customers } from '@/lib/data';
+import { initialCategories, initialInvoices, initialCustomers, initialProducts } from '@/lib/data';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type InvoiceItemState = {
   product: Product;
@@ -43,17 +44,18 @@ type InvoiceItemState = {
 const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
 
 type InvoiceEditorProps = {
-    customers: Customer[];
-    products: Product[];
     invoice?: Invoice;
 }
 
-export function InvoiceEditor({ customers: initialCustomersProp, products, invoice }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
-  const [customerList, setCustomerList] = useState<Customer[]>(initialCustomersProp);
+  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(
     isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined
@@ -104,7 +106,7 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
         address: 'آدرس ثبت نشده',
         purchaseHistory: 'مشتری جدید',
     };
-    setCustomerList(prev => [...prev, newCustomer]);
+    setCustomerList(prev => [newCustomer, ...prev]);
     setSelectedCustomer(newCustomer);
     setCustomerSearch(''); // Clear search after adding
     toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
@@ -173,33 +175,29 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
     setIsProcessing(true);
 
     setTimeout(() => {
-        if (isEditMode) {
-            // Update existing invoice
-            const invoiceIndex = invoices.findIndex(inv => inv.id === invoice.id);
-            if (invoiceIndex > -1) {
-                invoices[invoiceIndex] = {
-                    ...invoices[invoiceIndex],
-                    customerId: selectedCustomer.id,
-                    customerName: selectedCustomer.name,
-                    customerEmail: selectedCustomer.email,
-                    items: items.map(item => ({
-                        productId: item.product.id,
-                        productName: item.product.name,
-                        quantity: item.quantity,
-                        unit: item.unit,
-                        unitPrice: item.product.price,
-                        totalPrice: item.product.price * item.quantity,
-                    })),
-                    subtotal,
-                    discount,
-                    tax: taxAmount,
-                    total,
-                    description: description || 'فاکتور ویرایش شده',
-                };
-            }
+        if (isEditMode && invoice) {
+            const updatedInvoice = {
+                ...invoice,
+                customerId: selectedCustomer.id,
+                customerName: selectedCustomer.name,
+                customerEmail: selectedCustomer.email,
+                items: items.map(item => ({
+                    productId: item.product.id,
+                    productName: item.product.name,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                    unitPrice: item.product.price,
+                    totalPrice: item.product.price * item.quantity,
+                })),
+                subtotal,
+                discount,
+                tax: taxAmount,
+                total,
+                description: description || 'فاکتور ویرایش شده',
+            };
+            setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
              toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
         } else {
-            // Create new invoice
             const newInvoice: Invoice = {
                 id: `inv-${Math.random().toString(36).substr(2, 9)}`,
                 invoiceNumber: `HIS-${(invoices.length + 1).toString().padStart(3, '0')}`,
@@ -222,13 +220,8 @@ export function InvoiceEditor({ customers: initialCustomersProp, products, invoi
                 total,
                 description: description || 'فاکتور ایجاد شده',
             };
-            invoices.unshift(newInvoice);
+            setInvoices(prev => [newInvoice, ...prev]);
             toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
-        }
-        
-        const customerExists = customers.some(c => c.id === selectedCustomer.id);
-        if (!customerExists) {
-            customers.push(selectedCustomer);
         }
 
         setIsProcessing(false);

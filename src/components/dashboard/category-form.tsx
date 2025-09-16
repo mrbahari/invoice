@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -16,9 +16,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
-import { categories } from '@/lib/data';
+import { initialCategories } from '@/lib/data';
 import { Upload, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type CategoryFormProps = {
   category?: Category;
@@ -29,6 +30,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const { toast } = useToast();
   const isEditMode = !!category;
 
+  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [name, setName] = useState(category?.name || '');
   const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
@@ -61,27 +63,18 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
     setIsProcessing(true);
 
-    // Simulate API call
     setTimeout(() => {
       if (isEditMode && category) {
-        // Update existing category
-        const categoryIndex = categories.findIndex((c) => c.id === category.id);
-        if (categoryIndex > -1) {
-          categories[categoryIndex] = {
-            ...categories[categoryIndex],
-            name,
-            storeName,
-            storeAddress,
-            storePhone,
-            logoUrl: logo || categories[categoryIndex].logoUrl,
-          };
-        }
+        setCategories(prev => prev.map(c => 
+            c.id === category.id 
+            ? { ...c, name, storeName, storeAddress, storePhone, logoUrl: logo || c.logoUrl } 
+            : c
+        ));
         toast({
           title: 'دسته‌بندی با موفقیت ویرایش شد',
           description: `تغییرات برای دسته‌بندی "${name}" ذخیره شد.`,
         });
       } else {
-        // Create new category
         const newCategory: Category = {
           id: `cat-${Math.random().toString(36).substr(2, 9)}`,
           name,
@@ -90,7 +83,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
           storePhone,
           logoUrl: logo || '/placeholder-logo.png'
         };
-        categories.unshift(newCategory);
+        setCategories(prev => [newCategory, ...prev]);
         toast({
           title: 'دسته‌بندی جدید ایجاد شد',
           description: `دسته‌بندی "${name}" با موفقیت ایجاد شد.`,
@@ -99,7 +92,6 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
       setIsProcessing(false);
       router.push('/dashboard/categories');
-      router.refresh(); // Refresh the page to show the new category
     }, 1000);
   };
 

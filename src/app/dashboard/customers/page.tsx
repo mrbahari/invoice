@@ -26,14 +26,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { customers as initialCustomers, invoices } from '@/lib/data';
+import { initialCustomers, initialInvoices } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Customer, Invoice } from '@/lib/definitions';
 
 export default function CustomersPage() {
-  const [customerList, setCustomerList] = useState(initialCustomers);
+  const [customerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
 
   const getCustomerStats = (customerId: string) => {
     const customerInvoices = invoices.filter(inv => inv.customerId === customerId);

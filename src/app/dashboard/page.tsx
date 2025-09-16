@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -22,10 +23,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { invoices, customers } from '@/lib/data';
+import { initialInvoices, initialCustomers } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
-import type { InvoiceStatus } from '@/lib/definitions';
+import type { InvoiceStatus, Invoice, Customer } from '@/lib/definitions';
 import dynamic from 'next/dynamic';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const OverviewChart = dynamic(
   () => import('@/components/dashboard/overview-chart').then(mod => mod.OverviewChart),
@@ -46,6 +48,8 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 
 
 export default function DashboardPage() {
+  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const totalRevenue = invoices.reduce((acc, inv) => acc + inv.total, 0);
   const totalSales = invoices.length;
   const totalCustomers = customers.length;

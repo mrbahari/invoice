@@ -1,8 +1,8 @@
 
-import { Category, Customer, Invoice, Product, InvoiceItem, UnitOfMeasurement } from '@/lib/definitions';
+import { Category, Customer, Invoice, Product, InvoiceItem } from '@/lib/definitions';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export let categories: Category[] = [
+export const initialCategories: Category[] = [
   { 
     id: 'cat-1', 
     name: 'الکترونیک', 
@@ -29,16 +29,16 @@ export let categories: Category[] = [
   },
 ];
 
-export const products: Product[] = [
-  { id: 'prod-1', name: 'لپتاپ پرو', description: 'لپتاپ با کارایی بالا برای حرفه‌ای‌ها.', price: 1499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-1')?.imageUrl!, categoryId: 'cat-1' },
-  { id: 'prod-2', name: 'موس بی‌سیم', description: 'موس بی‌سیم ارگونومیک.', price: 49.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-2')?.imageUrl!, categoryId: 'cat-3' },
-  { id: 'prod-3', name: 'کیبورد مکانیکی', description: 'کیبورد مکانیکی با نورپردازی RGB.', price: 129.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-3')?.imageUrl!, categoryId: 'cat-3' },
-  { id: 'prod-4', name: 'مانیتور 4K', description: 'مانیتور ۲۷ اینچ 4K UHD.', price: 499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-4')?.imageUrl!, categoryId: 'cat-1' },
-  { id: 'prod-5', name: 'صندلی ارگونومیک', description: 'صندلی اداری ارگونومیک.', price: 399.00, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-5')?.imageUrl!, categoryId: 'cat-2' },
-  { id: 'prod-6', name: 'هدفون نویز کنسلینگ', description: 'هدفون روی گوش با قابلیت حذف نویز.', price: 249.50, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-6')?.imageUrl!, categoryId: 'cat-3' },
+export const initialProducts: Product[] = [
+  { id: 'prod-1', name: 'لپتاپ پرو', description: 'لپتاپ با کارایی بالا برای حرفه‌ای‌ها.', price: 1499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-1')!.imageUrl, categoryId: 'cat-1' },
+  { id: 'prod-2', name: 'موس بی‌سیم', description: 'موس بی‌سیم ارگونومیک.', price: 49.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-2')!.imageUrl, categoryId: 'cat-3' },
+  { id: 'prod-3', name: 'کیبورد مکانیکی', description: 'کیبورد مکانیکی با نورپردازی RGB.', price: 129.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-3')!.imageUrl, categoryId: 'cat-3' },
+  { id: 'prod-4', name: 'مانیتور 4K', description: 'مانیتور ۲۷ اینچ 4K UHD.', price: 499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-4')!.imageUrl, categoryId: 'cat-1' },
+  { id: 'prod-5', name: 'صندلی ارگونومیک', description: 'صندلی اداری ارگونومیک.', price: 399.00, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-5')!.imageUrl, categoryId: 'cat-2' },
+  { id: 'prod-6', name: 'هدفون نویز کنسلینگ', description: 'هدفون روی گوش با قابلیت حذف نویز.', price: 249.50, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-6')!.imageUrl, categoryId: 'cat-3' },
 ];
 
-export let customers: Customer[] = [
+export const initialCustomers: Customer[] = [
   { id: 'cust-1', name: 'شرکت نوآوران', email: 'contact@innovate.com', phone: '021-5550101', address: 'پارک علم و فناوری، تهران', purchaseHistory: 'خریدار دائمی لوازم الکترونیکی پیشرفته. مجموع خرج: ۸,۵۰۰ تومان در ۱۲ سفارش.' },
   { id: 'cust-2', name: 'راهکارهای خلاق', email: 'hello@creative.io', phone: '021-5550102', address: 'خیابان هنر، تهران', purchaseHistory: 'خریدار لوازم جانبی و گاهی مبلمان. مجموع خرج: ۱,۲۰۰ تومان در ۵ سفارش.' },
   { id: 'cust-3', name: 'مرکز استارتاپ', email: 'admin@startuphub.co', phone: '021-5550103', address: 'بزرگراه کارآفرینی، تهران', purchaseHistory: 'مشتری جدید، اولین سفارش بزرگ برای تجهیز دفتر. مجموع خرج: ۴,۵۰۰ تومان در ۱ سفارش.' },
@@ -61,7 +61,7 @@ const invoiceItems4: InvoiceItem[] = [
     ];
 
 
-export let invoices: Invoice[] = [
+export const initialInvoices: Invoice[] = [
   {
     id: 'inv-001',
     invoiceNumber: 'HIS-001',

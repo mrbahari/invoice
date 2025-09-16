@@ -17,7 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Customer } from '@/lib/definitions';
-import { customers } from '@/lib/data';
+import { initialCustomers } from '@/lib/data';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type CustomerFormProps = {
   customer?: Customer;
@@ -28,6 +29,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
   const { toast } = useToast();
   const isEditMode = !!customer;
 
+  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [name, setName] = useState(customer?.name || '');
   const [email, setEmail] = useState(customer?.email || '');
   const [phone, setPhone] = useState(customer?.phone || '');
@@ -47,19 +49,13 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
     setIsProcessing(true);
 
-    // Simulate API call
     setTimeout(() => {
       if (isEditMode && customer) {
-        const customerIndex = customers.findIndex((c) => c.id === customer.id);
-        if (customerIndex > -1) {
-          customers[customerIndex] = {
-            ...customers[customerIndex],
-            name,
-            email,
-            phone,
-            address,
-          };
-        }
+        setCustomers(prev => prev.map(c => 
+            c.id === customer.id 
+            ? { ...c, name, email, phone, address } 
+            : c
+        ));
         toast({
           title: 'مشتری با موفقیت ویرایش شد',
           description: `تغییرات برای مشتری "${name}" ذخیره شد.`,
@@ -73,7 +69,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           address: address || 'آدرس ثبت نشده',
           purchaseHistory: 'مشتری جدید',
         };
-        customers.unshift(newCustomer);
+        setCustomers(prev => [newCustomer, ...prev]);
         toast({
           title: 'مشتری جدید ایجاد شد',
           description: `مشتری "${name}" با موفقیت ایجاد شد.`,
@@ -82,7 +78,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
       setIsProcessing(false);
       router.push('/dashboard/customers');
-      router.refresh(); 
     }, 1000);
   };
 

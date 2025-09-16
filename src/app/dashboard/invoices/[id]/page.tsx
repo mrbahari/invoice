@@ -26,60 +26,40 @@ import html2canvas from 'html2canvas';
 // A correct number to words converter for Persian
 function toWords(num: number): string {
     if (num === 0) return 'صفر';
-
+    const and = ' و ';
     const units = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
     const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
     const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
     const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
     const thousands = ['', ' هزار', ' میلیون', ' میلیارد', ' تریلیون'];
 
-    function convertThreeDigits(n: number): string {
-        if (n === 0) return '';
-        
-        let word = '';
-        const h = Math.floor(n / 100);
-        const rem = n % 100;
-
-        if (h > 0) {
-            word += hundreds[h];
-        }
-
-        if (rem > 0) {
-            if (word.length > 0) word += ' و ';
-            if (rem < 10) {
-                word += units[rem];
-            } else if (rem < 20) {
-                word += teens[rem - 10];
-            } else {
-                const t = Math.floor(rem / 10);
-                const u = rem % 10;
-                word += tens[t];
-                if (u > 0) {
-                    word += ' و ' + units[u];
-                }
-            }
-        }
-        return word;
+    function convert(n: number): string {
+        if (n < 10) return units[n];
+        if (n < 20) return teens[n - 10];
+        if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 > 0 ? and + units[n % 10] : '');
+        if (n < 1000) return hundreds[Math.floor(n / 100)] + (n % 100 > 0 ? and + convert(n % 100) : '');
+        return '';
     }
 
-    let numStr = Math.floor(num).toString();
-    let result: string[] = [];
-    let chunkIndex = 0;
-
-    while (numStr.length > 0) {
-        let chunk = parseInt(numStr.slice(Math.max(0, numStr.length - 3)));
+    if (num === 0) return 'صفر';
+    
+    let result = '';
+    let i = 0;
+    while (num > 0) {
+        const chunk = num % 1000;
         if (chunk > 0) {
-            let chunkWord = convertThreeDigits(chunk);
-            if (chunkIndex > 0) {
-                chunkWord += thousands[chunkIndex];
+            const chunkWord = convert(chunk);
+            if (i > 0) {
+                result = chunkWord + thousands[i] + (result ? and + result : '');
+            } else {
+                result = chunkWord;
             }
-            result.unshift(chunkWord);
         }
-        numStr = numStr.slice(0, Math.max(0, numStr.length - 3));
-        chunkIndex++;
+        num = Math.floor(num / 1000);
+        i++;
     }
 
-    return result.join(' و ');
+    return result;
 }
 
 
@@ -142,7 +122,7 @@ export default function InvoicePreviewPage() {
                 <header className="relative bg-white rounded-t-lg overflow-hidden border-b-4" style={{ borderColor: storeInfo.themeColor }}>
                     <div className="p-8">
                         <div className="h-28 w-full absolute top-0 right-0" style={{ backgroundColor: storeInfo.themeColor }}></div>
-                        <div className="relative flex items-center justify-between">
+                        <div className="relative flex items-center justify-center">
                            <div className="flex items-center gap-4">
                                 <div className="bg-white p-2 rounded-full shadow-md w-16 h-16 flex items-center justify-center">
                                    {storeInfo.logoUrl ? (
@@ -255,6 +235,8 @@ export default function InvoicePreviewPage() {
 
 
 
+
+    
 
     
 

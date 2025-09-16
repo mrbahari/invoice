@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { parseISO, format } from 'date-fns-jalali';
+import { parseISO, format, subMonths, startOfMonth, isAfter } from 'date-fns-jalali';
 import type { Invoice } from '@/lib/definitions';
 import { formatCurrency } from '@/lib/utils';
 
@@ -14,12 +14,10 @@ type OverviewChartProps = {
 
 export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) {
   const data = useMemo(() => {
-    if (!invoices || invoices.length === 0) {
-      return [];
-    }
-
+    const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+    
     if (period === 'today' || period === '7d') {
-      // Group by day
+      // Group by day logic remains the same
       const dailyData = invoices.reduce<Record<string, number>>((acc, invoice) => {
         const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
         if (!acc[day]) {
@@ -35,30 +33,65 @@ export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) 
           total,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-        // Group by month
-        const monthlyData = invoices.reduce<Record<string, number>>((acc, invoice) => {
-            const month = format(parseISO(invoice.date), 'yyyy-MM');
-            if (!acc[month]) {
-            acc[month] = 0;
-            }
-            acc[month] += invoice.total;
-            return acc;
-        }, {});
-
-        const sortedMonths = Object.keys(monthlyData).sort();
-        const monthNames = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
-        
-        return sortedMonths.map(monthKey => {
-            const date = parseISO(`${monthKey}-01`);
-            const monthIndex = date.getMonth();
-            const year = date.getFullYear(); // Gregorian year
-            return {
-                name: `${monthNames[monthIndex]}`,
-                total: monthlyData[monthKey],
-            };
-        });
     }
+
+    // --- Monthly Data Logic ---
+    
+    // 1. Group actual sales by month
+    const monthlySales = invoices.reduce<Record<string, number>>((acc, invoice) => {
+        const monthKey = format(parseISO(invoice.date), 'yyyy-MM');
+        if (!acc[monthKey]) {
+            acc[monthKey] = 0;
+        }
+        acc[monthKey] += invoice.total;
+        return acc;
+    }, {});
+
+    // 2. Determine date range
+    const now = new Date();
+    const threeMonthsAgo = startOfMonth(subMonths(now, 2)); // Start of 3 months ago
+    
+    let earliestDate = threeMonthsAgo;
+    if (invoices.length > 0) {
+        const earliestInvoiceDate = invoices.reduce((earliest, inv) => {
+            const invDate = parseISO(inv.date);
+            return invDate < earliest ? invDate : earliest;
+        }, now);
+        
+        if (isAfter(threeMonthsAgo, earliestInvoiceDate)) {
+            earliestDate = startOfMonth(earliestInvoiceDate);
+        }
+    }
+
+    // 3. Generate all months in the range
+    const allMonths: { name: string; total: number }[] = [];
+    let currentMonth = earliestDate;
+
+    while (isAfter(now, currentMonth) || currentMonth.getMonth() === now.getMonth()) {
+        const monthKey = format(currentMonth, 'yyyy-MM');
+        const monthIndex = currentMonth.getMonth();
+
+        allMonths.push({
+            name: `${monthNames[monthIndex]}`,
+            total: monthlySales[monthKey] || 0,
+        });
+
+        // Move to the next month
+        const nextMonthDate = new Date(currentMonth);
+        nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+        
+        // Break loop if next month is in the future and not the same year
+        if (nextMonthDate > now && nextMonthDate.getFullYear() > now.getFullYear()) {
+             break;
+        }
+        currentMonth = nextMonthDate;
+
+        // Safety break
+        if(allMonths.length > 36) break;
+    }
+
+    return allMonths;
+
   }, [invoices, period]);
 
 

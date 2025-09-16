@@ -1,3 +1,4 @@
+
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ import {
 import { customers, invoices } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 export default function CustomersPage() {
   const getCustomerStats = (customerId: string) => {
@@ -49,12 +51,14 @@ export default function CustomersPage() {
                 <Button size="sm" variant="outline" className="h-8 gap-1">
                     خروجی
                 </Button>
-                <Button size="sm" className="h-8 gap-1">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    افزودن مشتری
-                    </span>
-                </Button>
+                <Link href="/dashboard/customers/new">
+                  <Button size="sm" className="h-8 gap-1">
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      افزودن مشتری
+                      </span>
+                  </Button>
+                </Link>
             </div>
         </div>
       </CardHeader>

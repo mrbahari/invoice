@@ -53,25 +53,18 @@ export function downloadCSV(data: any[], filename: string = 'export.csv', header
 }
 
 export function getStorePrefix(storeName: string): string {
-  // Remove common Persian store-related words
+  // Remove common Persian store-related words and then all non-alphabetic chars
   const cleanedName = storeName
     .replace(/فروشگاه/g, '')
     .replace(/شرکت/g, '')
     .replace(/گروه/g, '')
+    .replace(/[^a-zA-Z]/g, '') // Keep only English letters
     .trim();
 
-  // Extract the first 3 letters of the remaining words
-  const words = cleanedName.split(/\s+/);
-  const prefix = words
-    .map(word => word.charAt(0))
-    .join('')
-    .slice(0, 3)
-    .toUpperCase();
-    
-  // If prefix is less than 3 chars, pad it with the store name itself
-  if (prefix.length < 3) {
-      return (prefix + cleanedName.replace(/\s/g, '').slice(0,3)).slice(0,3).toUpperCase();
+  if (cleanedName.length > 0) {
+    return cleanedName.slice(0, 3).toUpperCase();
   }
   
-  return prefix;
+  // Fallback for names with no english letters
+  return 'INV';
 }

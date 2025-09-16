@@ -44,13 +44,14 @@ function toWords(num: number): string {
             let h = Math.floor(chunk / 100);
             let t = Math.floor((chunk % 100) / 10);
             let u = chunk % 10;
+            
+            let remainder = chunk % 100;
 
             if (h > 0) {
                 chunkWord += hundreds[h];
-                if (t > 0 || u > 0) chunkWord += " و ";
+                if (remainder > 0) chunkWord += " و ";
             }
             
-            let remainder = chunk % 100;
             if (remainder > 0) {
                 if (remainder < 10) {
                     chunkWord += units[remainder];
@@ -250,3 +251,4 @@ export default function InvoicePreviewPage() {
 }
 
     
+

@@ -75,11 +75,11 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     event.preventDefault();
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
 
-    if (!name || !numericPrice || !categoryId) {
+    if (!name || numericPrice === undefined || numericPrice < 0 || !categoryId) {
       toast({
         variant: 'destructive',
-        title: 'فیلدهای الزامی خالی است',
-        description: 'لطفاً نام، قیمت و دسته‌بندی محصول را وارد کنید.',
+        title: 'فیلدهای الزامی خالی یا نامعتبر است',
+        description: 'لطفاً نام، قیمت معتبر و دسته‌بندی محصول را وارد کنید.',
       });
       return;
     }
@@ -104,7 +104,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           description,
           price: numericPrice,
           categoryId,
-          imageUrl: image || PlaceHolderImages.find(p => p.id === 'prod-1')!.imageUrl,
+          imageUrl: image || PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)].imageUrl,
         };
         setProducts(prev => [newProduct, ...prev]);
         toast({

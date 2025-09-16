@@ -23,39 +23,56 @@ export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) 
       acc[day] += invoice.total;
       return acc;
     }, {});
-
-    // Generate all days for the last 7 days
+    
+    // Always generate the last 7 days as a base
     const today = new Date();
-    const last7Days = subDays(today, 6);
-    const dateRange = eachDayOfInterval({ start: last7Days, end: today });
-
+    const last7DaysDate = subDays(today, 6);
+    const sevenDayRange = eachDayOfInterval({ start: last7DaysDate, end: today });
+    
     // Create a complete dataset for the last 7 days, filling missing days with 0
-    const completeData = dateRange.map(date => {
+    const sevenDayData = sevenDayRange.map(date => {
         const dayString = format(date, 'yyyy-MM-dd');
         return {
             name: format(date, 'MM/dd'),
             total: salesByDay[dayString] || 0,
         };
     });
-    
-    // If period is 'all', we might need to show more than 7 days
-    if (period === 'all') {
-        const allSalesDays = Object.keys(salesByDay)
-            .sort()
-            .map(dayString => ({
-                name: format(parseISO(dayString), 'MM/dd'),
-                total: salesByDay[dayString],
-            }));
 
-        // If there are sales older than 7 days, show all of them.
-        // Otherwise, stick to the 7-day view.
-        if (allSalesDays.length > 0 && parseISO(Object.keys(salesByDay).sort()[0]) < last7Days) {
-            return allSalesDays;
-        }
+    // If period is 'all' and there are sales older than 7 days, show all sales days.
+    // Otherwise, for '7d', '30d', 'today', or 'all' (with no old data), stick to the 7-day view.
+    const allSalesDaysSorted = Object.keys(salesByDay).sort();
+    if (period === 'all' && allSalesDaysSorted.length > 0 && parseISO(allSalesDaysSorted[0]) < last7DaysDate) {
+      return allSalesDaysSorted.map(dayString => ({
+        name: format(parseISO(dayString), 'MM/dd'),
+        total: salesByDay[dayString],
+      }));
+    }
+    
+    // For other periods, we can filter the invoices, but for simplicity and to always show a trend,
+    // we will stick to the 7-day view, which will correctly reflect the totals for '7d' and 'today' within it.
+    // The main `invoices` prop is already filtered in the reports page, so `salesByDay` is correct.
+    // So if the filtered invoices fall within the 7 day range, they will be shown.
+    // If not, the chart will show 0 for the last 7 days, which is correct.
+    
+    // When the period is not 'all', it means the invoices are already filtered.
+    // So we just need to format them. If there's no data, we should still show the last 7 days.
+    if(invoices.length === 0) {
+        return sevenDayData;
+    }
+
+    const allFilteredSalesDays = Object.keys(salesByDay)
+      .sort()
+      .map(dayString => ({
+          name: format(parseISO(dayString), 'MM/dd'),
+          total: salesByDay[dayString],
+      }));
+
+    if (period !== 'all' && allFilteredSalesDays.length > 0) {
+        return allFilteredSalesDays;
     }
 
 
-    return completeData;
+    return sevenDayData;
 
   }, [invoices, period]);
 

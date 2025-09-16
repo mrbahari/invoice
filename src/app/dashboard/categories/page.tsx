@@ -90,7 +90,7 @@ export default function CategoriesPage() {
             <TableRow>
               <TableHead>نام دسته‌بندی</TableHead>
               <TableHead>نام فروشگاه</TableHead>
-              <TableHead className="hidden sm:table-cell">اطلاعات تماس</TableHead>
+              <TableHead className="hidden sm:table-cell">آدرس</TableHead>
               <TableHead className="text-left">محصولات</TableHead>
               <TableHead>
                 <span className="sr-only">اقدامات</span>

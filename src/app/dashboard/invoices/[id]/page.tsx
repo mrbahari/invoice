@@ -138,9 +138,14 @@ export default function InvoicePreviewPage() {
                      <div className="flex justify-between items-start text-sm border-b pb-6 mb-10">
                         <div className="flex items-baseline gap-4">
                             <span className="font-semibold text-gray-500 whitespace-nowrap">صورتحساب آقای/خانم:</span>
-                            <div className="flex items-baseline gap-2">
+                            <div className="flex flex-col items-start gap-1">
                                 <span className="font-bold text-lg text-gray-800">{invoice.customerName}</span>
-                                {customer?.phone && <span className="text-sm text-gray-600">({customer.phone})</span>}
+                                {customer?.phone && (
+                                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                      <span>شماره تماس:</span>
+                                      <span className="font-mono">{customer.phone.toLocaleString('fa-IR')}</span>
+                                  </div>
+                                )}
                             </div>
                         </div>
                         <div className="text-left">
@@ -220,3 +225,5 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    

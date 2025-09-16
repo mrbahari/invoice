@@ -43,7 +43,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
-  const [price, setPrice] = useState(product?.price || 0);
+  const [price, setPrice] = useState<number | string>(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [image, setImage] = useState<string | null>(product?.imageUrl || null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -58,10 +58,24 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       reader.readAsDataURL(file);
     }
   };
+  
+  const handlePriceFocus = () => {
+    if (price === 0) {
+      setPrice('');
+    }
+  };
+
+  const handlePriceBlur = () => {
+    if (price === '') {
+      setPrice(0);
+    }
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name || !price || !categoryId) {
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+
+    if (!name || !numericPrice || !categoryId) {
       toast({
         variant: 'destructive',
         title: 'فیلدهای الزامی خالی است',
@@ -76,7 +90,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       if (isEditMode && product) {
         setProducts(prev => prev.map(p => 
             p.id === product.id 
-            ? { ...p, name, description, price, categoryId, imageUrl: image || p.imageUrl }
+            ? { ...p, name, description, price: numericPrice, categoryId, imageUrl: image || p.imageUrl }
             : p
         ));
         toast({
@@ -88,7 +102,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           id: `prod-${Math.random().toString(36).substr(2, 9)}`,
           name,
           description,
-          price,
+          price: numericPrice,
           categoryId,
           imageUrl: image || PlaceHolderImages.find(p => p.id === 'prod-1')!.imageUrl,
         };
@@ -142,7 +156,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     id="price"
                     type="number"
                     value={price}
-                    onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onFocus={handlePriceFocus}
+                    onBlur={handlePriceBlur}
                     required
                 />
             </div>

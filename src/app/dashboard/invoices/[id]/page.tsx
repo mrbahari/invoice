@@ -177,8 +177,8 @@ export default function InvoicePreviewPage() {
                                 <TableHead className="w-16 text-center rounded-r-md text-white">ردیف</TableHead>
                                 <TableHead className='text-white'>شرح</TableHead>
                                 <TableHead className="w-24 text-center text-white">تعداد</TableHead>
-                                <TableHead className="w-32 text-center text-white">فی</TableHead>
-                                <TableHead className="w-32 text-center rounded-l-md text-white">جمع کل</TableHead>
+                                <TableHead className="w-32 text-right text-white">فی</TableHead>
+                                <TableHead className="w-32 text-right rounded-l-md text-white">جمع کل</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -190,8 +190,8 @@ export default function InvoicePreviewPage() {
                                     <p className="text-xs text-gray-500">{products.find(p=>p.id === item.productId)?.description}</p>
                                 </TableCell>
                                 <TableCell className="text-center py-3 align-top font-bold text-base font-mono">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                                <TableCell className="text-center py-3 align-top font-mono text-base">{formatCurrency(item.unitPrice)}</TableCell>
-                                <TableCell className="text-center py-3 align-top font-mono text-base">{formatCurrency(item.totalPrice)}</TableCell>
+                                <TableCell className="text-right py-3 align-top font-mono text-base">{formatCurrency(item.unitPrice)}</TableCell>
+                                <TableCell className="text-right py-3 align-top font-mono text-base">{formatCurrency(item.totalPrice)}</TableCell>
                             </TableRow>
                             ))}
                         </TableBody>
@@ -237,5 +237,7 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
+
+    
 
     

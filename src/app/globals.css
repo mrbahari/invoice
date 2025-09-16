@@ -81,35 +81,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@media print {
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  body * {
-    visibility: hidden;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-  
-  #invoice-card, #invoice-card * {
-    visibility: visible;
-  }
-
-  #invoice-card {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    box-shadow: none;
-    border: none;
-  }
-}
-    

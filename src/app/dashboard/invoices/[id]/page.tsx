@@ -16,11 +16,12 @@ import {
 import { initialInvoices, initialProducts, initialCategories, initialCustomers } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
-import { Printer, Mail, Phone, MapPin } from 'lucide-react';
+import { Download, Mail, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
+import html2canvas from 'html2canvas';
 
 // A simple number to words converter for Persian
 function toWords(num: number): string {
@@ -93,9 +94,19 @@ export default function InvoicePreviewPage() {
     phone: category?.storePhone || 'شماره ثبت نشده',
   };
 
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-        window.print();
+  const handleDownloadImage = () => {
+    const invoiceElement = document.getElementById('invoice-card');
+    if (invoiceElement) {
+        html2canvas(invoiceElement, {
+            scale: 2, // Increase resolution
+            useCORS: true, 
+            backgroundColor: null, 
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `invoice-${invoice?.invoiceNumber}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
     }
   };
 
@@ -103,9 +114,9 @@ export default function InvoicePreviewPage() {
     <div id="invoice-preview">
         <div className="bg-muted p-4 sm:p-8 rounded-lg">
             <div className="flex justify-center gap-2 mb-6 no-print">
-                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handlePrint}>
-                    <Printer className="h-3.5 w-3.5" />
-                    <span>چاپ / PDF</span>
+                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleDownloadImage}>
+                    <Download className="h-3.5 w-3.5" />
+                    <span>دانلود تصویر</span>
                 </Button>
             </div>
             <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-card">
@@ -211,7 +222,7 @@ export default function InvoicePreviewPage() {
                             </div>
                              <div className="flex items-center gap-2">
                                 <Mail size={14} />
-                                <span>info@{storeInfo.name.split(' ')[0].toLowerCase()}.com</span>
+                                <span>info@{storeInfo.name.replace(/\s+/g, '-').toLowerCase()}.com</span>
                             </div>
                              <div className="flex items-center gap-2">
                                 <MapPin size={14} />
@@ -225,7 +236,3 @@ export default function InvoicePreviewPage() {
     </div>
   );
 }
-
-    
-
-    

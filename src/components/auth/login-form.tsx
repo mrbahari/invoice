@@ -19,7 +19,7 @@ import { Package2 } from 'lucide-react';
 import { AuthError } from 'firebase/auth';
 
 export function LoginForm() {
-    const { signInWithGoogle, signInWithEmail } = useAuth();
+    const { signInWithGoogle, signInWithEmail, resetPassword } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { toast } = useToast();
@@ -54,6 +54,37 @@ export function LoginForm() {
             setIsLoading(false);
         }
     };
+    
+    const handlePasswordReset = async () => {
+        if (!email) {
+            toast({
+                variant: 'destructive',
+                title: 'ایمیل را وارد کنید',
+                description: 'برای بازیابی رمز عبور، لطفا ابتدا ایمیل خود را در کادر مربوطه وارد کنید.',
+            });
+            return;
+        }
+        try {
+            await resetPassword(email);
+            toast({
+                title: 'ایمیل بازیابی ارسال شد',
+                description: 'یک لینک برای بازیابی رمز عبور به ایمیل شما ارسال شد. لطفا پوشه Spam را نیز بررسی کنید.',
+            });
+        } catch (error) {
+            const authError = error as AuthError;
+            let description = 'خطایی در ارسال ایمیل بازیابی رخ داد.';
+             if (authError.code === 'auth/invalid-email') {
+                description = 'فرمت ایمیل وارد شده صحیح نمی‌باشد.';
+            } else if (authError.code === 'auth/user-not-found') {
+                description = 'کاربری با این ایمیل یافت نشد.';
+            }
+            toast({
+                variant: 'destructive',
+                title: 'خطا',
+                description,
+            });
+        }
+    };
 
   return (
     <Card className="mx-auto max-w-sm w-full">
@@ -84,9 +115,15 @@ export function LoginForm() {
             <div className="grid gap-2">
               <div className="flex items-center">
                 <Label htmlFor="password">رمز عبور</Label>
-                <Link href="#" className="mr-auto inline-block text-sm underline">
-                  رمز عبور خود را فراموش کرده‌اید؟
-                </Link>
+                 <Button
+                    type="button"
+                    variant="link"
+                    className="mr-auto h-auto p-0 text-sm underline"
+                    onClick={handlePasswordReset}
+                    disabled={isLoading}
+                  >
+                   رمز عبور خود را فراموش کرده‌اید؟
+                 </Button>
               </div>
               <Input 
                   id="password" 

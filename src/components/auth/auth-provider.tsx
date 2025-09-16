@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 
@@ -13,6 +13,7 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<void>;
   signUpWithEmail: (values: AuthFormValues) => Promise<User | null>;
   signInWithEmail: (values: AuthFormValues) => Promise<User | null>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
 };
@@ -59,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = async ({ email, password }: AuthFormValues) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password as string);
       router.push('/dashboard');
       return userCredential.user;
     } catch (error) {
@@ -70,12 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async ({ email, password }: AuthFormValues) => {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password as string);
       router.push('/dashboard');
       return userCredential.user;
     } catch (error) {
       console.error("Error signing in with email", error);
       throw error;
+    }
+  };
+  
+  const resetPassword = async (email: string) => {
+    try {
+        await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+        console.error("Error sending password reset email", error);
+        throw error;
     }
   };
 
@@ -89,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const value = { user, signInWithGoogle, signUpWithEmail, signInWithEmail, logout, loading };
+  const value = { user, signInWithGoogle, signUpWithEmail, signInWithEmail, resetPassword, logout, loading };
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">در حال بارگذاری...</div>;

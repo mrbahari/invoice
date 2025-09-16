@@ -2,7 +2,6 @@
 'use client';
 
 import {
-  Activity,
   CreditCard,
   DollarSign,
   Users,
@@ -52,7 +51,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">درآمد کل</CardTitle>
@@ -61,7 +60,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
-              ۲۰.۱% + از ماه گذشته
+              مجموع درآمد از تمام فاکتورها
             </p>
           </CardContent>
         </Card>
@@ -73,7 +72,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">+{totalSales}</div>
             <p className="text-xs text-muted-foreground">
-              ۱۸۰.۱% + از ماه گذشته
+              تعداد کل فاکتورهای صادر شده
             </p>
           </CardContent>
         </Card>
@@ -85,19 +84,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">+{totalCustomers}</div>
             <p className="text-xs text-muted-foreground">
-              ۱۹% + از ماه گذشته
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">فعال در حال حاضر</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+۵۷۳</div>
-            <p className="text-xs text-muted-foreground">
-               ۲۰۱+ از ساعت گذشته
+              تعداد کل مشتریان ثبت شده
             </p>
           </CardContent>
         </Card>

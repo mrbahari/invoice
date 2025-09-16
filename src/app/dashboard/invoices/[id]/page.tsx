@@ -124,55 +124,51 @@ export default function InvoicePreviewPage() {
                 </Button>
             </div>
             <Card className="max-w-4xl mx-auto font-sans shadow-lg" id="invoice-card">
-                 <header className="relative rounded-t-lg overflow-hidden border-b-4" style={{ backgroundColor: storeInfo.themeColor, borderColor: storeInfo.themeColor }}>
-                    <div className="p-8">
-                        <div className="relative flex items-center justify-start">
-                           <div className="flex items-center gap-4">
-                                <div className="bg-white p-2 rounded-full shadow-md w-28 h-28 flex items-center justify-center">
-                                   {storeInfo.logoUrl && (
-                                        <Image
-                                            src={storeInfo.logoUrl}
-                                            alt={`${storeInfo.name} logo`}
-                                            width={110}
-                                            height={110}
-                                            className="object-cover rounded-full"
-                                            unoptimized
-                                        />
-                                   )}
-                                </div>
-                               <div className="px-4 py-1 rounded-md">
-                                <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
-                                {category?.description && <p className="text-sm text-white/90 mt-1">{category.description}</p>}
-                               </div>
+                 <header className="relative rounded-t-lg overflow-hidden p-8" style={{ backgroundColor: storeInfo.themeColor }}>
+                    <div className="grid grid-cols-2 items-start gap-12">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-white p-2 rounded-full shadow-md w-28 h-28 flex items-center justify-center">
+                               {storeInfo.logoUrl && (
+                                    <Image
+                                        src={storeInfo.logoUrl}
+                                        alt={`${storeInfo.name} logo`}
+                                        width={110}
+                                        height={110}
+                                        className="object-cover rounded-full"
+                                        unoptimized
+                                    />
+                               )}
+                            </div>
+                           <div className="px-4 py-1 rounded-md">
+                            <h1 className="text-3xl font-bold text-white tracking-tight">{storeInfo.name}</h1>
+                            {category?.description && <p className="text-sm text-white/90 mt-1">{category.description}</p>}
                            </div>
-                        </div>
-                    </div>
-                </header>
-                
-                <CardContent className="p-8 bg-white">
-                     <div className="flex justify-between items-start text-sm border-b pb-6 mb-10">
-                        <div className="w-1/2 space-y-2 text-gray-700">
-                             <div className="flex justify-between">
-                                <span className="font-semibold text-gray-500">شماره سریال:</span>
+                       </div>
+                       
+                        <div className="w-full space-y-2 text-sm bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                             <div className="flex justify-between text-white">
+                                <span className="font-semibold opacity-80">شماره سریال:</span>
                                 <span className="font-mono font-bold">{invoice.invoiceNumber}</span>
                             </div>
-                             <div className="flex justify-between">
-                                <span className="font-semibold text-gray-500">تاریخ:</span>
+                             <div className="flex justify-between text-white">
+                                <span className="font-semibold opacity-80">تاریخ:</span>
                                 <span className="font-mono font-bold">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="font-semibold text-gray-500">آقای/خانم:</span>
+                            <div className="flex justify-between text-white">
+                                <span className="font-semibold opacity-80">آقای/خانم:</span>
                                 <span className="font-bold">{invoice.customerName}</span>
                             </div>
                             {customer?.phone && (
-                                <div className="flex justify-between">
-                                    <span className="font-semibold text-gray-500">شماره تماس:</span>
+                                <div className="flex justify-between text-white">
+                                    <span className="font-semibold opacity-80">شماره تماس:</span>
                                     <span className="font-mono font-bold">{customer.phone.toLocaleString('fa-IR')}</span>
                                 </div>
                             )}
                         </div>
                     </div>
-
+                </header>
+                
+                <CardContent className="p-8 bg-white">
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-primary/90 text-primary-foreground" style={{ backgroundColor: storeInfo.themeColor }}>

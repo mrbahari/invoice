@@ -36,11 +36,11 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name || !email) {
+    if (!name) {
       toast({
         variant: 'destructive',
-        title: 'فیلدهای الزامی خالی است',
-        description: 'لطفاً نام و ایمیل مشتری را وارد کنید.',
+        title: 'فیلد الزامی خالی است',
+        description: 'لطفاً نام مشتری را وارد کنید.',
       });
       return;
     }
@@ -68,9 +68,9 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         const newCustomer: Customer = {
           id: `cust-${Math.random().toString(36).substr(2, 9)}`,
           name,
-          email,
-          phone,
-          address,
+          email: email || 'ایمیل ثبت نشده',
+          phone: phone || 'تلفن ثبت نشده',
+          address: address || 'آدرس ثبت نشده',
           purchaseHistory: 'مشتری جدید',
         };
         customers.unshift(newCustomer);
@@ -116,7 +116,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="مثال: contact@innovate.com"
-                required
                 />
             </div>
              <div className="grid gap-3">

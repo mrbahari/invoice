@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { parseISO, format } from 'date-fns-jalali';
+import { parseISO, format, subDays, eachDayOfInterval } from 'date-fns-jalali';
 import type { Invoice } from '@/lib/definitions';
 import { formatCurrency } from '@/lib/utils';
 
@@ -14,7 +14,8 @@ type OverviewChartProps = {
 
 export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) {
   const data = useMemo(() => {
-    const dailyData = invoices.reduce<Record<string, number>>((acc, invoice) => {
+    // Group existing invoice data by day
+    const salesByDay = invoices.reduce<Record<string, number>>((acc, invoice) => {
       const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
       if (!acc[day]) {
         acc[day] = 0;
@@ -23,12 +24,39 @@ export function OverviewChart({ invoices, period = 'all' }: OverviewChartProps) 
       return acc;
     }, {});
 
-    return Object.entries(dailyData)
-      .map(([date, total]) => ({
-        name: format(parseISO(date), 'MM/dd'),
-        total,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    // Generate all days for the last 7 days
+    const today = new Date();
+    const last7Days = subDays(today, 6);
+    const dateRange = eachDayOfInterval({ start: last7Days, end: today });
+
+    // Create a complete dataset for the last 7 days, filling missing days with 0
+    const completeData = dateRange.map(date => {
+        const dayString = format(date, 'yyyy-MM-dd');
+        return {
+            name: format(date, 'MM/dd'),
+            total: salesByDay[dayString] || 0,
+        };
+    });
+    
+    // If period is 'all', we might need to show more than 7 days
+    if (period === 'all') {
+        const allSalesDays = Object.keys(salesByDay)
+            .sort()
+            .map(dayString => ({
+                name: format(parseISO(dayString), 'MM/dd'),
+                total: salesByDay[dayString],
+            }));
+
+        // If there are sales older than 7 days, show all of them.
+        // Otherwise, stick to the 7-day view.
+        if (allSalesDays.length > 0 && parseISO(Object.keys(salesByDay).sort()[0]) < last7Days) {
+            return allSalesDays;
+        }
+    }
+
+
+    return completeData;
+
   }, [invoices, period]);
 
 

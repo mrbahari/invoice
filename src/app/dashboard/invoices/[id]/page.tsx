@@ -25,50 +25,55 @@ import html2canvas from 'html2canvas';
 
 // A simple number to words converter for Persian
 function toWords(num: number): string {
+    if (num === 0) return "صفر";
+    if (num < 0) return "منفی " + toWords(Math.abs(num));
+
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
     const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
     const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
     const thousands = ["", "هزار", "میلیون", "میلیارد", "تریلیون"];
 
-    if (num === 0) return "صفر";
-    if (num < 0) return "منفی " + toWords(Math.abs(num));
-
     let word = "";
     let i = 0;
+
+    const processChunk = (n: number) => {
+        if (n === 0) return "";
+        let chunkWord = "";
+        
+        const h = Math.floor(n / 100);
+        const remainder = n % 100;
+        const t = Math.floor(remainder / 10);
+        const u = remainder % 10;
+
+        if (h > 0) {
+            chunkWord += hundreds[h];
+            if (remainder > 0) chunkWord += " و ";
+        }
+        
+        if (remainder > 0) {
+            if (remainder < 10) {
+                chunkWord += units[remainder];
+            } else if (remainder < 20) {
+                chunkWord += teens[remainder - 10];
+            } else {
+                chunkWord += tens[t];
+                if (u > 0) {
+                    chunkWord += " و " + units[u];
+                }
+            }
+        }
+        return chunkWord;
+    };
 
     while (num > 0) {
         let chunk = num % 1000;
         if (chunk > 0) {
-            let chunkWord = "";
-            let h = Math.floor(chunk / 100);
-            let t = Math.floor((chunk % 100) / 10);
-            let u = chunk % 10;
-            
-            let remainder = chunk % 100;
-
-            if (h > 0) {
-                chunkWord += hundreds[h];
-                if (remainder > 0) chunkWord += " و ";
-            }
-            
-            if (remainder > 0) {
-                if (remainder < 10) {
-                    chunkWord += units[remainder];
-                } else if (remainder < 20) {
-                    chunkWord += teens[remainder - 10];
-                } else {
-                    chunkWord += tens[t];
-                    if (u > 0) {
-                        chunkWord += " و " + units[u];
-                    }
-                }
-            }
-
-            if (thousands[i]) {
+            let chunkWord = processChunk(chunk);
+            if (i > 0) {
                 word = chunkWord + " " + thousands[i] + (word ? " و " : "") + word;
             } else {
-                word = chunkWord + (word ? " و " : "") + word;
+                word = chunkWord;
             }
         }
         num = Math.floor(num / 1000);
@@ -213,7 +218,7 @@ export default function InvoicePreviewPage() {
                         <div className="flex justify-between items-start">
                             <div className="w-2/3 pr-4">
                                 <span className="font-semibold text-gray-500">مبلغ به حروف:</span>
-                                <p className="mt-1 text-gray-700 font-medium">{toWords(Math.floor(invoice.total / 10))} تومان</p>
+                                <p className="mt-1 text-gray-700 font-medium">{toWords(Math.floor(invoice.total))} ریال</p>
                             </div>
                             <div className="w-1/3 space-y-2">
                                  <div className="flex justify-between items-center p-3 rounded-md" style={{ backgroundColor: `${storeInfo.themeColor}1A` }}>
@@ -251,4 +256,5 @@ export default function InvoicePreviewPage() {
 }
 
     
+
 

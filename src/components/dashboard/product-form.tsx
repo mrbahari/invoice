@@ -48,12 +48,10 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
-
-  // Raw numeric values for calculation
+  
   const [price, setPrice] = useState<number | ''>(product?.price ?? '');
   const [subUnitPrice, setSubUnitPrice] = useState<number | ''>('');
 
-  // Formatted string values for display
   const [displayPrice, setDisplayPrice] = useState(product?.price ? new Intl.NumberFormat('fa-IR').format(product.price) : '');
   const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState('');
   
@@ -78,13 +76,11 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   const parseFormattedNumber = (str: string) => {
     if (!str) return '';
-    // Remove non-digit characters (except for the decimal point if needed, but we ignore it here)
     const numericString = str.replace(/[^۰-۹0-9]/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString());
     const number = parseInt(numericString, 10);
     return isNaN(number) ? '' : number;
   };
-  
-  // Calculate sub-unit price when main price or quantity changes
+
   useEffect(() => {
     const mainPriceNum = price;
     const subUnitQtyNum = subUnitQuantity;
@@ -98,8 +94,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       setDisplaySubUnitPrice('');
     }
   }, [price, subUnitQuantity]);
-  
-  // Initial calculation for edit mode
+
   useEffect(() => {
     if (isEditMode && product) {
         const pPrice = product.price;
@@ -111,7 +106,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, product]);
+  }, []);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
@@ -146,7 +141,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      const num = parseInt(value, 10);
+      const num = parseFloat(value);
       setSubUnitQuantity(isNaN(num) ? '' : num);
   };
 
@@ -221,7 +216,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     event.preventDefault();
     
     const numericPrice = price;
-    const numericSubUnitQuantity = subUnitQuantity === '' ? undefined : subUnitQuantity;
+    const numericSubUnitQuantity = subUnitQuantity === '' ? undefined : Number(subUnitQuantity);
 
     if (!name || numericPrice === '' || numericPrice < 0 || !categoryId) {
       toast({
@@ -275,7 +270,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-        <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3" style={{ animationDelay: '0s' }}>
+        <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
             
             <div className="grid gap-6 lg:col-span-2">
                 <Card>
@@ -364,7 +359,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} step="0.01" />
                             </div>
                         </div>
                         
@@ -376,12 +371,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
                                 </div>
-                                <Input id="price" value={displayPrice} onChange={handlePriceChange} onBlur={handlePriceBlur} onFocus={(e) => e.target.select()} required />
+                                <Input id="price" value={displayPrice} onChange={handlePriceChange} onBlur={handlePriceBlur} onFocus={(e) => e.target.value = String(price)} required />
                             </div>
                             
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
-                                <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} onBlur={handleSubUnitPriceBlur} onFocus={(e) => e.target.select()} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} onBlur={handleSubUnitPriceBlur} onFocus={(e) => e.target.value = String(subUnitPrice)} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                     </CardContent>

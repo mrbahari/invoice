@@ -2,11 +2,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { SearchProvider } from '@/components/dashboard/search-provider';
 
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings';

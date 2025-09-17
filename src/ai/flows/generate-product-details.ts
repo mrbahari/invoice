@@ -63,11 +63,28 @@ const generateProductDetailsFlow = ai.defineFlow(
     }
     
     if (input.feature === 'image') {
-        const seed = encodeURIComponent(`${input.productName} ${input.categoryName}`);
+      try {
+        const { media } = await ai.generate({
+          model: 'googleai/imagen-4.0-fast-generate-001',
+          prompt: `Generate a photorealistic, professional product photo of a "{{productName}}" which is a product in the "{{categoryName}}" category. The product should be on a clean, white background. Do not include any text, logos, or other objects in the image. The image should be suitable for an e-commerce website.`,
+        });
+
+        if (!media || !media.url) {
+            throw new Error('AI image generation returned no media.');
+        }
+        
+        return { imageUrl: media.url };
+
+      } catch (error) {
+        console.warn("AI image generation failed, falling back to placeholder.", error);
+        // Fallback to picsum if Imagen fails (e.g., billing not enabled)
+        const seed = encodeURIComponent(`${input.productName} ${input.categoryName} ${Math.random()}`);
         const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
         return { imageUrl };
+      }
     }
 
     return {};
   }
 );
+

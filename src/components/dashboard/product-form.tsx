@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
 import { initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
-import { Search, WandSparkles, LoaderCircle, Trash2 } from 'lucide-react';
+import { Search, WandSparkles, LoaderCircle, Trash2, Copy } from 'lucide-react';
 import Image from 'next/image';
 import {
   Select,
@@ -216,12 +216,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     window.open(url, '_blank');
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    
+  const validateForm = () => {
     const numericPrice = Number(price);
-    const numericSubUnitPrice = Number(subUnitPrice);
-    const numericSubUnitQuantity = Number(subUnitQuantity);
 
     if (!name || isNaN(numericPrice) || numericPrice <= 0 || !categoryId) {
       toast({
@@ -229,31 +225,43 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         title: 'فیلدهای الزامی خالی یا نامعتبر است',
         description: 'لطفاً نام، قیمت معتبر و دسته‌بندی محصول را وارد کنید.',
       });
-      return;
+      return false;
     }
+    return true;
+  }
+
+  const buildProductData = (id: string): Product => {
+    const numericPrice = Number(price);
+    const numericSubUnitPrice = Number(subUnitPrice);
+    const numericSubUnitQuantity = Number(subUnitQuantity);
+    const finalImage = imageUrl || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
+
+    return {
+      id,
+      name,
+      code,
+      description,
+      price: numericPrice,
+      categoryId,
+      unit,
+      subUnit: subUnit || undefined,
+      subUnitQuantity: isNaN(numericSubUnitQuantity) ? undefined : numericSubUnitQuantity,
+      subUnitPrice: isNaN(numericSubUnitPrice) ? undefined : numericSubUnitPrice,
+      imageUrl: finalImage,
+    };
+  }
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!validateForm()) return;
 
     setIsProcessing(true);
     
-    const finalImage = imageUrl || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
-
     setTimeout(() => {
-      const newOrUpdatedProduct: Product = {
-        id: isEditMode && product ? product.id : `prod-${Math.random().toString(36).substr(2, 9)}`,
-        name,
-        code,
-        description,
-        price: numericPrice,
-        categoryId,
-        unit,
-        subUnit: subUnit || undefined,
-        subUnitQuantity: isNaN(numericSubUnitQuantity) ? undefined : numericSubUnitQuantity,
-        subUnitPrice: isNaN(numericSubUnitPrice) ? undefined : numericSubUnitPrice,
-        imageUrl: finalImage,
-      };
-
       if (isEditMode && product) {
+        const updatedProduct = buildProductData(product.id);
         setProducts(prev => [
-            newOrUpdatedProduct,
+            updatedProduct,
             ...prev.filter(p => p.id !== product.id)
         ]);
         toast({
@@ -261,7 +269,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           description: `تغییرات برای محصول "${name}" ذخیره و به بالای لیست منتقل شد.`,
         });
       } else {
-        setProducts(prev => [newOrUpdatedProduct, ...prev]);
+        const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
+        setProducts(prev => [newProduct, ...prev]);
         toast({
           title: 'محصول جدید ایجاد شد',
           description: `محصول "${name}" با موفقیت ایجاد شد.`,
@@ -272,6 +281,24 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       router.push('/dashboard/products');
     }, 1000);
   };
+  
+  const handleSaveAsCopy = () => {
+    if (!validateForm()) return;
+    
+    setIsProcessing(true);
+
+    setTimeout(() => {
+        const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
+        setProducts(prev => [newProduct, ...prev]);
+        toast({
+          title: 'محصول جدید از روی کپی ایجاد شد',
+          description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
+        });
+        
+        setIsProcessing(false);
+        router.push('/dashboard/products');
+    }, 1000);
+  }
 
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
@@ -443,7 +470,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 </Card>
             </div>
 
-            <div className="flex justify-end lg:col-span-3">
+            <div className="flex justify-end gap-2 lg:col-span-3">
+                {isEditMode && (
+                    <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                       <Copy className="ml-2 h-4 w-4" />
+                        ذخیره به عنوان کپی
+                    </Button>
+                )}
                 <Button type="submit" disabled={isProcessing} size="lg">
                     {isProcessing
                     ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'

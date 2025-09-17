@@ -65,7 +65,6 @@ export type InvoiceItem = {
   productName: string;
   quantity: number;
   unitPrice: number;
-  itemDiscount?: number;
   totalPrice: number;
   unit: string;
 };

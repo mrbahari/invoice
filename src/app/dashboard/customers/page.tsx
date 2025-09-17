@@ -110,7 +110,7 @@ export default function CustomersPage() {
               <TableHead>مشتری</TableHead>
               <TableHead className="hidden sm:table-cell">شماره تماس</TableHead>
               <TableHead className="hidden sm:table-cell text-center">سفارش‌ها</TableHead>
-              <TableHead className="hidden md:table-cell text-left">مجموع خرج شده</TableHead>
+              <TableHead className="hidden md:table-cell text-left">جمع مبلغ سفارشات</TableHead>
               <TableHead>
                 <span className="sr-only">اقدامات</span>
               </TableHead>

@@ -5,6 +5,7 @@ export type Customer = {
   email: string;
   phone: string;
   address: string;
+  avatarUrl?: string;
   purchaseHistory: string; // Simplified for AI prompt
 };
 

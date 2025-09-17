@@ -68,7 +68,7 @@ function generateBreadcrumbs(pathname: string, data: {categories: Category[], cu
             case 'settings': name = 'تنظیمات'; break;
             default:
                 if (pathSegments[index-1] === 'invoices' && !isLast) {
-                    name = `فاکتور #${pathSegments[index]}`;
+                    name = `فاکتور`;
                 } else if (pathSegments[index-1] === 'categories' && !isLast) {
                     const category = data.categories.find(c => c.id === segment);
                     name = category ? `دسته ${category.name}` : segment;

@@ -46,7 +46,7 @@ export default function CustomersPage() {
   const router = useRouter();
 
   const handleRowClick = (customerId: string) => {
-    router.push(`/dashboard/customers/${customerId}/edit`);
+    router.push(`/dashboard/customers/${customerId}`);
   };
 
   const getCustomerStats = (customerId: string) => {

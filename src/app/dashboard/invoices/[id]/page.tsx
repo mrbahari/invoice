@@ -14,6 +14,8 @@ import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, InvoiceItem } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
+import { useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 
 function toWords(num: number): string {
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
@@ -66,6 +68,7 @@ export default function InvoicePreviewPage() {
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
   
   const invoice = invoices.find((inv) => inv.id === params.id);
   const customer = customers.find((c) => c.id === invoice?.customerId);
@@ -74,6 +77,19 @@ export default function InvoicePreviewPage() {
   if (!invoice) {
     notFound();
   }
+
+  useEffect(() => {
+    if (invoice && customer) {
+        const qrData = `Invoice No: ${invoice.invoiceNumber}\nCustomer: ${customer.name}\nTotal: ${formatCurrency(invoice.total)}`;
+        QRCode.toDataURL(qrData, { width: 96, margin: 1 })
+            .then(url => {
+                setQrCodeUrl(url);
+            })
+            .catch(err => {
+                console.error('Failed to generate QR code:', err);
+            });
+    }
+  }, [invoice, customer]);
 
   const firstItem = invoice.items[0];
   const productInfo = products.find(p => p.id === firstItem?.productId);
@@ -103,9 +119,6 @@ export default function InvoicePreviewPage() {
     }
   };
 
-  const qrData = `Invoice No: ${invoice.invoiceNumber}\nCustomer: ${customer?.name}\nTotal: ${formatCurrency(invoice.total)}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(qrData)}`;
-
   return (
     <div id="invoice-preview" className="font-sans">
         <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
@@ -122,13 +135,14 @@ export default function InvoicePreviewPage() {
                   <tr>
                     <td className="w-1/6 align-top">
                       <div className="flex items-center justify-start h-full">
-                        <Image
-                            src={qrCodeUrl}
-                            alt="QR Code"
-                            width={96}
-                            height={96}
-                            unoptimized
-                        />
+                        {qrCodeUrl && (
+                            <Image
+                                src={qrCodeUrl}
+                                alt="QR Code"
+                                width={96}
+                                height={96}
+                            />
+                        )}
                       </div>
                     </td>
                     <td className="w-2/3 text-center align-top">

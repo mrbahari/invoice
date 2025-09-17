@@ -10,11 +10,13 @@ import { useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
+import { useSearch } from '@/components/dashboard/search-provider';
 
 export default function InvoicesPage() {
   const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const { toast } = useToast();
+  const { searchTerm } = useSearch();
 
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
     setAllInvoices(prev => 
@@ -36,17 +38,25 @@ export default function InvoicesPage() {
       description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
     });
   };
+  
+  const filteredInvoices = useMemo(() => {
+    return allInvoices.filter(invoice => 
+        invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [allInvoices, searchTerm]);
 
-  const paidInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Paid'), [allInvoices]);
-  const pendingInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Pending'), [allInvoices]);
-  const overdueInvoices = useMemo(() => allInvoices.filter(inv => inv.status === 'Overdue'), [allInvoices]);
+
+  const paidInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Paid'), [filteredInvoices]);
+  const pendingInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Pending'), [filteredInvoices]);
+  const overdueInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Overdue'), [filteredInvoices]);
 
   const tabsData = useMemo(() => [
-    { value: 'all', label: `همه (${allInvoices.length})`, invoices: allInvoices },
+    { value: 'all', label: `همه (${filteredInvoices.length})`, invoices: filteredInvoices },
     { value: 'paid', label: `پرداخت شده (${paidInvoices.length})`, invoices: paidInvoices },
     { value: 'pending', label: `در انتظار (${pendingInvoices.length})`, invoices: pendingInvoices },
     { value: 'overdue', label: `سررسید گذشته (${overdueInvoices.length})`, invoices: overdueInvoices, className: 'hidden sm:flex' },
-  ], [allInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
+  ], [filteredInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
 
   return (
     <InvoiceTabs

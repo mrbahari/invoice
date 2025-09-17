@@ -96,7 +96,7 @@ function generateBreadcrumbs(pathname: string, data: {categories: Category[], cu
     return breadcrumbs.slice(1);
 }
 
-const searchableRoutes = ['/dashboard/products', '/dashboard/customers', '/dashboard/categories'];
+const searchableRoutes = ['/dashboard/products', '/dashboard/customers', '/dashboard/categories', '/dashboard/invoices'];
 
 export function Header() {
   const pathname = usePathname();

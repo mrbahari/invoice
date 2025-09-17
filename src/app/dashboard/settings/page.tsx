@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { initialUnitsOfMeasurement } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';

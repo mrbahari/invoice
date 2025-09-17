@@ -30,6 +30,7 @@ import {
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
+import { Separator } from '../ui/separator';
 
 type ProductFormProps = {
   product?: Product;
@@ -162,14 +163,26 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     setTimeout(() => {
       if (isEditMode && product) {
-        setProducts(prev => prev.map(p => 
-            p.id === product.id 
-            ? { ...p, name, description, price: numericPrice, categoryId, unit, subUnit: subUnit || undefined, subUnitQuantity: numericSubUnitQuantity, imageUrl: finalImage }
-            : p
-        ));
+        const updatedProduct: Product = {
+            ...product,
+            name,
+            description,
+            price: numericPrice,
+            categoryId,
+            unit,
+            subUnit: subUnit || undefined,
+            subUnitQuantity: numericSubUnitQuantity,
+            imageUrl: finalImage
+        };
+        
+        setProducts(prev => [
+            updatedProduct,
+            ...prev.filter(p => p.id !== product.id)
+        ]);
+
         toast({
           title: 'محصول با موفقیت ویرایش شد',
-          description: `تغییرات برای محصول "${name}" ذخیره شد.`,
+          description: `تغییرات برای محصول "${name}" ذخیره و به بالای لیست منتقل شد.`,
         });
       } else {
         const newProduct: Product = {

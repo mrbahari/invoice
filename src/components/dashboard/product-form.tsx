@@ -70,7 +70,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     if (mainPriceNum > 0 && subUnitQtyNum > 0) {
       const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
-      setSubUnitPrice(Math.round(calculatedSubPrice));
+      setSubUnitPrice(calculatedSubPrice);
     } else {
       setSubUnitPrice('');
     }
@@ -82,7 +82,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         const pPrice = product.price;
         const pSubQty = product.subUnitQuantity;
         if (pPrice && pSubQty && pSubQty > 0) {
-            setSubUnitPrice(Math.round(pPrice / pSubQty));
+            setSubUnitPrice(pPrice / pSubQty);
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,7 +98,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
         const calculatedMainPrice = subUnitPriceNum * subUnitQtyNum;
-        setPrice(Math.round(calculatedMainPrice));
+        setPrice(calculatedMainPrice);
     } else if (newSubUnitPriceStr === '') {
         setPrice('');
     }
@@ -174,7 +174,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     if (value === '') {
         setter('');
     } else {
-        const num = parseInt(value, 10);
+        const num = parseFloat(value);
         setter(isNaN(num) ? '' : num);
     }
   };
@@ -187,7 +187,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const numericPrice = typeof price === 'string' && price !== '' ? parseInt(price, 10) : (typeof price === 'number' ? price : undefined);
+    const numericPrice = typeof price === 'string' && price !== '' ? parseFloat(price) : (typeof price === 'number' ? price : undefined);
     const numericSubUnitQuantity = typeof subUnitQuantity === 'string' && subUnitQuantity !== '' ? parseFloat(subUnitQuantity) : (typeof subUnitQuantity === 'number' ? subUnitQuantity : undefined);
 
 
@@ -255,16 +255,16 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-        <div className="mx-auto max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
             
-            <div className="lg:col-span-2 grid gap-6">
-                <Card className="animate-fade-in-up">
+            <div className="grid gap-6 lg:col-span-2">
+                <Card>
                     <CardHeader>
                         <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
                         <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="grid gap-3">
                                 <Label htmlFor="product-name">نام محصول</Label>
                                 <Input
@@ -309,12 +309,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     </CardContent>
                 </Card>
 
-                <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <Card>
                     <CardHeader>
                         <CardTitle>واحدها و قیمت‌گذاری</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div className="grid gap-3">
                                 <Label htmlFor="unit">واحد اصلی</Label>
                                 <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
@@ -344,14 +344,14 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value)} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => handleNumericInputChange(setSubUnitQuantity, e.target.value)} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="grid gap-3">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                           <div className="grid gap-3">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="price">قیمت اصلی (ریال)</Label>
+                                    <Label htmlFor="price">قیمت واحد اصلی (ریال)</Label>
                                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
@@ -360,7 +360,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             
                             <div className="grid gap-3">
-                                <Label htmlFor="sub-unit-price">قیمت فرعی (ریال)</Label>
+                                <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
                                 <Input id="sub-unit-price" type="number" value={subUnitPrice} onChange={handleSubUnitPriceChange} onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)} disabled={!showSubUnitFields} />
                             </div>
                         </div>
@@ -369,16 +369,16 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             </div>
             
             <div className="grid gap-6">
-                <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <Card>
                     <CardHeader>
                         <CardTitle>تصویر محصول</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4">
                         <div className="relative w-full aspect-video">
                             {imageUrl ? (
-                            <Image src={imageUrl} alt="پیش‌نمایش تصویر" fill={true} style={{objectFit: 'contain'}} className="rounded-md border p-2 bg-muted/30" onError={() => { toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'}); setImageUrl(null); }} unoptimized />
+                            <Image src={imageUrl} alt="پیش‌نمایش تصویر" fill={true} style={{objectFit: 'contain'}} className="rounded-md border bg-muted/30 p-2" onError={() => { toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'}); setImageUrl(null); }} unoptimized />
                             ) : (
-                            <div className="w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                            <div className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed bg-muted">
                                 <span className="text-xs text-muted-foreground">پیش‌نمایش تصویر</span>
                             </div>
                             )}
@@ -389,23 +389,23 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                             <Button type="button" variant="outline" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
-                                {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
-                                <span className="hidden sm:inline">AI</span>
+                                {aiLoading.image ? <LoaderCircle className="animate-spin h-4 w-4" /> : <WandSparkles className="h-4 w-4" />}
+                                <span className="ml-2 hidden sm:inline">AI</span>
                             </Button>
                             <Button type="button" variant="outline" size="sm" onClick={handleImageSearch}>
-                                <Search />
-                                <span className="hidden sm:inline">وب</span>
+                                <Search className="h-4 w-4" />
+                                <span className="ml-2 hidden sm:inline">وب</span>
                             </Button>
                             <Button type="button" variant="ghost" size="sm" onClick={() => setImageUrl(null)} disabled={!imageUrl}>
-                                <Trash2 />
-                                <span className="hidden sm:inline">حذف</span>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2 hidden sm:inline">حذف</span>
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="lg:col-span-3 flex justify-end">
+            <div className="flex justify-end lg:col-span-3">
                 <Button type="submit" disabled={isProcessing} size="lg">
                     {isProcessing
                     ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'

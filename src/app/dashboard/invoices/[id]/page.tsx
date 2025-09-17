@@ -201,23 +201,6 @@ export default function InvoicePreviewPage() {
               </div>
 
               {/* Summary and Signatures */}
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <div className="border border-black text-center text-sm p-2">
-                  <p>امضاء همکار</p>
-                  <div className="h-12"></div>
-                  <p>مدیریت فروش</p>
-                </div>
-                <div className="border border-black">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      <tr className="font-bold">
-                        <td className="p-1 border-r border-black">قابل پرداخت:</td>
-                        <td className="p-1 font-mono">{formatCurrency(invoice.total)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
               
               <div className="border border-black mt-2 p-2 text-sm">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>

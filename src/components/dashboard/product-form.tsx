@@ -183,8 +183,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     setIsProcessing(true);
     
-    // Get a random image if none is set
-    const finalImage = image || `https://picsum.photos/seed/${name}${categoryId}${Math.random()}/400/300`;
+    const finalImage = image || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
 
     setTimeout(() => {
       if (isEditMode && product) {

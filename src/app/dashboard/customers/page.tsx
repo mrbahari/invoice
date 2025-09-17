@@ -1,7 +1,7 @@
 
 'use client';
 
-import { File, FilePen, PlusCircle, Search, Trash2 } from 'lucide-react';
+import { File, PlusCircle, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -55,7 +55,7 @@ export default function CustomersPage() {
   }, [customerList, searchTerm]);
 
   const handleRowClick = (customerId: string) => {
-    router.push(`/dashboard/customers/${customerId}`);
+    router.push(`/dashboard/customers/${customerId}/edit`);
   };
 
   const getCustomerStats = (customerId: string) => {
@@ -129,9 +129,6 @@ export default function CustomersPage() {
               <TableHead className="hidden sm:table-cell">شماره تماس</TableHead>
               <TableHead className="hidden sm:table-cell text-center">سفارش‌ها</TableHead>
               <TableHead className="hidden md:table-cell text-left">جمع مبلغ سفارشات</TableHead>
-              <TableHead>
-                <span className="sr-only">اقدامات</span>
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,36 +158,6 @@ export default function CustomersPage() {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-left">
                     {formatCurrency(totalSpent)}
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-2">
-                      <Button asChild size="icon" variant="ghost" className="h-8 w-8">
-                        <Link href={`/dashboard/customers/${customer.id}/edit`}>
-                          <FilePen className="h-4 w-4" />
-                          <span className="sr-only">ویرایش</span>
-                        </Link>
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600">
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">حذف</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                این عمل غیرقابل بازگشت است و مشتری «{customer.name}» را برای همیشه حذف می‌کند.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCustomer(customer.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
                   </TableCell>
                 </TableRow>
               );

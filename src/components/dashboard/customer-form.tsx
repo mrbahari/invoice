@@ -19,6 +19,18 @@ import { useToast } from '@/hooks/use-toast';
 import type { Customer } from '@/lib/definitions';
 import { initialCustomers } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 type CustomerFormProps = {
   customer?: Customer;
@@ -80,6 +92,21 @@ export function CustomerForm({ customer }: CustomerFormProps) {
       router.push('/dashboard/customers');
     }, 1000);
   };
+  
+  const handleDelete = () => {
+    if (!customer) return;
+
+    setIsProcessing(true);
+    setTimeout(() => {
+      setCustomers(prev => prev.filter(c => c.id !== customer.id));
+      toast({
+        title: 'مشتری حذف شد',
+        description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
+      });
+      setIsProcessing(false);
+      router.push('/dashboard/customers');
+    }, 1000);
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -136,7 +163,31 @@ export function CustomerForm({ customer }: CustomerFormProps) {
             />
           </div>
         </CardContent>
-        <CardFooter className="justify-end">
+        <CardFooter className="flex justify-between">
+          <div>
+            {isEditMode && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" disabled={isProcessing}>
+                    <Trash2 className="ml-2 h-4 w-4" />
+                    حذف مشتری
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        این عمل غیرقابل بازگشت است و مشتری «{customer.name}» را برای همیشه حذف می‌کند.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
           <Button type="submit" disabled={isProcessing}>
             {isProcessing
               ? isEditMode

@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MoreHorizontal } from 'lucide-react';
+import { Eye, FilePen, CheckCircle, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,12 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -121,48 +115,46 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
                   {formatCurrency(invoice.total)}
                 </TableCell>
                 <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
-                  <AlertDialog>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">باز کردن منو</span>
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button asChild size="icon" variant="ghost" className="h-8 w-8">
+                        <Link href={`/dashboard/invoices/${invoice.id}`}>
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">مشاهده</span>
+                        </Link>
+                      </Button>
+                       <Button asChild size="icon" variant="ghost" className="h-8 w-8">
+                        <Link href={`/dashboard/invoices/${invoice.id}/edit`}>
+                          <FilePen className="h-4 w-4" />
+                          <span className="sr-only">ویرایش</span>
+                        </Link>
+                      </Button>
+                      {invoice.status !== 'Paid' && (
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-600" onClick={() => onStatusChange(invoice.id, 'Paid')}>
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="sr-only">پرداخت</span>
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/invoices/${invoice.id}`} className="w-full cursor-pointer">
-                            مشاهده جزئیات
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRowClick(invoice.id)}>
-                            ویرایش
-                        </DropdownMenuItem>
-                        {invoice.status !== 'Paid' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(invoice.id, 'Paid')}>
-                            علامت‌گذاری به عنوان پرداخت شده
-                          </DropdownMenuItem>
-                        )}
+                      )}
+                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
-                            حذف
-                          </DropdownMenuItem>
+                           <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600">
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">حذف</span>
+                          </Button>
                         </AlertDialogTrigger>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice.invoiceNumber}» را برای همیشه حذف می‌کند.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDeleteInvoice(invoice.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice.invoiceNumber}» را برای همیشه حذف می‌کند.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDeleteInvoice(invoice.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                 </TableCell>
               </TableRow>
             )})}

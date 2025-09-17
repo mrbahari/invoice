@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle, File } from 'lucide-react';
+import { PlusCircle, File, FilePen, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,13 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -138,37 +131,34 @@ export default function ProductsPage() {
                   {formatCurrency(product.price)}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <AlertDialog>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">باز کردن منو</span>
+                  <div className="flex items-center gap-2">
+                    <Button asChild size="icon" variant="ghost" className="h-8 w-8">
+                      <Link href={`/dashboard/products/${product.id}/edit`}>
+                        <FilePen className="h-4 w-4" />
+                        <span className="sr-only">ویرایش</span>
+                      </Link>
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600">
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">حذف</span>
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>اقدامات</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/products/${product.id}/edit`}>ویرایش</Link>
-                        </DropdownMenuItem>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className='text-red-600' onSelect={(e) => e.preventDefault()}>حذف</DropdownMenuItem>
-                        </AlertDialogTrigger>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                      <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                      <AlertDialogDescription>
-                          این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
-                      </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                      <AlertDialogCancel>انصراف</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>انصراف</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

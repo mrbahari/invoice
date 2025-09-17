@@ -112,12 +112,12 @@ export default function InvoicePreviewPage() {
               <table className="w-full mb-4">
                 <tbody>
                   <tr>
-                    <td className="w-1/4 align-top">
+                    <td className="w-1/6 align-top">
                         <div className="flex items-center justify-start h-full">
                             <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} unoptimized data-ai-hint="qr code" />
                         </div>
                     </td>
-                    <td className="w-1/2 text-center align-top">
+                    <td className="w-2/3 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
                       <h2 className="text-lg font-semibold">{category?.storeName}</h2>
                       <p className="text-sm">{category?.description}</p>

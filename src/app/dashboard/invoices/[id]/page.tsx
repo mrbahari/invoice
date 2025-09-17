@@ -158,6 +158,9 @@ export default function InvoicePreviewPage() {
                       <td className="p-1 border-r border-black w-1/2">نام: {customer?.name}</td>
                       <td className="p-1 w-1/2">شماره تماس: {customer?.phone}</td>
                     </tr>
+                     <tr className="border-t border-black">
+                      <td colSpan={2} className="p-1 border-r border-black">آدرس: {customer?.address}</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

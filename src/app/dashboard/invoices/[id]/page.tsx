@@ -172,13 +172,12 @@ export default function InvoicePreviewPage() {
                       <th className="border border-black p-1 font-semibold">مقدار</th>
                       <th className="border border-black p-1 font-semibold">واحد</th>
                       <th className="border border-black p-1 font-semibold">مبلغ واحد (ریال)</th>
-                      <th className="border border-black p-1 font-semibold">تخفیف هر واحد</th>
-                      <th className="border border-black p-1 font-semibold">مبلغ کل پس از کسر تخفیف</th>
+                      <th className="border border-black p-1 font-semibold">مبلغ کل</th>
                     </tr>
                   </thead>
                   <tbody>
                     {invoice.items.map((item, index) => {
-                      const itemTotal = item.quantity * (item.unitPrice - (item.itemDiscount || 0));
+                      const itemTotal = item.quantity * item.unitPrice;
                       return (
                       <tr key={index}>
                         <td className="border border-black p-1 text-center">{index + 1}</td>
@@ -186,7 +185,6 @@ export default function InvoicePreviewPage() {
                         <td className="border border-black p-1 text-center font-mono">{item.quantity.toLocaleString('fa-IR')}</td>
                         <td className="border border-black p-1 text-center">{item.unit}</td>
                         <td className="border border-black p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
-                        <td className="border border-black p-1 text-center font-mono">{formatCurrency(item.itemDiscount || 0)}</td>
                         <td className="border border-black p-1 text-center font-mono">{formatCurrency(itemTotal)}</td>
                       </tr>
                       )

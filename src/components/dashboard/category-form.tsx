@@ -158,7 +158,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-2xl mx-auto animate-fade-in-up">
         <CardHeader>
           <CardTitle>
             {isEditMode ? `ویرایش دسته‌بندی: ${category?.name}` : 'افزودن دسته‌بندی جدید'}
@@ -320,5 +320,3 @@ export function CategoryForm({ category }: CategoryFormProps) {
     </form>
   );
 }
-
-    

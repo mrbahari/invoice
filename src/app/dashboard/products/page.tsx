@@ -83,7 +83,7 @@ export default function ProductsPage() {
   };
 
   const renderProductTable = (productList: typeof products) => (
-    <Card>
+    <Card className="animate-fade-in-up">
       <CardHeader>
         <CardTitle>محصولات</CardTitle>
         <CardDescription>

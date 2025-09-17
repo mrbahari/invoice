@@ -65,35 +65,42 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   });
   
   useEffect(() => {
-    // Recalculate sub-unit price when main price or quantity changes.
     const mainPriceNum = typeof price === 'string' ? parseFloat(price) : price;
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
     if (mainPriceNum > 0 && subUnitQtyNum > 0) {
       const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
       setSubUnitPrice(Math.round(calculatedSubPrice));
-    } else if (isEditMode && product) {
-        // Initial calculation for edit mode
+    } else {
+      setSubUnitPrice('');
+    }
+  }, [price, subUnitQuantity]);
+  
+  useEffect(() => {
+    // Initial calculation for edit mode
+    if (isEditMode && product) {
         const pPrice = product.price;
         const pSubQty = product.subUnitQuantity;
         if (pPrice && pSubQty && pSubQty > 0) {
             setSubUnitPrice(Math.round(pPrice / pSubQty));
         }
-    } else {
-      setSubUnitPrice('');
     }
-  }, [price, subUnitQuantity, isEditMode, product]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, product]);
+
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSubUnitPrice = e.target.value;
-    setSubUnitPrice(newSubUnitPrice);
+    const newSubUnitPriceStr = e.target.value;
+    setSubUnitPrice(newSubUnitPriceStr);
 
-    const subUnitPriceNum = parseFloat(newSubUnitPrice);
+    const subUnitPriceNum = parseFloat(newSubUnitPriceStr);
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
     if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
         const calculatedMainPrice = subUnitPriceNum * subUnitQtyNum;
         setPrice(Math.round(calculatedMainPrice));
+    } else if (newSubUnitPriceStr === '') {
+        setPrice('');
     }
   };
 
@@ -163,22 +170,25 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     window.open(url, '_blank');
   };
   
+  const handleNumericInputChange = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string) => {
+    if (value === '') {
+        setter('');
+    } else {
+        const num = parseInt(value, 10);
+        setter(isNaN(num) ? '' : num);
+    }
+  };
+
   const handlePriceFocus = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string | number) => {
     if (value === 0) {
       setter('');
     }
   };
 
-  const handlePriceBlur = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string | number) => {
-    if (value === '') {
-      setter(0);
-    }
-  };
-
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-    const numericSubUnitQuantity = typeof subUnitQuantity === 'string' && subUnitQuantity !== '' ? parseFloat(subUnitQuantity) : undefined;
+    const numericPrice = typeof price === 'string' && price !== '' ? parseInt(price, 10) : (typeof price === 'number' ? price : undefined);
+    const numericSubUnitQuantity = typeof subUnitQuantity === 'string' && subUnitQuantity !== '' ? parseFloat(subUnitQuantity) : (typeof subUnitQuantity === 'number' ? subUnitQuantity : undefined);
 
 
     if (!name || numericPrice === undefined || numericPrice < 0 || !categoryId) {
@@ -248,7 +258,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         <div className="mx-auto max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <div className="lg:col-span-2 grid gap-6">
-                <Card>
+                <Card className="animate-fade-in-up">
                     <CardHeader>
                         <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
                         <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
@@ -299,7 +309,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                     <CardHeader>
                         <CardTitle>واحدها و قیمت‌گذاری</CardTitle>
                     </CardHeader>
@@ -334,7 +344,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value)} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                         
@@ -346,12 +356,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
                                 </div>
-                                <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value === '' ? '' : parseInt(e.target.value, 10))} onFocus={(e) => handlePriceFocus(setPrice, e.target.value)} onBlur={(e) => handlePriceBlur(setPrice, e.target.value)} required />
+                                <Input id="price" type="number" value={price} onChange={(e) => handleNumericInputChange(setPrice, e.target.value)} onFocus={(e) => handlePriceFocus(setPrice, e.target.value)} required />
                             </div>
                             
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-price">قیمت فرعی (ریال)</Label>
-                                <Input id="sub-unit-price" type="number" value={subUnitPrice} onChange={handleSubUnitPriceChange} onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)} onBlur={(e) => handlePriceBlur(setSubUnitPrice, e.target.value)} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-price" type="number" value={subUnitPrice} onChange={handleSubUnitPriceChange} onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                     </CardContent>
@@ -359,7 +369,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             </div>
             
             <div className="grid gap-6">
-                <Card>
+                <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                     <CardHeader>
                         <CardTitle>تصویر محصول</CardTitle>
                     </CardHeader>

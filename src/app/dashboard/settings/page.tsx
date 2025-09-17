@@ -42,19 +42,13 @@ export default function SettingsPage() {
   const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
   
   const [newUnitName, setNewUnitName] = useState('');
-  const [newUnitDefault, setNewUnitDefault] = useState<number | string>(1);
 
 
   const handleAddUnit = () => {
     const name = newUnitName.trim();
-    const defaultQty = typeof newUnitDefault === 'string' ? parseFloat(newUnitDefault) : newUnitDefault;
 
     if (name === '') {
         toast({ variant: 'destructive', title: 'نام واحد نمی‌تواند خالی باشد.' });
-        return;
-    }
-     if (isNaN(defaultQty) || defaultQty <= 0) {
-        toast({ variant: 'destructive', title: 'مقدار پیش‌فرض نامعتبر است.', description: 'مقدار پیش‌فرض باید یک عدد بزرگتر از صفر باشد.' });
         return;
     }
     if (units.some(u => u.name === name)) {
@@ -62,9 +56,8 @@ export default function SettingsPage() {
         return;
     }
     
-    setUnits(prev => [...prev, { name, defaultQuantity: defaultQty }]);
+    setUnits(prev => [...prev, { name, defaultQuantity: 1 }]);
     setNewUnitName('');
-    setNewUnitDefault(1);
     toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
@@ -169,7 +162,7 @@ export default function SettingsPage() {
 
   return (
     <div className="grid gap-6">
-      <Card>
+      <Card className="animate-fade-in-up">
         <CardHeader>
           <CardTitle>تنظیمات</CardTitle>
           <CardDescription>
@@ -178,11 +171,11 @@ export default function SettingsPage() {
         </CardHeader>
       </Card>
 
-      <Card>
+      <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
         <CardHeader>
           <CardTitle>مدیریت واحدها</CardTitle>
           <CardDescription>
-            واحدهای اندازه‌گیری و مقدار پیش‌فرض آن‌ها در فاکتور را مدیریت کنید.
+            واحدهای اندازه‌گیری قابل استفاده در فاکتورها را مدیریت کنید.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -196,17 +189,6 @@ export default function SettingsPage() {
                     onChange={(e) => setNewUnitName(e.target.value)}
                 />
               </div>
-               <div className="grid gap-1.5">
-                <Label htmlFor="new-unit-default">مقدار پیش‌فرض</Label>
-                <Input
-                    id="new-unit-default"
-                    type="number"
-                    step="0.01"
-                    value={newUnitDefault}
-                    onChange={(e) => setNewUnitDefault(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    className="w-full sm:w-32"
-                />
-              </div>
               <Button onClick={handleAddUnit} className="self-end">
                   <PlusCircle className="ml-2 h-4 w-4" />
                   افزودن
@@ -216,7 +198,6 @@ export default function SettingsPage() {
             {units.length > 0 ? units.map(unit => (
                 <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
                     <span>{unit.name}</span>
-                    <span className="text-xs text-muted-foreground mr-2 border-r pr-2">پیش‌فرض: {unit.defaultQuantity}</span>
                     <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
                         <X className="h-3 w-3" />
                     </button>
@@ -226,7 +207,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
         <CardHeader>
           <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
           <CardDescription>
@@ -254,7 +235,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive">
+      <Card className="border-destructive animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
         <CardHeader>
           <CardTitle className="text-destructive">منطقه خطر</CardTitle>
           <CardDescription>

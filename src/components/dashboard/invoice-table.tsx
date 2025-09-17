@@ -59,7 +59,7 @@ type InvoiceTableProps = {
 
 export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
   return (
-     <Card>
+     <Card className="animate-fade-in-up">
       <CardHeader className="px-7">
         <CardTitle>فاکتورها</CardTitle>
         <CardDescription>

@@ -83,7 +83,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-2xl mx-auto animate-fade-in-up">
         <CardHeader>
           <CardTitle>
             {isEditMode ? `ویرایش مشتری: ${customer?.name}` : 'افزودن مشتری جدید'}

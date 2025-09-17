@@ -53,7 +53,7 @@ export default function DashboardPage() {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card>
+        <Card className="animate-fade-in-up">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">درآمد کل</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -65,7 +65,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مجموع فروش</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -77,7 +77,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مجموع مشتریان</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -91,7 +91,7 @@ export default function DashboardPage() {
         </Card>
       </div>
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Link href="/dashboard/reports">
+        <Link href="/dashboard/reports" className="block animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <Card className="xl:col-span-2 transition-all hover:shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle>نمای کلی فروش</CardTitle>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </Link>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <CardHeader>
             <CardTitle>فاکتورهای اخیر</CardTitle>
             <CardDescription>

@@ -63,7 +63,7 @@ export default function CategoriesPage() {
   };
 
   return (
-    <Card>
+    <Card className="animate-fade-in-up">
       <CardHeader>
         <div className='flex justify-between items-center'>
             <div>

@@ -126,7 +126,7 @@ export default function ReportsPage() {
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card>
+        <Card className="animate-fade-in-up">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               درآمد کل
@@ -140,7 +140,7 @@ export default function ReportsPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">فاکتورها</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -152,7 +152,7 @@ export default function ReportsPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -167,7 +167,7 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid gap-4 md:gap-8">
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <CardHeader>
             <CardTitle>نمای کلی فروش</CardTitle>
             <CardDescription>نمای کلی درآمد در بازه زمانی انتخاب شده.</CardDescription>
@@ -178,7 +178,7 @@ export default function ReportsPage() {
         </Card>
         
         <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
-            <Card>
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <CardHeader>
                 <CardTitle>مشتریان برتر</CardTitle>
                 <CardDescription>
@@ -222,7 +222,7 @@ export default function ReportsPage() {
             </CardContent>
             </Card>
 
-            <Card>
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                 <CardHeader>
                     <CardTitle>پرفروش‌ترین محصولات</CardTitle>
                     <CardDescription>
@@ -267,5 +267,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    

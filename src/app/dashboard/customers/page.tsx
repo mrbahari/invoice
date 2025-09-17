@@ -77,7 +77,7 @@ export default function CustomersPage() {
   };
 
   return (
-    <Card>
+    <Card className="animate-fade-in-up">
       <CardHeader>
         <div className='flex items-center justify-between'>
             <div>

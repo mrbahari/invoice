@@ -474,7 +474,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 {isEditMode && (
                     <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
                        <Copy className="ml-2 h-4 w-4" />
-                        ذخیره به عنوان کپی
+                        ذخیره با عنوان محصول جدید
                     </Button>
                 )}
                 <Button type="submit" disabled={isProcessing} size="lg">

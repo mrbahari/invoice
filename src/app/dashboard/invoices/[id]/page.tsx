@@ -137,7 +137,7 @@ export default function InvoicePreviewPage() {
                 <table className="w-full text-sm">
                   <tbody>
                     <tr className="border-b border-black">
-                      <td className="p-1 border-l border-black w-1/5">نام: {category?.storeName}</td>
+                      <td className="p-1 border-l border-black w-1/5">نام فروشگاه: {category?.storeName}</td>
                       <td className="p-1 w-4/5">شماره تماس: {category?.storePhone}</td>
                     </tr>
                     <tr>

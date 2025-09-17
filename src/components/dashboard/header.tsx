@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Home,
@@ -95,6 +95,7 @@ function generateBreadcrumbs(pathname: string, data: {categories: Category[], cu
 export function Header() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
@@ -103,10 +104,15 @@ export function Header() {
   const breadcrumbs = generateBreadcrumbs(pathname, { categories, customers, products });
 
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
+  
+  const handleSheetLinkClick = () => {
+    setIsSheetOpen(false);
+  };
+
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
-      <Sheet>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
@@ -121,6 +127,7 @@ export function Header() {
             <Link
               href="#"
               className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+              onClick={handleSheetLinkClick}
             >
               <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">حسابگر</span>
@@ -130,6 +137,7 @@ export function Header() {
                     key={item.href}
                     href={item.href}
                     className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                    onClick={handleSheetLinkClick}
                 >
                     <item.icon className="h-5 w-5" />
                     {item.label}
@@ -138,6 +146,7 @@ export function Header() {
              <Link
                 href="/dashboard/settings"
                 className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                onClick={handleSheetLinkClick}
             >
                 <Settings className="h-5 w-5" />
                 تنظیمات

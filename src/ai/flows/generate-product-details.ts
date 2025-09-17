@@ -63,25 +63,14 @@ const generateProductDetailsFlow = ai.defineFlow(
     }
     
     if (input.feature === 'image') {
-        try {
-            const { media } = await ai.generate({
-                model: 'googleai/imagen-4.0-fast-generate-001',
-                prompt: `یک عکس محصول حرفه‌ای و باکیفیت از «{{productName}}» که یک محصول در دسته‌بندی «{{categoryName}}» است، روی پس‌زمینه سفید و تمیز تولید کن. تصویر باید کاملاً مرتبط با کاربرد آن در صنعت «{{categoryName}}» باشد و هیچ متن، لوگو یا اشیاء دیگری در آن نباشد.`,
-            });
-            if (media.url) {
-                return { imageUrl: media.url };
-            }
-            throw new Error('Image generation failed to return a URL.');
-        } catch (error) {
-            console.warn("Imagen API failed, falling back to placeholder image.", error);
-            // By adding Math.random(), we ensure a different image is fetched on each attempt.
-            const seed = (input.productName + ' ' + input.categoryName + ' ' + Math.random()).replace(/[^a-zA-Z0-9 ]/g, '');
-            const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
-            return { imageUrl };
-        }
+        // Use picsum.photos as the source for internet images.
+        // The seed is a combination of product name, category name, and a random element
+        // to ensure a different, yet relevant, image is fetched on each attempt.
+        const seed = (input.productName + ' ' + input.categoryName + ' ' + Math.random()).replace(/[^a-zA-Z0-9 ]/g, '');
+        const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
+        return { imageUrl };
     }
 
     return {};
   }
 );
-

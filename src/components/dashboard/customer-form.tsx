@@ -105,7 +105,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
              <div className="grid gap-3">
-                <Label htmlFor="customer-email">ایمیل</Label>
+                <Label htmlFor="customer-email">ایمیل (اختیاری)</Label>
                 <Input
                 id="customer-email"
                 type="email"

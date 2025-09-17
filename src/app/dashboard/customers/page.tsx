@@ -115,7 +115,7 @@ export default function CustomersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>مشتری</TableHead>
-              <TableHead className="hidden sm:table-cell">تماس</TableHead>
+              <TableHead className="hidden sm:table-cell">شماره تماس</TableHead>
               <TableHead className="hidden sm:table-cell text-center">سفارش‌ها</TableHead>
               <TableHead className="hidden md:table-cell text-left">مجموع خرج شده</TableHead>
               <TableHead>
@@ -143,8 +143,7 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    <div>{customer.email}</div>
-                    <div className="text-xs text-muted-foreground">{customer.phone}</div>
+                    <div>{customer.phone}</div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-center">
                     {orderCount}

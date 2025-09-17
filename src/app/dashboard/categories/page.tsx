@@ -127,39 +127,6 @@ export default function CategoriesPage() {
     return products.filter(p => p.categoryId === categoryId).length;
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    const categoryToDelete = categoryList.find(c => c.id === categoryId);
-    if (!categoryToDelete) return;
-
-    const childCount = categoryList.filter(c => c.parentId === categoryId).length;
-    if (childCount > 0) {
-        toast({
-            variant: 'destructive',
-            title: 'خطا در حذف',
-            description: `این دسته‌بندی دارای ${childCount} زیرمجموعه است و قابل حذف نیست. ابتدا زیرمجموعه‌ها را حذف یا جابجا کنید.`,
-        });
-        return;
-    }
-
-    setCategoryList(prev => prev.filter(c => c.id !== categoryId));
-    
-    toast({
-        title: 'دسته‌بندی حذف شد',
-        description: `دسته‌بندی "${categoryToDelete?.name}" با موفقیت حذف شد.`,
-    });
-  };
-  
-  const getIndentation = (category: Category): number => {
-    let depth = 0;
-    let currentId = category.parentId;
-    while (currentId) {
-        depth++;
-        const parent = categoriesById.get(currentId);
-        currentId = parent?.parentId;
-    }
-    return depth;
-  }
-  
   if (selectedCategory) {
     const categoryToEdit = selectedCategory === 'new' ? undefined : selectedCategory;
     return <CategoryForm category={categoryToEdit} onBack={handleBackToList} />;
@@ -194,16 +161,17 @@ export default function CategoriesPage() {
               <TableHead>دسته‌بندی والد</TableHead>
               <TableHead>فروشگاه</TableHead>
               <TableHead className="text-left">محصولات</TableHead>
-              <TableHead>
-                <span className="sr-only">اقدامات</span>
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedAndFilteredCategories.map((category) => {
               const indentation = getIndentation(category);
               return (
-              <TableRow key={category.id} className={category.parentId ? 'bg-muted/50' : ''}>
+              <TableRow 
+                key={category.id} 
+                onClick={() => handleEdit(category)}
+                className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-1 ${category.parentId ? 'bg-muted/50' : ''}`}
+              >
                 <TableCell className="font-medium" style={{ paddingRight: `${1 + indentation * 1.5}rem` }}>
                   {category.parentId && '– '}
                   {category.name}
@@ -218,34 +186,6 @@ export default function CategoriesPage() {
                 <TableCell>{getStoreName(category)}</TableCell>
                 <TableCell className="text-left">
                   {getProductCount(category.id)}
-                </TableCell>
-                <TableCell className="text-left">
-                  <div className="flex items-center gap-2">
-                    <Button onClick={() => handleEdit(category)} size="icon" variant="ghost" className="h-8 w-8">
-                      <FilePen className="h-4 w-4" />
-                      <span className="sr-only">ویرایش</span>
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">حذف</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                          <AlertDialogDescription>
-                              این عمل غیرقابل بازگشت است و دسته‌بندی «{category.name}» را برای همیشه حذف می‌کند.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>انصراف</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteCategory(category.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
                 </TableCell>
               </TableRow>
             )})}

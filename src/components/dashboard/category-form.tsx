@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import type { Category } from '@/lib/definitions';
+import type { Category, Product } from '@/lib/definitions';
 import { initialData } from '@/lib/data';
 import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench, Palette, GraduationCap, Banknote, Sprout, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
@@ -24,6 +24,17 @@ import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import ReactDOMServer from 'react-dom/server';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type CategoryFormProps = {
   category?: Category;
@@ -73,6 +84,7 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
   const isEditMode = !!category;
 
   const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [products] = useLocalStorage<Product[]>('products', initialData.products);
   const categoriesById = new Map(categories.map(c => [c.id, c]));
 
   const [name, setName] = useState(category?.name || '');
@@ -170,6 +182,42 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
       onBack();
     }, 1000);
   };
+
+  const handleDelete = () => {
+    if (!category) return;
+
+    const childCount = categories.filter(c => c.parentId === category.id).length;
+    if (childCount > 0) {
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: `این دسته‌بندی دارای ${childCount} زیرمجموعه است و قابل حذف نیست. ابتدا زیرمجموعه‌ها را حذف یا جابجا کنید.`,
+        });
+        return;
+    }
+     const productCount = products.filter(p => p.categoryId === category.id).length;
+    if (productCount > 0) {
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: `این دسته‌بندی به ${productCount} محصول اختصاص داده شده و قابل حذف نیست.`,
+        });
+        return;
+    }
+
+
+    setIsProcessing(true);
+    setTimeout(() => {
+      setCategories(prev => prev.filter(c => c.id !== category.id));
+      toast({
+        title: 'دسته‌بندی حذف شد',
+        description: `دسته‌بندی "${category.name}" با موفقیت حذف شد.`,
+      });
+      setIsProcessing(false);
+      onBack();
+    }, 1000);
+  };
+
 
   const possibleParents = categories.filter(c => c.id !== category?.id);
 
@@ -353,7 +401,31 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="justify-end">
+        <CardFooter className="flex justify-between">
+           <div>
+            {isEditMode && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" disabled={isProcessing}>
+                    <Trash2 className="ml-2 h-4 w-4" />
+                    حذف دسته‌بندی
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        این عمل غیرقابل بازگشت است و دسته‌بندی «{category.name}» را برای همیشه حذف می‌کند.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
           <Button type="submit" disabled={isProcessing}>
             {isProcessing
               ? isEditMode

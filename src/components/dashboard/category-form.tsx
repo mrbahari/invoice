@@ -95,14 +95,12 @@ export function CategoryForm({ category }: CategoryFormProps) {
   
   const handleIconSelect = (IconComponent: React.ElementType) => {
     const svgString = ReactDOMServer.renderToStaticMarkup(
-      <IconComponent color="currentColor" size={48} strokeWidth={2} />
+      <IconComponent size={48} strokeWidth={2} />
     );
-    // Replace both stroke and fill to handle all icon types correctly.
-    const finalSvg = svgString
-      .replace(/stroke="currentColor"/g, `stroke="${themeColor}"`)
-      .replace(/fill="currentColor"/g, `fill="${themeColor}"`);
-
-    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(finalSvg)))}`;
+    // This creates a data URL that can be colored by CSS 'color' property.
+    // We achieve this by *not* setting a color in the SVG itself, but using 'currentColor'.
+    const coloredSvgString = svgString.replace(/stroke="[^"]*"/g, 'stroke="currentColor"').replace(/fill="[^"]*"/g, 'fill="currentColor"');
+    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(coloredSvgString)))}`;
     setLogo(dataUrl);
   };
 
@@ -232,6 +230,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                       className="rounded-md border p-2"
                       key={logo} 
                       unoptimized
+                      style={logo.startsWith('data:image/svg+xml') ? { color: themeColor } : {}}
                     />
                     <Button
                       type="button"

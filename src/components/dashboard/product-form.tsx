@@ -30,6 +30,18 @@ import {
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
 
 type ProductFormProps = {
   product?: Product;
@@ -299,6 +311,22 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         router.push('/dashboard/products');
     }, 1000);
   }
+  
+  const handleDelete = () => {
+    if (!product) return;
+    
+    setIsProcessing(true);
+    setTimeout(() => {
+        setProducts(prev => prev.filter(p => p.id !== product.id));
+        toast({
+            title: 'محصول حذف شد',
+            description: `محصول "${product.name}" با موفقیت حذف شد.`,
+        });
+        setIsProcessing(false);
+        router.push('/dashboard/products');
+    }, 1000);
+  };
+
 
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
@@ -470,18 +498,44 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 </Card>
             </div>
 
-            <div className="flex justify-end gap-2 lg:col-span-3">
-                {isEditMode && (
-                    <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                       <Copy className="ml-2 h-4 w-4" />
-                        ذخیره با عنوان محصول جدید
+            <div className="flex justify-between items-center gap-2 lg:col-span-3">
+                <div>
+                     {isEditMode && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" disabled={isProcessing}>
+                                    <Trash2 className="ml-2 h-4 w-4" />
+                                    حذف محصول
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
+                <div className='flex gap-2'>
+                    {isEditMode && (
+                        <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                           <Copy className="ml-2 h-4 w-4" />
+                            ذخیره با عنوان محصول جدید
+                        </Button>
+                    )}
+                    <Button type="submit" disabled={isProcessing} size="lg">
+                        {isProcessing
+                        ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
+                        : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
                     </Button>
-                )}
-                <Button type="submit" disabled={isProcessing} size="lg">
-                    {isProcessing
-                    ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
-                    : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
-                </Button>
+                </div>
             </div>
         </div>
     </form>

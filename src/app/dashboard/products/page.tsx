@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File, FilePen, Trash2 } from 'lucide-react';
+import { PlusCircle, File } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,22 +28,11 @@ import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
 import { useState } from 'react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
+  const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
@@ -71,15 +60,6 @@ export default function ProductsPage() {
     
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
-  
-  const handleDeleteProduct = (productId: string) => {
-    const productToDelete = products.find(p => p.id === productId);
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    toast({
-        title: 'محصول حذف شد',
-        description: `محصول "${productToDelete?.name}" با موفقیت حذف شد.`,
-    });
-  };
 
   const renderProductTable = (productList: typeof products) => (
     <Card className="animate-fade-in-up">
@@ -102,9 +82,6 @@ export default function ProductsPage() {
                 توضیحات
               </TableHead>
               <TableHead className="text-left">قیمت</TableHead>
-              <TableHead>
-                <span className="sr-only">اقدامات</span>
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -129,36 +106,6 @@ export default function ProductsPage() {
                 </TableCell>
                 <TableCell className="text-left">
                   {formatCurrency(product.price)}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-2">
-                    <Button asChild size="icon" variant="ghost" className="h-8 w-8">
-                      <Link href={`/dashboard/products/${product.id}/edit`}>
-                        <FilePen className="h-4 w-4" />
-                        <span className="sr-only">ویرایش</span>
-                      </Link>
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">حذف</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>انصراف</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
                 </TableCell>
               </TableRow>
             ))}

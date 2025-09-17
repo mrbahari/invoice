@@ -69,7 +69,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
     if (mainPriceNum > 0 && subUnitQtyNum > 0) {
-      setSubUnitPrice(mainPriceNum / subUnitQtyNum);
+      const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
+      // Round to 2 decimal places to avoid floating point issues
+      setSubUnitPrice(Math.round(calculatedSubPrice * 100) / 100);
     } else {
       setSubUnitPrice('');
     }
@@ -80,7 +82,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           const mainPriceNum = product.price;
           const subUnitQtyNum = product.subUnitQuantity;
           if (mainPriceNum > 0 && subUnitQtyNum && subUnitQtyNum > 0) {
-              setSubUnitPrice(mainPriceNum / subUnitQtyNum);
+              const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
+              setSubUnitPrice(Math.round(calculatedSubPrice * 100) / 100);
           }
       }
   }, [product]);
@@ -93,7 +96,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
     if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
-      setPrice(subUnitPriceNum * subUnitQtyNum);
+        const calculatedMainPrice = subUnitPriceNum * subUnitQtyNum;
+        setPrice(Math.round(calculatedMainPrice * 100) / 100);
     }
   };
 

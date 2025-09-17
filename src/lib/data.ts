@@ -49,15 +49,12 @@ export const initialProducts: Product[] = [
 ];
 
 export const initialCustomers: Customer[] = [
-  { id: 'cust-1', name: 'شرکت نوآوران', email: 'contact@innovate.com', phone: '021-5550101', address: 'پارک علم و فناوری، تهران', purchaseHistory: 'خریدار دائمی لوازم الکترونیکی پیشرفته. مجموع خرج: ۸,۵۰۰ تومان در ۱۲ سفارش.' },
-  { id: 'cust-2', name: 'راهکارهای خلاق', email: 'hello@creative.io', phone: '021-5550102', address: 'خیابان هنر، تهران', purchaseHistory: 'خریدار لوازم جانبی و گاهی مبلمان. مجموع خرج: ۱,۲۰۰ تومان در ۵ سفارش.' },
-  { id: 'cust-3', name: 'مرکز استارتاپ', email: 'admin@startuphub.co', phone: '021-5550103', address: 'بزرگراه کارآفرینی، تهران', purchaseHistory: 'مشتری جدید، اولین سفارش بزرگ برای تجهیز دفتر. مجموع خرج: ۴,۵۰۰ تومان در ۱ سفارش.' },
-  { id: 'cust-4', name: 'رضا رضایی', email: 'john.doe@email.com', phone: '0912-5550104', address: 'خیابان افرا، هر شهری', purchaseHistory: 'خریدهای نادر لوازم جانبی شخصی. مجموع خرج: ۳۵۰ تومان در ۳ سفارش.' },
+    { id: 'cust-1', name: 'اصغر حسن زاده | شرکت همراه کوشا کیش', email: 'a.hassanzadeh@example.com', phone: '09121372580', address: 'فرودگاه امام خمینی', purchaseHistory: 'مشتری جدید' },
+    { id: 'cust-2', name: 'راهکارهای خلاق', email: 'hello@creative.io', phone: '021-5550102', address: 'خیابان هنر، تهران', purchaseHistory: 'خریدار لوازم جانبی و گاهی مبلمان. مجموع خرج: ۱,۲۰۰ تومان در ۵ سفارش.' },
 ];
 
 const invoiceItems1: InvoiceItem[] = [
-      { productId: 'prod-1', productName: 'لپتاپ پرو', quantity: 2, unitPrice: 1499.99, totalPrice: 2999.98, unit: 'عدد' },
-      { productId: 'prod-4', productName: 'مانیتور 4K', quantity: 2, unitPrice: 499.99, totalPrice: 999.98, unit: 'عدد' },
+    { productId: 'prod-1', productName: 'لپتاپ پرو', quantity: 1, unitPrice: 480310000, totalPrice: 480310000, unit: 'عدد' },
     ];
 const invoiceItems2: InvoiceItem[] = [
       { productId: 'prod-2', productName: 'موس بی‌سیم', quantity: 5, unitPrice: 49.99, totalPrice: 249.95, unit: 'عدد' },
@@ -73,63 +70,19 @@ const invoiceItems4: InvoiceItem[] = [
 
 export const initialInvoices: Invoice[] = [
   {
-    id: 'inv-001',
-    invoiceNumber: 'HIS-001',
+    id: 'inv-z0w7l3lgr',
+    invoiceNumber: 'HIS-1546',
     customerId: 'cust-1',
-    customerName: 'شرکت نوآوران',
-    customerEmail: 'contact@innovate.com',
-    date: '2023-10-26T00:00:00.000Z',
-    status: 'Paid',
+    customerName: 'اصغر حسن زاده | شرکت همراه کوشا کیش',
+    customerEmail: 'a.hassanzadeh@example.com',
+    date: '2024-08-05T08:21:44.223Z',
+    status: 'Pending',
     items: invoiceItems1,
-    subtotal: 3999.96,
+    subtotal: 480310000,
     discount: 0,
+    additions: 0,
     tax: 0,
-    total: 3999.96,
-    description: 'خرید ۲ عدد لپتاپ پرو و ۲ عدد مانیتور 4K.'
-  },
-  {
-    id: 'inv-002',
-    invoiceNumber: 'HIS-002',
-    customerId: 'cust-2',
-    customerName: 'راهکارهای خلاق',
-    customerEmail: 'hello@creative.io',
-    date: '2023-10-28T00:00:00.000Z',
-    status: 'Pending',
-    items: invoiceItems2,
-    subtotal: 899.90,
-    discount: 0,
-    tax: 0,
-    total: 899.90,
-    description: 'سفارش ۵ عدد موس بی‌سیم و ۵ عدد کیبورد مکانیکی.'
-  },
-  {
-    id: 'inv-003',
-    invoiceNumber: 'HIS-003',
-    customerId: 'cust-3',
-    customerName: 'مرکز استارتاپ',
-    customerEmail: 'admin@startuphub.co',
-    date: '2023-09-15T00:00:00.000Z',
-    status: 'Overdue',
-    items: invoiceItems3,
-    subtotal: 3990.00,
-    discount: 0,
-    tax: 0,
-    total: 3990.00,
-    description: 'سفارش عمده ۱۰ عدد صندلی ارگونومیک برای دفتر جدید.'
-  },
-  {
-    id: 'inv-004',
-    invoiceNumber: 'HIS-004',
-    customerId: 'cust-4',
-    customerName: 'رضا رضایی',
-    customerEmail: 'john.doe@email.com',
-    date: '2023-11-01T00:00:00.000Z',
-    status: 'Pending',
-    items: invoiceItems4,
-    subtotal: 249.50,
-    discount: 0,
-    tax: 0,
-    total: 249.50,
-    description: '۱ عدد هدفون نویز کنسلینگ.'
+    total: 480310000,
+    description: 'فاکتور ایجاد شده',
   },
 ];

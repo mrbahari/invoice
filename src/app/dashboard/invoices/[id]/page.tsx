@@ -78,7 +78,6 @@ export default function InvoicePreviewPage() {
   const firstItem = invoice.items[0];
   const productInfo = products.find(p => p.id === firstItem?.productId);
   const category = categories.find(c => c.id === productInfo?.categoryId);
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`;
   
   const handleDownloadImage = () => {
     const invoiceElement = document.getElementById('invoice-card');
@@ -111,17 +110,7 @@ export default function InvoicePreviewPage() {
                 <tbody>
                   <tr>
                     <td className="w-1/4 align-top">
-                      <div className="flex items-center gap-4">
-                         <div className="relative h-20 w-20">
-                            <Image
-                              src={qrCodeUrl}
-                              alt="QR Code"
-                              width={80}
-                              height={80}
-                              unoptimized
-                            />
-                         </div>
-                      </div>
+                      
                     </td>
                     <td className="w-1/2 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>

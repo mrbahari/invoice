@@ -33,7 +33,7 @@ const descriptionAndPricePrompt = ai.definePrompt({
         description: z.string().describe('A short, catchy, and professional product description in Persian (Farsi), max 2-3 sentences.'),
         price: z.number().describe('A reasonable suggested price in Iranian Rial (IRR) for this product, considering market value. Provide only a number.'),
     })},
-    prompt: `Based on the product name "{{productName}}" within the category "{{categoryName}}", generate a suitable description and a suggested price in Iranian Rial.`,
+    prompt: `برای یک محصول در دسته‌بندی «{{categoryName}}» با نام «{{productName}}»، یک توضیح کوتاه و حرفه‌ای به زبان فارسی و یک قیمت پیشنهادی معقول به ریال ایران ارائه بده. تاکید می‌شود که محصول مربوط به دسته‌بندی «{{categoryName}}» است.`,
 });
 
 
@@ -66,7 +66,7 @@ const generateProductDetailsFlow = ai.defineFlow(
         try {
             const { media } = await ai.generate({
                 model: 'googleai/imagen-4.0-fast-generate-001',
-                prompt: `Generate a professional, high-quality product photo of a single '${input.productName}' from the category '${input.categoryName}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
+                prompt: `یک عکس محصول حرفه‌ای و باکیفیت از «{{productName}}» که یک محصول در دسته‌بندی «{{categoryName}}» است، روی پس‌زمینه سفید و تمیز تولید کن. تصویر باید کاملاً مرتبط با کاربرد آن در صنعت «{{categoryName}}» باشد و هیچ متن، لوگو یا اشیاء دیگری در آن نباشد.`,
             });
             if (media.url) {
                 return { imageUrl: media.url };
@@ -84,3 +84,4 @@ const generateProductDetailsFlow = ai.defineFlow(
     return {};
   }
 );
+

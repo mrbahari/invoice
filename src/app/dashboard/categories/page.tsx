@@ -73,34 +73,39 @@ export default function CategoriesPage() {
     const filtered = categoryList.filter(category =>
       category.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const filteredIds = new Set(filtered.map(c => c.id));
 
     const categoriesById = new Map(categoryList.map(c => [c.id, c]));
-    const topLevelCategories = filtered.filter(c => !c.parentId);
+    
+    // Function to check if a category should be in the final list (is in filtered list or one of its ancestors is)
+    const isVisible = (cat: Category): boolean => {
+        if (filteredIds.has(cat.id)) return true;
+        if (!cat.parentId) return false;
+        const parent = categoriesById.get(cat.parentId);
+        return parent ? isVisible(parent) : false;
+    }
+
+    const visibleCategories = categoryList.filter(isVisible);
+    const topLevelCategories = visibleCategories.filter(c => !c.parentId);
     
     const sorted: Category[] = [];
     
+    const addChildrenToSortedList = (parentId: string) => {
+        const children = visibleCategories
+            .filter(child => child.parentId === parentId)
+            .sort((a, b) => a.name.localeCompare(b.name));
+            
+        children.forEach(child => {
+            sorted.push(child);
+            addChildrenToSortedList(child.id); // Recursively find grandchildren
+        });
+    };
+    
     topLevelCategories.sort((a, b) => a.name.localeCompare(b.name)).forEach(parent => {
       sorted.push(parent);
-      
-      const findChildren = (parentId: string) => {
-        const children = filtered.filter(child => child.parentId === parentId);
-        children.sort((a, b) => a.name.localeCompare(b.name)).forEach(child => {
-            sorted.push(child);
-            findChildren(child.id); // Recursively find grandchildren
-        });
-      };
-      
-      findChildren(parent.id);
+      addChildrenToSortedList(parent.id);
     });
     
-    // Add orphan children (whose parents are filtered out)
-    const addedIds = new Set(sorted.map(c => c.id));
-    filtered.forEach(child => {
-        if (child.parentId && !addedIds.has(child.id)) {
-            sorted.push(child);
-        }
-    });
-
     return sorted;
   }, [categoryList, searchTerm]);
   
@@ -132,10 +137,11 @@ export default function CategoriesPage() {
   
   const getIndentation = (category: Category): number => {
     let depth = 0;
-    let current = category;
-    while (current.parentId && categoriesById.has(current.parentId)) {
+    let currentId = category.parentId;
+    while (currentId) {
         depth++;
-        current = categoriesById.get(current.parentId)!;
+        const parent = categoriesById.get(currentId);
+        currentId = parent?.parentId;
     }
     return depth;
   }
@@ -247,5 +253,3 @@ export default function CategoriesPage() {
     </Card>
   );
 }
-
-    

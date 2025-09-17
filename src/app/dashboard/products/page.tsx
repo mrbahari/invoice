@@ -67,21 +67,13 @@ export default function ProductsPage() {
       return products.filter(productFilter);
     }
     
-    const selectedCategory = categoriesById.get(activeTab);
-    // If it's a parent category (has no parent), show its products and all descendants' products.
-    if (selectedCategory && !selectedCategory.parentId) {
-      const descendantIds = getDescendantIds(activeTab);
-      return products
+    // For any selected category, get all its descendant IDs including itself.
+    const descendantIds = getDescendantIds(activeTab);
+    return products
         .filter(p => descendantIds.includes(p.categoryId))
         .filter(productFilter);
-    }
 
-    // If it's a sub-category (has a parent), show only its products.
-    return products
-      .filter(product => product.categoryId === activeTab)
-      .filter(productFilter);
-
-  }, [products, activeTab, searchTerm, categoriesById, getDescendantIds]);
+  }, [products, activeTab, searchTerm, getDescendantIds]);
 
   const handleRowClick = (productId: string) => {
     router.push(`/dashboard/products/${productId}/edit`);
@@ -104,23 +96,34 @@ export default function ProductsPage() {
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
   
-  const sortedCategories = useMemo(() => {
-    const categoryMap = new Map(categories.map(c => [c.id, c]));
-    const topLevel = categories.filter(c => !c.parentId || !categoryMap.has(c.parentId));
-    const sorted: Category[] = [];
+  const sortedCategoriesForTabs = useMemo(() => {
+    const categoryMap = new Map(categories.map(c => ({ ...c, children: [] as Category[] })));
+    const topLevel: Category[] = [];
 
-    const addChildren = (parentId: string, depth: number) => {
-        const children = categories.filter(c => c.parentId === parentId);
-        children.sort((a,b) => a.name.localeCompare(b.name)).forEach(child => {
-            sorted.push({ ...child, name: `${'– '.repeat(depth)}${child.name}` });
-            addChildren(child.id, depth + 1);
+    categories.forEach(cat => {
+        if (cat.parentId && categoryMap.has(cat.parentId)) {
+            categoryMap.get(cat.parentId)!.children.push(cat);
+        } else {
+            topLevel.push(cat);
+        }
+    });
+
+    const sorted: { id: string; name: string }[] = [];
+    const addCategoryToTabs = (category: Category, depth: number) => {
+        sorted.push({
+            id: category.id,
+            name: `${'– '.repeat(depth)}${category.name}`
         });
+        const children = categoryMap.get(category.id)?.children || [];
+        children
+            .sort((a,b) => a.name.localeCompare(b.name))
+            .forEach(child => addCategoryToTabs(child, depth + 1));
     };
 
-    topLevel.sort((a,b) => a.name.localeCompare(b.name)).forEach(parent => {
-        sorted.push(parent);
-        addChildren(parent.id, 1);
-    });
+    topLevel
+        .sort((a,b) => a.name.localeCompare(b.name))
+        .forEach(parent => addCategoryToTabs(parent, 0));
+
     return sorted;
   }, [categories]);
 
@@ -190,7 +193,7 @@ export default function ProductsPage() {
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">همه</TabsTrigger>
-          {sortedCategories.map(cat => (
+          {sortedCategoriesForTabs.map(cat => (
             <TabsTrigger key={cat.id} value={cat.id}>
               {cat.name}
             </TabsTrigger>
@@ -226,5 +229,3 @@ export default function ProductsPage() {
     </Tabs>
   );
 }
-
-    

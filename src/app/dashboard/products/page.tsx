@@ -47,12 +47,18 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function ProductsPage() {
   const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
+  const router = useRouter();
+
+  const handleRowClick = (productId: string) => {
+    router.push(`/dashboard/products/${productId}/edit`);
+  };
 
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
@@ -110,7 +116,7 @@ export default function ProductsPage() {
           </TableHeader>
           <TableBody>
             {productList.map((product) => (
-              <TableRow key={product.id}>
+              <TableRow key={product.id} onClick={() => handleRowClick(product.id)} className="cursor-pointer">
                 <TableCell className="hidden sm:table-cell">
                   <Image
                     alt={product.name}
@@ -131,7 +137,7 @@ export default function ProductsPage() {
                 <TableCell className="text-left">
                   {formatCurrency(product.price)}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <AlertDialog>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

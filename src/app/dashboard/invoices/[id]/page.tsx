@@ -155,11 +155,8 @@ export default function InvoicePreviewPage() {
                 <table className="w-full text-sm">
                   <tbody>
                     <tr>
-                      <td className="p-1 border-r border-black w-1/2">نام: {customer?.name}</td>
-                      <td className="p-1 w-1/2">شماره تماس: {customer?.phone}</td>
-                    </tr>
-                     <tr className="border-t border-black">
-                      <td colSpan={2} className="p-1 border-r border-black">آدرس: {customer?.address}</td>
+                      <td className="p-1 border-r border-black w-1/3">نام: {customer?.name}</td>
+                      <td className="p-1 w-2/3">شماره تماس: {customer?.phone}<span className='mx-4'>|</span>آدرس: {customer?.address}</td>
                     </tr>
                   </tbody>
                 </table>

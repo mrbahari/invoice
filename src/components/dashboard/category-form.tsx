@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
-import { initialCategories } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench, Palette, GraduationCap, Banknote, Sprout, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -72,7 +72,7 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
   const { toast } = useToast();
   const isEditMode = !!category;
 
-  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const categoriesById = new Map(categories.map(c => [c.id, c]));
 
   const [name, setName] = useState(category?.name || '');

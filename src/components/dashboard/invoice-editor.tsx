@@ -31,7 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { initialCategories, initialInvoices, initialCustomers, initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
   AlertDialog,
@@ -63,11 +63,11 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
-  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
-  const [products] = useLocalStorage<Product[]>('products', initialProducts);
-  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
-  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
+  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(
     isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined
@@ -618,5 +618,3 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
     </div>
   );
 }
-
-    

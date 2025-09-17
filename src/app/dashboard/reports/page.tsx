@@ -22,7 +22,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, Customer, Product } from '@/lib/definitions';
-import { initialInvoices, initialCustomers, initialProducts } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { DollarSign, CreditCard, Users, ArrowUp, Package } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,9 +32,9 @@ import Image from 'next/image';
 type Period = 'all' | '30d' | '7d' | 'today';
 
 export default function ReportsPage() {
-  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
-  const [allCustomers] = useLocalStorage<Customer[]>('customers', initialCustomers);
-  const [allProducts] = useLocalStorage<Product[]>('products', initialProducts);
+  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [allProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [period, setPeriod] = useState<Period>('all');
 
   const { invoicesInPeriod, totalRevenue, invoiceCount, customerCount, topCustomers, topProducts } = useMemo(() => {

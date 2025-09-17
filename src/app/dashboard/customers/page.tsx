@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { initialCustomers, initialInvoices } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -41,8 +41,8 @@ import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from '@/components/dashboard/customer-form';
 
 export default function CustomersPage() {
-  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
-  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | 'new' | null>(null);
   const { toast } = useToast();
   const { searchTerm } = useSearch();

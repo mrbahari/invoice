@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -56,8 +56,8 @@ export function ProductForm({ product, categories, onBack }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
-  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
+  const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');

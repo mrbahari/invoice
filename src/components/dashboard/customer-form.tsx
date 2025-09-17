@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Customer } from '@/lib/definitions';
-import { initialCustomers } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
   AlertDialog,
@@ -40,7 +40,7 @@ export function CustomerForm({ customer, onBack }: CustomerFormProps) {
   const { toast } = useToast();
   const isEditMode = !!customer;
 
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [name, setName] = useState(customer?.name || '');
   const [email, setEmail] = useState(customer?.email || '');
   const [phone, setPhone] = useState(customer?.phone || '');

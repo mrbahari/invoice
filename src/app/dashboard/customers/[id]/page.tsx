@@ -1,9 +1,10 @@
+
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialCustomers, initialInvoices } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import type { Customer, Invoice } from '@/lib/definitions';
 import {
   Card,
@@ -46,8 +47,8 @@ const statusTranslation: Record<Invoice['status'], string> = {
 
 export default function CustomerDetailPage() {
   const params = useParams<{ id: string }>();
-  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
-  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
 
   const customer = customers.find((c) => c.id === params.id);
 

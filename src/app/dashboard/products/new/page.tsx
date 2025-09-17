@@ -2,13 +2,13 @@
 'use client';
 
 import { ProductForm } from '@/components/dashboard/product-form';
-import { initialCategories } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category } from '@/lib/definitions';
 import { useRouter } from 'next/navigation';
 
 export default function NewProductPage() {
-  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const router = useRouter();
   
   // This page is now handled within ProductsPage.

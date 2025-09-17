@@ -27,7 +27,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { initialUnitsOfMeasurement, initialCategories, initialCustomers, initialProducts, initialInvoices } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
@@ -39,7 +39,7 @@ export default function SettingsPage() {
   const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
   const [products, setProducts] = useLocalStorage<Product[]>('products', []);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
-  const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
+  const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
   
   const [newUnitName, setNewUnitName] = useState('');
 
@@ -71,7 +71,7 @@ export default function SettingsPage() {
     setCustomers([]);
     setProducts([]);
     setInvoices([]);
-    setUnits(initialUnitsOfMeasurement);
+    setUnits(initialData.units);
 
     toast({
       title: 'اطلاعات پاک شد',
@@ -80,11 +80,11 @@ export default function SettingsPage() {
   };
   
   const handleLoadDefaults = () => {
-    setCategories(initialCategories);
-    setCustomers(initialCustomers);
-    setProducts(initialProducts);
-    setInvoices(initialInvoices);
-    setUnits(initialUnitsOfMeasurement);
+    setCategories(initialData.categories);
+    setCustomers(initialData.customers);
+    setProducts(initialData.products);
+    setInvoices(initialData.invoices);
+    setUnits(initialData.units);
 
     toast({
       title: 'داده‌های پیش‌فرض بارگذاری شد',

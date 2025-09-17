@@ -2,7 +2,7 @@
 'use client';
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialInvoices, initialCustomers } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import type { Invoice, Customer, InvoiceStatus } from '@/lib/definitions';
 import {
     Card,
@@ -38,8 +38,8 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 };
 
 export default function DashboardHomePageContent() {
-  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
-  const [allCustomers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
 
   const { totalRevenue, totalPaidInvoices, newCustomers, paidInvoices } = useMemo(() => {
     const paid = allInvoices.filter(inv => inv.status === 'Paid');

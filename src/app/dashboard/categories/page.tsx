@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { initialCategories, initialProducts } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,8 +41,8 @@ import { useSearch } from '@/components/dashboard/search-provider';
 import { CategoryForm } from '@/components/dashboard/category-form';
 
 export default function CategoriesPage() {
-  const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialCategories);
-  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [products] = useLocalStorage<Product[]>('products', initialData.products);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'new' | null>(null);
   const { toast } = useToast();
   const { searchTerm } = useSearch();

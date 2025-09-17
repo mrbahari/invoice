@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { initialInvoices, initialCustomers } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -15,8 +15,8 @@ import { InvoiceEditor } from '@/components/dashboard/invoice-editor';
 import InvoicePreviewPage from './[id]/page';
 
 export default function InvoicesPage() {
-  const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
-  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
@@ -117,5 +117,3 @@ export default function InvoicesPage() {
     />
   );
 }
-
-    

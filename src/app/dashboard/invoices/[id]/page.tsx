@@ -5,7 +5,7 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
-import { initialInvoices, initialProducts, initialCategories, initialCustomers } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { Download, ArrowRight } from 'lucide-react';
@@ -68,10 +68,10 @@ type InvoicePreviewProps = {
 
 
 export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewProps) {
-  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
-  const [products] = useLocalStorage<Product[]>('products', initialProducts);
-  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
-  const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
   const invoice = invoices.find((inv) => inv.id === invoiceId);

@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { initialProducts, initialCategories } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -34,8 +34,8 @@ import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from '@/components/dashboard/product-form';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
-  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | 'new' | null>(null);
   const { toast } = useToast();

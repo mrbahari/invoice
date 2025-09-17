@@ -48,14 +48,21 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
-  const [price, setPrice] = useState<number | string>(product?.price ?? ''); // Main unit price
-  const [subUnitPrice, setSubUnitPrice] = useState<number | string>(''); // Sub unit price
+
+  // Raw numeric values for calculation
+  const [price, setPrice] = useState<number | ''>(product?.price ?? '');
+  const [subUnitPrice, setSubUnitPrice] = useState<number | ''>('');
+
+  // Formatted string values for display
+  const [displayPrice, setDisplayPrice] = useState(product?.price ? new Intl.NumberFormat('fa-IR').format(product.price) : '');
+  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState('');
+  
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [unit, setUnit] = useState<string>(product?.unit || (unitsOfMeasurement[0]?.name || ''));
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
   const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
-  const [subUnitQuantity, setSubUnitQuantity] = useState<number | string>(product?.subUnitQuantity ?? '');
+  const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
@@ -63,45 +70,84 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     price: false,
     image: false,
   });
-  
-  useEffect(() => {
-    const mainPriceNum = typeof price === 'string' ? parseFloat(price) : price;
-    const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
-    if (mainPriceNum > 0 && subUnitQtyNum > 0) {
-      const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
+  const formatNumber = (num: number | '') => {
+    if (num === '' || isNaN(Number(num))) return '';
+    return new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(Number(num));
+  };
+
+  const parseFormattedNumber = (str: string) => {
+    if (!str) return '';
+    // Remove non-digit characters (except for the decimal point if needed, but we ignore it here)
+    const numericString = str.replace(/[^۰-۹0-9]/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString());
+    const number = parseInt(numericString, 10);
+    return isNaN(number) ? '' : number;
+  };
+  
+  // Calculate sub-unit price when main price or quantity changes
+  useEffect(() => {
+    const mainPriceNum = price;
+    const subUnitQtyNum = subUnitQuantity;
+
+    if (mainPriceNum !== '' && subUnitQtyNum !== '' && subUnitQtyNum > 0) {
+      const calculatedSubPrice = Math.round(mainPriceNum / subUnitQtyNum);
       setSubUnitPrice(calculatedSubPrice);
+      setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
     } else {
       setSubUnitPrice('');
+      setDisplaySubUnitPrice('');
     }
   }, [price, subUnitQuantity]);
   
+  // Initial calculation for edit mode
   useEffect(() => {
-    // Initial calculation for edit mode
     if (isEditMode && product) {
         const pPrice = product.price;
         const pSubQty = product.subUnitQuantity;
         if (pPrice && pSubQty && pSubQty > 0) {
-            setSubUnitPrice(pPrice / pSubQty);
+            const calculatedSubPrice = Math.round(pPrice / pSubQty);
+            setSubUnitPrice(calculatedSubPrice);
+            setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, product]);
 
-
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseFormattedNumber(rawValue);
+    setPrice(numericValue);
+    setDisplayPrice(rawValue);
+  };
+  
+  const handlePriceBlur = () => {
+    setDisplayPrice(formatNumber(price));
+  };
+  
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSubUnitPriceStr = e.target.value;
-    setSubUnitPrice(newSubUnitPriceStr);
+    const rawValue = e.target.value;
+    const numericValue = parseFormattedNumber(rawValue);
+    setSubUnitPrice(numericValue);
+    setDisplaySubUnitPrice(rawValue);
 
-    const subUnitPriceNum = parseFloat(newSubUnitPriceStr);
-    const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
-
-    if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
-        const calculatedMainPrice = subUnitPriceNum * subUnitQtyNum;
-        setPrice(calculatedMainPrice);
-    } else if (newSubUnitPriceStr === '') {
+    if (numericValue !== '' && subUnitQuantity !== '' && subUnitQuantity > 0) {
+      const calculatedMainPrice = Math.round(numericValue * subUnitQuantity);
+      setPrice(calculatedMainPrice);
+      setDisplayPrice(formatNumber(calculatedMainPrice));
+    } else if (numericValue === '') {
         setPrice('');
+        setDisplayPrice('');
     }
+  };
+
+  const handleSubUnitPriceBlur = () => {
+    setDisplaySubUnitPrice(formatNumber(subUnitPrice));
+  };
+  
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const num = parseInt(value, 10);
+      setSubUnitQuantity(isNaN(num) ? '' : num);
   };
 
   const handleAiGeneration = async (feature: AIFeature) => {
@@ -134,6 +180,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         setDescription(result.description);
       } else if (feature === 'price' && result.price !== undefined) {
         setPrice(result.price);
+        setDisplayPrice(formatNumber(result.price));
       } else if (feature === 'image' && result.imageUrl) {
         setImageUrl(result.imageUrl);
       }
@@ -169,29 +216,14 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const url = `https://www.google.com/search?q=${query}&tbm=isch`;
     window.open(url, '_blank');
   };
-  
-  const handleNumericInputChange = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string) => {
-    if (value === '') {
-        setter('');
-    } else {
-        const num = parseFloat(value);
-        setter(isNaN(num) ? '' : num);
-    }
-  };
-
-  const handlePriceFocus = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string | number) => {
-    if (value === 0) {
-      setter('');
-    }
-  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const numericPrice = typeof price === 'string' && price !== '' ? parseFloat(price) : (typeof price === 'number' ? price : undefined);
-    const numericSubUnitQuantity = typeof subUnitQuantity === 'string' && subUnitQuantity !== '' ? parseFloat(subUnitQuantity) : (typeof subUnitQuantity === 'number' ? subUnitQuantity : undefined);
+    
+    const numericPrice = price;
+    const numericSubUnitQuantity = subUnitQuantity === '' ? undefined : subUnitQuantity;
 
-
-    if (!name || numericPrice === undefined || numericPrice < 0 || !categoryId) {
+    if (!name || numericPrice === '' || numericPrice < 0 || !categoryId) {
       toast({
         variant: 'destructive',
         title: 'فیلدهای الزامی خالی یا نامعتبر است',
@@ -205,41 +237,29 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
 
     setTimeout(() => {
+      const newOrUpdatedProduct: Product = {
+        id: isEditMode && product ? product.id : `prod-${Math.random().toString(36).substr(2, 9)}`,
+        name,
+        description,
+        price: numericPrice,
+        categoryId,
+        unit,
+        subUnit: subUnit || undefined,
+        subUnitQuantity: numericSubUnitQuantity,
+        imageUrl: finalImage,
+      };
+
       if (isEditMode && product) {
-        const updatedProduct: Product = {
-            ...product,
-            name,
-            description,
-            price: numericPrice,
-            categoryId,
-            unit,
-            subUnit: subUnit || undefined,
-            subUnitQuantity: numericSubUnitQuantity,
-            imageUrl: finalImage
-        };
-        
         setProducts(prev => [
-            updatedProduct,
+            newOrUpdatedProduct,
             ...prev.filter(p => p.id !== product.id)
         ]);
-
         toast({
           title: 'محصول با موفقیت ویرایش شد',
           description: `تغییرات برای محصول "${name}" ذخیره و به بالای لیست منتقل شد.`,
         });
       } else {
-        const newProduct: Product = {
-          id: `prod-${Math.random().toString(36).substr(2, 9)}`,
-          name,
-          description,
-          price: numericPrice,
-          categoryId,
-          unit,
-          subUnit: subUnit || undefined,
-          subUnitQuantity: numericSubUnitQuantity,
-          imageUrl: finalImage,
-        };
-        setProducts(prev => [newProduct, ...prev]);
+        setProducts(prev => [newOrUpdatedProduct, ...prev]);
         toast({
           title: 'محصول جدید ایجاد شد',
           description: `محصول "${name}" با موفقیت ایجاد شد.`,
@@ -330,7 +350,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit">واحد فرعی</Label>
-                                <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); setSubUnitPrice(''); } else { setSubUnit(value); } }}>
+                                <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }}>
                                     <SelectTrigger id="sub-unit">
                                         <SelectValue placeholder="اختیاری" />
                                     </SelectTrigger>
@@ -344,7 +364,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => handleNumericInputChange(setSubUnitQuantity, e.target.value)} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                         
@@ -356,12 +376,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
                                 </div>
-                                <Input id="price" type="number" value={price} onChange={(e) => handleNumericInputChange(setPrice, e.target.value)} onFocus={(e) => handlePriceFocus(setPrice, e.target.value)} required />
+                                <Input id="price" value={displayPrice} onChange={handlePriceChange} onBlur={handlePriceBlur} onFocus={(e) => e.target.value = price.toString()} required />
                             </div>
                             
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
-                                <Input id="sub-unit-price" type="number" value={subUnitPrice} onChange={handleSubUnitPriceChange} onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} onBlur={handleSubUnitPriceBlur} onFocus={(e) => e.target.value = subUnitPrice.toString()} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                     </CardContent>
@@ -390,15 +410,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         <div className="grid grid-cols-3 gap-2">
                             <Button type="button" variant="outline" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
                                 {aiLoading.image ? <LoaderCircle className="animate-spin h-4 w-4" /> : <WandSparkles className="h-4 w-4" />}
-                                <span className="ml-2 hidden sm:inline">AI</span>
+                                <span className="mr-2 hidden sm:inline">AI</span>
                             </Button>
                             <Button type="button" variant="outline" size="sm" onClick={handleImageSearch}>
                                 <Search className="h-4 w-4" />
-                                <span className="ml-2 hidden sm:inline">وب</span>
+                                <span className="mr-2 hidden sm:inline">وب</span>
                             </Button>
                             <Button type="button" variant="ghost" size="sm" onClick={() => setImageUrl(null)} disabled={!imageUrl}>
                                 <Trash2 className="h-4 w-4" />
-                                <span className="ml-2 hidden sm:inline">حذف</span>
+                                <span className="mr-2 hidden sm:inline">حذف</span>
                             </Button>
                         </div>
                     </CardContent>
@@ -416,3 +436,5 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     </form>
   );
 }
+
+    

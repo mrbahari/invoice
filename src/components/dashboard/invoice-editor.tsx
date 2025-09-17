@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, Copy, ArrowRight } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -56,9 +56,10 @@ type InvoiceItemState = {
 
 type InvoiceEditorProps = {
     invoice?: Invoice;
+    onBack: () => void;
 }
 
-export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoice, onBack }: InvoiceEditorProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditMode = !!invoice;
@@ -211,7 +212,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
 
-  const handleProcessInvoice = (navigateTo: 'list' | 'preview' = 'list') => {
+  const handleProcessInvoice = (navigateToPreview: boolean = false) => {
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
       return;
@@ -283,10 +284,10 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
         }
 
         setIsProcessing(false);
-        if (navigateTo === 'preview' && processedInvoiceId) {
+        if (navigateToPreview && processedInvoiceId) {
              router.push(`/dashboard/invoices/${processedInvoiceId}`);
         } else {
-             router.push('/dashboard/invoices');
+             onBack();
         }
     }, 1000);
   };
@@ -302,7 +303,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
         });
         setIsProcessing(false);
-        router.push('/dashboard/invoices');
+        onBack();
     }, 1000);
   };
 
@@ -319,12 +320,18 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                     اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
                 </CardDescription>
               </div>
-               {isEditMode && (
-                 <Button onClick={() => handleProcessInvoice('preview')} variant="outline" size="sm" className="h-8 gap-1">
-                   <Eye className="h-3.5 w-3.5" />
-                   <span>ذخیره و پیش‌نمایش</span>
-                 </Button>
-               )}
+               <div className='flex items-center gap-2'>
+                  <Button type="button" variant="outline" onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست
+                  </Button>
+                  {isEditMode && (
+                    <Button onClick={() => handleProcessInvoice(true)} variant="outline" size="sm" className="h-10 gap-1">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>ذخیره و پیش‌نمایش</span>
+                    </Button>
+                  )}
+               </div>
             </div>
           </CardHeader>
           <CardContent className="grid gap-6">
@@ -499,7 +506,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                       </AlertDialog>
                   )}
                 </div>
-                <Button className="w-full max-w-xs" onClick={() => handleProcessInvoice('list')} disabled={isProcessing}>
+                <Button className="w-full max-w-xs" onClick={() => handleProcessInvoice(false)} disabled={isProcessing}>
                     {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
                 </Button>
             </CardFooter>

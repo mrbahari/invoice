@@ -52,15 +52,10 @@ type InvoiceTableProps = {
   customers: Customer[];
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
   onDeleteInvoice: (invoiceId: string) => void;
+  onRowClick: (invoice: Invoice) => void;
 };
 
-export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
-  const router = useRouter();
-
-  const handleRowClick = (invoiceId: string) => {
-    router.push(`/dashboard/invoices/${invoiceId}/edit`);
-  };
-  
+export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice, onRowClick }: InvoiceTableProps) {
   return (
      <Card className="animate-fade-in-up">
       <CardHeader className="px-7">
@@ -91,7 +86,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
               return (
               <TableRow 
                 key={invoice.id} 
-                onClick={() => handleRowClick(invoice.id)}
+                onClick={() => onRowClick(invoice)}
                 className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
               >
                 <TableCell>

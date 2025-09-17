@@ -6,17 +6,20 @@ import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { initialInvoices, initialCustomers } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { InvoiceEditor } from '@/components/dashboard/invoice-editor';
 
 export default function InvoicesPage() {
   const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
+
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | 'new' | null>(null);
 
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
     setAllInvoices(prev => 
@@ -57,6 +60,23 @@ export default function InvoicesPage() {
     { value: 'pending', label: `در انتظار (${pendingInvoices.length})`, invoices: pendingInvoices },
     { value: 'overdue', label: `سررسید گذشته (${overdueInvoices.length})`, invoices: overdueInvoices, className: 'hidden sm:flex' },
   ], [filteredInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
+  
+  const handleAddNew = () => {
+    setSelectedInvoice('new');
+  };
+
+  const handleEdit = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+  };
+  
+  const handleBackToList = () => {
+    setSelectedInvoice(null);
+  };
+
+  if (selectedInvoice) {
+    const invoiceToEdit = selectedInvoice === 'new' ? undefined : selectedInvoice;
+    return <InvoiceEditor invoice={invoiceToEdit} onBack={handleBackToList} />;
+  }
 
   return (
     <InvoiceTabs
@@ -65,15 +85,14 @@ export default function InvoicesPage() {
         defaultTab="all"
         onStatusChange={handleUpdateStatus}
         onDeleteInvoice={handleDeleteInvoice}
+        onEditInvoice={handleEdit}
         pageActions={
-            <Link href="/dashboard/invoices/new">
-                <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    ایجاد فاکتور
-                </span>
-                </Button>
-            </Link>
+            <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  ایجاد فاکتور
+              </span>
+            </Button>
         }
     />
   );

@@ -1,14 +1,16 @@
 
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const InvoiceEditorDynamic = dynamic(
-  () => import('@/components/dashboard/invoice-editor').then(mod => mod.InvoiceEditor),
-  { ssr: false, loading: () => <p>در حال بارگذاری...</p> }
-);
-
+import { useRouter } from 'next/navigation';
 
 export default function NewInvoicePage() {
-    return <InvoiceEditorDynamic />;
+  const router = useRouter();
+  
+  // This page is now handled within InvoicesPage.
+  // We redirect to the main invoices page.
+  if (typeof window !== 'undefined') {
+    router.replace('/dashboard/invoices');
+  }
+
+  return null; // or a loading indicator
 }

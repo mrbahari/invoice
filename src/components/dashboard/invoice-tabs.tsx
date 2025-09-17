@@ -23,9 +23,10 @@ type InvoiceTabsProps = {
   pageActions: React.ReactNode;
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
   onDeleteInvoice: (invoiceId: string) => void;
+  onEditInvoice: (invoice: Invoice) => void;
 };
 
-export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onDeleteInvoice }: InvoiceTabsProps) {
+export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onDeleteInvoice, onEditInvoice }: InvoiceTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   const handleExport = () => {
@@ -74,6 +75,7 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
             customers={customers} 
             onStatusChange={onStatusChange}
             onDeleteInvoice={onDeleteInvoice}
+            onRowClick={(invoice) => onEditInvoice(invoice)}
           />
         </TabsContent>
       ))}

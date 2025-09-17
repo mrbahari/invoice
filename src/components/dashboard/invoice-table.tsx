@@ -1,5 +1,8 @@
 
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,6 +61,12 @@ type InvoiceTableProps = {
 };
 
 export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
+  const router = useRouter();
+
+  const handleRowClick = (invoiceId: string) => {
+    router.push(`/dashboard/invoices/${invoiceId}/edit`);
+  };
+  
   return (
      <Card className="animate-fade-in-up">
       <CardHeader className="px-7">
@@ -86,7 +95,11 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
             {invoiceList.map((invoice) => {
               const customer = customers.find(c => c.id === invoice.customerId);
               return (
-              <TableRow key={invoice.id}>
+              <TableRow 
+                key={invoice.id} 
+                onClick={() => handleRowClick(invoice.id)}
+                className="cursor-pointer"
+              >
                 <TableCell>
                   <div className="font-medium">{invoice.customerName}</div>
                   <div className="hidden text-sm text-muted-foreground md:inline">
@@ -107,7 +120,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
                 <TableCell className="text-right">
                   {formatCurrency(invoice.total)}
                 </TableCell>
-                <TableCell className="text-left">
+                <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
                   <AlertDialog>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -122,10 +135,8 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
                             مشاهده جزئیات
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="w-full cursor-pointer">
+                        <DropdownMenuItem onClick={() => handleRowClick(invoice.id)}>
                             ویرایش
-                          </Link>
                         </DropdownMenuItem>
                         {invoice.status !== 'Paid' && (
                           <DropdownMenuItem onClick={() => onStatusChange(invoice.id, 'Paid')}>

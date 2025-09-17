@@ -15,7 +15,6 @@ import {
   PanelLeft,
   Search,
   LogOut,
-  File as FileIcon,
   User,
 } from 'lucide-react';
 import {
@@ -44,12 +43,13 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { initialCategories, initialCustomers, initialProducts } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Category, Customer, Product } from '@/lib/definitions';
+import { useSearch } from './search-provider';
+import { cn } from '@/lib/utils';
 
 function generateBreadcrumbs(pathname: string, data: {categories: Category[], customers: Customer[], products: Product[]}) {
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -94,9 +94,12 @@ function generateBreadcrumbs(pathname: string, data: {categories: Category[], cu
     return breadcrumbs.slice(1);
 }
 
+const searchableRoutes = ['/dashboard/products', '/dashboard/customers', '/dashboard/categories'];
+
 export function Header() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { searchTerm, setSearchTerm } = useSearch();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
@@ -110,6 +113,15 @@ export function Header() {
   const handleSheetLinkClick = () => {
     setIsSheetOpen(false);
   };
+  
+  const showSearch = searchableRoutes.some(route => pathname.startsWith(route));
+  
+  // Reset search term when navigating away from searchable pages
+  useEffect(() => {
+    if (!showSearch) {
+      setSearchTerm('');
+    }
+  }, [pathname, showSearch, setSearchTerm]);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
@@ -178,14 +190,17 @@ export function Header() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="relative ml-auto flex-1 md:grow-0">
+      <div className={cn("relative ml-auto flex-1 md:grow-0", !showSearch && 'hidden')}>
         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
           placeholder="جستجو..."
           className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+      <div className={cn("relative ml-auto flex-1 md:grow-0", showSearch && 'hidden')} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -225,5 +240,3 @@ const mobileNavItems = [
     { href: '/dashboard/categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
     { href: '/dashboard/reports', icon: LineChart, label: 'گزارشات' },
 ];
-
-    

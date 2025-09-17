@@ -1,7 +1,7 @@
 
 'use client';
 
-import { File, PlusCircle, Search, Trash2 } from 'lucide-react';
+import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -38,15 +38,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import { useMemo } from 'react';
+import { useSearch } from '@/components/dashboard/search-provider';
 
 export default function CustomersPage() {
   const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const { toast } = useToast();
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
+  const { searchTerm } = useSearch();
 
   const filteredCustomers = useMemo(() => {
     return customerList.filter(customer =>
@@ -93,15 +93,6 @@ export default function CustomersPage() {
                 <CardDescription>
                 مشتریان خود را مدیریت کرده و سابقه خرید آنها را مشاهده کنید.
                 </CardDescription>
-            </div>
-            <div className="relative ml-auto flex-1 md:grow-0">
-                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="جستجوی مشتری..."
-                    className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
             </div>
             <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>

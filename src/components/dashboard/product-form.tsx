@@ -342,8 +342,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         <Image
                         src={imageUrl}
                         alt="پیش‌نمایش تصویر"
-                        layout="fill"
-                        objectFit="contain"
+                        fill={true}
+                        style={{objectFit: 'contain'}}
                         className="rounded-md border p-2"
                         onError={() => {
                             toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'});

@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DollarSign,
-  Hash,
   ShoppingBag,
   FilePen,
 } from 'lucide-react';
@@ -62,8 +61,7 @@ export default function CustomerDetailPage() {
   const stats = useMemo(() => {
     const totalSpent = customerInvoices.reduce((acc, inv) => acc + inv.total, 0);
     const orderCount = customerInvoices.length;
-    const averagePurchase = orderCount > 0 ? totalSpent / orderCount : 0;
-    return { totalSpent, orderCount, averagePurchase };
+    return { totalSpent, orderCount };
   }, [customerInvoices]);
 
   if (!customer) {
@@ -94,7 +92,7 @@ export default function CustomerDetailPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مجموع خرید</CardTitle>
@@ -111,15 +109,6 @@ export default function CustomerDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.orderCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">میانگین خرید</CardTitle>
-            <Hash className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.averagePurchase)}</div>
           </CardContent>
         </Card>
       </div>

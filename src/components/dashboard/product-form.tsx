@@ -334,7 +334,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder={`تعداد در ${unit}`} step="0.01" disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                         

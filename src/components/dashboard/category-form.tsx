@@ -2,8 +2,6 @@
 'use client';
 
 import { useState, ChangeEvent, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import ReactDOMServer from 'react-dom/server';
 import {
   Card,
   CardContent,
@@ -18,16 +16,18 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Category } from '@/lib/definitions';
 import { initialCategories } from '@/lib/data';
-import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench, Palette, GraduationCap, Banknote, Sprout } from 'lucide-react';
+import { Upload, Trash2, Building, ShoppingCart, Laptop, Shirt, Gamepad, Utensils, Car, HeartPulse, Check, Book, Home, Briefcase, Wrench, Palette, GraduationCap, Banknote, Sprout, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import ReactDOMServer from 'react-dom/server';
 
 type CategoryFormProps = {
   category?: Category;
+  onBack: () => void;
 };
 
 const iconList = [
@@ -68,8 +68,7 @@ const colorPalette = [
     '#65a30d', // Lime 600
 ];
 
-export function CategoryForm({ category }: CategoryFormProps) {
-  const router = useRouter();
+export function CategoryForm({ category, onBack }: CategoryFormProps) {
   const { toast } = useToast();
   const isEditMode = !!category;
 
@@ -168,7 +167,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
       }
 
       setIsProcessing(false);
-      router.push('/dashboard/categories');
+      onBack();
     }, 1000);
   };
 
@@ -178,12 +177,20 @@ export function CategoryForm({ category }: CategoryFormProps) {
     <form onSubmit={handleSubmit}>
       <Card className="max-w-2xl mx-auto animate-fade-in-up">
         <CardHeader>
-          <CardTitle>
-            {isEditMode ? `ویرایش دسته‌بندی: ${category?.name}` : 'افزودن دسته‌بندی جدید'}
-          </CardTitle>
-          <CardDescription>
-            اطلاعات دسته‌بندی و در صورت نیاز، فروشگاه مربوطه را وارد کنید.
-          </CardDescription>
+            <div className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>
+                        {isEditMode ? `ویرایش دسته‌بندی: ${category?.name}` : 'افزودن دسته‌بندی جدید'}
+                    </CardTitle>
+                    <CardDescription>
+                        اطلاعات دسته‌بندی و در صورت نیاز، فروشگاه مربوطه را وارد کنید.
+                    </CardDescription>
+                </div>
+                <Button type="button" variant="outline" onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست
+                </Button>
+            </div>
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -361,5 +368,3 @@ export function CategoryForm({ category }: CategoryFormProps) {
     </form>
   );
 }
-
-    

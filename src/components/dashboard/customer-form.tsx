@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -30,14 +29,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ArrowRight, Copy } from 'lucide-react';
 
 type CustomerFormProps = {
   customer?: Customer;
+  onBack: () => void;
 };
 
-export function CustomerForm({ customer }: CustomerFormProps) {
-  const router = useRouter();
+export function CustomerForm({ customer, onBack }: CustomerFormProps) {
   const { toast } = useToast();
   const isEditMode = !!customer;
 
@@ -47,40 +46,47 @@ export function CustomerForm({ customer }: CustomerFormProps) {
   const [phone, setPhone] = useState(customer?.phone || '');
   const [address, setAddress] = useState(customer?.address || '');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  
+  const validateForm = () => {
     if (!name || !phone) {
       toast({
         variant: 'destructive',
         title: 'فیلدهای الزامی خالی است',
         description: 'لطفاً نام و شماره تماس مشتری را وارد کنید.',
       });
-      return;
+      return false;
     }
+    return true;
+  }
+  
+  const buildCustomerData = (id: string): Customer => ({
+    id,
+    name,
+    email: email || 'ایمیل ثبت نشده',
+    phone,
+    address: address || 'آدرس ثبت نشده',
+    purchaseHistory: customer?.purchaseHistory || 'مشتری جدید',
+  });
+
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!validateForm()) return;
 
     setIsProcessing(true);
 
     setTimeout(() => {
       if (isEditMode && customer) {
+        const updatedCustomer = buildCustomerData(customer.id);
         setCustomers(prev => prev.map(c => 
-            c.id === customer.id 
-            ? { ...c, name, email, phone, address } 
-            : c
+            c.id === customer.id ? updatedCustomer : c
         ));
         toast({
           title: 'مشتری با موفقیت ویرایش شد',
           description: `تغییرات برای مشتری "${name}" ذخیره شد.`,
         });
       } else {
-        const newCustomer: Customer = {
-          id: `cust-${Math.random().toString(36).substr(2, 9)}`,
-          name,
-          email: email || 'ایمیل ثبت نشده',
-          phone,
-          address: address || 'آدرس ثبت نشده',
-          purchaseHistory: 'مشتری جدید',
-        };
+        const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
         setCustomers(prev => [newCustomer, ...prev]);
         toast({
           title: 'مشتری جدید ایجاد شد',
@@ -89,9 +95,27 @@ export function CustomerForm({ customer }: CustomerFormProps) {
       }
 
       setIsProcessing(false);
-      router.push('/dashboard/customers');
+      onBack();
     }, 1000);
   };
+  
+  const handleSaveAsCopy = () => {
+    if (!validateForm()) return;
+    
+    setIsProcessing(true);
+
+    setTimeout(() => {
+        const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
+        setCustomers(prev => [newCustomer, ...prev]);
+        toast({
+          title: 'مشتری جدید از روی کپی ایجاد شد',
+          description: `مشتری جدید "${name}" با موفقیت ایجاد شد.`,
+        });
+        
+        setIsProcessing(false);
+        onBack();
+    }, 1000);
+  }
   
   const handleDelete = () => {
     if (!customer) return;
@@ -104,7 +128,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
       });
       setIsProcessing(false);
-      router.push('/dashboard/customers');
+      onBack();
     }, 1000);
   };
 
@@ -112,12 +136,20 @@ export function CustomerForm({ customer }: CustomerFormProps) {
     <form onSubmit={handleSubmit}>
       <Card className="max-w-2xl mx-auto animate-fade-in-up">
         <CardHeader>
-          <CardTitle>
-            {isEditMode ? `ویرایش مشتری: ${customer?.name}` : 'افزودن مشتری جدید'}
-          </CardTitle>
-          <CardDescription>
-            اطلاعات مشتری را وارد کنید.
-          </CardDescription>
+            <div className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>
+                        {isEditMode ? `ویرایش مشتری: ${customer?.name}` : 'افزودن مشتری جدید'}
+                    </CardTitle>
+                    <CardDescription>
+                        اطلاعات مشتری را وارد کنید.
+                    </CardDescription>
+                </div>
+                 <Button type="button" variant="outline" onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست
+                </Button>
+            </div>
         </CardHeader>
         <CardContent className="grid gap-6">
           <div className="grid gap-3">
@@ -188,15 +220,23 @@ export function CustomerForm({ customer }: CustomerFormProps) {
               </AlertDialog>
             )}
           </div>
-          <Button type="submit" disabled={isProcessing}>
-            {isProcessing
-              ? isEditMode
-                ? 'در حال ذخیره...'
-                : 'در حال ایجاد...'
-              : isEditMode
-              ? 'ذخیره تغییرات'
-              : 'ایجاد مشتری'}
-          </Button>
+           <div className='flex gap-2'>
+              {isEditMode && (
+                  <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                     <Copy className="ml-2 h-4 w-4" />
+                      ذخیره با عنوان جدید
+                  </Button>
+              )}
+              <Button type="submit" disabled={isProcessing}>
+                {isProcessing
+                  ? isEditMode
+                    ? 'در حال ذخیره...'
+                    : 'در حال ایجاد...'
+                  : isEditMode
+                  ? 'ذخیره تغییرات'
+                  : 'ایجاد مشتری'}
+              </Button>
+          </div>
         </CardFooter>
       </Card>
     </form>

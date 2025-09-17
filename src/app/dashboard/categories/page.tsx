@@ -38,10 +38,12 @@ import type { Category, Product } from '@/lib/definitions';
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { CategoryForm } from '@/components/dashboard/category-form';
 
 export default function CategoriesPage() {
   const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialCategories);
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [selectedCategory, setSelectedCategory] = useState<Category | 'new' | null>(null);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
@@ -67,6 +69,18 @@ export default function CategoriesPage() {
         return root?.storeName || '-';
     }
     return category.storeName || '-';
+  };
+  
+  const handleAddNew = () => {
+    setSelectedCategory('new');
+  };
+
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+  };
+  
+  const handleBackToList = () => {
+    setSelectedCategory(null);
   };
 
   const sortedAndFilteredCategories = useMemo(() => {
@@ -145,6 +159,12 @@ export default function CategoriesPage() {
     }
     return depth;
   }
+  
+  if (selectedCategory) {
+    const categoryToEdit = selectedCategory === 'new' ? undefined : selectedCategory;
+    return <CategoryForm category={categoryToEdit} onBack={handleBackToList} />;
+  }
+
 
   return (
     <Card className="animate-fade-in-up">
@@ -157,14 +177,12 @@ export default function CategoriesPage() {
                 </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-            <Link href="/dashboard/categories/new">
-              <Button size="sm" className="h-8 gap-1">
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  افزودن دسته‌بندی
-                  </span>
-              </Button>
-            </Link>
+            <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+              افزودن دسته‌بندی
+              </span>
+            </Button>
             </div>
         </div>
       </CardHeader>
@@ -203,11 +221,9 @@ export default function CategoriesPage() {
                 </TableCell>
                 <TableCell className="text-left">
                   <div className="flex items-center gap-2">
-                    <Button asChild size="icon" variant="ghost" className="h-8 w-8">
-                      <Link href={`/dashboard/categories/${category.id}/edit`}>
-                        <FilePen className="h-4 w-4" />
-                        <span className="sr-only">ویرایش</span>
-                      </Link>
+                    <Button onClick={() => handleEdit(category)} size="icon" variant="ghost" className="h-8 w-8">
+                      <FilePen className="h-4 w-4" />
+                      <span className="sr-only">ویرایش</span>
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

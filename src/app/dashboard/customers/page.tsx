@@ -1,7 +1,7 @@
 
 'use client';
 
-import { File, PlusCircle } from 'lucide-react';
+import { File, PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,7 +22,6 @@ import {
 import { initialCustomers, initialInvoices } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Customer, Invoice } from '@/lib/definitions';
 import {
@@ -37,15 +36,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { CustomerForm } from '@/components/dashboard/customer-form';
 
 export default function CustomersPage() {
   const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | 'new' | null>(null);
   const { toast } = useToast();
-  const router = useRouter();
   const { searchTerm } = useSearch();
 
   const filteredCustomers = useMemo(() => {
@@ -54,8 +53,16 @@ export default function CustomersPage() {
     );
   }, [customerList, searchTerm]);
 
-  const handleRowClick = (customerId: string) => {
-    router.push(`/dashboard/customers/${customerId}/edit`);
+  const handleRowClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+  };
+  
+  const handleAddNew = () => {
+    setSelectedCustomer('new');
+  };
+
+  const handleBackToList = () => {
+    setSelectedCustomer(null);
   };
 
   const getCustomerStats = (customerId: string) => {
@@ -84,6 +91,12 @@ export default function CustomersPage() {
     });
   };
 
+  if (selectedCustomer) {
+      const customerToEdit = selectedCustomer === 'new' ? undefined : selectedCustomer;
+      return <CustomerForm customer={customerToEdit} onBack={handleBackToList} />;
+  }
+
+
   return (
     <Card className="animate-fade-in-up">
       <CardHeader>
@@ -101,14 +114,12 @@ export default function CustomersPage() {
                         خروجی
                     </span>
                 </Button>
-                <Link href="/dashboard/customers/new">
-                  <Button size="sm" className="h-8 gap-1">
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      افزودن مشتری
-                      </span>
-                  </Button>
-                </Link>
+                <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    افزودن مشتری
+                    </span>
+                </Button>
             </div>
         </div>
       </CardHeader>
@@ -129,7 +140,7 @@ export default function CustomersPage() {
               return (
                 <TableRow 
                   key={customer.id} 
-                  onClick={() => handleRowClick(customer.id)} 
+                  onClick={() => handleRowClick(customer)} 
                   className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
                 >
                   <TableCell>

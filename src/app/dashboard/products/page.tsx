@@ -97,7 +97,9 @@ export default function ProductsPage() {
   };
   
   const sortedCategoriesForTabs = useMemo(() => {
-    const categoryMap = new Map(categories.map(c => ({ ...c, children: [] as Category[] })));
+    const categoryMap: Map<string, Category & { children: Category[] }> = new Map(
+      categories.map(c => [c.id, { ...c, children: [] }])
+    );
     const topLevel: Category[] = [];
 
     categories.forEach(cat => {
@@ -190,7 +192,7 @@ export default function ProductsPage() {
 
   return (
     <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <TabsList>
           <TabsTrigger value="all">همه</TabsTrigger>
           {sortedCategoriesForTabs.map(cat => (
@@ -199,7 +201,7 @@ export default function ProductsPage() {
             </TabsTrigger>
           ))}
         </TabsList>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">

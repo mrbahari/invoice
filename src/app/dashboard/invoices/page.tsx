@@ -82,6 +82,11 @@ export default function InvoicesPage() {
     setSelectedInvoice(null);
     setViewingInvoiceId(null);
   };
+  
+  const handleSaveAndPreview = (invoiceId: string) => {
+    setSelectedInvoice(null);
+    setViewingInvoiceId(invoiceId);
+  }
 
   if (viewingInvoiceId) {
     return <InvoicePreviewPage invoiceId={viewingInvoiceId} onBack={handleBackToList} />;
@@ -89,7 +94,7 @@ export default function InvoicesPage() {
 
   if (selectedInvoice) {
     const invoiceToEdit = selectedInvoice === 'new' ? undefined : selectedInvoice;
-    return <InvoiceEditor invoice={invoiceToEdit} onBack={handleBackToList} />;
+    return <InvoiceEditor invoice={invoiceToEdit} onBack={handleBackToList} onSaveAndPreview={handleSaveAndPreview} />;
   }
 
   return (
@@ -112,3 +117,5 @@ export default function InvoicesPage() {
     />
   );
 }
+
+    

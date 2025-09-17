@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice } from '@/lib/definitions';
 import {
   Card,
@@ -57,10 +56,10 @@ type InvoiceItemState = {
 type InvoiceEditorProps = {
     invoice?: Invoice;
     onBack: () => void;
+    onSaveAndPreview: (invoiceId: string) => void;
 }
 
-export function InvoiceEditor({ invoice, onBack }: InvoiceEditorProps) {
-  const router = useRouter();
+export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
@@ -285,7 +284,7 @@ export function InvoiceEditor({ invoice, onBack }: InvoiceEditorProps) {
 
         setIsProcessing(false);
         if (navigateToPreview && processedInvoiceId) {
-             router.push(`/dashboard/invoices/${processedInvoiceId}`);
+             onSaveAndPreview(processedInvoiceId);
         } else {
              onBack();
         }
@@ -619,3 +618,5 @@ export function InvoiceEditor({ invoice, onBack }: InvoiceEditorProps) {
     </div>
   );
 }
+
+    

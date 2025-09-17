@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { Product, Category } from '@/lib/definitions';
+import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
 import { initialProducts } from '@/lib/data';
 import { Upload, Trash2, WandSparkles, LoaderCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -37,6 +37,8 @@ type ProductFormProps = {
   categories: Category[];
 };
 
+const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
+
 type AIFeature = 'description' | 'image' | 'price';
 
 export function ProductForm({ product, categories }: ProductFormProps) {
@@ -49,6 +51,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [description, setDescription] = useState(product?.description || '');
   const [price, setPrice] = useState<number | string>(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
+  const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || 'عدد');
   const [image, setImage] = useState<string | null>(product?.imageUrl || null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
@@ -66,11 +69,21 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       });
       return;
     }
+     if (!categoryId) {
+      toast({
+        variant: 'destructive',
+        title: 'دسته‌بندی انتخاب نشده',
+        description: 'برای دریافت نتیجه بهتر، ابتدا دسته‌بندی محصول را انتخاب کنید.',
+      });
+      return;
+    }
 
     setAiLoading(prev => ({ ...prev, [feature]: true }));
+    
+    const categoryName = categories.find(c => c.id === categoryId)?.name || '';
 
     try {
-      const input: GenerateProductDetailsInput = { productName: name, feature };
+      const input: GenerateProductDetailsInput = { productName: name, categoryName, feature };
       const result = await generateProductDetails(input);
 
       if (feature === 'description' && result.description) {
@@ -167,7 +180,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       if (isEditMode && product) {
         setProducts(prev => prev.map(p => 
             p.id === product.id 
-            ? { ...p, name, description, price: numericPrice, categoryId, imageUrl: image || p.imageUrl }
+            ? { ...p, name, description, price: numericPrice, categoryId, unit, imageUrl: image || p.imageUrl }
             : p
         ));
         toast({
@@ -181,6 +194,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           description,
           price: numericPrice,
           categoryId,
+          unit,
           imageUrl: image || PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)].imageUrl,
         };
         setProducts(prev => [newProduct, ...prev]);
@@ -265,6 +279,21 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 </Select>
             </div>
           </div>
+          <div className="grid gap-3">
+            <Label htmlFor="unit">واحد پیش‌فرض</Label>
+            <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
+                <SelectTrigger id="unit">
+                <SelectValue placeholder="انتخاب واحد" />
+                </SelectTrigger>
+                <SelectContent>
+                {unitsOfMeasurement.map((u) => (
+                    <SelectItem key={u} value={u}>
+                    {u}
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+           </div>
           <div className="grid gap-3">
               <div className="flex items-center justify-between">
                 <Label>تصویر محصول</Label>

@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 const GenerateProductDetailsInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
+  categoryName: z.string().describe('The category of the product.'),
   feature: z.enum(['description', 'image', 'price']).describe('The specific feature to generate.'),
 });
 export type GenerateProductDetailsInput = z.infer<typeof GenerateProductDetailsInputSchema>;
@@ -27,12 +28,12 @@ export type GenerateProductDetailsOutput = z.infer<typeof GenerateProductDetails
 
 const descriptionAndPricePrompt = ai.definePrompt({
     name: 'productDescriptionPricePrompt',
-    input: { schema: z.object({ productName: z.string() }) },
+    input: { schema: z.object({ productName: z.string(), categoryName: z.string() }) },
     output: { schema: z.object({
         description: z.string().describe('A short, catchy, and professional product description in Persian (Farsi), max 2-3 sentences.'),
         price: z.number().describe('A reasonable suggested price in Iranian Rial (IRR) for this product, considering market value. Provide only a number.'),
     })},
-    prompt: `Based on the product name "{{productName}}", generate a suitable description and a suggested price in Iranian Rial.`,
+    prompt: `Based on the product name "{{productName}}" within the category "{{categoryName}}", generate a suitable description and a suggested price in Iranian Rial.`,
 });
 
 
@@ -51,7 +52,7 @@ const generateProductDetailsFlow = ai.defineFlow(
   async (input) => {
     
     if (input.feature === 'description' || input.feature === 'price') {
-      const { output } = await descriptionAndPricePrompt({ productName: input.productName });
+      const { output } = await descriptionAndPricePrompt({ productName: input.productName, categoryName: input.categoryName });
       if (!output) {
         throw new Error('Failed to generate description or price.');
       }
@@ -65,7 +66,7 @@ const generateProductDetailsFlow = ai.defineFlow(
         try {
             const { media } = await ai.generate({
                 model: 'googleai/imagen-4.0-fast-generate-001',
-                prompt: `Generate a professional, high-quality product photo of a single '${input.productName}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
+                prompt: `Generate a professional, high-quality product photo of a single '${input.productName}' from the category '${input.categoryName}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
             });
             if (media.url) {
                 return { imageUrl: media.url };
@@ -73,7 +74,7 @@ const generateProductDetailsFlow = ai.defineFlow(
             throw new Error('Image generation failed to return a URL.');
         } catch (error) {
             console.warn("Imagen API failed, falling back to placeholder image.", error);
-            const seed = input.productName.replace(/[^a-zA-Z0-9]/g, ''); // Sanitize seed
+            const seed = (input.productName + input.categoryName).replace(/[^a-zA-Z0-9]/g, ''); // Sanitize seed
             const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
             return { imageUrl };
         }

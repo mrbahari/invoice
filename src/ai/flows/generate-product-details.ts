@@ -64,16 +64,10 @@ const generateProductDetailsFlow = ai.defineFlow(
     }
     
     if (input.feature === 'image') {
-        const { media } = await ai.generate({
-            model: 'googleai/imagen-4.0-fast-generate-001',
-            prompt: `Generate a professional, high-quality product photo of a single '{{productName}}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
-        });
-
-        if (!media.url) {
-            throw new Error('Failed to generate image.');
-        }
-
-        return { imageUrl: media.url };
+        // Fallback to a placeholder image to avoid Imagen API billing errors
+        const seed = Math.floor(Math.random() * 1000);
+        const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
+        return { imageUrl };
     }
 
     return {};

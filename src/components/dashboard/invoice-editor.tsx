@@ -112,9 +112,6 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
-    if (item.product.subUnit && item.product.subUnitQuantity) {
-      return item.quantity * item.product.subUnitQuantity * item.product.price;
-    }
     return item.quantity * item.product.price;
   };
 
@@ -294,7 +291,8 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                         <Input
                           type="number"
                           value={item.quantity}
-                          onChange={(e) => handleQuantityChange(item.product.id, parseInt(e.target.value, 10))}
+                          onChange={(e) => handleQuantityChange(item.product.id, parseFloat(e.target.value))}
+                          step="0.01"
                           className="w-20 text-center mx-auto"
                         />
                       </TableCell>

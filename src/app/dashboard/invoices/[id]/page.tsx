@@ -99,10 +99,6 @@ export default function InvoicePreviewPage() {
   };
   
   const getDisplayPrice = (item: InvoiceItem): string => {
-    const product = products.find(p => p.id === item.productId);
-    if (product?.subUnit && product?.subUnitQuantity) {
-      return `${formatCurrency(item.unitPrice)} / ${product.subUnit}`;
-    }
     return formatCurrency(item.unitPrice);
   };
 

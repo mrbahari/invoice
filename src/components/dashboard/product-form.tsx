@@ -235,7 +235,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             <div className="grid gap-3">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="price">
-                    {subUnit ? `قیمت واحد فرعی (${subUnit})` : 'قیمت'} (ریال)
+                    قیمت واحد فروش اصلی (ریال)
                   </Label>
                   <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
                      {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}

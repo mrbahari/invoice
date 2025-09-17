@@ -208,10 +208,7 @@ export function Header() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-      <div className="ml-auto flex items-center gap-4">
-        <div className="hidden md:flex">
-            <LiveClock />
-        </div>
+      <div className="flex items-center gap-4">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button
@@ -255,6 +252,9 @@ export function Header() {
             </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+        <div className="hidden md:flex">
+            <LiveClock />
+        </div>
       </div>
     </header>
   );

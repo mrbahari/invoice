@@ -12,6 +12,7 @@ export type Customer = {
 export type Category = {
   id: string;
   name: string;
+  parentId?: string;
   description?: string;
   storeName?: string;
   logoUrl?: string;

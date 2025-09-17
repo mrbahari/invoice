@@ -37,6 +37,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Product } from '@/lib/definitions';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 export default function CategoriesPage() {
   const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialCategories);
@@ -44,10 +45,39 @@ export default function CategoriesPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredCategories = useMemo(() => {
-    return categoryList.filter(category =>
+  const getCategoryName = (categoryId: string) => {
+    return categoryList.find(c => c.id === categoryId)?.name;
+  };
+
+  const sortedAndFilteredCategories = useMemo(() => {
+    const filtered = categoryList.filter(category =>
       category.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const categoriesById = new Map(categoryList.map(c => [c.id, c]));
+    const topLevelCategories = filtered.filter(c => !c.parentId || !categoriesById.has(c.parentId));
+    const childCategories = filtered.filter(c => c.parentId && categoriesById.has(c.parentId));
+
+    const sorted: Category[] = [];
+    
+    topLevelCategories.sort((a, b) => a.name.localeCompare(b.name)).forEach(parent => {
+      sorted.push(parent);
+      childCategories
+        .filter(child => child.parentId === parent.id)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(child => sorted.push(child));
+    });
+    
+    // Add orphan children (whose parents are filtered out)
+    const addedIds = new Set(sorted.map(c => c.id));
+    childCategories.forEach(child => {
+        if (!addedIds.has(child.id)) {
+            sorted.push(child);
+        }
+    });
+
+
+    return sorted;
   }, [categoryList, searchTerm]);
   
   const getProductCount = (categoryId: string) => {
@@ -56,6 +86,18 @@ export default function CategoriesPage() {
 
   const handleDeleteCategory = (categoryId: string) => {
     const categoryToDelete = categoryList.find(c => c.id === categoryId);
+    if (!categoryToDelete) return;
+
+    const childCount = categoryList.filter(c => c.parentId === categoryId).length;
+    if (childCount > 0) {
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: `این دسته‌بندی دارای ${childCount} زیرمجموعه است و قابل حذف نیست. ابتدا زیرمجموعه‌ها را حذف یا جابجا کنید.`,
+        });
+        return;
+    }
+
     setCategoryList(prev => prev.filter(c => c.id !== categoryId));
     
     toast({
@@ -71,7 +113,7 @@ export default function CategoriesPage() {
             <div>
                 <CardTitle>دسته‌بندی‌ها</CardTitle>
                 <CardDescription>
-                اطلاعات فروشگاه را برای هر دسته‌بندی مدیریت کنید.
+                دسته‌بندی‌ها و زیرمجموعه‌های محصولات خود را مدیریت کنید.
                 </CardDescription>
             </div>
             <div className="relative ml-auto flex-1 md:grow-0">
@@ -100,8 +142,8 @@ export default function CategoriesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>نام دسته‌بندی</TableHead>
-              <TableHead>نام فروشگاه</TableHead>
-              <TableHead className="hidden sm:table-cell">آدرس</TableHead>
+              <TableHead>دسته‌بندی والد</TableHead>
+              <TableHead>فروشگاه</TableHead>
               <TableHead className="text-left">محصولات</TableHead>
               <TableHead>
                 <span className="sr-only">اقدامات</span>
@@ -109,14 +151,20 @@ export default function CategoriesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCategories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell>{category.storeName}</TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  <div className='text-sm'>{category.storeAddress}</div>
-                  <div className='text-xs text-muted-foreground'>{category.storePhone}</div>
+            {sortedAndFilteredCategories.map((category) => (
+              <TableRow key={category.id} className={category.parentId ? 'bg-muted/50' : ''}>
+                <TableCell className="font-medium">
+                  {category.parentId ? <span className='mr-4'>–</span> : ''}
+                  {category.name}
                 </TableCell>
+                <TableCell>
+                  {category.parentId ? (
+                     <Badge variant="outline">{getCategoryName(category.parentId)}</Badge>
+                  ) : (
+                    <span className='text-muted-foreground'>-</span>
+                  )}
+                </TableCell>
+                <TableCell>{category.storeName}</TableCell>
                 <TableCell className="text-left">
                   {getProductCount(category.id)}
                 </TableCell>
@@ -157,7 +205,7 @@ export default function CategoriesPage() {
       </CardContent>
        <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>{filteredCategories.length}</strong> از <strong>{categoryList.length}</strong> دسته‌بندی
+          نمایش <strong>{sortedAndFilteredCategories.length}</strong> از <strong>{categoryList.length}</strong> دسته‌بندی
         </div>
       </CardFooter>
     </Card>

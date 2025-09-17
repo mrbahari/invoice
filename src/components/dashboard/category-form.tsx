@@ -24,6 +24,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type CategoryFormProps = {
   category?: Category;
@@ -74,6 +75,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
   const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [name, setName] = useState(category?.name || '');
+  const [parentId, setParentId] = useState(category?.parentId || '');
   const [description, setDescription] = useState(category?.description || '');
   const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
@@ -124,7 +126,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
             c.id === category.id 
-            ? { ...c, name, description, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
+            ? { ...c, name, parentId: parentId || undefined, description, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
             : c
         ));
         toast({
@@ -135,6 +137,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
         const newCategory: Category = {
           id: `cat-${Math.random().toString(36).substr(2, 9)}`,
           name,
+          parentId: parentId || undefined,
           description,
           storeName,
           storeAddress,
@@ -154,6 +157,8 @@ export function CategoryForm({ category }: CategoryFormProps) {
     }, 1000);
   };
 
+  const possibleParents = categories.filter(c => c.id !== category?.id && !c.parentId);
+
   return (
     <form onSubmit={handleSubmit}>
       <Card className="max-w-2xl mx-auto animate-fade-in-up">
@@ -166,15 +171,33 @@ export function CategoryForm({ category }: CategoryFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <div className="grid gap-3">
-            <Label htmlFor="category-name">نام دسته‌بندی</Label>
-            <Input
-              id="category-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="مثال: الکترونیک"
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-3">
+              <Label htmlFor="category-name">نام دسته‌بندی</Label>
+              <Input
+                id="category-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="مثال: الکترونیک"
+                required
+              />
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="parent-category">دسته‌بندی والد (اختیاری)</Label>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger id="parent-category">
+                  <SelectValue placeholder="انتخاب دسته‌بندی والد" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">هیچکدام (دسته‌بندی اصلی)</SelectItem>
+                  {possibleParents.map(parent => (
+                    <SelectItem key={parent.id} value={parent.id}>
+                      {parent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid gap-3">
               <Label htmlFor="description">توضیحات</Label>

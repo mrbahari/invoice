@@ -23,11 +23,11 @@ import {
 } from '@/components/ui/table';
 import { initialProducts, initialCategories } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
@@ -40,18 +40,55 @@ export default function ProductsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
 
+  const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
+
+  const getDescendantIds = useCallback((categoryId: string): string[] => {
+    const descendants = new Set<string>();
+    const queue = [categoryId];
+    descendants.add(categoryId);
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      const children = categories.filter(c => c.parentId === currentId);
+      for (const child of children) {
+        if (!descendants.has(child.id)) {
+          descendants.add(child.id);
+          queue.push(child.id);
+        }
+      }
+    }
+    return Array.from(descendants);
+  }, [categories]);
+
   const filteredProducts = useMemo(() => {
+    const productFilter = (product: Product) => product.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (activeTab === 'all') {
+      return products.filter(productFilter);
+    }
+    
+    const selectedCategory = categoriesById.get(activeTab);
+    // If it's a parent category (or has children), show its products and all descendants' products.
+    if (selectedCategory && !selectedCategory.parentId) {
+      const descendantIds = getDescendantIds(activeTab);
+      return products
+        .filter(p => descendantIds.includes(p.categoryId))
+        .filter(productFilter);
+    }
+
+    // If it's a sub-category (or has no children), show only its products.
     return products
-      .filter(product => activeTab === 'all' || product.categoryId === activeTab)
-      .filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [products, activeTab, searchTerm]);
+      .filter(product => product.categoryId === activeTab)
+      .filter(productFilter);
+
+  }, [products, activeTab, searchTerm, categoriesById, getDescendantIds]);
 
   const handleRowClick = (productId: string) => {
     router.push(`/dashboard/products/${productId}/edit`);
   };
 
   const getCategoryName = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId)?.name || 'بدون دسته‌بندی';
+    return categoriesById.get(categoryId)?.name || 'بدون دسته‌بندی';
   };
 
   const handleExport = () => {
@@ -66,6 +103,19 @@ export default function ProductsPage() {
     
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
+  
+  const sortedCategories = useMemo(() => {
+      const topLevel = categories.filter(c => !c.parentId || !categoriesById.has(c.parentId));
+      const sorted: Category[] = [];
+
+      topLevel.sort((a,b) => a.name.localeCompare(b.name)).forEach(parent => {
+          sorted.push(parent);
+          const children = categories.filter(c => c.parentId === parent.id);
+          children.sort((a,b) => a.name.localeCompare(b.name)).forEach(child => sorted.push(child));
+      });
+      return sorted;
+  }, [categories, categoriesById]);
+
 
   const renderProductTable = (productList: typeof products) => (
     <Card className="animate-fade-in-up">
@@ -120,7 +170,7 @@ export default function ProductsPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>{productList.length}</strong> از <strong>{products.filter(p => activeTab === 'all' || p.categoryId === activeTab).length}</strong> محصول
+          نمایش <strong>{productList.length}</strong> از <strong>{products.length}</strong> محصول
         </div>
       </CardFooter>
     </Card>
@@ -132,8 +182,11 @@ export default function ProductsPage() {
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">همه</TabsTrigger>
-          {categories.map(cat => (
-            <TabsTrigger key={cat.id} value={cat.id}>{cat.name}</TabsTrigger>
+          {sortedCategories.map(cat => (
+            <TabsTrigger key={cat.id} value={cat.id}>
+              {cat.parentId ? <span className='ml-2'>–</span> : ''}
+              {cat.name}
+            </TabsTrigger>
           ))}
         </TabsList>
         <div className="ml-auto flex items-center gap-2">

@@ -47,6 +47,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
 
   const [name, setName] = useState(product?.name || '');
+  const [code, setCode] = useState(product?.code || '');
   const [description, setDescription] = useState(product?.description || '');
   
   const [price, setPrice] = useState<number | ''>(product?.price ?? '');
@@ -239,6 +240,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       const newOrUpdatedProduct: Product = {
         id: isEditMode && product ? product.id : `prod-${Math.random().toString(36).substr(2, 9)}`,
         name,
+        code,
         description,
         price: numericPrice,
         categoryId,
@@ -284,8 +286,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6">
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="grid gap-3">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="grid gap-3 md:col-span-2">
                                 <Label htmlFor="product-name">نام محصول</Label>
                                 <Input
                                     id="product-name"
@@ -296,20 +298,29 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                                 />
                             </div>
                             <div className="grid gap-3">
-                                <Label htmlFor="category">دسته‌بندی</Label>
-                                <Select value={categoryId} onValueChange={setCategoryId} required>
-                                    <SelectTrigger id="category">
-                                    <SelectValue placeholder="انتخاب دسته‌بندی" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                    {categories.map((cat) => (
-                                        <SelectItem key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                        </SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </Select>
+                                <Label htmlFor="product-code">کد کالا</Label>
+                                <Input
+                                    id="product-code"
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    placeholder="اختیاری"
+                                />
                             </div>
+                        </div>
+                        <div className="grid gap-3">
+                             <Label htmlFor="category">دسته‌بندی</Label>
+                            <Select value={categoryId} onValueChange={setCategoryId} required>
+                                <SelectTrigger id="category">
+                                <SelectValue placeholder="انتخاب دسته‌بندی" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                {categories.map((cat) => (
+                                    <SelectItem key={cat.id} value={cat.id}>
+                                    {cat.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-3">
                             <div className="flex items-center justify-between">
@@ -443,5 +454,3 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     </form>
   );
 }
-
-    

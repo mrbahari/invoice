@@ -52,14 +52,19 @@ const generateProductDetailsFlow = ai.defineFlow(
   async (input) => {
     
     if (input.feature === 'description' || input.feature === 'price') {
-      const { output } = await descriptionAndPricePrompt({ productName: input.productName, categoryName: input.categoryName });
-      if (!output) {
-        throw new Error('Failed to generate description or price.');
+      try {
+        const { output } = await descriptionAndPricePrompt({ productName: input.productName, categoryName: input.categoryName });
+        if (!output) {
+          throw new Error('Failed to generate description or price.');
+        }
+        return {
+          description: input.feature === 'description' ? output.description : undefined,
+          price: input.feature === 'price' ? output.price : undefined,
+        };
+      } catch (error) {
+        console.warn("AI description/price generation failed.", error);
+        return {}; // Return empty object on failure to be handled by the client
       }
-      return {
-        description: input.feature === 'description' ? output.description : undefined,
-        price: input.feature === 'price' ? output.price : undefined,
-      };
     }
 
     if (input.feature === 'image') {
@@ -82,4 +87,3 @@ const generateProductDetailsFlow = ai.defineFlow(
     return {};
   }
 );
-

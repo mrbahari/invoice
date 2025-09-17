@@ -230,7 +230,7 @@ export default function InvoicePreviewPage() {
               {/* Footer */}
               <div className="mt-8 flex justify-between text-xs text-gray-500">
                 <span>صفحه ۱ از ۱</span>
-                <span>تاریخ گزارش: {new Date().toLocaleDateString('fa-IR')} {new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>تاریخ گزارش: {new Date().toLocaleDateString('fa-IR')} ساعت {new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
 
             </div>

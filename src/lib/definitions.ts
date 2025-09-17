@@ -29,6 +29,7 @@ export type Product = {
   unit: string;
   subUnit?: string;
   subUnitQuantity?: number;
+  subUnitPrice?: number;
 };
 
 export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue';

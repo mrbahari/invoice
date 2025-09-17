@@ -190,6 +190,12 @@ export default function InvoicePreviewPage() {
                       )
                     })}
                   </tbody>
+                  <tfoot>
+                    <tr className="font-bold">
+                        <td colSpan={4} className="border border-black p-1 text-center">جمع کل</td>
+                        <td colSpan={2} className="border border-black p-1 text-center font-mono">{formatCurrency(invoice.total)}</td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
 
@@ -203,11 +209,7 @@ export default function InvoicePreviewPage() {
                 <div className="border border-black">
                   <table className="w-full text-sm">
                     <tbody>
-                      <tr>
-                        <td className="p-1 border-r border-black">جمع کل:</td>
-                        <td className="p-1 font-mono">{formatCurrency(invoice.subtotal)}</td>
-                      </tr>
-                      <tr className="border-t border-black font-bold">
+                      <tr className="font-bold">
                         <td className="p-1 border-r border-black">قابل پرداخت:</td>
                         <td className="p-1 font-mono">{formatCurrency(invoice.total)}</td>
                       </tr>

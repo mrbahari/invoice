@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, Copy } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -553,3 +553,5 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     </div>
   );
 }
+
+    

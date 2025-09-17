@@ -30,7 +30,6 @@ import {
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
-import { Separator } from '../ui/separator';
 
 type ProductFormProps = {
   product?: Product;
@@ -269,58 +268,61 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             </div>
           </div>
           
-            <div className="grid grid-cols-1 gap-4 items-end md:grid-cols-3">
-                <div className="grid gap-3">
-                    <Label htmlFor="unit">واحد فروش اصلی</Label>
-                    <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
-                        <SelectTrigger id="unit">
-                        <SelectValue placeholder="انتخاب واحد" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {unitsOfMeasurement.map((u) => (
-                            <SelectItem key={u.name} value={u.name}>
-                            {u.name}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="sub-unit">واحد فرعی (اختیاری)</Label>
-                    <Select 
-                    value={subUnit || 'none'} 
-                    onValueChange={(value: string) => {
-                        if (value === 'none') {
-                        setSubUnit(undefined);
-                        setSubUnitQuantity('');
-                        } else {
-                        setSubUnit(value);
-                        }
-                    }}>
-                        <SelectTrigger id="sub-unit">
-                        <SelectValue placeholder="انتخاب واحد" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        <SelectItem key="none" value="none">هیچکدام</SelectItem>
-                        {unitsOfMeasurement.map((u) => (
-                            <SelectItem key={u.name} value={u.name}>
-                            {u.name}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="sub-unit-quantity">مقدار واحد فرعی</Label>
-                    <Input
-                        id="sub-unit-quantity"
-                        type="number"
-                        value={subUnitQuantity}
-                        onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                        placeholder={`مثال: ۱۲ (عدد در بسته)`}
-                        disabled={!subUnit}
-                    />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="grid gap-3">
+                <Label htmlFor="unit">واحد فروش اصلی</Label>
+                <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
+                  <SelectTrigger id="unit">
+                    <SelectValue placeholder="انتخاب واحد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unitsOfMeasurement.map((u) => (
+                      <SelectItem key={u.name} value={u.name}>
+                        {u.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="sub-unit">واحد فرعی (اختیاری)</Label>
+                <Select
+                  value={subUnit || 'none'}
+                  onValueChange={(value: string) => {
+                    if (value === 'none') {
+                      setSubUnit(undefined);
+                      setSubUnitQuantity('');
+                    } else {
+                      setSubUnit(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="sub-unit">
+                    <SelectValue placeholder="انتخاب واحد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem key="none" value="none">
+                      هیچکدام
+                    </SelectItem>
+                    {unitsOfMeasurement.map((u) => (
+                      <SelectItem key={u.name} value={u.name}>
+                        {u.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
+                <Input
+                  id="sub-unit-quantity"
+                  type="number"
+                  value={subUnitQuantity}
+                  onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  placeholder={`عدد در واحد اصلی`}
+                  disabled={!subUnit}
+                />
+              </div>
             </div>
 
           <div className="grid gap-6">
@@ -331,6 +333,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         id="image-url"
                         value={imageUrl || ''}
                         onChange={(e) => setImageUrl(e.target.value)}
+                        onFocus={() => setImageUrl('')}
                         placeholder="URL تصویر یا تولید با AI..."
                     />
                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>

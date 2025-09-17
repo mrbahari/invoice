@@ -80,7 +80,6 @@ export default function CustomerDetailPage() {
             </Avatar>
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">{customer.name}</h1>
-                <p className="text-muted-foreground">{customer.email}</p>
                 <p className="text-muted-foreground">{customer.phone}</p>
             </div>
         </div>

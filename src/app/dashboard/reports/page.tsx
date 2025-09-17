@@ -56,7 +56,10 @@ export default function ReportsPage() {
         startDate = new Date(0); // The beginning of time
     }
 
-    const invoicesInPeriod = allInvoices.filter(inv => parseISO(inv.date) >= startDate);
+    const invoicesInPeriod = allInvoices
+      .filter(inv => parseISO(inv.date) >= startDate)
+      .filter(inv => inv.status === 'Paid');
+
     const totalRevenue = invoicesInPeriod.reduce((acc, inv) => acc + inv.total, 0);
     const invoiceCount = invoicesInPeriod.length;
 
@@ -136,19 +139,19 @@ export default function ReportsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
-              بر اساس بازه زمانی انتخاب شده
+              فقط از فاکتورهای پرداخت شده
             </p>
           </CardContent>
         </Card>
         <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">فاکتورها</CardTitle>
+            <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{invoiceCount}</div>
              <p className="text-xs text-muted-foreground">
-              تعداد کل فاکتورهای صادر شده
+              تعداد فاکتورهای پرداخت شده در این دوره
             </p>
           </CardContent>
         </Card>

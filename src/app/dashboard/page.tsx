@@ -29,6 +29,7 @@ import type { InvoiceStatus, Invoice, Customer } from '@/lib/definitions';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -47,8 +48,13 @@ export default function DashboardPage() {
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const router = useRouter();
-  const totalRevenue = invoices.reduce((acc, inv) => acc + inv.total, 0);
-  const totalSales = invoices.length;
+
+  const { paidInvoices, totalRevenue, totalSales } = useMemo(() => {
+    const paid = invoices.filter(inv => inv.status === 'Paid');
+    const revenue = paid.reduce((acc, inv) => acc + inv.total, 0);
+    return { paidInvoices: paid, totalRevenue: revenue, totalSales: paid.length };
+  }, [invoices]);
+
   const totalCustomers = customers.length;
   const recentInvoices = invoices.slice(0, 5);
   
@@ -68,7 +74,7 @@ export default function DashboardPage() {
             <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
                 <p className="text-xs text-muted-foreground">
-                مجموع درآمد از تمام فاکتورها
+                مجموع درآمد از فاکتورهای پرداخت شده
                 </p>
             </CardContent>
             </Card>
@@ -82,7 +88,7 @@ export default function DashboardPage() {
             <CardContent>
                 <div className="text-2xl font-bold">+{totalSales}</div>
                 <p className="text-xs text-muted-foreground">
-                تعداد کل فاکتورهای صادر شده
+                تعداد کل فاکتورهای پرداخت شده
                 </p>
             </CardContent>
             </Card>
@@ -110,7 +116,7 @@ export default function DashboardPage() {
               <CardDescription>نمای کلی از فروش در ۱۲ ماه گذشته.</CardDescription>
             </CardHeader>
             <CardContent className="pr-2">
-              <OverviewChart invoices={invoices} />
+              <OverviewChart invoices={paidInvoices} />
             </CardContent>
           </Card>
         </Link>

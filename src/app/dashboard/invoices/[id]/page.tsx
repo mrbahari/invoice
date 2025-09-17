@@ -122,7 +122,7 @@ export default function InvoicePreviewPage() {
                             />
                          </div>
                          <div className="text-xs -rotate-90 whitespace-nowrap origin-bottom-left" style={{ transform: 'rotate(-90deg) translateY(50%)', transformOrigin: 'bottom left' }}>
-                           <span className="font-mono">www.arpaco.ir</span> نرم افزار آریا
+                           نرم افزار آریا
                          </div>
                       </div>
                     </td>

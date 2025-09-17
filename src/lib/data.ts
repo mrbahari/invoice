@@ -33,12 +33,12 @@ export const initialCategories: Category[] = [
 ];
 
 export const initialProducts: Product[] = [
-  { id: 'prod-1', name: 'لپتاپ پرو', description: 'لپتاپ با کارایی بالا برای حرفه‌ای‌ها.', price: 1499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-1')!.imageUrl, categoryId: 'cat-1' },
-  { id: 'prod-2', name: 'موس بی‌سیم', description: 'موس بی‌سیم ارگونومیک.', price: 49.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-2')!.imageUrl, categoryId: 'cat-3' },
-  { id: 'prod-3', name: 'کیبورد مکانیکی', description: 'کیبورد مکانیکی با نورپردازی RGB.', price: 129.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-3')!.imageUrl, categoryId: 'cat-3' },
-  { id: 'prod-4', name: 'مانیتور 4K', description: 'مانیتور ۲۷ اینچ 4K UHD.', price: 499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-4')!.imageUrl, categoryId: 'cat-1' },
-  { id: 'prod-5', name: 'صندلی ارگونومیک', description: 'صندلی اداری ارگونومیک.', price: 399.00, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-5')!.imageUrl, categoryId: 'cat-2' },
-  { id: 'prod-6', name: 'هدفون نویز کنسلینگ', description: 'هدفون روی گوش با قابلیت حذف نویز.', price: 249.50, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-6')!.imageUrl, categoryId: 'cat-3' },
+  { id: 'prod-1', name: 'لپتاپ پرو', description: 'لپتاپ با کارایی بالا برای حرفه‌ای‌ها.', price: 1499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-1')!.imageUrl, categoryId: 'cat-1', unit: 'عدد' },
+  { id: 'prod-2', name: 'موس بی‌سیم', description: 'موس بی‌سیم ارگونومیک.', price: 49.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-2')!.imageUrl, categoryId: 'cat-3', unit: 'عدد' },
+  { id: 'prod-3', name: 'کیبورد مکانیکی', description: 'کیبورد مکانیکی با نورپردازی RGB.', price: 129.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-3')!.imageUrl, categoryId: 'cat-3', unit: 'عدد' },
+  { id: 'prod-4', name: 'مانیتور 4K', description: 'مانیتور ۲۷ اینچ 4K UHD.', price: 499.99, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-4')!.imageUrl, categoryId: 'cat-1', unit: 'عدد' },
+  { id: 'prod-5', name: 'صندلی ارگونومیک', description: 'صندلی اداری ارگونومیک.', price: 399.00, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-5')!.imageUrl, categoryId: 'cat-2', unit: 'عدد' },
+  { id: 'prod-6', name: 'هدفون نویز کنسلینگ', description: 'هدفون روی گوش با قابلیت حذف نویز.', price: 249.50, imageUrl: PlaceHolderImages.find(p => p.id === 'prod-6')!.imageUrl, categoryId: 'cat-3', unit: 'عدد' },
 ];
 
 export const initialCustomers: Customer[] = [

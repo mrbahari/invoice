@@ -26,6 +26,8 @@ export type Product = {
   price: number;
   imageUrl: string;
   categoryId: string;
+  unit: UnitOfMeasurement;
+  defaultQuantity?: number;
 };
 
 export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue';

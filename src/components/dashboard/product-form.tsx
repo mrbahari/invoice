@@ -52,6 +52,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [price, setPrice] = useState<number | string>(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || 'عدد');
+  const [defaultQuantity, setDefaultQuantity] = useState<number | string>(product?.defaultQuantity ?? '');
   const [image, setImage] = useState<string | null>(product?.imageUrl || null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
@@ -164,6 +165,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    const numericDefaultQuantity = typeof defaultQuantity === 'string' && defaultQuantity !== '' ? parseFloat(defaultQuantity) : undefined;
+
 
     if (!name || numericPrice === undefined || numericPrice < 0 || !categoryId) {
       toast({
@@ -180,7 +183,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       if (isEditMode && product) {
         setProducts(prev => prev.map(p => 
             p.id === product.id 
-            ? { ...p, name, description, price: numericPrice, categoryId, unit, imageUrl: image || p.imageUrl }
+            ? { ...p, name, description, price: numericPrice, categoryId, unit, defaultQuantity: numericDefaultQuantity, imageUrl: image || p.imageUrl }
             : p
         ));
         toast({
@@ -195,6 +198,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           price: numericPrice,
           categoryId,
           unit,
+          defaultQuantity: numericDefaultQuantity,
           imageUrl: image || PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)].imageUrl,
         };
         setProducts(prev => [newProduct, ...prev]);
@@ -279,21 +283,33 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 </Select>
             </div>
           </div>
-          <div className="grid gap-3">
-            <Label htmlFor="unit">واحد پیش‌فرض</Label>
-            <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
-                <SelectTrigger id="unit">
-                <SelectValue placeholder="انتخاب واحد" />
-                </SelectTrigger>
-                <SelectContent>
-                {unitsOfMeasurement.map((u) => (
-                    <SelectItem key={u} value={u}>
-                    {u}
-                    </SelectItem>
-                ))}
-                </SelectContent>
-            </Select>
-           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-3">
+              <Label htmlFor="unit">واحد پیش‌فرض</Label>
+              <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
+                  <SelectTrigger id="unit">
+                  <SelectValue placeholder="انتخاب واحد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                  {unitsOfMeasurement.map((u) => (
+                      <SelectItem key={u} value={u}>
+                      {u}
+                      </SelectItem>
+                  ))}
+                  </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="default-quantity">مقدار پیش‌فرض (اختیاری)</Label>
+              <Input
+                id="default-quantity"
+                type="number"
+                value={defaultQuantity}
+                onChange={(e) => setDefaultQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                placeholder="مثال: 1"
+              />
+            </div>
+          </div>
           <div className="grid gap-3">
               <div className="flex items-center justify-between">
                 <Label>تصویر محصول</Label>

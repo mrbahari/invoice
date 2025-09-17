@@ -164,28 +164,21 @@ export default function InvoicePreviewPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-2 border-black">
                                 <TableHead className="w-12 text-center border-l">ردیف</TableHead>
-                                <TableHead className="w-32 text-center border-l">کد کالا</TableHead>
                                 <TableHead className="text-center border-l">شرح کالا/خدمت</TableHead>
                                 <TableHead className="w-24 text-center border-l">مقدار</TableHead>
-                                <TableHead className="w-28 text-center border-l">واحد</TableHead>
-                                <TableHead className="w-28 text-center border-l">واحد فرعی</TableHead>
-                                <TableHead className="w-28 text-center border-l">تعداد واحد فرعی</TableHead>
+                                <TableHead className="w-32 text-center border-l">واحد</TableHead>
                                 <TableHead className="w-32 text-center border-l">قیمت واحد</TableHead>
                                 <TableHead className="w-36 text-center">جمع کل</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {invoice.items.map((item, index) => {
-                                const product = products.find(p => p.id === item.productId);
                                 return (
                                 <TableRow key={index} className="border-b-gray-100">
                                     <TableCell className="text-center align-top font-medium border-l">{index + 1}</TableCell>
-                                    <TableCell className="text-center align-top font-mono border-l">{product?.code}</TableCell>
                                     <TableCell className="py-3 align-top text-right font-semibold border-l">{item.productName}</TableCell>
                                     <TableCell className="text-center py-3 align-top font-mono border-l">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                                    <TableCell className="text-center py-3 align-top font-mono border-l">{product?.unit}</TableCell>
-                                    <TableCell className="text-center py-3 align-top font-mono border-l">{item.unit === product?.subUnit ? item.unit : '-'}</TableCell>
-                                    <TableCell className="text-center py-3 align-top font-mono border-l">{product?.subUnitQuantity || '-'}</TableCell>
+                                    <TableCell className="text-center py-3 align-top border-l">{item.unit}</TableCell>
                                     <TableCell className="text-right py-3 align-top font-mono border-l">{formatCurrency(item.unitPrice)}</TableCell>
                                     <TableCell className="text-right py-3 align-top font-mono">{formatCurrency(item.totalPrice)}</TableCell>
                                 </TableRow>

@@ -239,7 +239,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
 
             const newInvoice: Invoice = {
                 id: `inv-${Math.random().toString(36).substr(2, 9)}`,
-                invoiceNumber: `${prefix}-${(invoices.length + 1).toString().padStart(3, '0')}`,
+                invoiceNumber: `${prefix}-${(invoices.length + 1546).toString().padStart(3, '0')}`,
                 customerId: selectedCustomer.id,
                 customerName: selectedCustomer.name,
                 customerEmail: selectedCustomer.email,

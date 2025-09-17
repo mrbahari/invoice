@@ -113,9 +113,6 @@ export default function InvoicePreviewPage() {
                 <tbody>
                   <tr>
                     <td className="w-1/6 align-top">
-                        <div className="flex items-center justify-start h-full">
-                            <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} unoptimized data-ai-hint="qr code" />
-                        </div>
                     </td>
                     <td className="w-2/3 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
@@ -233,7 +230,7 @@ export default function InvoicePreviewPage() {
               {/* Footer */}
               <div className="mt-8 flex justify-between text-xs text-gray-500">
                 <span>صفحه ۱ از ۱</span>
-                <span>تاریخ گزارش: {new Date().toLocaleDateString('fa-IR')} {new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })} نام کاربر: {customer?.name.split(' ')[0]}</span>
+                <span>تاریخ گزارش: {new Date().toLocaleDateString('fa-IR')} {new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
 
             </div>

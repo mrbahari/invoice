@@ -314,7 +314,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   <SelectValue placeholder="انتخاب واحد" />
                   </SelectTrigger>
                   <SelectContent>
-                   <SelectItem value={undefined as any}>هیچکدام</SelectItem>
+                   <SelectItem key="none" value={undefined as any}>هیچکدام</SelectItem>
                   {unitsOfMeasurement.map((u) => (
                       <SelectItem key={u} value={u}>
                       {u}

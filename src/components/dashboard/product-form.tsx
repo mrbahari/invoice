@@ -68,10 +68,10 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     price: false,
     image: false,
   });
-
+  
   const formatNumber = (num: number | '' | undefined) => {
     if (num === '' || num === undefined || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(Number(num));
+    return new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(Math.round(Number(num)));
   };
 
   const parseFormattedNumber = (str: string) => {
@@ -81,19 +81,17 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     return isNaN(number) ? '' : number;
   };
 
-
   useEffect(() => {
-    const mainPriceNum = price;
-    const subUnitQtyNum = subUnitQuantity;
+    const mainPriceNum = Number(price);
+    const subUnitQtyNum = Number(subUnitQuantity);
 
-    if (mainPriceNum !== '' && subUnitQtyNum !== '' && subUnitQtyNum > 0) {
+    if (mainPriceNum > 0 && subUnitQtyNum > 0) {
       const calculatedSubPrice = Math.round(mainPriceNum / subUnitQtyNum);
       setSubUnitPrice(calculatedSubPrice);
       setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
     } else {
-        if(subUnitPrice === ''){ // only clear if not manually set
-            setDisplaySubUnitPrice('');
-        }
+       setSubUnitPrice('');
+       setDisplaySubUnitPrice('');
     }
   }, [price, subUnitQuantity]);
 
@@ -121,14 +119,11 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     setSubUnitPrice(numericValue);
     setDisplaySubUnitPrice(rawValue);
 
-    const subUnitQtyNum = subUnitQuantity;
-    if (numericValue !== '' && subUnitQtyNum !== '' && subUnitQtyNum > 0) {
+    const subUnitQtyNum = Number(subUnitQuantity);
+    if (numericValue !== '' && subUnitQtyNum > 0) {
       const calculatedMainPrice = Math.round(numericValue * subUnitQtyNum);
       setPrice(calculatedMainPrice);
       setDisplayPrice(formatNumber(calculatedMainPrice));
-    } else if (numericValue === '') {
-        setPrice('');
-        setDisplayPrice('');
     }
   };
 
@@ -146,6 +141,10 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       const value = e.target.value;
       const num = parseFloat(value);
       setSubUnitQuantity(isNaN(num) ? '' : num);
+  };
+  
+  const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
   };
 
   const handleAiGeneration = async (feature: AIFeature) => {
@@ -177,8 +176,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       if (feature === 'description' && result.description) {
         setDescription(result.description);
       } else if (feature === 'price' && result.price !== undefined) {
-        setPrice(result.price);
-        setDisplayPrice(formatNumber(result.price));
+        const roundedPrice = Math.round(result.price);
+        setPrice(roundedPrice);
+        setDisplayPrice(formatNumber(roundedPrice));
       } else if (feature === 'image' && result.imageUrl) {
         setImageUrl(result.imageUrl);
       }
@@ -405,7 +405,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         </div>
                         <div className="relative grid gap-3">
                             <Label htmlFor="image-url">URL تصویر</Label>
-                            <Input id="image-url" value={imageUrl || ''} onChange={(e) => setImageUrl(e.target.value)} placeholder="URL تصویر یا تولید با AI..." />
+                            <Input id="image-url" value={imageUrl || ''} onChange={(e) => setImageUrl(e.target.value)} onFocus={handleImageFocus} placeholder="URL تصویر یا تولید با AI..." />
                              {imageUrl && (
                                <Button
                                  type="button"
@@ -443,3 +443,5 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     </form>
   );
 }
+
+    

@@ -28,6 +28,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { InvoiceStatus, Invoice, Customer } from '@/lib/definitions';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
+import { useRouter } from 'next/navigation';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -45,10 +46,15 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 export default function DashboardPage() {
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
+  const router = useRouter();
   const totalRevenue = invoices.reduce((acc, inv) => acc + inv.total, 0);
   const totalSales = invoices.length;
   const totalCustomers = customers.length;
   const recentInvoices = invoices.slice(0, 5);
+  
+  const handleRowClick = (invoiceId: string) => {
+    router.push(`/dashboard/invoices/${invoiceId}/edit`);
+  };
 
   return (
     <>
@@ -122,7 +128,11 @@ export default function DashboardPage() {
                 {recentInvoices.map((invoice) => {
                   const customer = customers.find(c => c.id === invoice.customerId);
                   return (
-                    <TableRow key={invoice.id}>
+                    <TableRow 
+                      key={invoice.id} 
+                      onClick={() => handleRowClick(invoice.id)} 
+                      className="cursor-pointer transition-colors hover:bg-muted/50"
+                    >
                       <TableCell>
                         <div className="font-medium">{invoice.customerName}</div>
                         <div className="hidden text-sm text-muted-foreground md:inline">

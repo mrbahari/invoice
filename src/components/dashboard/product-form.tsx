@@ -30,6 +30,7 @@ import {
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
+import { Separator } from '../ui/separator';
 
 type ProductFormProps = {
   product?: Product;
@@ -164,7 +165,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       if (isEditMode && product) {
         setProducts(prev => prev.map(p => 
             p.id === product.id 
-            ? { ...p, name, description, price: numericPrice, categoryId, unit, subUnit, subUnitQuantity: numericSubUnitQuantity, imageUrl: finalImage }
+            ? { ...p, name, description, price: numericPrice, categoryId, unit, subUnit: subUnit || undefined, subUnitQuantity: numericSubUnitQuantity, imageUrl: finalImage }
             : p
         ));
         toast({
@@ -179,7 +180,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           price: numericPrice,
           categoryId,
           unit,
-          subUnit,
+          subUnit: subUnit || undefined,
           subUnitQuantity: numericSubUnitQuantity,
           imageUrl: finalImage,
         };
@@ -265,107 +266,122 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 </Select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          
+          <div className="grid gap-3">
+            <Label htmlFor="unit">واحد فروش اصلی</Label>
+            <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
+                <SelectTrigger id="unit">
+                <SelectValue placeholder="انتخاب واحد" />
+                </SelectTrigger>
+                <SelectContent>
+                {unitsOfMeasurement.map((u) => (
+                    <SelectItem key={u} value={u}>
+                    {u}
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="relative">
+            <Separator className="my-2" />
+            <span className="absolute top-1/2 right-1/2 -translate-y-1/2 translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">واحد تبدیل (اختیاری)</span>
+          </div>
+            
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-3">
-              <Label htmlFor="unit">واحد اصلی</Label>
-              <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
-                  <SelectTrigger id="unit">
-                  <SelectValue placeholder="انتخاب واحد" />
-                  </SelectTrigger>
-                  <SelectContent>
-                  {unitsOfMeasurement.map((u) => (
-                      <SelectItem key={u} value={u}>
-                      {u}
-                      </SelectItem>
-                  ))}
-                  </SelectContent>
-              </Select>
-            </div>
-             <div className="grid gap-3">
-              <Label htmlFor="sub-unit">واحد فرعی (اختیاری)</Label>
-              <Select value={subUnit} onValueChange={(value: UnitOfMeasurement) => setSubUnit(value)}>
-                  <SelectTrigger id="sub-unit">
-                  <SelectValue placeholder="انتخاب واحد" />
-                  </SelectTrigger>
-                  <SelectContent>
-                   <SelectItem key="none" value={undefined as any}>هیچکدام</SelectItem>
-                  {unitsOfMeasurement.map((u) => (
-                      <SelectItem key={u} value={u}>
-                      {u}
-                      </SelectItem>
-                  ))}
-                  </SelectContent>
-              </Select>
+            <Label htmlFor="sub-unit">واحد فرعی (برای تبدیل)</Label>
+            <Select 
+              value={subUnit || 'none'} 
+              onValueChange={(value: UnitOfMeasurement) => {
+                if (value === 'none') {
+                  setSubUnit(undefined);
+                  setSubUnitQuantity('');
+                } else {
+                  setSubUnit(value);
+                }
+              }}>
+                <SelectTrigger id="sub-unit">
+                <SelectValue placeholder="انتخاب واحد" />
+                </SelectTrigger>
+                <SelectContent>
+                <SelectItem key="none" value={'none'}>هیچکدام</SelectItem>
+                {unitsOfMeasurement.map((u) => (
+                    <SelectItem key={u} value={u}>
+                    {u}
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
             </div>
             <div className="grid gap-3">
-              <Label htmlFor="sub-unit-quantity">مقدار واحد فرعی</Label>
-              <Input
+            <Label htmlFor="sub-unit-quantity">مقدار واحد فرعی</Label>
+            <Input
                 id="sub-unit-quantity"
                 type="number"
                 value={subUnitQuantity}
                 onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                placeholder="مثال: 12"
+                placeholder={`مثال: ۱۲ (عدد در بسته)`}
                 disabled={!subUnit}
-              />
+            />
             </div>
           </div>
-            <div className="grid gap-6">
-                <div className="grid gap-3">
-                    <Label htmlFor="image-url">تصویر محصول</Label>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" className='flex-grow' onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
-                          {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
-                          {aiLoading.image ? 'در حال تولید...' : 'تولید با هوش مصنوعی'}
-                      </Button>
-                      <Button type="button" variant="secondary" onClick={handleImageSearch}>
-                          <Search className="ml-2" />
-                          جستجو در وب
-                      </Button>
-                    </div>
-                    <div className="relative">
-                      <Input
-                          id="image-url"
-                          value={imageUrl || ''}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                          placeholder="URL تصویر را اینجا جای‌گذاری کنید یا با AI تولید کنید..."
-                      />
-                      {imageUrl && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                          onClick={() => setImageUrl(null)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                </div>
 
-                <div className="relative w-full h-48">
-                    {imageUrl ? (
-                    <>
-                        <Image
-                        src={imageUrl}
-                        alt="پیش‌نمایش تصویر"
-                        fill={true}
-                        style={{objectFit: 'contain'}}
-                        className="rounded-md border p-2"
-                        onError={() => {
-                            toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'});
-                            setImageUrl(null);
-                        }}
-                        unoptimized
-                        />
-                    </>
-                    ) : (
-                    <div className="w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                        <span className="text-xs text-muted-foreground">پیش‌نمایش تصویر</span>
-                    </div>
+          <div className="grid gap-6">
+              <div className="grid gap-3">
+                  <Label htmlFor="image-url">تصویر محصول</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                        id="image-url"
+                        value={imageUrl || ''}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        placeholder="URL تصویر یا تولید با AI..."
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
+                        {aiLoading.image ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                        <span className="sr-only">تولید با هوش مصنوعی</span>
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={handleImageSearch}>
+                        <Search className="h-4 w-4" />
+                        <span className="sr-only">جستجو در وب</span>
+                    </Button>
+                    {imageUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setImageUrl(null)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">حذف تصویر</span>
+                      </Button>
                     )}
-                </div>
-            </div>
+                  </div>
+              </div>
+
+              <div className="relative w-full h-48">
+                  {imageUrl ? (
+                  <>
+                      <Image
+                      src={imageUrl}
+                      alt="پیش‌نمایش تصویر"
+                      fill={true}
+                      style={{objectFit: 'contain'}}
+                      className="rounded-md border p-2"
+                      onError={() => {
+                          toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'});
+                          setImageUrl(null);
+                      }}
+                      unoptimized
+                      />
+                  </>
+                  ) : (
+                  <div className="w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                      <span className="text-xs text-muted-foreground">پیش‌نمایش تصویر</span>
+                  </div>
+                  )}
+              </div>
+          </div>
         </CardContent>
         <CardFooter className="justify-end">
           <Button type="submit" disabled={isProcessing}>

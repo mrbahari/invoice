@@ -59,42 +59,48 @@ export default function DashboardPage() {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-        <Card className="animate-fade-in-up">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">درآمد کل</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              مجموع درآمد از تمام فاکتورها
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">مجموع فروش</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{totalSales}</div>
-            <p className="text-xs text-muted-foreground">
-              تعداد کل فاکتورهای صادر شده
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">مجموع مشتریان</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{totalCustomers}</div>
-            <p className="text-xs text-muted-foreground">
-              تعداد کل مشتریان ثبت شده
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/reports" className="block animate-fade-in-up">
+            <Card className="transition-all hover:shadow-md hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">درآمد کل</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+                <p className="text-xs text-muted-foreground">
+                مجموع درآمد از تمام فاکتورها
+                </p>
+            </CardContent>
+            </Card>
+        </Link>
+        <Link href="/dashboard/invoices" className="block animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <Card className="transition-all hover:shadow-md hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">مجموع فروش</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">+{totalSales}</div>
+                <p className="text-xs text-muted-foreground">
+                تعداد کل فاکتورهای صادر شده
+                </p>
+            </CardContent>
+            </Card>
+        </Link>
+        <Link href="/dashboard/customers" className="block animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <Card className="transition-all hover:shadow-md hover:-translate-y-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">مجموع مشتریان</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">+{totalCustomers}</div>
+                <p className="text-xs text-muted-foreground">
+                تعداد کل مشتریان ثبت شده
+                </p>
+            </CardContent>
+            </Card>
+        </Link>
       </div>
       <div className="grid gap-4 md:gap-8 md:grid-cols-2 xl:grid-cols-3">
         <Link href="/dashboard/reports" className="block animate-fade-in-up xl:col-span-2" style={{ animationDelay: '0.3s' }}>

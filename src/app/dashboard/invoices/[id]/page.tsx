@@ -6,9 +6,9 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { initialInvoices, initialProducts, initialCategories, initialCustomers } from '@/lib/data';
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
-import { Download } from 'lucide-react';
+import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -61,16 +61,20 @@ function toWords(num: number): string {
     return word.trim();
 }
 
+type InvoicePreviewProps = {
+    invoiceId: string;
+    onBack: () => void;
+};
 
-export default function InvoicePreviewPage() {
-  const params = useParams<{ id: string }>();
+
+export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewProps) {
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
-  const invoice = invoices.find((inv) => inv.id === params.id);
+  const invoice = invoices.find((inv) => inv.id === invoiceId);
   const customer = customers.find((c) => c.id === invoice?.customerId);
 
 
@@ -120,10 +124,14 @@ export default function InvoicePreviewPage() {
   };
 
   return (
-    <div id="invoice-preview" className="font-sans">
+    <div id="invoice-preview" className="font-sans animate-fade-in-up">
         <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
-            <div className="flex justify-center gap-2 mb-6">
-                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleDownloadImage}>
+            <div className="flex justify-between gap-2 mb-6">
+                <Button type="button" variant="outline" onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست
+                </Button>
+                <Button size="sm" variant="outline" className="h-10 gap-1" onClick={handleDownloadImage}>
                     <Download className="h-3.5 w-3.5" />
                     <span>دانلود تصویر</span>
                 </Button>

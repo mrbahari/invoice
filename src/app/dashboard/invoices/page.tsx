@@ -12,6 +12,7 @@ import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from '@/components/dashboard/invoice-editor';
+import InvoicePreviewPage from './[id]/page';
 
 export default function InvoicesPage() {
   const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
@@ -20,6 +21,7 @@ export default function InvoicesPage() {
   const { searchTerm } = useSearch();
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | 'new' | null>(null);
+  const [viewingInvoiceId, setViewingInvoiceId] = useState<string | null>(null);
 
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
     setAllInvoices(prev => 
@@ -63,15 +65,27 @@ export default function InvoicesPage() {
   
   const handleAddNew = () => {
     setSelectedInvoice('new');
+    setViewingInvoiceId(null);
   };
 
   const handleEdit = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
+    setViewingInvoiceId(null);
+  };
+  
+  const handleView = (invoiceId: string) => {
+    setViewingInvoiceId(invoiceId);
+    setSelectedInvoice(null);
   };
   
   const handleBackToList = () => {
     setSelectedInvoice(null);
+    setViewingInvoiceId(null);
   };
+
+  if (viewingInvoiceId) {
+    return <InvoicePreviewPage invoiceId={viewingInvoiceId} onBack={handleBackToList} />;
+  }
 
   if (selectedInvoice) {
     const invoiceToEdit = selectedInvoice === 'new' ? undefined : selectedInvoice;
@@ -86,6 +100,7 @@ export default function InvoicesPage() {
         onStatusChange={handleUpdateStatus}
         onDeleteInvoice={handleDeleteInvoice}
         onEditInvoice={handleEdit}
+        onViewInvoice={handleView}
         pageActions={
             <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
               <PlusCircle className="h-3.5 w-3.5" />

@@ -136,12 +136,9 @@ export default function InvoicePreviewPage() {
                 <div className="bg-gray-200 p-1 font-bold text-center text-sm">اطلاعات کارشناس فروش</div>
                 <table className="w-full text-sm">
                   <tbody>
-                    <tr className="border-b border-black">
-                      <td className="p-1 border-l border-black w-1/5">نام فروشگاه: {category?.storeName}</td>
-                      <td className="p-1 w-4/5">شماره تماس: {category?.storePhone}</td>
-                    </tr>
                     <tr>
-                      <td colSpan={2} className="p-1">آدرس: {category?.storeAddress}</td>
+                      <td className="p-1 border-l border-black w-1/4">نام فروشگاه: {category?.storeName}</td>
+                      <td className="p-1 w-3/4">شماره تماس: {category?.storePhone} | آدرس: {category?.storeAddress}</td>
                     </tr>
                   </tbody>
                 </table>

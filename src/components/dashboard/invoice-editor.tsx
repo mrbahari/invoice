@@ -145,10 +145,13 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity < 1) {
+    if (newQuantity < 0) return; // Prevent negative quantity
+    
+    // If quantity is 0, consider removing it or handle as needed
+    if (newQuantity === 0) {
         handleRemoveItem(productId);
         return;
-    };
+    }
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.product.id === productId ? { ...item, quantity: newQuantity } : item

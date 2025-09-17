@@ -85,8 +85,8 @@ export default function InvoicePreviewPage() {
 
   // Determine the store info based on the category of the first item
   const firstItem = invoice.items[0];
-  const product = products.find(p => p.id === firstItem.productId);
-  const category = categories.find(c => c.id === product?.categoryId);
+  const productInfo = products.find(p => p.id === firstItem.productId);
+  const category = categories.find(c => c.id === productInfo?.categoryId);
 
   const defaultThemeColor = 'hsl(var(--primary))';
   
@@ -99,6 +99,11 @@ export default function InvoicePreviewPage() {
   };
   
   const getDisplayPrice = (item: InvoiceItem): string => {
+    const product = products.find(p => p.id === item.productId);
+    if (product && product.subUnit && product.subUnitQuantity && product.subUnitQuantity > 0) {
+        const subUnitPrice = item.unitPrice / product.subUnitQuantity;
+        return `${formatCurrency(subUnitPrice)} / ${product.subUnit}`;
+    }
     return formatCurrency(item.unitPrice);
   };
 

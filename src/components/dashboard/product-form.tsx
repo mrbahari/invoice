@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -49,7 +49,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
-  const [price, setPrice] = useState<number | string>(product?.price ?? '');
+  const [price, setPrice] = useState<number | string>(product?.price ?? ''); // Main unit price
+  const [subUnitPrice, setSubUnitPrice] = useState<number | string>(''); // Sub unit price
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [unit, setUnit] = useState<string>(product?.unit || (unitsOfMeasurement[0]?.name || ''));
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
@@ -63,6 +64,43 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     price: false,
     image: false,
   });
+  
+  // Effect to calculate sub-unit price when main price or quantity changes
+  useEffect(() => {
+    const mainPriceNum = typeof price === 'string' ? parseFloat(price) : price;
+    const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
+
+    if (mainPriceNum > 0 && subUnitQtyNum > 0) {
+      setSubUnitPrice(mainPriceNum / subUnitQtyNum);
+    } else {
+      setSubUnitPrice('');
+    }
+  }, [price, subUnitQuantity]);
+  
+  // Effect to pre-fill prices when editing an existing product
+  useEffect(() => {
+      if (product) {
+          const mainPriceNum = product.price;
+          const subUnitQtyNum = product.subUnitQuantity;
+          if (mainPriceNum > 0 && subUnitQtyNum && subUnitQtyNum > 0) {
+              setSubUnitPrice(mainPriceNum / subUnitQtyNum);
+          }
+      }
+  }, [product]);
+
+  // Handler for sub-unit price input change
+  const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSubUnitPrice = e.target.value;
+    setSubUnitPrice(newSubUnitPrice);
+
+    const subUnitPriceNum = parseFloat(newSubUnitPrice);
+    const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
+
+    if (subUnitPriceNum > 0 && subUnitQtyNum > 0) {
+      setPrice(subUnitPriceNum * subUnitQtyNum);
+    }
+  };
+
 
   const handleAiGeneration = async (feature: AIFeature) => {
     if (!name) {
@@ -130,15 +168,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     window.open(url, '_blank');
   };
   
-  const handlePriceFocus = () => {
-    if (price === 0) {
-      setPrice('');
+  const handlePriceFocus = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string | number) => {
+    if (value === 0) {
+      setter('');
     }
   };
 
-  const handlePriceBlur = () => {
-    if (price === '') {
-      setPrice(0);
+  const handlePriceBlur = (setter: React.Dispatch<React.SetStateAction<string | number>>, value: string | number) => {
+    if (value === '') {
+      setter(0);
     }
   };
 
@@ -208,6 +246,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }, 1000);
   };
 
+  const showSubUnitFields = !!subUnit && subUnit !== 'none' && subUnitQuantity;
+
   return (
     <form onSubmit={handleSubmit}>
       <Card className="max-w-2xl mx-auto">
@@ -244,27 +284,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               placeholder="توضیحات محصول را اینجا بنویسید یا با هوش مصنوعی تولید کنید..."
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="price">
-                    قیمت واحد فروش اصلی (ریال)
-                  </Label>
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
-                     {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
-                  </Button>
-                </div>
-                <Input
-                    id="price"
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    onFocus={handlePriceFocus}
-                    onBlur={handlePriceBlur}
-                    required
-                />
-            </div>
-            <div className="grid gap-3">
+          
+           <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-3">
                 <Label htmlFor="category">دسته‌بندی</Label>
                 <Select value={categoryId} onValueChange={setCategoryId} required>
                     <SelectTrigger id="category">
@@ -278,11 +300,11 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     ))}
                     </SelectContent>
                 </Select>
-            </div>
-          </div>
-          
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div className="grid gap-3">
+              </div>
+           </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end border p-4 rounded-lg">
+              <div className="grid gap-3 md:col-span-1">
                 <Label htmlFor="unit">واحد فروش اصلی</Label>
                 <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
                   <SelectTrigger id="unit">
@@ -297,7 +319,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-3">
+              <div className="grid gap-3 md:col-span-1">
                 <Label htmlFor="sub-unit">واحد فرعی (اختیاری)</Label>
                 <Select
                   value={subUnit || 'none'}
@@ -305,6 +327,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     if (value === 'none') {
                       setSubUnit(undefined);
                       setSubUnitQuantity('');
+                      setPrice('');
                     } else {
                       setSubUnit(value);
                     }
@@ -325,17 +348,54 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-3">
+              <div className="grid gap-3 md:col-span-1">
                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
                 <Input
                   id="sub-unit-quantity"
                   type="number"
                   value={subUnitQuantity}
-                  onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))}
                   placeholder={`عدد در واحد اصلی`}
-                  disabled={!subUnit}
+                  disabled={!subUnit || subUnit === 'none'}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="price">
+                      قیمت واحد اصلی (ریال)
+                    </Label>
+                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price || showSubUnitFields}>
+                       {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+                    </Button>
+                  </div>
+                  <Input
+                      id="price"
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                      onFocus={(e) => handlePriceFocus(setPrice, e.target.value)}
+                      onBlur={(e) => handlePriceBlur(setPrice, e.target.value)}
+                      required
+                      disabled={showSubUnitFields}
+                  />
+                </div>
+                {subUnit && subUnit !== 'none' && (
+                    <div className="grid gap-3">
+                        <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
+                        <Input
+                            id="sub-unit-price"
+                            type="number"
+                            value={subUnitPrice}
+                            onChange={handleSubUnitPriceChange}
+                            onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)}
+                            onBlur={(e) => handlePriceBlur(setSubUnitPrice, e.target.value)}
+                            disabled={!subUnitQuantity}
+                        />
+                    </div>
+                )}
             </div>
 
           <div className="grid gap-6">

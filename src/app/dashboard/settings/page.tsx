@@ -47,13 +47,13 @@ export default function SettingsPage() {
 
   const handleAddUnit = () => {
     const name = newUnitName.trim();
-    const defaultQty = typeof newUnitDefault === 'string' ? parseInt(newUnitDefault, 10) : newUnitDefault;
+    const defaultQty = typeof newUnitDefault === 'string' ? parseFloat(newUnitDefault) : newUnitDefault;
 
     if (name === '') {
         toast({ variant: 'destructive', title: 'نام واحد نمی‌تواند خالی باشد.' });
         return;
     }
-     if (isNaN(defaultQty) || defaultQty < 1) {
+     if (isNaN(defaultQty) || defaultQty <= 0) {
         toast({ variant: 'destructive', title: 'مقدار پیش‌فرض نامعتبر است.', description: 'مقدار پیش‌فرض باید یک عدد بزرگتر از صفر باشد.' });
         return;
     }
@@ -201,8 +201,9 @@ export default function SettingsPage() {
                 <Input
                     id="new-unit-default"
                     type="number"
+                    step="0.01"
                     value={newUnitDefault}
-                    onChange={(e) => setNewUnitDefault(e.target.value === '' ? '' : parseInt(e.target.value))}
+                    onChange={(e) => setNewUnitDefault(e.target.value === '' ? '' : parseFloat(e.target.value))}
                     className="w-full sm:w-32"
                 />
               </div>

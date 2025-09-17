@@ -172,10 +172,11 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
   };
   
-  const getUnitPrice = (item: InvoiceItemState) => {
-      return item.unit === item.product.subUnit && item.product.subUnitPrice
-        ? item.product.subUnitPrice
-        : item.product.price;
+  const getUnitPrice = (item: InvoiceItemState): number => {
+      if (item.unit === item.product.subUnit && item.product.subUnitPrice !== undefined) {
+          return item.product.subUnitPrice;
+      }
+      return item.product.price;
   };
 
   const handleProcessInvoice = () => {
@@ -497,3 +498,5 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     </div>
   );
 }
+
+    

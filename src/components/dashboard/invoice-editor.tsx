@@ -112,7 +112,10 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
-    return item.quantity * item.product.price;
+    const effectivePrice = item.unit === item.product.subUnit && item.product.subUnitPrice
+      ? item.product.subUnitPrice
+      : item.product.price;
+    return item.quantity * effectivePrice;
   };
 
   const subtotal = useMemo(
@@ -130,7 +133,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   }, [subtotal, discount, taxAmount]);
 
   const handleAddProduct = (product: Product) => {
-    const initialQuantity = 1; // Always default to 1
+    const initialQuantity = 1;
 
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.product.id === product.id);
@@ -144,9 +147,8 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity < 0) return; // Prevent negative quantity
+    if (newQuantity < 0) return;
     
-    // If quantity is 0, consider removing it or handle as needed
     if (newQuantity === 0) {
         handleRemoveItem(productId);
         return;
@@ -169,6 +171,12 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   const handleRemoveItem = (productId: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
   };
+  
+  const getUnitPrice = (item: InvoiceItemState) => {
+      return item.unit === item.product.subUnit && item.product.subUnitPrice
+        ? item.product.subUnitPrice
+        : item.product.price;
+  };
 
   const handleProcessInvoice = () => {
     if (!selectedCustomer) {
@@ -188,7 +196,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             productName: item.product.name,
             quantity: item.quantity,
             unit: item.unit,
-            unitPrice: item.product.price,
+            unitPrice: getUnitPrice(item),
             totalPrice: calculateItemTotal(item),
         }));
 
@@ -262,51 +270,58 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
               </TableHeader>
               <TableBody>
                 {items.length > 0 ? (
-                  items.map((item) => (
-                    <TableRow key={item.product.id}>
-                      <TableCell className="hidden md:table-cell">
-                        <Image
-                            src={item.product.imageUrl}
-                            alt={item.product.name}
-                            width={64}
-                            height={64}
-                            className="rounded-md object-cover"
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{item.product.name}</TableCell>
-                      <TableCell>
-                          <Select
-                            value={item.unit}
-                            onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
-                          >
-                            <SelectTrigger className="w-[100px]">
-                              <SelectValue placeholder="واحد" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {unitsOfMeasurement.map(unit => (
-                                <SelectItem key={unit.name} value={unit.name}>{unit.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => handleQuantityChange(item.product.id, parseFloat(e.target.value))}
-                          step="0.01"
-                          className="w-20 text-center mx-auto"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.product.price)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(calculateItemTotal(item))}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  items.map((item) => {
+                      const availableUnits = [item.product.unit];
+                      if (item.product.subUnit) {
+                          availableUnits.push(item.product.subUnit);
+                      }
+
+                      return (
+                        <TableRow key={item.product.id}>
+                          <TableCell className="hidden md:table-cell">
+                            <Image
+                                src={item.product.imageUrl}
+                                alt={item.product.name}
+                                width={64}
+                                height={64}
+                                className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{item.product.name}</TableCell>
+                          <TableCell>
+                              <Select
+                                value={item.unit}
+                                onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
+                              >
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="واحد" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableUnits.map(unit => (
+                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleQuantityChange(item.product.id, parseFloat(e.target.value))}
+                              step="0.01"
+                              className="w-20 text-center mx-auto"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(getUnitPrice(item))}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(calculateItemTotal(item))}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
@@ -479,3 +494,4 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     </div>
   );
 }
+

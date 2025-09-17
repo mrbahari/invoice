@@ -197,32 +197,24 @@ export default function InvoicePreviewPage() {
 
               {/* Summary and Signatures */}
               <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="border border-black text-center text-sm p-2">
+                  <p>امضاء همکار</p>
+                  <div className="h-12"></div>
+                  <p>مدیریت فروش</p>
+                </div>
                 <div className="border border-black">
                   <table className="w-full text-sm">
                     <tbody>
                       <tr>
                         <td className="p-1 border-r border-black">جمع کل:</td>
-                        <td className="p-1 font-mono">{formatCurrency(invoice.total)}</td>
-                      </tr>
-                      <tr className="border-t border-black">
-                        <td className="p-1 border-r border-black">تخفیف فاکتور:</td>
-                        <td className="p-1 font-mono">{formatCurrency(invoice.discount)}</td>
-                      </tr>
-                      <tr className="border-t border-black">
-                        <td className="p-1 border-r border-black">اضافات:</td>
-                        <td className="p-1 font-mono">{formatCurrency(invoice.additions || 0)}</td>
+                        <td className="p-1 font-mono">{formatCurrency(invoice.subtotal)}</td>
                       </tr>
                       <tr className="border-t border-black font-bold">
                         <td className="p-1 border-r border-black">قابل پرداخت:</td>
-                        <td className="p-1 font-mono">{formatCurrency(invoice.total + (invoice.additions || 0) - invoice.discount)}</td>
+                        <td className="p-1 font-mono">{formatCurrency(invoice.total)}</td>
                       </tr>
                     </tbody>
                   </table>
-                </div>
-                <div className="border border-black text-center text-sm p-2">
-                  <p>امضاء همکار</p>
-                  <div className="h-12"></div>
-                  <p>مدیریت فروش</p>
                 </div>
               </div>
               
@@ -232,7 +224,7 @@ export default function InvoicePreviewPage() {
               </div>
 
               <div className="border border-t-0 border-black p-2 text-sm">
-                 مبلغ به حروف: {toWords(Math.floor(invoice.total + (invoice.additions || 0) - invoice.discount))} ریال
+                 مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال
               </div>
 
 

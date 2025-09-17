@@ -122,11 +122,12 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
     setTimeout(() => {
       const finalLogoUrl = logo || `https://picsum.photos/seed/${Math.random()}/110/110`;
+      const finalParentId = parentId === 'none' ? undefined : parentId;
       
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
             c.id === category.id 
-            ? { ...c, name, parentId: parentId || undefined, description, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
+            ? { ...c, name, parentId: finalParentId, description, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
             : c
         ));
         toast({
@@ -137,7 +138,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
         const newCategory: Category = {
           id: `cat-${Math.random().toString(36).substr(2, 9)}`,
           name,
-          parentId: parentId || undefined,
+          parentId: finalParentId,
           description,
           storeName,
           storeAddress,
@@ -184,12 +185,12 @@ export function CategoryForm({ category }: CategoryFormProps) {
             </div>
             <div className="grid gap-3">
               <Label htmlFor="parent-category">دسته‌بندی والد (اختیاری)</Label>
-              <Select value={parentId} onValueChange={setParentId}>
+              <Select value={parentId || 'none'} onValueChange={setParentId}>
                 <SelectTrigger id="parent-category">
                   <SelectValue placeholder="انتخاب دسته‌بندی والد" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">هیچکدام (دسته‌بندی اصلی)</SelectItem>
+                  <SelectItem value="none">هیچکدام (دسته‌بندی اصلی)</SelectItem>
                   {possibleParents.map(parent => (
                     <SelectItem key={parent.id} value={parent.id}>
                       {parent.name}

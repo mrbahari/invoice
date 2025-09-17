@@ -92,7 +92,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
               <TableRow 
                 key={invoice.id} 
                 onClick={() => handleRowClick(invoice.id)}
-                className="cursor-pointer"
+                className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
               >
                 <TableCell>
                   <div className="font-medium">{invoice.customerName}</div>

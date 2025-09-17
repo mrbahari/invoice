@@ -48,6 +48,20 @@ export default function CategoriesPage() {
   const { searchTerm } = useSearch();
 
   const categoriesById = useMemo(() => new Map(categoryList.map(c => [c.id, c])), [categoryList]);
+  
+  const getIndentation = (category: Category): number => {
+    let depth = 0;
+    let current = category;
+    while (current.parentId) {
+      const parent = categoriesById.get(current.parentId);
+      if (!parent) {
+        break;
+      }
+      depth++;
+      current = parent;
+    }
+    return depth;
+  };
 
   const getCategoryName = (categoryId: string) => {
     return categoriesById.get(categoryId)?.name;

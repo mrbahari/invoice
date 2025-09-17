@@ -31,11 +31,7 @@ export const initialCategories: Category[] = [
   { 
     id: 'cat-3', 
     name: 'لوازم جانبی',
-    storeName: 'جانبی سنتر',
-    logoUrl: 'https://picsum.photos/seed/janebi/48/48',
-    storeAddress: 'پاساژ علاالدین، طبقه ۲، پلاک ۴۰۴',
-    storePhone: '۰۲۱-۶۶۷۷۸۸۹۹',
-    themeColor: '#db2777', // Pink
+    parentId: 'cat-1',
   },
 ];
 
@@ -86,3 +82,5 @@ export const initialInvoices: Invoice[] = [
     description: 'فاکتور ایجاد شده',
   },
 ];
+
+    

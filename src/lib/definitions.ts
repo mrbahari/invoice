@@ -14,6 +14,7 @@ export type Category = {
   name: string;
   parentId?: string;
   description?: string;
+  // Store-related properties are only for top-level categories
   storeName?: string;
   logoUrl?: string;
   storeAddress?: string;
@@ -75,3 +76,5 @@ export type AuthFormValues = {
   firstName?: string;
   lastName?: string;
 };
+
+    

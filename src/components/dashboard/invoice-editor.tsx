@@ -53,7 +53,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
 
   const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
-  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
 
@@ -186,6 +186,18 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
   };
   
+  const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
+
+  const getRootParent = (categoryId: string): Category | undefined => {
+    let current = categoriesById.get(categoryId);
+    while (current && current.parentId) {
+      const parent = categoriesById.get(current.parentId);
+      if (!parent) return current;
+      current = parent;
+    }
+    return current;
+  };
+
 
   const handleProcessInvoice = (navigateTo: 'list' | 'preview' = 'list') => {
     if (!selectedCustomer) {
@@ -233,7 +245,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
              toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
         } else {
-            const firstItemCategory = categories.find(c => c.id === items[0].product.categoryId);
+            const firstItemCategory = items[0].product.categoryId ? getRootParent(items[0].product.categoryId) : undefined;
             const storeName = firstItemCategory?.storeName || 'Store';
             const prefix = getStorePrefix(storeName);
 
@@ -550,3 +562,4 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   );
 }
 
+    

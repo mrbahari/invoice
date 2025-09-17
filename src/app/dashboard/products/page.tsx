@@ -68,7 +68,7 @@ export default function ProductsPage() {
     }
     
     const selectedCategory = categoriesById.get(activeTab);
-    // If it's a parent category (or has children), show its products and all descendants' products.
+    // If it's a parent category (has no parent), show its products and all descendants' products.
     if (selectedCategory && !selectedCategory.parentId) {
       const descendantIds = getDescendantIds(activeTab);
       return products
@@ -76,7 +76,7 @@ export default function ProductsPage() {
         .filter(productFilter);
     }
 
-    // If it's a sub-category (or has no children), show only its products.
+    // If it's a sub-category (has a parent), show only its products.
     return products
       .filter(product => product.categoryId === activeTab)
       .filter(productFilter);
@@ -105,16 +105,24 @@ export default function ProductsPage() {
   };
   
   const sortedCategories = useMemo(() => {
-      const topLevel = categories.filter(c => !c.parentId || !categoriesById.has(c.parentId));
-      const sorted: Category[] = [];
+    const categoryMap = new Map(categories.map(c => [c.id, c]));
+    const topLevel = categories.filter(c => !c.parentId || !categoryMap.has(c.parentId));
+    const sorted: Category[] = [];
 
-      topLevel.sort((a,b) => a.name.localeCompare(b.name)).forEach(parent => {
-          sorted.push(parent);
-          const children = categories.filter(c => c.parentId === parent.id);
-          children.sort((a,b) => a.name.localeCompare(b.name)).forEach(child => sorted.push(child));
-      });
-      return sorted;
-  }, [categories, categoriesById]);
+    const addChildren = (parentId: string, depth: number) => {
+        const children = categories.filter(c => c.parentId === parentId);
+        children.sort((a,b) => a.name.localeCompare(b.name)).forEach(child => {
+            sorted.push({ ...child, name: `${'– '.repeat(depth)}${child.name}` });
+            addChildren(child.id, depth + 1);
+        });
+    };
+
+    topLevel.sort((a,b) => a.name.localeCompare(b.name)).forEach(parent => {
+        sorted.push(parent);
+        addChildren(parent.id, 1);
+    });
+    return sorted;
+  }, [categories]);
 
 
   const renderProductTable = (productList: typeof products) => (
@@ -184,7 +192,6 @@ export default function ProductsPage() {
           <TabsTrigger value="all">همه</TabsTrigger>
           {sortedCategories.map(cat => (
             <TabsTrigger key={cat.id} value={cat.id}>
-              {cat.parentId ? <span className='ml-2'>–</span> : ''}
               {cat.name}
             </TabsTrigger>
           ))}
@@ -219,3 +226,5 @@ export default function ProductsPage() {
     </Tabs>
   );
 }
+
+    

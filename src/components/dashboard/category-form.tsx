@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactDOMServer from 'react-dom/server';
 import {
@@ -74,15 +74,31 @@ export function CategoryForm({ category }: CategoryFormProps) {
   const isEditMode = !!category;
 
   const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialCategories);
+  const categoriesById = new Map(categories.map(c => [c.id, c]));
+
   const [name, setName] = useState(category?.name || '');
   const [parentId, setParentId] = useState(category?.parentId || '');
   const [description, setDescription] = useState(category?.description || '');
+  
+  const parentCategory = parentId ? categoriesById.get(parentId) : undefined;
+  
   const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
   const [themeColor, setThemeColor] = useState<string>(category?.themeColor || '#4f46e5');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    const parentCat = parentId ? categoriesById.get(parentId) : undefined;
+    if (parentCat) {
+      setStoreName(parentCat.storeName || '');
+      setStoreAddress(parentCat.storeAddress || '');
+      setStorePhone(parentCat.storePhone || '');
+      setLogo(parentCat.logoUrl || null);
+      setThemeColor(parentCat.themeColor || '#4f46e5');
+    }
+  }, [parentId, categoriesById]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,8 +115,6 @@ export function CategoryForm({ category }: CategoryFormProps) {
     const svgString = ReactDOMServer.renderToStaticMarkup(
       <IconComponent size={48} strokeWidth={2} />
     );
-    // This creates a data URL that can be colored by CSS 'color' property.
-    // We achieve this by *not* setting a color in the SVG itself, but using 'currentColor'.
     const coloredSvgString = svgString.replace(/stroke="[^"]*"/g, 'stroke="currentColor"').replace(/fill="[^"]*"/g, 'fill="currentColor"');
     const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(coloredSvgString)))}`;
     setLogo(dataUrl);
@@ -109,11 +123,11 @@ export function CategoryForm({ category }: CategoryFormProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name || !storeName) {
+    if (!name || (!parentId && !storeName)) {
       toast({
         variant: 'destructive',
         title: 'فیلدهای الزامی خالی است',
-        description: 'لطفاً نام دسته‌بندی و نام فروشگاه را وارد کنید.',
+        description: 'لطفاً نام دسته‌بندی و برای دسته‌بندی‌های اصلی، نام فروشگاه را وارد کنید.',
       });
       return;
     }
@@ -121,13 +135,24 @@ export function CategoryForm({ category }: CategoryFormProps) {
     setIsProcessing(true);
 
     setTimeout(() => {
-      const finalLogoUrl = logo || `https://picsum.photos/seed/${Math.random()}/110/110`;
       const finalParentId = parentId === 'none' ? undefined : parentId;
       
+      const newOrUpdatedCategory: Category = {
+          id: isEditMode ? category.id : `cat-${Math.random().toString(36).substr(2, 9)}`,
+          name,
+          parentId: finalParentId,
+          description,
+          storeName: finalParentId ? undefined : storeName,
+          storeAddress: finalParentId ? undefined : storeAddress,
+          storePhone: finalParentId ? undefined : storePhone,
+          logoUrl: finalParentId ? undefined : (logo || `https://picsum.photos/seed/${Math.random()}/110/110`),
+          themeColor: finalParentId ? undefined : themeColor,
+      };
+
       if (isEditMode && category) {
         setCategories(prev => prev.map(c => 
             c.id === category.id 
-            ? { ...c, name, parentId: finalParentId, description, storeName, storeAddress, storePhone, logoUrl: finalLogoUrl, themeColor } 
+            ? newOrUpdatedCategory
             : c
         ));
         toast({
@@ -135,18 +160,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
           description: `تغییرات برای دسته‌بندی "${name}" ذخیره شد.`,
         });
       } else {
-        const newCategory: Category = {
-          id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-          name,
-          parentId: finalParentId,
-          description,
-          storeName,
-          storeAddress,
-          storePhone,
-          logoUrl: finalLogoUrl,
-          themeColor,
-        };
-        setCategories(prev => [newCategory, ...prev]);
+        setCategories(prev => [newOrUpdatedCategory, ...prev]);
         toast({
           title: 'دسته‌بندی جدید ایجاد شد',
           description: `دسته‌بندی "${name}" با موفقیت ایجاد شد.`,
@@ -158,7 +172,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
     }, 1000);
   };
 
-  const possibleParents = categories.filter(c => c.id !== category?.id && !c.parentId);
+  const possibleParents = categories.filter(c => c.id !== category?.id);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -168,7 +182,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
             {isEditMode ? `ویرایش دسته‌بندی: ${category?.name}` : 'افزودن دسته‌بندی جدید'}
           </CardTitle>
           <CardDescription>
-            اطلاعات دسته‌بندی و فروشگاه مربوطه را وارد کنید.
+            اطلاعات دسته‌بندی و در صورت نیاز، فروشگاه مربوطه را وارد کنید.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
@@ -179,7 +193,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                 id="category-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: الکترونیک"
+                placeholder="مثال: موبایل و تبلت"
                 required
               />
             </div>
@@ -190,7 +204,7 @@ export function CategoryForm({ category }: CategoryFormProps) {
                   <SelectValue placeholder="انتخاب دسته‌بندی والد" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">هیچکدام (دسته‌بندی اصلی)</SelectItem>
+                  <SelectItem value="none">هیچکدام (دسته‌بندی اصلی/فروشگاه)</SelectItem>
                   {possibleParents.map(parent => (
                     <SelectItem key={parent.id} value={parent.id}>
                       {parent.name}
@@ -209,124 +223,128 @@ export function CategoryForm({ category }: CategoryFormProps) {
                 placeholder="توضیحات مختصری در مورد دسته‌بندی بنویسید..."
               />
           </div>
-          <div className="grid gap-3">
-            <Label htmlFor="store-name">نام فروشگاه</Label>
-            <Input
-              id="store-name"
-              value={storeName}
-              onChange={(e) => setStoreName(e.target.value)}
-              placeholder="مثال: فروشگاه سپهر"
-              required
-            />
-          </div>
-          <div className="grid gap-3">
-            <Label htmlFor="store-address">آدرس فروشگاه</Label>
-            <Input
-              id="store-address"
-              value={storeAddress}
-              onChange={(e) => setStoreAddress(e.target.value)}
-              placeholder="مثال: میدان ولیعصر، برج فناوری، طبقه ۵"
-            />
-          </div>
-          <div className="grid gap-3">
-            <Label htmlFor="store-phone">تلفن فروشگاه</Label>
-            <Input
-              id="store-phone"
-              type="tel"
-              value={storePhone}
-              onChange={(e) => setStorePhone(e.target.value)}
-              placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴"
-            />
-          </div>
           
           <Separator />
-
-          <div className="grid gap-4">
-              <Label>لوگوی فروشگاه</Label>
-              <div className='flex items-start gap-6'>
-                {logo ? (
-                  <div className="relative w-24 h-24">
-                    <Image
-                      src={logo}
-                      alt="پیش‌نمایش لوگو"
-                      layout="fill"
-                      objectFit="contain"
-                      className="rounded-md border p-2"
-                      key={logo} 
-                      unoptimized
-                      style={logo.startsWith('data:image/svg+xml') ? { color: themeColor } : {}}
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                      onClick={() => setLogo(null)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                        <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
-                    </div>}
-
-                <div className='flex-1 grid gap-4'>
-                    <div className="flex items-center justify-center w-full">
-                      <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                              <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
-                          </div>
-                          <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
-                      </label>
-                    </div> 
-                </div>
-              </div>
-              
-              <div className="relative">
-                <Separator className="my-2" />
-                <span className="absolute top-1/2 right-1/2 -translate-y-1/2 translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">یا</span>
-              </div>
-              
-              <div>
-                <p className="text-sm text-muted-foreground mb-3">یک آیکون انتخاب کنید:</p>
-                <div className="grid grid-cols-8 gap-2">
-                    {iconList.map((icon, index) => (
-                      <button
+          
+          <div className={cn("grid gap-6", parentId && "opacity-50 pointer-events-none")}>
+            <div className='relative -top-3'>
+              <h3 className='text-lg font-semibold'>اطلاعات فروشگاه</h3>
+              <p className='text-sm text-muted-foreground'>این بخش تنها برای دسته‌بندی‌های اصلی (والد) قابل ویرایش است.</p>
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="store-name">نام فروشگاه</Label>
+              <Input
+                id="store-name"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                placeholder="مثال: فروشگاه سپهر"
+                required={!parentId}
+              />
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="store-address">آدرس فروشگاه</Label>
+              <Input
+                id="store-address"
+                value={storeAddress}
+                onChange={(e) => setStoreAddress(e.target.value)}
+                placeholder="مثال: میدان ولیعصر، برج فناوری، طبقه ۵"
+              />
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="store-phone">تلفن فروشگاه</Label>
+              <Input
+                id="store-phone"
+                type="tel"
+                value={storePhone}
+                onChange={(e) => setStorePhone(e.target.value)}
+                placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴"
+              />
+            </div>
+            
+            <div className="grid gap-4">
+                <Label>لوگوی فروشگاه</Label>
+                <div className='flex items-start gap-6'>
+                  {logo ? (
+                    <div className="relative w-24 h-24">
+                      <Image
+                        src={logo}
+                        alt="پیش‌نمایش لوگو"
+                        layout="fill"
+                        objectFit="contain"
+                        className="rounded-md border p-2"
+                        key={logo} 
+                        unoptimized
+                        style={logo.startsWith('data:image/svg+xml') ? { color: themeColor } : {}}
+                      />
+                      <Button
                         type="button"
-                        key={index}
-                        onClick={() => handleIconSelect(icon.component)}
-                        className={cn(
-                          'flex items-center justify-center p-2 border rounded-md hover:bg-accent hover:text-accent-foreground transition-colors'
-                        )}
-                        title={icon.name}
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
+                        onClick={() => setLogo(null)}
                       >
-                        <icon.component className="h-6 w-6" />
-                      </button>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                          <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                      </div>}
+
+                  <div className='flex-1 grid gap-4'>
+                      <div className="flex items-center justify-center w-full">
+                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                                <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
+                            </div>
+                            <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                        </label>
+                      </div> 
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <Separator className="my-2" />
+                  <span className="absolute top-1/2 right-1/2 -translate-y-1/2 translate-x-1/2 bg-card px-2 text-xs text-muted-foreground">یا</span>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-3">یک آیکون انتخاب کنید:</p>
+                  <div className="grid grid-cols-8 gap-2">
+                      {iconList.map((icon, index) => (
+                        <button
+                          type="button"
+                          key={index}
+                          onClick={() => handleIconSelect(icon.component)}
+                          className={cn(
+                            'flex items-center justify-center p-2 border rounded-md hover:bg-accent hover:text-accent-foreground transition-colors'
+                          )}
+                          title={icon.name}
+                        >
+                          <icon.component className="h-6 w-6" />
+                        </button>
+                      ))}
+                  </div>
+                </div>
+            </div>
+            
+            <div className="grid gap-3">
+                <Label>رنگ تم فاکتور</Label>
+                <div className="grid grid-cols-8 gap-2">
+                    {colorPalette.map(color => (
+                        <button
+                            key={color}
+                            type="button"
+                            className="w-full h-8 rounded-md border flex items-center justify-center"
+                            style={{ backgroundColor: color }}
+                            onClick={() => setThemeColor(color)}
+                        >
+                            {themeColor === color && <Check className="w-5 h-5 text-white" />}
+                        </button>
                     ))}
                 </div>
-              </div>
+            </div>
           </div>
-          
-          <Separator />
-
-          <div className="grid gap-3">
-              <Label>رنگ تم فاکتور</Label>
-              <div className="grid grid-cols-8 gap-2">
-                  {colorPalette.map(color => (
-                      <button
-                          key={color}
-                          type="button"
-                          className="w-full h-8 rounded-md border flex items-center justify-center"
-                          style={{ backgroundColor: color }}
-                          onClick={() => setThemeColor(color)}
-                      >
-                          {themeColor === color && <Check className="w-5 h-5 text-white" />}
-                      </button>
-                  ))}
-              </div>
-          </div>
-
         </CardContent>
         <CardFooter className="justify-end">
           <Button type="submit" disabled={isProcessing}>
@@ -343,3 +361,5 @@ export function CategoryForm({ category }: CategoryFormProps) {
     </form>
   );
 }
+
+    

@@ -192,7 +192,7 @@ export function Header() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="ml-auto flex items-center gap-4">
+      <div className="mr-auto flex items-center gap-4">
         <div className={cn("relative flex-1 md:grow-0", !showSearch && 'hidden')}>
             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -206,34 +206,34 @@ export function Header() {
         <div className="hidden md:flex">
          <LiveClock />
         </div>
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button
-                variant="outline"
-                size="icon"
-                className="overflow-hidden rounded-full"
-            >
-                <Avatar>
-                    <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
-                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                </Avatar>
-            </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">تنظیمات</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-                <LogOut className="ml-2 h-4 w-4" />
-                خروج
-            </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
       </div>
+      <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+          <Button
+              variant="outline"
+              size="icon"
+              className="overflow-hidden rounded-full"
+          >
+              <Avatar>
+                  <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
+                  <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+              </Avatar>
+          </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings">تنظیمات</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={logout}>
+              <LogOut className="ml-2 h-4 w-4" />
+              خروج
+          </DropdownMenuItem>
+          </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }

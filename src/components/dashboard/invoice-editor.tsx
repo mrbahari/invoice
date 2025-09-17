@@ -327,7 +327,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             <CardContent className="grid gap-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="discount">تخفیف (تومان)</Label>
+                    <Label htmlFor="discount">تخفیف (ریال)</Label>
                     <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} />
                   </div>
                   <div className="grid gap-2">

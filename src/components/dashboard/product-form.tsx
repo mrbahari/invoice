@@ -177,7 +177,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-3">
-                <Label htmlFor="price">قیمت (تومان)</Label>
+                <Label htmlFor="price">قیمت (ریال)</Label>
                 <Input
                     id="price"
                     type="number"

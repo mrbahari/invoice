@@ -104,60 +104,74 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   }, [activeTab, showSearch, setSearchTerm]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetTrigger asChild>
-          <Button size="icon" variant="outline" className="sm:hidden">
-            <PanelLeft className="h-5 w-5" />
-            <span className="sr-only">باز کردن منو</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="sm:max-w-xs">
-          <SheetHeader>
-              <SheetTitle className="sr-only">منوی ناوبری اصلی</SheetTitle>
-          </SheetHeader>
-          <nav className="grid gap-6 text-lg font-medium">
-            <button
-              onClick={() => handleSheetLinkClick('dashboard')}
-              className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-            >
-              <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-              <span className="sr-only">حسابگر</span>
-            </button>
-            {mobileNavItems.map((item) => (
-                <button
-                    key={item.tab}
-                    onClick={() => handleSheetLinkClick(item.tab)}
-                    className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                </button>
-            ))}
-             <button
-                onClick={() => handleSheetLinkClick('settings')}
-                className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-            >
-                <Settings className="h-5 w-5" />
-                تنظیمات
-            </button>
-          </nav>
-        </SheetContent>
-      </Sheet>
-      <Breadcrumb className="hidden md:flex">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <button onClick={() => onTabChange('dashboard')}>خانه</button>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-             <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="mr-auto flex items-center gap-4">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
+      <div className="flex items-center gap-4">
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button size="icon" variant="outline" className="sm:hidden">
+              <PanelLeft className="h-5 w-5" />
+              <span className="sr-only">باز کردن منو</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="sm:max-w-xs">
+            <SheetHeader>
+                <SheetTitle className="sr-only">منوی ناوبری اصلی</SheetTitle>
+            </SheetHeader>
+            <nav className="grid gap-6 text-lg font-medium">
+              <button
+                onClick={() => handleSheetLinkClick('dashboard')}
+                className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+              >
+                <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
+                <span className="sr-only">حسابگر</span>
+              </button>
+              {mobileNavItems.map((item) => (
+                  <button
+                      key={item.tab}
+                      onClick={() => handleSheetLinkClick(item.tab)}
+                      className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                  </button>
+              ))}
+               <button
+                  onClick={() => handleSheetLinkClick('settings')}
+                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+              >
+                  <Settings className="h-5 w-5" />
+                  تنظیمات
+              </button>
+            </nav>
+          </SheetContent>
+        </Sheet>
+        <Breadcrumb className="hidden md:flex">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <button onClick={() => onTabChange('dashboard')}>خانه</button>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+               <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
+      <div className={cn("relative md:grow-0", !showSearch && 'hidden')}>
+        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="جستجو..."
+          className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="flex items-center gap-4">
         <div className="hidden md:flex">
             <LiveClock />
         </div>
@@ -204,16 +218,6 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-      <div className={cn("relative mr-auto flex-1 md:grow-0", !showSearch && 'hidden')}>
-        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="جستجو..."
-          className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
       </div>
     </header>
   );

@@ -80,7 +80,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const number = parseInt(numericString, 10);
     return isNaN(number) ? '' : number;
   };
-
+  
+  // Recalculate sub-unit price when main price or quantity changes
   useEffect(() => {
     const mainPriceNum = Number(price);
     const subUnitQtyNum = Number(subUnitQuantity);
@@ -93,7 +94,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
        setSubUnitPrice('');
        setDisplaySubUnitPrice('');
     }
-  }, [price, subUnitQuantity]);
+  }, [price, subUnitQuantity, unit]);
 
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {

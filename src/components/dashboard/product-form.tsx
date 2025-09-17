@@ -36,7 +36,7 @@ type ProductFormProps = {
   categories: Category[];
 };
 
-type AIFeature = 'description' | 'price';
+type AIFeature = 'description' | 'price' | 'image';
 
 export function ProductForm({ product, categories }: ProductFormProps) {
   const router = useRouter();
@@ -60,6 +60,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
     description: false,
     price: false,
+    image: false,
   });
 
   const handleAiGeneration = async (feature: AIFeature) => {
@@ -92,11 +93,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         setDescription(result.description);
       } else if (feature === 'price' && result.price !== undefined) {
         setPrice(result.price);
+      } else if (feature === 'image' && result.imageUrl) {
+        setImageUrl(result.imageUrl);
       }
       
       toast({
         title: 'هوش مصنوعی انجام شد',
-        description: `فیلد ${feature === 'description' ? 'توضیحات' : 'قیمت'} با موفقیت تولید شد.`
+        description: `فیلد ${feature === 'description' ? 'توضیحات' : feature === 'price' ? 'قیمت' : 'تصویر'} با موفقیت تولید شد.`
       })
 
     } catch (error) {
@@ -308,18 +311,35 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           </div>
             <div className="grid gap-6">
                 <div className="grid gap-3">
-                    <Label htmlFor="image-url">URL تصویر</Label>
-                    <div className="flex gap-2">
-                    <Input
-                        id="image-url"
-                        value={imageUrl || ''}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        placeholder="آدرس تصویر را اینجا جای‌گذاری کنید..."
-                    />
-                    <Button type="button" variant="outline" onClick={handleImageSearch}>
-                        <Search className="ml-2 h-4 w-4" />
-                        جستجو
-                    </Button>
+                    <Label htmlFor="image-url">تصویر محصول</Label>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" className='flex-grow' onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
+                          {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+                          {aiLoading.image ? 'در حال تولید...' : 'تولید با هوش مصنوعی'}
+                      </Button>
+                      <Button type="button" variant="secondary" onClick={handleImageSearch}>
+                          <Search className="ml-2" />
+                          جستجو در وب
+                      </Button>
+                    </div>
+                    <div className="relative">
+                      <Input
+                          id="image-url"
+                          value={imageUrl || ''}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                          placeholder="URL تصویر را اینجا جای‌گذاری کنید یا با AI تولید کنید..."
+                      />
+                      {imageUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                          onClick={() => setImageUrl(null)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                 </div>
 
@@ -338,15 +358,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         }}
                         unoptimized
                         />
-                        <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                        onClick={() => setImageUrl(null)}
-                        >
-                        <Trash2 className="h-4 w-4" />
-                        </Button>
                     </>
                     ) : (
                     <div className="w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">

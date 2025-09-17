@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates product details using AI.
@@ -11,14 +12,14 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 // Input Schema
-export const GenerateProductDetailsInputSchema = z.object({
+const GenerateProductDetailsInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
   feature: z.enum(['description', 'image', 'price']).describe('The specific feature to generate.'),
 });
 export type GenerateProductDetailsInput = z.infer<typeof GenerateProductDetailsInputSchema>;
 
 // Output Schema
-export const GenerateProductDetailsOutputSchema = z.object({
+const GenerateProductDetailsOutputSchema = z.object({
   description: z.string().optional().describe('A concise and appealing product description.'),
   imageUrl: z.string().optional().describe('A data URI for the generated product image.'),
   price: z.number().optional().describe('A suggested retail price for the product.'),

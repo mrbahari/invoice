@@ -571,23 +571,25 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
                     </Select>
                 </div>
                 <ScrollArea className="h-96">
-                    <div className="grid gap-4">
+                    <div className="grid grid-cols-3 gap-3">
                     {filteredProducts.map(product => (
-                        <div key={product.id} className="flex items-center gap-4">
-                            <Image
-                                src={product.imageUrl}
-                                alt={product.name}
-                                width={64}
-                                height={64}
-                                className="rounded-md object-cover"
-                            />
-                            <div className="flex-1 text-sm">
-                                <p className="font-medium">{product.name}</p>
-                            </div>
-                            <Button size="icon" variant="outline" onClick={() => handleAddProduct(product)}>
-                                <PlusCircle className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <Card 
+                            key={product.id} 
+                            onClick={() => handleAddProduct(product)}
+                            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
+                        >
+                            <CardContent className="p-2">
+                                <div className="relative w-full aspect-square mb-2">
+                                    <Image
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        fill
+                                        className="rounded-md object-cover"
+                                    />
+                                </div>
+                                <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                            </CardContent>
+                        </Card>
                     ))}
                     </div>
                 </ScrollArea>

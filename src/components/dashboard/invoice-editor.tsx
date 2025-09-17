@@ -479,7 +479,10 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                             />
                             <div className="flex-1 text-sm">
                                 <p className="font-medium">{product.name}</p>
-                                <p className="text-muted-foreground">{formatCurrency(product.price)}</p>
+                                <p className="text-muted-foreground">{formatCurrency(product.price)} / {product.unit}</p>
+                                {product.subUnit && product.subUnitPrice && (
+                                    <p className="text-xs text-muted-foreground">{formatCurrency(product.subUnitPrice)} / {product.subUnit}</p>
+                                )}
                             </div>
                             <Button size="icon" variant="outline" onClick={() => handleAddProduct(product)}>
                                 <PlusCircle className="h-4 w-4" />

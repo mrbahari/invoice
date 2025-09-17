@@ -65,20 +65,24 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   });
   
   useEffect(() => {
-    // This effect runs when the component mounts or when product/price/subUnitQuantity changes.
-    // It's responsible for initially calculating the sub-unit price in edit mode,
-    // and for recalculating it whenever the main price or conversion quantity changes.
+    // Recalculate sub-unit price when main price or quantity changes.
     const mainPriceNum = typeof price === 'string' ? parseFloat(price) : price;
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
     if (mainPriceNum > 0 && subUnitQtyNum > 0) {
       const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
-      // Round to 2 decimal places to avoid floating point issues
-      setSubUnitPrice(Math.round(calculatedSubPrice * 100) / 100);
+      setSubUnitPrice(Math.round(calculatedSubPrice));
+    } else if (isEditMode && product) {
+        // Initial calculation for edit mode
+        const pPrice = product.price;
+        const pSubQty = product.subUnitQuantity;
+        if (pPrice && pSubQty && pSubQty > 0) {
+            setSubUnitPrice(Math.round(pPrice / pSubQty));
+        }
     } else {
       setSubUnitPrice('');
     }
-  }, [price, subUnitQuantity, product]); // Depend on product to re-run on initial load in edit mode
+  }, [price, subUnitQuantity, isEditMode, product]);
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSubUnitPrice = e.target.value;
@@ -89,11 +93,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
         const calculatedMainPrice = subUnitPriceNum * subUnitQtyNum;
-        // Round to 2 decimal places
-        setPrice(Math.round(calculatedMainPrice * 100) / 100);
+        setPrice(Math.round(calculatedMainPrice));
     }
   };
-
 
   const handleAiGeneration = async (feature: AIFeature) => {
     if (!name) {
@@ -296,15 +298,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
-            
-            <div className="grid gap-6">
+
                 <Card>
                     <CardHeader>
                         <CardTitle>واحدها و قیمت‌گذاری</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="grid gap-3">
                                 <Label htmlFor="unit">واحد اصلی</Label>
                                 <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
@@ -332,35 +332,33 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-
-                        {showSubUnitFields && (
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder={`تعداد در واحد اصلی`} step="0.01" />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))} placeholder={`تعداد در ${unit}`} step="0.01" disabled={!showSubUnitFields} />
                             </div>
-                        )}
+                        </div>
                         
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="grid gap-3">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="price">قیمت واحد اصلی (ریال)</Label>
+                                    <Label htmlFor="price">قیمت اصلی (ریال)</Label>
                                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
                                 </div>
-                                <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))} onFocus={(e) => handlePriceFocus(setPrice, e.target.value)} onBlur={(e) => handlePriceBlur(setPrice, e.target.value)} required />
+                                <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value === '' ? '' : parseInt(e.target.value, 10))} onFocus={(e) => handlePriceFocus(setPrice, e.target.value)} onBlur={(e) => handlePriceBlur(setPrice, e.target.value)} required />
                             </div>
-                            {showSubUnitFields && (
-                                <div className="grid gap-3">
-                                    <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
-                                    <Input id="sub-unit-price" type="number" value={subUnitPrice} onChange={handleSubUnitPriceChange} onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)} onBlur={(e) => handlePriceBlur(setSubUnitPrice, e.target.value)} disabled={!subUnitQuantity} step="0.01" />
-                                </div>
-                            )}
+                            
+                            <div className="grid gap-3">
+                                <Label htmlFor="sub-unit-price">قیمت فرعی (ریال)</Label>
+                                <Input id="sub-unit-price" type="number" value={subUnitPrice} onChange={handleSubUnitPriceChange} onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)} onBlur={(e) => handlePriceBlur(setSubUnitPrice, e.target.value)} disabled={!showSubUnitFields} />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
-
+            </div>
+            
+            <div className="grid gap-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>تصویر محصول</CardTitle>

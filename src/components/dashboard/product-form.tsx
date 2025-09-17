@@ -205,38 +205,45 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             </div>
           </div>
           <div className="grid gap-3">
-              <Label htmlFor="logo">تصویر محصول</Label>
-              {image ? (
-                <div className="relative w-40 h-40">
-                  <Image
-                    src={image}
-                    alt="پیش‌نمایش تصویر"
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-md border p-2"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                    onClick={() => setImage(null)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center w-full">
-                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Label>تصویر محصول</Label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
                           <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">برای آپلود کلیک کنید</span> یا فایل را بکشید و رها کنید</p>
-                          <p className="text-xs text-muted-foreground">SVG, PNG, JPG</p>
+                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">برای آپلود کلیک کنید</span></p>
+                          <p className="text-xs text-muted-foreground">یا فایل را بکشید و رها کنید</p>
                       </div>
                       <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                   </label>
                 </div>
-              )}
+                <div className="relative w-40 h-40">
+                  {image ? (
+                      <>
+                        <Image
+                          src={image}
+                          alt="پیش‌نمایش تصویر"
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-md border p-2"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
+                          onClick={() => setImage(null)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                  ) : (
+                    <div className="w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                        <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                    </div>
+                  )}
+                </div>
+              </div>
           </div>
         </CardContent>
         <CardFooter className="justify-end">

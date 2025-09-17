@@ -39,6 +39,7 @@ type InvoiceItemState = {
   product: Product;
   quantity: number;
   unit: string;
+  itemDiscount: number;
 };
 
 type InvoiceEditorProps = {
@@ -71,12 +72,14 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
           product,
           quantity: item.quantity,
           unit: item.unit,
+          itemDiscount: item.itemDiscount || 0,
         }
       }).filter((item): item is InvoiceItemState => item !== null);
   });
   
   const [description, setDescription] = useState(invoice?.description || '');
-  const [discount, setDiscount] = useState(invoice?.discount || 0);
+  const [overallDiscount, setOverallDiscount] = useState(invoice?.discount || 0);
+  const [additions, setAdditions] = useState(invoice?.additions || 0);
   const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -112,25 +115,29 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
-    const effectivePrice = item.unit === item.product.subUnit && item.product.subUnitPrice !== undefined
-      ? item.product.subUnitPrice
-      : item.product.price;
-    return item.quantity * effectivePrice;
+    const unitPrice = getUnitPrice(item);
+    return item.quantity * (unitPrice - item.itemDiscount);
   };
 
   const subtotal = useMemo(
-    () => items.reduce((acc, item) => acc + calculateItemTotal(item), 0),
+    () => items.reduce((acc, item) => acc + (item.quantity * getUnitPrice(item)), 0),
+    [items]
+  );
+  
+  const totalItemDiscounts = useMemo(
+    () => items.reduce((acc, item) => acc + (item.quantity * item.itemDiscount), 0),
     [items]
   );
 
+  const totalBeforeTax = subtotal - totalItemDiscounts - overallDiscount;
+
   const taxAmount = useMemo(() => {
-    const discountedSubtotal = subtotal - discount;
-    return discountedSubtotal * (tax / 100);
-  }, [subtotal, discount, tax]);
+    return totalBeforeTax * (tax / 100);
+  }, [totalBeforeTax, tax]);
 
   const total = useMemo(() => {
-    return subtotal - discount + taxAmount;
-  }, [subtotal, discount, taxAmount]);
+    return totalBeforeTax + taxAmount + additions;
+  }, [totalBeforeTax, taxAmount, additions]);
 
   const handleAddProduct = (product: Product) => {
     const initialQuantity = 1;
@@ -142,23 +149,23 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
           item.product.id === product.id ? { ...item, quantity: item.quantity + initialQuantity } : item
         );
       }
-      return [...prevItems, { product, quantity: initialQuantity, unit: product.unit }];
+      return [...prevItems, { product, quantity: initialQuantity, unit: product.unit, itemDiscount: 0 }];
     });
   };
+  
+  const handleItemFieldChange = (productId: string, field: 'quantity' | 'itemDiscount', value: number) => {
+    if (value < 0) return;
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity < 0) return;
-    
-    if (newQuantity === 0) {
+    if (field === 'quantity' && value === 0) {
         handleRemoveItem(productId);
         return;
     }
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.product.id === productId ? { ...item, quantity: newQuantity } : item
-      )
-    );
+
+    setItems(prevItems => prevItems.map(item =>
+        item.product.id === productId ? { ...item, [field]: value } : item
+    ));
   };
+
 
   const handleUnitChange = (productId: string, newUnit: string) => {
     setItems((prevItems) =>
@@ -198,23 +205,28 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             quantity: item.quantity,
             unit: item.unit,
             unitPrice: getUnitPrice(item),
+            itemDiscount: item.itemDiscount,
             totalPrice: calculateItemTotal(item),
         }));
+        
+        const finalSubtotal = invoiceItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+        const finalTotal = finalSubtotal - totalItemDiscounts - overallDiscount + (totalBeforeTax * (tax/100)) + additions;
 
         let processedInvoiceId = '';
 
         if (isEditMode && invoice) {
             processedInvoiceId = invoice.id;
-            const updatedInvoice = {
+            const updatedInvoice: Invoice = {
                 ...invoice,
                 customerId: selectedCustomer.id,
                 customerName: selectedCustomer.name,
                 customerEmail: selectedCustomer.email,
                 items: invoiceItems,
-                subtotal,
-                discount,
+                subtotal: finalSubtotal,
+                discount: totalItemDiscounts + overallDiscount,
+                additions: additions,
                 tax: taxAmount,
-                total,
+                total: finalTotal,
                 description: description || 'فاکتور ویرایش شده',
             };
             setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
@@ -233,10 +245,11 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                 date: new Date().toISOString(),
                 status: 'Pending',
                 items: invoiceItems,
-                subtotal,
-                discount,
+                subtotal: finalSubtotal,
+                discount: totalItemDiscounts + overallDiscount,
+                additions: additions,
                 tax: taxAmount,
-                total,
+                total: finalTotal,
                 description: description || 'فاکتور ایجاد شده',
             };
             processedInvoiceId = newInvoice.id;
@@ -283,6 +296,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                   <TableHead className="w-[110px]">واحد</TableHead>
                   <TableHead className="w-[100px] text-center">مقدار</TableHead>
                   <TableHead className="w-[120px] text-right">قیمت</TableHead>
+                  <TableHead className="w-[120px] text-right">تخفیف واحد</TableHead>
                   <TableHead className="w-[120px] text-right">جمع کل</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
@@ -326,12 +340,20 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                             <Input
                               type="number"
                               value={item.quantity}
-                              onChange={(e) => handleQuantityChange(item.product.id, parseFloat(e.target.value))}
+                              onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
                               step="0.01"
                               className="w-20 text-center mx-auto"
                             />
                           </TableCell>
                           <TableCell className="text-right">{formatCurrency(getUnitPrice(item))}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.itemDiscount}
+                              onChange={(e) => handleItemFieldChange(item.product.id, 'itemDiscount', parseFloat(e.target.value) || 0)}
+                              className="w-24 text-right"
+                            />
+                          </TableCell>
                           <TableCell className="text-right">{formatCurrency(calculateItemTotal(item))}</TableCell>
                           <TableCell>
                             <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
@@ -343,7 +365,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                     })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
                     </TableCell>
                   </TableRow>
@@ -363,10 +385,14 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                 <CardTitle>پرداخت</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="discount">تخفیف (ریال)</Label>
-                    <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} />
+                    <Label htmlFor="additions">اضافات (ریال)</Label>
+                    <Input id="additions" type="number" value={additions} onChange={(e) => setAdditions(parseFloat(e.target.value) || 0)} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="overall-discount">تخفیف کلی (ریال)</Label>
+                    <Input id="overall-discount" type="number" value={overallDiscount} onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)} />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="tax">مالیات (%)</Label>
@@ -379,10 +405,20 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                         <span>جمع جزء</span>
                         <span>{formatCurrency(subtotal)}</span>
                     </div>
-                    {discount > 0 && (
+                     <div className="flex justify-between">
+                        <span>مجموع تخفیف آیتم‌ها</span>
+                        <span className="text-destructive">-{formatCurrency(totalItemDiscounts)}</span>
+                    </div>
+                    {overallDiscount > 0 && (
                       <div className="flex justify-between">
-                          <span>تخفیف</span>
-                          <span className="text-destructive">-{formatCurrency(discount)}</span>
+                          <span>تخفیف کلی</span>
+                          <span className="text-destructive">-{formatCurrency(overallDiscount)}</span>
+                      </div>
+                    )}
+                     {additions > 0 && (
+                      <div className="flex justify-between">
+                          <span>اضافات</span>
+                          <span>{formatCurrency(additions)}</span>
                       </div>
                     )}
                     {tax > 0 && (

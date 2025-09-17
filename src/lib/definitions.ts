@@ -46,6 +46,7 @@ export type Invoice = {
   items: InvoiceItem[];
   subtotal: number;
   discount: number;
+  additions?: number;
   tax: number; // Assuming a fixed tax rate for simplicity
   total: number;
   description: string;
@@ -61,6 +62,7 @@ export type InvoiceItem = {
   productName: string;
   quantity: number;
   unitPrice: number;
+  itemDiscount?: number;
   totalPrice: number;
   unit: string;
 };

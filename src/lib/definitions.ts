@@ -28,6 +28,8 @@ export type Product = {
   categoryId: string;
   unit: UnitOfMeasurement;
   defaultQuantity?: number;
+  subUnit?: UnitOfMeasurement;
+  subUnitQuantity?: number;
 };
 
 export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue';
@@ -65,3 +67,4 @@ export type AuthFormValues = {
   firstName?: string;
   lastName?: string;
 };
+

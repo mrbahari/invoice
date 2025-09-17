@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
@@ -54,6 +53,10 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || 'عدد');
   const [defaultQuantity, setDefaultQuantity] = useState<number | string>(product?.defaultQuantity ?? '');
   const [image, setImage] = useState<string | null>(product?.imageUrl || null);
+  
+  const [subUnit, setSubUnit] = useState<UnitOfMeasurement | undefined>(product?.subUnit);
+  const [subUnitQuantity, setSubUnitQuantity] = useState<number | string>(product?.subUnitQuantity ?? '');
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
     description: false,
@@ -166,6 +169,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     event.preventDefault();
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
     const numericDefaultQuantity = typeof defaultQuantity === 'string' && defaultQuantity !== '' ? parseFloat(defaultQuantity) : undefined;
+    const numericSubUnitQuantity = typeof subUnitQuantity === 'string' && subUnitQuantity !== '' ? parseFloat(subUnitQuantity) : undefined;
 
 
     if (!name || numericPrice === undefined || numericPrice < 0 || !categoryId) {
@@ -178,12 +182,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }
 
     setIsProcessing(true);
+    
+    // Get a random image if none is set
+    const finalImage = image || `https://picsum.photos/seed/${name}${categoryId}${Math.random()}/400/300`;
 
     setTimeout(() => {
       if (isEditMode && product) {
         setProducts(prev => prev.map(p => 
             p.id === product.id 
-            ? { ...p, name, description, price: numericPrice, categoryId, unit, defaultQuantity: numericDefaultQuantity, imageUrl: image || p.imageUrl }
+            ? { ...p, name, description, price: numericPrice, categoryId, unit, defaultQuantity: numericDefaultQuantity, subUnit, subUnitQuantity: numericSubUnitQuantity, imageUrl: finalImage }
             : p
         ));
         toast({
@@ -199,7 +206,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           categoryId,
           unit,
           defaultQuantity: numericDefaultQuantity,
-          imageUrl: image || PlaceHolderImages[Math.floor(Math.random() * PlaceHolderImages.length)].imageUrl,
+          subUnit,
+          subUnitQuantity: numericSubUnitQuantity,
+          imageUrl: finalImage,
         };
         setProducts(prev => [newProduct, ...prev]);
         toast({
@@ -283,9 +292,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-3">
-              <Label htmlFor="unit">واحد پیش‌فرض</Label>
+              <Label htmlFor="unit">واحد اصلی</Label>
               <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
                   <SelectTrigger id="unit">
                   <SelectValue placeholder="انتخاب واحد" />
@@ -299,8 +308,36 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   </SelectContent>
               </Select>
             </div>
+             <div className="grid gap-3">
+              <Label htmlFor="sub-unit">واحد فرعی (اختیاری)</Label>
+              <Select value={subUnit} onValueChange={(value: UnitOfMeasurement) => setSubUnit(value)}>
+                  <SelectTrigger id="sub-unit">
+                  <SelectValue placeholder="انتخاب واحد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                   <SelectItem value={undefined as any}>هیچکدام</SelectItem>
+                  {unitsOfMeasurement.map((u) => (
+                      <SelectItem key={u} value={u}>
+                      {u}
+                      </SelectItem>
+                  ))}
+                  </SelectContent>
+              </Select>
+            </div>
             <div className="grid gap-3">
-              <Label htmlFor="default-quantity">مقدار پیش‌فرض (اختیاری)</Label>
+              <Label htmlFor="sub-unit-quantity">مقدار واحد فرعی</Label>
+              <Input
+                id="sub-unit-quantity"
+                type="number"
+                value={subUnitQuantity}
+                onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                placeholder="مثال: 12"
+                disabled={!subUnit}
+              />
+            </div>
+          </div>
+           <div className="grid gap-3">
+              <Label htmlFor="default-quantity">مقدار پیش‌فرض در فاکتور (اختیاری)</Label>
               <Input
                 id="default-quantity"
                 type="number"
@@ -309,13 +346,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 placeholder="مثال: 1"
               />
             </div>
-          </div>
           <div className="grid gap-3">
               <div className="flex items-center justify-between">
                 <Label>تصویر محصول</Label>
                  <Button type="button" variant="ghost" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
                     {aiLoading.image ? <LoaderCircle className="animate-spin ml-2" /> : <WandSparkles className="ml-2" />}
-                    تولید با هوش مصنوعی
+                    جستجوی تصویر
                 </Button>
               </div>
               <div className="flex items-center gap-4">
@@ -333,7 +369,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   {aiLoading.image ? (
                     <div className="w-full h-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted">
                         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-xs text-muted-foreground mt-2">در حال تولید...</span>
+                        <span className="text-xs text-muted-foreground mt-2">در حال جستجو...</span>
                     </div>
                   ) : image ? (
                       <>

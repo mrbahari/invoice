@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, ChangeEvent } from 'react';
+import { useRef, ChangeEvent, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -24,9 +24,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
-import { Download, Upload, Trash2 } from 'lucide-react';
+import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
+import { Download, Upload, Trash2, PlusCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { initialUnitsOfMeasurement } from '@/lib/data';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -36,12 +39,35 @@ export default function SettingsPage() {
   const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
   const [products, setProducts] = useLocalStorage<Product[]>('products', []);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
+  const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
+  
+  const [newUnit, setNewUnit] = useState('');
+
+  const handleAddUnit = () => {
+    if (newUnit.trim() === '') {
+        toast({ variant: 'destructive', title: 'نام واحد نمی‌تواند خالی باشد.' });
+        return;
+    }
+    if (units.includes(newUnit.trim())) {
+        toast({ variant: 'destructive', title: 'این واحد قبلاً اضافه شده است.' });
+        return;
+    }
+    setUnits(prev => [...prev, newUnit.trim()]);
+    setNewUnit('');
+    toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
+  };
+
+  const handleDeleteUnit = (unitToDelete: string) => {
+    setUnits(prev => prev.filter(u => u !== unitToDelete));
+    toast({ title: 'واحد با موفقیت حذف شد.' });
+  };
 
   const handleClearData = () => {
     setCategories([]);
     setCustomers([]);
     setProducts([]);
     setInvoices([]);
+    setUnits(initialUnitsOfMeasurement);
 
     toast({
       title: 'اطلاعات پاک شد',
@@ -55,6 +81,7 @@ export default function SettingsPage() {
       customers,
       products,
       invoices,
+      units,
       backupDate: new Date().toISOString(),
     };
     
@@ -95,6 +122,9 @@ export default function SettingsPage() {
           setCustomers(data.customers);
           setProducts(data.products);
           setInvoices(data.invoices);
+          if (data.units) {
+            setUnits(data.units);
+          }
           
           toast({
             title: 'بازیابی موفق',
@@ -135,6 +165,39 @@ export default function SettingsPage() {
             تنظیمات کلی برنامه را مدیریت کنید.
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>مدیریت واحدها</CardTitle>
+          <CardDescription>
+            واحدهای اندازه‌گیری مورد استفاده در محصولات را اضافه یا حذف کنید.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+              <Input
+                  placeholder="نام واحد جدید..."
+                  value={newUnit}
+                  onChange={(e) => setNewUnit(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddUnit()}
+              />
+              <Button onClick={handleAddUnit}>
+                  <PlusCircle className="ml-2 h-4 w-4" />
+                  افزودن
+              </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
+            {units.length > 0 ? units.map(unit => (
+                <Badge key={unit} variant="secondary" className="text-base font-normal">
+                    {unit}
+                    <button onClick={() => handleDeleteUnit(unit)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                        <X className="h-3 w-3" />
+                    </button>
+                </Badge>
+            )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
+          </div>
+        </CardContent>
       </Card>
       
       <Card>
@@ -177,7 +240,7 @@ export default function SettingsPage() {
             <div>
               <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
               <p className="text-sm text-muted-foreground">
-                تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، دسته‌بندی‌ها) برای همیشه حذف خواهند شد.
+                تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، دسته‌بندی‌ها و واحدها) برای همیشه حذف خواهند شد.
               </p>
             </div>
             <AlertDialog>

@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { initialProducts } from '@/lib/data';
+import { initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
 import { Search, WandSparkles, LoaderCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -36,8 +36,6 @@ type ProductFormProps = {
   categories: Category[];
 };
 
-const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
-
 type AIFeature = 'description' | 'price';
 
 export function ProductForm({ product, categories }: ProductFormProps) {
@@ -46,11 +44,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const isEditMode = !!product;
 
   const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
+  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
+
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
   const [price, setPrice] = useState<number | string>(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
-  const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || 'عدد');
+  const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || (unitsOfMeasurement[0] || ''));
   const [defaultQuantity, setDefaultQuantity] = useState<number | string>(product?.defaultQuantity ?? '');
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   

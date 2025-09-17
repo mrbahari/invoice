@@ -50,7 +50,7 @@ export type Invoice = {
   description: string;
 };
 
-export type UnitOfMeasurement = 'عدد' | 'متر طول' | 'متر مربع' | 'بسته';
+export type UnitOfMeasurement = string;
 
 export type InvoiceItem = {
   productId: string;
@@ -67,4 +67,3 @@ export type AuthFormValues = {
   firstName?: string;
   lastName?: string;
 };
-

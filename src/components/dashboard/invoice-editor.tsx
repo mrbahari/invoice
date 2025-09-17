@@ -32,7 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { initialCategories, initialInvoices, initialCustomers, initialProducts } from '@/lib/data';
+import { initialCategories, initialInvoices, initialCustomers, initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type InvoiceItemState = {
@@ -40,8 +40,6 @@ type InvoiceItemState = {
   quantity: number;
   unit: UnitOfMeasurement;
 };
-
-const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
 
 type InvoiceEditorProps = {
     invoice?: Invoice;
@@ -56,6 +54,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
+  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(
     isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined

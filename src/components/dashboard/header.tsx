@@ -210,6 +210,9 @@ export function Header() {
           />
       </div>
       <div className="flex items-center gap-4 ml-auto">
+        <div className="hidden md:flex">
+         <LiveClock />
+        </div>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button
@@ -253,9 +256,6 @@ export function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-        <div className="hidden md:flex">
-         <LiveClock />
-        </div>
       </div>
     </header>
   );
@@ -271,3 +271,4 @@ const mobileNavItems = [
 ];
 
     
+

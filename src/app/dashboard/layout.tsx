@@ -8,6 +8,14 @@ import { Header } from '@/components/dashboard/header';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useRouter } from 'next/navigation';
 import { SearchProvider } from '@/components/dashboard/search-provider';
+import InvoicesPage from './invoices/page';
+import ProductsPage from './products/page';
+import CustomersPage from './customers/page';
+import CategoriesPage from './categories/page';
+import ReportsPage from './reports/page';
+import SettingsPage from './settings/page';
+import DashboardHomePageContent from './home/page';
+
 
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings';
 
@@ -29,6 +37,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
   };
+  
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardHomePageContent />;
+      case 'invoices':
+        return <InvoicesPage />;
+      case 'products':
+        return <ProductsPage />;
+      case 'customers':
+        return <CustomersPage />;
+      case 'categories':
+        return <CategoriesPage />;
+      case 'reports':
+        return <ReportsPage />;
+      case 'settings':
+        return <SettingsPage />;
+      default:
+        return children;
+    }
+  };
+
 
   return (
     <SearchProvider>
@@ -37,8 +67,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex flex-col sm:gap-4 sm:py-4 sm:pr-14">
           <Header activeTab={activeTab} onTabChange={handleTabChange} />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-             {/* Pass activeTab to the page component */}
-            {React.cloneElement(children as React.ReactElement, { activeTab })}
+             {renderContent()}
           </main>
         </div>
       </div>

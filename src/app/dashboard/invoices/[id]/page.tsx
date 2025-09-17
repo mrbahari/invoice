@@ -192,8 +192,8 @@ export default function InvoicePreviewPage() {
                   </tbody>
                   <tfoot>
                     <tr className="font-bold">
-                        <td colSpan={4} className="border border-black p-1 text-center">جمع کل</td>
-                        <td colSpan={2} className="border border-black p-1 text-center font-mono">{formatCurrency(invoice.total)}</td>
+                        <td colSpan={5} className="border border-black p-1 text-center">جمع کل</td>
+                        <td className="border border-black p-1 text-center font-mono">{formatCurrency(invoice.total)}</td>
                     </tr>
                   </tfoot>
                 </table>

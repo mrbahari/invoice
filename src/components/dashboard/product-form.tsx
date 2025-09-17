@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
 import { initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
-import { Search, WandSparkles, LoaderCircle, Trash2, Copy } from 'lucide-react';
+import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import {
   Select,
@@ -46,11 +46,12 @@ import {
 type ProductFormProps = {
   product?: Product;
   categories: Category[];
+  onBack: () => void;
 };
 
 type AIFeature = 'description' | 'price' | 'image';
 
-export function ProductForm({ product, categories }: ProductFormProps) {
+export function ProductForm({ product, categories, onBack }: ProductFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditMode = !!product;
@@ -272,13 +273,10 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     setTimeout(() => {
       if (isEditMode && product) {
         const updatedProduct = buildProductData(product.id);
-        setProducts(prev => [
-            updatedProduct,
-            ...prev.filter(p => p.id !== product.id)
-        ]);
+        setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
         toast({
           title: 'محصول با موفقیت ویرایش شد',
-          description: `تغییرات برای محصول "${name}" ذخیره و به بالای لیست منتقل شد.`,
+          description: `تغییرات برای محصول "${name}" ذخیره شد.`,
         });
       } else {
         const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
@@ -290,7 +288,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       }
 
       setIsProcessing(false);
-      router.push('/dashboard/products');
+      onBack(); // Go back to the list view
     }, 1000);
   };
   
@@ -308,7 +306,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         });
         
         setIsProcessing(false);
-        router.push('/dashboard/products');
+        onBack();
     }, 1000);
   }
   
@@ -323,7 +321,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             description: `محصول "${product.name}" با موفقیت حذف شد.`,
         });
         setIsProcessing(false);
-        router.push('/dashboard/products');
+        onBack();
     }, 1000);
   };
 
@@ -336,9 +334,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             
             <div className="grid gap-6 lg:col-span-2">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
-                        <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
+                            <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
+                        </div>
+                        <Button type="button" variant="outline" onClick={onBack}>
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                            بازگشت به لیست
+                        </Button>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

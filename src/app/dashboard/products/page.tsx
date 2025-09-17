@@ -31,11 +31,13 @@ import { useState, useMemo, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { ProductForm } from '@/components/dashboard/product-form';
 
 export default function ProductsPage() {
-  const [products] = useLocalStorage<Product[]>('products', initialProducts);
+  const [products, setProducts] = useLocalStorage<Product[]>('products', initialProducts);
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedProduct, setSelectedProduct] = useState<Product | 'new' | null>(null);
   const { toast } = useToast();
   const router = useRouter();
   const { searchTerm } = useSearch();
@@ -67,7 +69,6 @@ export default function ProductsPage() {
       return products.filter(productFilter);
     }
     
-    // For any selected category, get all its descendant IDs including itself.
     const descendantIds = getDescendantIds(activeTab);
     return products
         .filter(p => descendantIds.includes(p.categoryId))
@@ -75,8 +76,16 @@ export default function ProductsPage() {
 
   }, [products, activeTab, searchTerm, getDescendantIds]);
 
-  const handleRowClick = (productId: string) => {
-    router.push(`/dashboard/products/${productId}/edit`);
+  const handleRowClick = (product: Product) => {
+    setSelectedProduct(product);
+  };
+  
+  const handleAddNew = () => {
+    setSelectedProduct('new');
+  };
+
+  const handleBackToList = () => {
+    setSelectedProduct(null);
   };
 
   const getCategoryName = (categoryId: string) => {
@@ -129,66 +138,10 @@ export default function ProductsPage() {
     return sorted;
   }, [categories]);
 
-
-  const renderProductTable = (productList: typeof products) => (
-    <Card className="animate-fade-in-up">
-      <CardHeader>
-        <CardTitle>محصولات</CardTitle>
-        <CardDescription>
-          محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="hidden w-[100px] sm:table-cell">
-                <span className="sr-only">تصویر</span>
-              </TableHead>
-              <TableHead>نام</TableHead>
-              <TableHead>دسته‌بندی</TableHead>
-              <TableHead className="hidden md:table-cell">
-                توضیحات
-              </TableHead>
-              <TableHead className="text-left">قیمت</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {productList.map((product) => (
-              <TableRow key={product.id} onClick={() => handleRowClick(product.id)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
-                <TableCell className="hidden sm:table-cell">
-                  <Image
-                    alt={product.name}
-                    className="aspect-square rounded-md object-cover"
-                    height="64"
-                    src={product.imageUrl}
-                    width="64"
-                    data-ai-hint="product image"
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{getCategoryName(product.categoryId)}</Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell max-w-xs truncate">
-                  {product.description}
-                </TableCell>
-                <TableCell className="text-left">
-                  {formatCurrency(product.price)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-      <CardFooter>
-        <div className="text-xs text-muted-foreground">
-          نمایش <strong>{productList.length}</strong> از <strong>{products.length}</strong> محصول
-        </div>
-      </CardFooter>
-    </Card>
-  );
-
+  if (selectedProduct) {
+      const productToEdit = selectedProduct === 'new' ? undefined : selectedProduct;
+      return <ProductForm product={productToEdit} categories={categories} onBack={handleBackToList} />;
+  }
 
   return (
     <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
@@ -208,17 +161,70 @@ export default function ProductsPage() {
               خروجی
             </span>
           </Button>
-          <Link href="/dashboard/products/new">
-            <Button size="sm" className="h-8 gap-1">
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                افزودن محصول
-              </span>
-            </Button>
-          </Link>
+          <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+            <PlusCircle className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+              افزودن محصول
+            </span>
+          </Button>
         </div>
       </div>
-       {renderProductTable(filteredProducts)}
+       <Card className="animate-fade-in-up">
+        <CardHeader>
+            <CardTitle>محصولات</CardTitle>
+            <CardDescription>
+            محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead className="hidden w-[100px] sm:table-cell">
+                    <span className="sr-only">تصویر</span>
+                </TableHead>
+                <TableHead>نام</TableHead>
+                <TableHead>دسته‌بندی</TableHead>
+                <TableHead className="hidden md:table-cell">
+                    توضیحات
+                </TableHead>
+                <TableHead className="text-left">قیمت</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {filteredProducts.map((product) => (
+                <TableRow key={product.id} onClick={() => handleRowClick(product)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
+                    <TableCell className="hidden sm:table-cell">
+                    <Image
+                        alt={product.name}
+                        className="aspect-square rounded-md object-cover"
+                        height="64"
+                        src={product.imageUrl}
+                        width="64"
+                        data-ai-hint="product image"
+                    />
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                    <Badge variant="outline">{getCategoryName(product.categoryId)}</Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell max-w-xs truncate">
+                    {product.description}
+                    </TableCell>
+                    <TableCell className="text-left">
+                    {formatCurrency(product.price)}
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </CardContent>
+        <CardFooter>
+            <div className="text-xs text-muted-foreground">
+            نمایش <strong>{filteredProducts.length}</strong> از <strong>{products.length}</strong> محصول
+            </div>
+        </CardFooter>
+        </Card>
     </Tabs>
   );
 }

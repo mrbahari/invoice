@@ -1,21 +1,16 @@
 
 'use client';
 
-import { ProductForm } from '@/components/dashboard/product-form';
-import { initialProducts, initialCategories } from '@/lib/data';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Product, Category } from '@/lib/definitions';
-import { notFound, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function EditProductPage() {
-  const params = useParams<{ id: string }>();
-  const [products] = useLocalStorage<Product[]>('products', initialProducts);
-  const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
-  const product = products.find((p) => p.id === params.id);
-
-  if (!product) {
-    notFound();
+  const router = useRouter();
+  
+  // This page is now handled within ProductsPage.
+  // We redirect to the main products page.
+  if (typeof window !== 'undefined') {
+    router.replace('/dashboard/products');
   }
 
-  return <ProductForm product={product} categories={categories} />;
+  return null; // or a loading indicator
 }

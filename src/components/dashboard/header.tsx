@@ -15,8 +15,7 @@ import {
   PanelLeft,
   Search,
   LogOut,
-  User,
-  Command,
+  Sparkles,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,6 +32,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -202,10 +209,7 @@ export function Header() {
           onChange={(e) => setSearchTerm(e.target.value)}
           />
       </div>
-      <div className="flex items-center gap-4">
-        <div className="hidden md:flex">
-         <LiveClock />
-        </div>
+      <div className="flex items-center gap-4 ml-auto">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button
@@ -220,19 +224,38 @@ export function Header() {
             </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">تنظیمات</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-                <LogOut className="ml-2 h-4 w-4" />
-                خروج
-            </DropdownMenuItem>
+              <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings">تنظیمات</Link>
+              </DropdownMenuItem>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>پشتیبانی</DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="items-center text-center">
+                        <Sparkles className="h-8 w-8 text-primary" />
+                        <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
+                        <DialogDescription className="text-base !mt-4">
+                            طراحی و توسعه توسط اسماعیل بهاری
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
+                        09125486083
+                    </div>
+                </DialogContent>
+              </Dialog>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>
+                  <LogOut className="ml-2 h-4 w-4" />
+                  خروج
+              </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+        <div className="hidden md:flex">
+         <LiveClock />
+        </div>
       </div>
     </header>
   );
@@ -246,7 +269,5 @@ const mobileNavItems = [
     { href: '/dashboard/categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
     { href: '/dashboard/reports', icon: LineChart, label: 'گزارشات' },
 ];
-
-    
 
     

@@ -195,7 +195,7 @@ export default function ReportsPage() {
                     </TableHeader>
                     <TableBody>
                     {topCustomers.map(customer => (
-                        <TableRow key={customer.id}>
+                        <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                             <TableCell>
                                 <Link href={`/dashboard/customers/${customer.id}/edit`}>
                                     <div className="flex items-center gap-3 hover:underline">
@@ -239,7 +239,7 @@ export default function ReportsPage() {
                         </TableHeader>
                         <TableBody>
                         {topProducts.map(product => (
-                            <TableRow key={product.id}>
+                            <TableRow key={product.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                                 <TableCell>
                                     <Link href={`/dashboard/products/${product.id}/edit`}>
                                         <div className="flex items-center gap-3 hover:underline">

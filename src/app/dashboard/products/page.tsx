@@ -116,7 +116,7 @@ export default function ProductsPage() {
           </TableHeader>
           <TableBody>
             {productList.map((product) => (
-              <TableRow key={product.id} onClick={() => handleRowClick(product.id)} className="cursor-pointer">
+              <TableRow key={product.id} onClick={() => handleRowClick(product.id)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
                 <TableCell className="hidden sm:table-cell">
                   <Image
                     alt={product.name}

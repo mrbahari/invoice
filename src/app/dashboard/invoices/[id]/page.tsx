@@ -126,20 +126,6 @@ export default function InvoicePreviewPage() {
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
                     </td>
-                    <td className="w-1/4 text-left align-top">
-                      {category?.logoUrl &&
-                        <div className="relative w-24 h-24 ml-auto">
-                            <Image
-                                src={category.logoUrl}
-                                alt={`${category?.storeName} logo`}
-                                layout="fill"
-                                objectFit="contain"
-                                className="p-1"
-                                unoptimized
-                            />
-                        </div>
-                      }
-                    </td>
                   </tr>
                 </tbody>
               </table>

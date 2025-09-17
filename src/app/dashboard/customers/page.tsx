@@ -1,7 +1,7 @@
 
 'use client';
 
-import { MoreHorizontal, PlusCircle, File, FilePenSquare, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File, FilePen, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,13 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -155,7 +148,7 @@ export default function CustomersPage() {
                     <div className="flex items-center gap-2">
                       <Button asChild size="icon" variant="ghost" className="h-8 w-8">
                         <Link href={`/dashboard/customers/${customer.id}/edit`}>
-                          <FilePenSquare className="h-4 w-4" />
+                          <FilePen className="h-4 w-4" />
                           <span className="sr-only">ویرایش</span>
                         </Link>
                       </Button>

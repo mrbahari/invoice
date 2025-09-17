@@ -64,8 +64,9 @@ const generateProductDetailsFlow = ai.defineFlow(
     }
     
     if (input.feature === 'image') {
-        // Fallback to a placeholder image to avoid Imagen API billing errors
-        const seed = Math.floor(Math.random() * 1000);
+        // Fallback to a seeded placeholder image to avoid Imagen API billing errors
+        // Using the product name as a seed ensures a consistent image for the same product
+        const seed = input.productName;
         const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
         return { imageUrl };
     }

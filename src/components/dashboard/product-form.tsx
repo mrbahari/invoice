@@ -96,7 +96,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const subUnitPriceNum = parseFloat(newSubUnitPrice);
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
-    if (subUnitPriceNum > 0 && subUnitQtyNum > 0) {
+    if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
       setPrice(subUnitPriceNum * subUnitQtyNum);
     }
   };
@@ -246,7 +246,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }, 1000);
   };
 
-  const showSubUnitFields = !!subUnit && subUnit !== 'none' && subUnitQuantity;
+  const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
   return (
     <form onSubmit={handleSubmit}>
@@ -327,7 +327,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     if (value === 'none') {
                       setSubUnit(undefined);
                       setSubUnitQuantity('');
-                      setPrice('');
+                      setSubUnitPrice('');
                     } else {
                       setSubUnit(value);
                     }
@@ -357,6 +357,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   onChange={(e) => setSubUnitQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))}
                   placeholder={`عدد در واحد اصلی`}
                   disabled={!subUnit || subUnit === 'none'}
+                  step="0.01"
                 />
               </div>
             </div>
@@ -367,7 +368,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     <Label htmlFor="price">
                       قیمت واحد اصلی (ریال)
                     </Label>
-                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price || showSubUnitFields}>
+                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
                        {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                     </Button>
                   </div>
@@ -379,10 +380,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                       onFocus={(e) => handlePriceFocus(setPrice, e.target.value)}
                       onBlur={(e) => handlePriceBlur(setPrice, e.target.value)}
                       required
-                      disabled={showSubUnitFields}
                   />
                 </div>
-                {subUnit && subUnit !== 'none' && (
+                {showSubUnitFields && (
                     <div className="grid gap-3">
                         <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
                         <Input
@@ -393,6 +393,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             onFocus={(e) => handlePriceFocus(setSubUnitPrice, e.target.value)}
                             onBlur={(e) => handlePriceBlur(setSubUnitPrice, e.target.value)}
                             disabled={!subUnitQuantity}
+                            step="0.01"
                         />
                     </div>
                 )}

@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -112,7 +112,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
-    const effectivePrice = item.unit === item.product.subUnit && item.product.subUnitPrice
+    const effectivePrice = item.unit === item.product.subUnit && item.product.subUnitPrice !== undefined
       ? item.product.subUnitPrice
       : item.product.price;
     return item.quantity * effectivePrice;
@@ -179,7 +179,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
       return item.product.price;
   };
 
-  const handleProcessInvoice = () => {
+  const handleProcessInvoice = (navigateTo: 'list' | 'preview' = 'list') => {
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
       return;
@@ -201,7 +201,10 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
             totalPrice: calculateItemTotal(item),
         }));
 
+        let processedInvoiceId = '';
+
         if (isEditMode && invoice) {
+            processedInvoiceId = invoice.id;
             const updatedInvoice = {
                 ...invoice,
                 customerId: selectedCustomer.id,
@@ -236,12 +239,17 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                 total,
                 description: description || 'فاکتور ایجاد شده',
             };
+            processedInvoiceId = newInvoice.id;
             setInvoices(prev => [newInvoice, ...prev]);
             toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
         }
 
         setIsProcessing(false);
-        router.push('/dashboard/invoices');
+        if (navigateTo === 'preview' && processedInvoiceId) {
+             router.push(`/dashboard/invoices/${processedInvoiceId}`);
+        } else {
+             router.push('/dashboard/invoices');
+        }
     }, 1000);
   };
 
@@ -251,10 +259,20 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card className="animate-fade-in-up">
           <CardHeader>
-            <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
-            <CardDescription>
-                اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
+                <CardDescription>
+                    اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
+                </CardDescription>
+              </div>
+               {isEditMode && (
+                 <Button onClick={() => handleProcessInvoice('preview')} variant="outline" size="sm" className="h-8 gap-1">
+                   <Eye className="h-3.5 w-3.5" />
+                   <span>ذخیره و پیش‌نمایش</span>
+                 </Button>
+               )}
+            </div>
           </CardHeader>
           <CardContent className="grid gap-6">
             <Table>
@@ -381,7 +399,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                 </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full" onClick={handleProcessInvoice} disabled={isProcessing}>
+                <Button className="w-full" onClick={() => handleProcessInvoice('list')} disabled={isProcessing}>
                     {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
                 </Button>
             </CardFooter>
@@ -498,5 +516,3 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     </div>
   );
 }
-
-    

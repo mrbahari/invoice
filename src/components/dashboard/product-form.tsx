@@ -275,7 +275,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-        <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3" style={{ animationDelay: '0s' }}>
             
             <div className="grid gap-6 lg:col-span-2">
                 <Card>
@@ -364,7 +364,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder={`تعداد در ${unit}`} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} />
                             </div>
                         </div>
                         
@@ -376,12 +376,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
                                 </div>
-                                <Input id="price" value={displayPrice} onChange={handlePriceChange} onBlur={handlePriceBlur} onFocus={(e) => e.target.value = price.toString()} required />
+                                <Input id="price" value={displayPrice} onChange={handlePriceChange} onBlur={handlePriceBlur} onFocus={(e) => e.target.select()} required />
                             </div>
                             
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
-                                <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} onBlur={handleSubUnitPriceBlur} onFocus={(e) => e.target.value = subUnitPrice.toString()} disabled={!showSubUnitFields} />
+                                <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} onBlur={handleSubUnitPriceBlur} onFocus={(e) => e.target.select()} disabled={!showSubUnitFields} />
                             </div>
                         </div>
                     </CardContent>
@@ -403,22 +403,29 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             </div>
                             )}
                         </div>
-                        <div className="grid gap-3">
+                        <div className="relative grid gap-3">
                             <Label htmlFor="image-url">URL تصویر</Label>
                             <Input id="image-url" value={imageUrl || ''} onChange={(e) => setImageUrl(e.target.value)} placeholder="URL تصویر یا تولید با AI..." />
+                             {imageUrl && (
+                               <Button
+                                 type="button"
+                                 variant="ghost"
+                                 size="icon"
+                                 className="absolute bottom-1 left-1 h-7 w-7 text-muted-foreground"
+                                 onClick={() => setImageUrl(null)}
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             )}
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <Button type="button" variant="outline" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
                                 {aiLoading.image ? <LoaderCircle className="animate-spin h-4 w-4" /> : <WandSparkles className="h-4 w-4" />}
-                                <span className="mr-2 hidden sm:inline">AI</span>
+                                <span className="mr-2">تولید با AI</span>
                             </Button>
                             <Button type="button" variant="outline" size="sm" onClick={handleImageSearch}>
                                 <Search className="h-4 w-4" />
-                                <span className="mr-2 hidden sm:inline">وب</span>
-                            </Button>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => setImageUrl(null)} disabled={!imageUrl}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="mr-2 hidden sm:inline">حذف</span>
+                                <span className="mr-2">جستجو در وب</span>
                             </Button>
                         </div>
                     </CardContent>
@@ -436,5 +443,3 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     </form>
   );
 }
-
-    

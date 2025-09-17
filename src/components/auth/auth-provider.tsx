@@ -26,12 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    // Handle redirect result
+    // Handle redirect result first
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
@@ -42,10 +37,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).catch((error) => {
         console.error("Error getting redirect result", error);
       }).finally(() => {
-        setLoading(false);
+        // Now, set up the onAuthStateChanged listener
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setLoading(false);
+        });
+        
+        // If there's no user after checking redirect and auth state, we're not loading anymore
+        if (!auth.currentUser) {
+            setLoading(false);
+        }
+
+        return () => unsubscribe();
       });
 
-    return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {

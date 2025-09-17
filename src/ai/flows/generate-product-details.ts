@@ -63,10 +63,7 @@ const generateProductDetailsFlow = ai.defineFlow(
     }
     
     if (input.feature === 'image') {
-        // Use picsum.photos as the source for internet images.
-        // The seed is a combination of product name, category name, and a random element
-        // to ensure a different, yet relevant, image is fetched on each attempt.
-        const seed = (input.productName + ' ' + input.categoryName + ' ' + Math.random()).replace(/[^a-zA-Z0-9 ]/g, '');
+        const seed = encodeURIComponent(`${input.productName} ${input.categoryName}`);
         const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
         return { imageUrl };
     }

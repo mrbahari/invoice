@@ -1,7 +1,7 @@
 
 'use client';
 
-import { MoreHorizontal, PlusCircle, File, FilePen, Trash2 } from 'lucide-react';
+import { File, FilePen, PlusCircle, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -38,12 +38,21 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 
 export default function CustomersPage() {
   const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const { toast } = useToast();
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredCustomers = useMemo(() => {
+    return customerList.filter(customer =>
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [customerList, searchTerm]);
 
   const handleRowClick = (customerId: string) => {
     router.push(`/dashboard/customers/${customerId}`);
@@ -63,7 +72,7 @@ export default function CustomersPage() {
         phone: 'تلفن',
         address: 'آدرس'
     };
-    downloadCSV(customerList, 'customers.csv', headers);
+    downloadCSV(filteredCustomers, 'customers.csv', headers);
   };
   
   const handleDeleteCustomer = (customerId: string) => {
@@ -78,14 +87,23 @@ export default function CustomersPage() {
   return (
     <Card className="animate-fade-in-up">
       <CardHeader>
-        <div className='flex items-center justify-between'>
+        <div className='flex items-center justify-between gap-4'>
             <div>
                 <CardTitle>مشتریان</CardTitle>
                 <CardDescription>
                 مشتریان خود را مدیریت کرده و سابقه خرید آنها را مشاهده کنید.
                 </CardDescription>
             </div>
-            <div className="mr-auto flex items-center gap-2">
+            <div className="relative ml-auto flex-1 md:grow-0">
+                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="جستجوی مشتری..."
+                    className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
                     <File className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -117,7 +135,7 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customerList.map((customer) => {
+            {filteredCustomers.map((customer) => {
               const { totalSpent, orderCount } = getCustomerStats(customer.id);
               const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
               return (
@@ -182,7 +200,7 @@ export default function CustomersPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>1-{customerList.length}</strong> از <strong>{customerList.length}</strong> مشتریان
+          نمایش <strong>{filteredCustomers.length}</strong> از <strong>{customerList.length}</strong> مشتریان
         </div>
       </CardFooter>
     </Card>

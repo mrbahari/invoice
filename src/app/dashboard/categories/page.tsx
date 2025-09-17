@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { PlusCircle, FilePen, Trash2 } from 'lucide-react';
+import { PlusCircle, FilePen, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -35,11 +35,20 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Product } from '@/lib/definitions';
+import { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 
 export default function CategoriesPage() {
   const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialCategories);
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredCategories = useMemo(() => {
+    return categoryList.filter(category =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categoryList, searchTerm]);
   
   const getProductCount = (categoryId: string) => {
     return products.filter(p => p.categoryId === categoryId).length;
@@ -58,14 +67,23 @@ export default function CategoriesPage() {
   return (
     <Card className="animate-fade-in-up">
       <CardHeader>
-        <div className='flex justify-between items-center'>
+        <div className='flex justify-between items-center gap-4'>
             <div>
                 <CardTitle>دسته‌بندی‌ها</CardTitle>
                 <CardDescription>
                 اطلاعات فروشگاه را برای هر دسته‌بندی مدیریت کنید.
                 </CardDescription>
             </div>
-            <div className="mr-auto flex items-center gap-2">
+            <div className="relative ml-auto flex-1 md:grow-0">
+                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="جستجوی دسته‌بندی..."
+                    className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="flex items-center gap-2">
             <Link href="/dashboard/categories/new">
               <Button size="sm" className="h-8 gap-1">
                   <PlusCircle className="h-3.5 w-3.5" />
@@ -91,7 +109,7 @@ export default function CategoriesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categoryList.map((category) => (
+            {filteredCategories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
                 <TableCell>{category.storeName}</TableCell>
@@ -139,7 +157,7 @@ export default function CategoriesPage() {
       </CardContent>
        <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>1-{categoryList.length}</strong> از <strong>{categoryList.length}</strong> دسته‌بندی
+          نمایش <strong>{filteredCategories.length}</strong> از <strong>{categoryList.length}</strong> دسته‌بندی
         </div>
       </CardFooter>
     </Card>

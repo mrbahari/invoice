@@ -34,15 +34,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -51,7 +43,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -104,10 +96,8 @@ function generateBreadcrumbs(pathname: string, data: {categories: Category[], cu
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   const [categories] = useLocalStorage<Category[]>('categories', initialCategories);
   const [customers] = useLocalStorage<Customer[]>('customers', initialCustomers);
@@ -120,33 +110,6 @@ export function Header() {
   const handleSheetLinkClick = () => {
     setIsSheetOpen(false);
   };
-
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || e.key === '/') {
-        e.preventDefault()
-        setIsSearchOpen((open) => !open)
-      }
-    }
-    document.addEventListener('keydown', down)
-    return () => document.removeEventListener('keydown', down)
-  }, []);
-
-  const runCommand = (command: () => unknown) => {
-    setIsSearchOpen(false)
-    command()
-  }
-
-  const navLinks = [
-    { name: 'داشبورد', href: '/dashboard', icon: Home },
-    { name: 'فاکتورها', href: '/dashboard/invoices', icon: FileIcon },
-    { name: 'محصولات', href: '/dashboard/products', icon: Package },
-    { name: 'مشتریان', href: '/dashboard/customers', icon: Users },
-    { name: 'دسته‌بندی‌ها', href: '/dashboard/categories', icon: Shapes },
-    { name: 'گزارشات', href: '/dashboard/reports', icon: LineChart },
-    { name: 'تنظیمات', href: '/dashboard/settings', icon: Settings },
-  ];
-
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
@@ -216,63 +179,12 @@ export function Header() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="relative ml-auto flex-1 md:grow-0">
-        <Button
-            variant="outline"
-            className="flex items-center gap-2 text-muted-foreground w-full justify-between md:w-[200px] lg:w-[336px]"
-            onClick={() => setIsSearchOpen(true)}
-        >
-            <div className="flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                <span>جستجو...</span>
-            </div>
-            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-        </Button>
-        <CommandDialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-          <CommandInput placeholder="یک فرمان تایپ کنید یا جستجو کنید..." />
-          <CommandList>
-            <CommandEmpty>نتیجه‌ای یافت نشد.</CommandEmpty>
-            <CommandGroup heading="لینک‌ها">
-              {navLinks.map(link => (
-                <CommandItem
-                  key={link.href}
-                  value={link.name}
-                  onSelect={() => runCommand(() => router.push(link.href))}
-                >
-                  <link.icon className="ml-2 h-4 w-4" />
-                  <span>{link.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            <CommandSeparator />
-            <CommandGroup heading="مشتریان">
-              {customers.map(customer => (
-                <CommandItem
-                  key={customer.id}
-                  value={customer.name}
-                  onSelect={() => runCommand(() => router.push(`/dashboard/customers/${customer.id}`))}
-                >
-                  <User className="ml-2 h-4 w-4" />
-                  <span>{customer.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            <CommandSeparator />
-            <CommandGroup heading="محصولات">
-               {products.map(product => (
-                <CommandItem
-                  key={product.id}
-                  value={product.name}
-                  onSelect={() => runCommand(() => router.push(`/dashboard/products/${product.id}/edit`))}
-                >
-                  <Package className="ml-2 h-4 w-4" />
-                  <span>{product.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </CommandDialog>
+        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="جستجو..."
+          className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+        />
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

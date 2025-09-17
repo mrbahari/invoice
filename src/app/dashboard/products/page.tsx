@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File } from 'lucide-react';
+import { PlusCircle, File, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,9 +27,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
 
 export default function ProductsPage() {
   const [products] = useLocalStorage<Product[]>('products', initialProducts);
@@ -37,6 +38,13 @@ export default function ProductsPage() {
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter(product => activeTab === 'all' || product.categoryId === activeTab)
+      .filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [products, activeTab, searchTerm]);
 
   const handleRowClick = (productId: string) => {
     router.push(`/dashboard/products/${productId}/edit`);
@@ -47,9 +55,7 @@ export default function ProductsPage() {
   };
 
   const handleExport = () => {
-    const dataToExport = activeTab === 'all'
-      ? products
-      : products.filter(p => p.categoryId === activeTab);
+    const dataToExport = filteredProducts;
 
     const headers = {
       name: 'نام محصول',
@@ -114,7 +120,7 @@ export default function ProductsPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>1-{productList.length}</strong> از <strong>{productList.length}</strong> محصول
+          نمایش <strong>{productList.length}</strong> از <strong>{products.filter(p => activeTab === 'all' || p.categoryId === activeTab).length}</strong> محصول
         </div>
       </CardFooter>
     </Card>
@@ -131,6 +137,15 @@ export default function ProductsPage() {
           ))}
         </TabsList>
         <div className="ml-auto flex items-center gap-2">
+           <div className="relative ml-auto flex-1 md:grow-0">
+                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="جستجوی محصول..."
+                    className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
           <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -147,14 +162,7 @@ export default function ProductsPage() {
           </Link>
         </div>
       </div>
-      <TabsContent value="all">
-        {renderProductTable(products)}
-      </TabsContent>
-      {categories.map(cat => (
-        <TabsContent key={cat.id} value={cat.id}>
-            {renderProductTable(products.filter(p => p.categoryId === cat.id))}
-        </TabsContent>
-      ))}
+       {renderProductTable(filteredProducts)}
     </Tabs>
   );
 }

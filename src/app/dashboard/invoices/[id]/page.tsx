@@ -82,15 +82,23 @@ export default function InvoicePreviewPage() {
   const handleDownloadImage = () => {
     const invoiceElement = document.getElementById('invoice-card');
     if (invoiceElement) {
+        // Temporarily set a fixed width for consistent image output
+        const originalWidth = invoiceElement.style.width;
+        invoiceElement.style.width = '1024px';
+
         html2canvas(invoiceElement, {
             scale: 2, 
             useCORS: true, 
             backgroundColor: '#ffffff',
+            windowWidth: 1024, // Ensure canvas width matches
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `invoice-${invoice?.invoiceNumber}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
+        }).finally(() => {
+            // Revert the width back to its original state
+            invoiceElement.style.width = originalWidth;
         });
     }
   };

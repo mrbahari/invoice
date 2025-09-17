@@ -199,65 +199,63 @@ export function Header() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      <div className="relative ml-auto flex-1 md:grow-0">
+          <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+          type="search"
+          placeholder="جستجو..."
+          className={cn("w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]", !showSearch && 'hidden')}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          />
+      </div>
       <div className="ml-auto flex items-center gap-4">
-        <div className={cn("relative flex-1 md:grow-0", !showSearch && 'hidden')}>
-            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-            type="search"
-            placeholder="جستجو..."
-            className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="hidden md:flex">
+            <LiveClock />
         </div>
-        <div className="flex items-center gap-6">
-            <div className="hidden md:flex">
-                <LiveClock />
-            </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="overflow-hidden rounded-full"
-                >
-                    <Avatar>
-                        <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
-                        <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                    </Avatar>
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings">تنظیمات</Link>
-                </DropdownMenuItem>
-                <Dialog>
-                    <DialogTrigger asChild>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>پشتیبانی</DropdownMenuItem>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader className="items-center text-center">
-                            <Sparkles className="h-8 w-8 text-primary" />
-                            <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
-                            <DialogDescription className="text-base !mt-4">
-                                طراحی و توسعه توسط اسماعیل بهاری
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
-                            09125486083
-                        </div>
-                    </DialogContent>
-                </Dialog>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
-                    <LogOut className="ml-2 h-4 w-4" />
-                    خروج
-                </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button
+                variant="outline"
+                size="icon"
+                className="overflow-hidden rounded-full"
+            >
+                <Avatar>
+                    <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
+                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                </Avatar>
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings">تنظیمات</Link>
+            </DropdownMenuItem>
+            <Dialog>
+                <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>پشتیبانی</DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="items-center text-center">
+                        <Sparkles className="h-8 w-8 text-primary" />
+                        <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
+                        <DialogDescription className="text-base !mt-4">
+                            طراحی و توسعه توسط اسماعیل بهاری
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
+                        09125486083
+                    </div>
+                </DialogContent>
+            </Dialog>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+                <LogOut className="ml-2 h-4 w-4" />
+                خروج
+            </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

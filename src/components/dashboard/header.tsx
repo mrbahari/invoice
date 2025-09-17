@@ -193,9 +193,6 @@ export function Header() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="flex items-center gap-4 ml-auto">
-        <div className="hidden md:flex">
-         <LiveClock />
-        </div>
         <div className={cn("relative flex-1 md:grow-0", !showSearch && 'hidden')}>
             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -205,6 +202,9 @@ export function Header() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             />
+        </div>
+        <div className="hidden md:flex">
+         <LiveClock />
         </div>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

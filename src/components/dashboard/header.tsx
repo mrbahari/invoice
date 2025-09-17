@@ -27,6 +27,8 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -112,6 +114,9 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="sm:max-w-xs">
+          <SheetHeader>
+              <SheetTitle className="sr-only">منوی ناوبری اصلی</SheetTitle>
+          </SheetHeader>
           <nav className="grid gap-6 text-lg font-medium">
             <Link
               href="#"

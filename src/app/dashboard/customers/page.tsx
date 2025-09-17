@@ -44,11 +44,17 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function CustomersPage() {
   const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialCustomers);
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialInvoices);
   const { toast } = useToast();
+  const router = useRouter();
+
+  const handleRowClick = (customerId: string) => {
+    router.push(`/dashboard/customers/${customerId}/edit`);
+  };
 
   const getCustomerStats = (customerId: string) => {
     const customerInvoices = invoices.filter(inv => inv.customerId === customerId);
@@ -122,7 +128,11 @@ export default function CustomersPage() {
               const { totalSpent, orderCount } = getCustomerStats(customer.id);
               const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
               return (
-                <TableRow key={customer.id}>
+                <TableRow 
+                  key={customer.id} 
+                  onClick={() => handleRowClick(customer.id)} 
+                  className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
+                >
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
@@ -142,7 +152,7 @@ export default function CustomersPage() {
                   <TableCell className="hidden md:table-cell text-left">
                     {formatCurrency(totalSpent)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <AlertDialog>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

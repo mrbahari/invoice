@@ -81,7 +81,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     return isNaN(number) ? '' : number;
   };
   
-  // Recalculate sub-unit price when main price or quantity changes
   useEffect(() => {
     const mainPriceNum = Number(price);
     const subUnitQtyNum = Number(subUnitQuantity);

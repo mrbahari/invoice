@@ -16,6 +16,7 @@ import {
   Search,
   LogOut,
   User,
+  Command,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -50,6 +51,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Category, Customer, Product } from '@/lib/definitions';
 import { useSearch } from './search-provider';
 import { cn } from '@/lib/utils';
+import { LiveClock } from './live-clock';
 
 function generateBreadcrumbs(pathname: string, data: {categories: Category[], customers: Customer[], products: Product[]}) {
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -190,44 +192,48 @@ export function Header() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-      <div className={cn("relative ml-auto flex-1 md:grow-0", !showSearch && 'hidden')}>
-        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="جستجو..."
-          className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex items-center gap-4 ml-auto">
+        <div className="hidden md:flex">
+         <LiveClock />
+        </div>
+        <div className={cn("relative flex-1 md:grow-0", !showSearch && 'hidden')}>
+            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+            type="search"
+            placeholder="جستجو..."
+            className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button
+                variant="outline"
+                size="icon"
+                className="overflow-hidden rounded-full"
+            >
+                <Avatar>
+                    <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
+                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                </Avatar>
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings">تنظیمات</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+                <LogOut className="ml-2 h-4 w-4" />
+                خروج
+            </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <div className={cn("relative ml-auto flex-1 md:grow-0", showSearch && 'hidden')} />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="overflow-hidden rounded-full"
-          >
-            <Avatar>
-                <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
-                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">تنظیمات</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>پشتیبانی</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>
-            <LogOut className="ml-2 h-4 w-4" />
-            خروج
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }

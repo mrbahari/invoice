@@ -1,8 +1,28 @@
+
+'use client';
+
 import type { ReactNode } from 'react';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
+import { useAuth } from '@/components/auth/auth-provider';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (!user) {
+    // در حین بارگذاری یا اگر کاربری وجود ندارد، چیزی نمایش داده نمی‌شود تا از فلش محتوا جلوگیری شود
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <SidebarNav />

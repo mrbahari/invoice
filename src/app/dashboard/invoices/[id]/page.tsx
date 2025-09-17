@@ -126,6 +126,7 @@ export default function InvoicePreviewPage() {
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
                     </td>
+                    <td className="w-1/6"></td>
                   </tr>
                 </tbody>
               </table>

@@ -92,7 +92,7 @@ export default function InvoicePreviewPage() {
     const invoiceElement = document.getElementById('invoice-card');
     if (invoiceElement) {
         html2canvas(invoiceElement, {
-            scale: 2, // Increase resolution
+            scale: 2, 
             useCORS: true, 
             backgroundColor: null, 
         }).then(canvas => {
@@ -114,29 +114,32 @@ export default function InvoicePreviewPage() {
                 </Button>
             </div>
             <Card className="max-w-5xl mx-auto font-sans shadow-lg bg-white" id="invoice-card">
-                 <header className="p-8 sm:p-12">
-                     <div className="grid grid-cols-2 gap-12 items-start">
-                        <div className="col-span-1 space-y-2">
-                           {category?.logoUrl && (
+                 <header className="border-b-2 border-gray-100">
+                     <div className="h-24" style={{ backgroundColor: category?.themeColor || 'hsl(var(--primary))' }}>
+                         {category?.logoUrl && category.logoUrl.startsWith('data:image/svg+xml') &&
+                            <div className="p-6 text-white h-full flex items-center">
                                 <Image
                                     src={category.logoUrl}
                                     alt={`${category?.storeName} logo`}
-                                    width={80}
-                                    height={80}
+                                    width={48}
+                                    height={48}
                                     className="object-contain"
                                     unoptimized
-                                    style={{ color: category.themeColor }}
                                 />
-                           )}
-                           <h1 className="text-xl font-bold">{category?.storeName}</h1>
+                            </div>
+                         }
+                     </div>
+                     <div className="p-8 sm:p-12 grid grid-cols-2 gap-12 items-end">
+                        <div className="col-span-1 space-y-2">
+                           <h1 className="text-2xl font-bold">{category?.storeName}</h1>
                            <p className="text-sm text-muted-foreground">{category?.storeAddress}</p>
                            <p className="text-sm text-muted-foreground font-mono">{category?.storePhone}</p>
                         </div>
                         <div className="col-span-1 space-y-4 text-left">
-                            <h2 className="text-4xl font-bold tracking-tight">فاکتور</h2>
-                            <div className="space-y-2 text-sm">
+                            <h2 className="text-5xl font-bold tracking-tight">فاکتور</h2>
+                            <div className="space-y-1 text-sm">
                                 <div className="flex justify-end gap-4">
-                                    <span className="font-semibold text-muted-foreground">شماره فاکتور:</span>
+                                    <span className="font-semibold text-muted-foreground">شماره:</span>
                                     <span className="font-mono font-bold">{invoice.invoiceNumber}</span>
                                 </div>
                                 <div className="flex justify-end gap-4">
@@ -146,33 +149,28 @@ export default function InvoicePreviewPage() {
                             </div>
                         </div>
                      </div>
-                     <div className="mt-12 border-t pt-8">
-                         <h3 className="font-semibold mb-4">صورتحساب برای:</h3>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                             <p className="font-bold text-base">{customer?.name}</p>
-                             <p><span className="text-muted-foreground">آدرس:</span> {customer?.address}</p>
-                             <p><span className="text-muted-foreground">تلفن:</span> {customer?.phone}</p>
-                             <p><span className="text-muted-foreground">ایمیل:</span> {customer?.email}</p>
-                         </div>
+                     <div className="px-8 sm:px-12 pb-8">
+                         <h3 className="font-semibold mb-2 text-muted-foreground">صورتحساب برای:</h3>
+                         <p className="font-bold text-base">{customer?.name}</p>
+                         <p className="text-sm">{customer?.address}</p>
                      </div>
                 </header>
                 
                 <CardContent className="px-8 sm:px-12 py-0">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-gray-50 hover:bg-gray-50 border-b-2">
-                                <TableHead className="w-12 text-center">#</TableHead>
-                                <TableHead>شرح کالا</TableHead>
-                                <TableHead className="w-24 text-center">مقدار</TableHead>
-                                <TableHead className="w-32 text-center">واحد</TableHead>
-                                <TableHead className="w-32 text-right">قیمت واحد</TableHead>
-                                <TableHead className="w-36 text-right">جمع کل</TableHead>
+                            <TableRow className="border-b-2 hover:bg-transparent">
+                                <TableHead className="w-12 text-center text-xs tracking-wider uppercase">#</TableHead>
+                                <TableHead className="text-xs tracking-wider uppercase">شرح کالا</TableHead>
+                                <TableHead className="w-24 text-center text-xs tracking-wider uppercase">مقدار</TableHead>
+                                <TableHead className="w-32 text-center text-xs tracking-wider uppercase">واحد</TableHead>
+                                <TableHead className="w-32 text-right text-xs tracking-wider uppercase">قیمت واحد</TableHead>
+                                <TableHead className="w-36 text-right text-xs tracking-wider uppercase">جمع کل</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {invoice.items.map((item, index) => {
-                                return (
-                                <TableRow key={index} className="border-b-gray-100">
+                            {invoice.items.map((item, index) => (
+                                <TableRow key={index} className="border-b-gray-100 hover:bg-gray-50/50">
                                     <TableCell className="text-center align-top font-medium text-muted-foreground">{index + 1}</TableCell>
                                     <TableCell className="py-4 align-top text-right font-semibold">{item.productName}</TableCell>
                                     <TableCell className="text-center py-4 align-top font-mono">{item.quantity.toLocaleString('fa-IR')}</TableCell>
@@ -180,43 +178,46 @@ export default function InvoicePreviewPage() {
                                     <TableCell className="text-right py-4 align-top font-mono">{formatCurrency(item.unitPrice)}</TableCell>
                                     <TableCell className="text-right py-4 align-top font-mono font-semibold">{formatCurrency(item.totalPrice)}</TableCell>
                                 </TableRow>
-                            )})}
+                            ))}
                         </TableBody>
                     </Table>
                     
                      <div className="mt-12 flex justify-between items-start gap-8">
-                        <div className="w-2/3 pr-4">
-                            <h4 className="font-semibold text-muted-foreground mb-2">یادداشت‌ها</h4>
+                        <div className="w-2/3 pr-4 pt-4">
+                            <h4 className="font-semibold text-muted-foreground mb-2 text-sm">یادداشت‌ها</h4>
                             <p className="text-sm text-gray-700">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
                         </div>
-                        <div className="w-1/3 space-y-4">
-                             <div className="flex justify-between items-center">
+                        <div className="w-1/3 space-y-4 bg-gray-50 rounded-lg p-6">
+                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">جمع جزء:</span>
                                 <span className="font-medium font-mono">{formatCurrency(invoice.subtotal)}</span>
                             </div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">تخفیف:</span>
                                 <span className="font-medium font-mono text-destructive">{formatCurrency(invoice.discount)}</span>
                             </div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">مالیات:</span>
                                 <span className="font-medium font-mono">{formatCurrency(invoice.tax)}</span>
                             </div>
                             <hr className="my-2 border-t border-dashed" />
-                            <div className="flex justify-between items-center text-lg">
+                            <div className="flex justify-between items-center text-xl">
                                 <span className="font-extrabold">جمع کل:</span>
-                                <span className="font-extrabold font-mono">{formatCurrency(invoice.total)}</span>
+                                <span className="font-extrabold font-mono" style={{ color: category?.themeColor || 'hsl(var(--primary))' }}>{formatCurrency(invoice.total)}</span>
                             </div>
                         </div>
                     </div>
 
                 </CardContent>
                  <footer className="p-8 sm:p-12 mt-12 text-center text-sm text-muted-foreground">
+                    <hr className="mb-8" />
                     <p>با تشکر از خرید شما</p>
-                    <p className="mt-8">مهر و امضای فروشنده</p>
+                    <div className="mt-24 h-px w-48 bg-gray-300 mx-auto"></div>
+                    <p className="mt-2">مهر و امضای فروشنده</p>
                  </footer>
             </Card>
         </div>
     </div>
   );
-}
+
+    

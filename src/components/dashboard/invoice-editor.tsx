@@ -494,6 +494,55 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
       <div className="grid auto-rows-max items-start gap-4 md:gap-8">
         <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <CardHeader>
+                <CardTitle>محصولات</CardTitle>
+                <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                    </div>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="انتخاب دسته‌بندی" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                            {categories.map((cat: Category) => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <ScrollArea className="h-96">
+                    <div className="grid grid-cols-3 gap-3">
+                    {filteredProducts.map(product => (
+                        <Card 
+                            key={product.id} 
+                            onClick={() => handleAddProduct(product)}
+                            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
+                        >
+                            <CardContent className="p-2">
+                                <div className="relative w-full aspect-square mb-2">
+                                    <Image
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        fill
+                                        className="rounded-md object-cover"
+                                    />
+                                </div>
+                                <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                            </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <CardHeader>
                 <CardTitle>مشتریان</CardTitle>
                 <CardDescription>یک مشتری برای این فاکتور انتخاب کنید.</CardDescription>
             </CardHeader>
@@ -542,55 +591,6 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
                            افزودن مشتری جدید: "{customerSearch}"
                         </Button>
                     )}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
-
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <CardHeader>
-                <CardTitle>محصولات</CardTitle>
-                <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
-                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                    </div>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="انتخاب دسته‌بندی" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
-                            {categories.map((cat: Category) => (
-                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <ScrollArea className="h-96">
-                    <div className="grid grid-cols-3 gap-3">
-                    {filteredProducts.map(product => (
-                        <Card 
-                            key={product.id} 
-                            onClick={() => handleAddProduct(product)}
-                            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
-                        >
-                            <CardContent className="p-2">
-                                <div className="relative w-full aspect-square mb-2">
-                                    <Image
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        fill
-                                        className="rounded-md object-cover"
-                                    />
-                                </div>
-                                <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                            </CardContent>
-                        </Card>
-                    ))}
                     </div>
                 </ScrollArea>
             </CardContent>

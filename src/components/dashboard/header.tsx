@@ -209,9 +209,6 @@ export function Header() {
         />
       </div>
       <div className="ml-auto flex items-center gap-4">
-        <div className="hidden md:flex">
-            <LiveClock />
-        </div>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button
@@ -240,7 +237,7 @@ export function Header() {
                         <Sparkles className="h-8 w-8 text-primary" />
                         <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
                         <DialogDescription className="text-base !mt-4">
-                            طراحی و توسعه توسط اسماعیل بهاری
+                            اسماعیل بهاری
                         </DialogDescription>
                     </DialogHeader>
                     <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
@@ -255,6 +252,9 @@ export function Header() {
             </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+        <div className="hidden md:flex">
+            <LiveClock />
+        </div>
       </div>
     </header>
   );

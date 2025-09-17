@@ -90,9 +90,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Link href="/dashboard/reports" className="block animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <Card className="xl:col-span-2 transition-all hover:shadow-lg hover:-translate-y-1">
+      <div className="grid gap-4 md:gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <Link href="/dashboard/reports" className="block animate-fade-in-up xl:col-span-2" style={{ animationDelay: '0.3s' }}>
+          <Card className="transition-all hover:shadow-lg hover:-translate-y-1 h-full">
             <CardHeader>
               <CardTitle>نمای کلی فروش</CardTitle>
               <CardDescription>نمای کلی از فروش در ۱۲ ماه گذشته.</CardDescription>

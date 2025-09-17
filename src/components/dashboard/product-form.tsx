@@ -51,7 +51,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [price, setPrice] = useState<number | string>(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || (unitsOfMeasurement[0] || ''));
-  const [defaultQuantity, setDefaultQuantity] = useState<number | string>(product?.defaultQuantity ?? '');
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
   const [subUnit, setSubUnit] = useState<UnitOfMeasurement | undefined>(product?.subUnit);
@@ -142,7 +141,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-    const numericDefaultQuantity = typeof defaultQuantity === 'string' && defaultQuantity !== '' ? parseFloat(defaultQuantity) : undefined;
     const numericSubUnitQuantity = typeof subUnitQuantity === 'string' && subUnitQuantity !== '' ? parseFloat(subUnitQuantity) : undefined;
 
 
@@ -163,7 +161,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       if (isEditMode && product) {
         setProducts(prev => prev.map(p => 
             p.id === product.id 
-            ? { ...p, name, description, price: numericPrice, categoryId, unit, defaultQuantity: numericDefaultQuantity, subUnit, subUnitQuantity: numericSubUnitQuantity, imageUrl: finalImage }
+            ? { ...p, name, description, price: numericPrice, categoryId, unit, subUnit, subUnitQuantity: numericSubUnitQuantity, imageUrl: finalImage }
             : p
         ));
         toast({
@@ -178,7 +176,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           price: numericPrice,
           categoryId,
           unit,
-          defaultQuantity: numericDefaultQuantity,
           subUnit,
           subUnitQuantity: numericSubUnitQuantity,
           imageUrl: finalImage,
@@ -309,16 +306,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               />
             </div>
           </div>
-           <div className="grid gap-3">
-              <Label htmlFor="default-quantity">مقدار پیش‌فرض در فاکتور (اختیاری)</Label>
-              <Input
-                id="default-quantity"
-                type="number"
-                value={defaultQuantity}
-                onChange={(e) => setDefaultQuantity(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                placeholder="مثال: 1"
-              />
-            </div>
             <div className="grid gap-6">
                 <div className="grid gap-3">
                     <Label htmlFor="image-url">URL تصویر</Label>
@@ -349,6 +336,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'});
                             setImageUrl(null);
                         }}
+                        unoptimized
                         />
                         <Button
                         type="button"

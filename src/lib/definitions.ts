@@ -27,7 +27,6 @@ export type Product = {
   imageUrl: string;
   categoryId: string;
   unit: UnitOfMeasurement;
-  defaultQuantity?: number;
   subUnit?: UnitOfMeasurement;
   subUnitQuantity?: number;
 };

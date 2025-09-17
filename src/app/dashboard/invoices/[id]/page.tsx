@@ -95,6 +95,9 @@ export default function InvoicePreviewPage() {
     }
   };
 
+  const qrData = `Invoice No: ${invoice.invoiceNumber}\nCustomer: ${customer?.name}\nTotal: ${formatCurrency(invoice.total)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=${encodeURIComponent(qrData)}`;
+
   return (
     <div id="invoice-preview" className="font-sans">
         <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
@@ -110,7 +113,9 @@ export default function InvoicePreviewPage() {
                 <tbody>
                   <tr>
                     <td className="w-1/4 align-top">
-                      
+                        <div className="flex items-center justify-start h-full">
+                            <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} unoptimized data-ai-hint="qr code" />
+                        </div>
                     </td>
                     <td className="w-1/2 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>

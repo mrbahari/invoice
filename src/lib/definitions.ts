@@ -26,8 +26,8 @@ export type Product = {
   price: number;
   imageUrl: string;
   categoryId: string;
-  unit: UnitOfMeasurement;
-  subUnit?: UnitOfMeasurement;
+  unit: string;
+  subUnit?: string;
   subUnitQuantity?: number;
 };
 
@@ -49,7 +49,10 @@ export type Invoice = {
   description: string;
 };
 
-export type UnitOfMeasurement = string;
+export type UnitOfMeasurement = {
+  name: string;
+  defaultQuantity: number;
+};
 
 export type InvoiceItem = {
   productId: string;
@@ -57,7 +60,7 @@ export type InvoiceItem = {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  unit: UnitOfMeasurement;
+  unit: string;
 };
 
 export type AuthFormValues = {

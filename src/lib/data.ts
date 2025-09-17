@@ -2,7 +2,12 @@
 import { Category, Customer, Invoice, Product, InvoiceItem, UnitOfMeasurement } from '@/lib/definitions';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export const initialUnitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
+export const initialUnitsOfMeasurement: UnitOfMeasurement[] = [
+  { name: 'عدد', defaultQuantity: 1 },
+  { name: 'متر طول', defaultQuantity: 1 },
+  { name: 'متر مربع', defaultQuantity: 1 },
+  { name: 'بسته', defaultQuantity: 1 },
+];
 
 export const initialCategories: Category[] = [
   { 

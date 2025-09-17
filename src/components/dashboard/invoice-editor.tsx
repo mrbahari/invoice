@@ -38,7 +38,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 type InvoiceItemState = {
   product: Product;
   quantity: number;
-  unit: UnitOfMeasurement;
+  unit: string;
 };
 
 type InvoiceEditorProps = {
@@ -133,14 +133,17 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
   }, [subtotal, discount, taxAmount]);
 
   const handleAddProduct = (product: Product) => {
+    const unitInfo = unitsOfMeasurement.find(u => u.name === product.unit);
+    const initialQuantity = unitInfo ? unitInfo.defaultQuantity : 1;
+
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.product.id === product.id);
       if (existingItem) {
         return prevItems.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.product.id === product.id ? { ...item, quantity: item.quantity + initialQuantity } : item
         );
       }
-      return [...prevItems, { product, quantity: 1, unit: product.unit }];
+      return [...prevItems, { product, quantity: initialQuantity, unit: product.unit }];
     });
   };
 
@@ -156,7 +159,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     );
   };
 
-  const handleUnitChange = (productId: string, newUnit: UnitOfMeasurement) => {
+  const handleUnitChange = (productId: string, newUnit: string) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.product.id === productId ? { ...item, unit: newUnit } : item
@@ -275,14 +278,14 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                       <TableCell>
                           <Select
                             value={item.unit}
-                            onValueChange={(value: UnitOfMeasurement) => handleUnitChange(item.product.id, value)}
+                            onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
                           >
                             <SelectTrigger className="w-[100px]">
                               <SelectValue placeholder="واحد" />
                             </SelectTrigger>
                             <SelectContent>
                               {unitsOfMeasurement.map(unit => (
-                                <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                <SelectItem key={unit.name} value={unit.name}>{unit.name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>

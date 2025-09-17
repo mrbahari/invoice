@@ -41,24 +41,35 @@ export default function SettingsPage() {
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
   const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialUnitsOfMeasurement);
   
-  const [newUnit, setNewUnit] = useState('');
+  const [newUnitName, setNewUnitName] = useState('');
+  const [newUnitDefault, setNewUnitDefault] = useState<number | string>(1);
+
 
   const handleAddUnit = () => {
-    if (newUnit.trim() === '') {
+    const name = newUnitName.trim();
+    const defaultQty = typeof newUnitDefault === 'string' ? parseInt(newUnitDefault, 10) : newUnitDefault;
+
+    if (name === '') {
         toast({ variant: 'destructive', title: 'نام واحد نمی‌تواند خالی باشد.' });
         return;
     }
-    if (units.includes(newUnit.trim())) {
+     if (isNaN(defaultQty) || defaultQty < 1) {
+        toast({ variant: 'destructive', title: 'مقدار پیش‌فرض نامعتبر است.', description: 'مقدار پیش‌فرض باید یک عدد بزرگتر از صفر باشد.' });
+        return;
+    }
+    if (units.some(u => u.name === name)) {
         toast({ variant: 'destructive', title: 'این واحد قبلاً اضافه شده است.' });
         return;
     }
-    setUnits(prev => [...prev, newUnit.trim()]);
-    setNewUnit('');
+    
+    setUnits(prev => [...prev, { name, defaultQuantity: defaultQty }]);
+    setNewUnitName('');
+    setNewUnitDefault(1);
     toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
-  const handleDeleteUnit = (unitToDelete: string) => {
-    setUnits(prev => prev.filter(u => u !== unitToDelete));
+  const handleDeleteUnit = (unitNameToDelete: string) => {
+    setUnits(prev => prev.filter(u => u.name !== unitNameToDelete));
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
@@ -171,27 +182,41 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>مدیریت واحدها</CardTitle>
           <CardDescription>
-            واحدهای اندازه‌گیری مورد استفاده در محصولات را اضافه یا حذف کنید.
+            واحدهای اندازه‌گیری و مقدار پیش‌فرض آن‌ها در فاکتور را مدیریت کنید.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 mb-4">
-              <Input
-                  placeholder="نام واحد جدید..."
-                  value={newUnit}
-                  onChange={(e) => setNewUnit(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddUnit()}
-              />
-              <Button onClick={handleAddUnit}>
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <div className="grid gap-1.5 flex-grow">
+                <Label htmlFor="new-unit-name">نام واحد جدید</Label>
+                <Input
+                    id="new-unit-name"
+                    placeholder="مثال: کارتن"
+                    value={newUnitName}
+                    onChange={(e) => setNewUnitName(e.target.value)}
+                />
+              </div>
+               <div className="grid gap-1.5">
+                <Label htmlFor="new-unit-default">مقدار پیش‌فرض</Label>
+                <Input
+                    id="new-unit-default"
+                    type="number"
+                    value={newUnitDefault}
+                    onChange={(e) => setNewUnitDefault(e.target.value === '' ? '' : parseInt(e.target.value))}
+                    className="w-full sm:w-32"
+                />
+              </div>
+              <Button onClick={handleAddUnit} className="self-end">
                   <PlusCircle className="ml-2 h-4 w-4" />
                   افزودن
               </Button>
           </div>
           <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
             {units.length > 0 ? units.map(unit => (
-                <Badge key={unit} variant="secondary" className="text-base font-normal">
-                    {unit}
-                    <button onClick={() => handleDeleteUnit(unit)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
+                    <span>{unit.name}</span>
+                    <span className="text-xs text-muted-foreground mr-2 border-r pr-2">پیش‌فرض: {unit.defaultQuantity}</span>
+                    <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
                         <X className="h-3 w-3" />
                     </button>
                 </Badge>

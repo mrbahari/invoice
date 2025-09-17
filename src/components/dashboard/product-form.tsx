@@ -51,10 +51,10 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [description, setDescription] = useState(product?.description || '');
   const [price, setPrice] = useState<number | string>(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
-  const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || (unitsOfMeasurement[0] || ''));
+  const [unit, setUnit] = useState<string>(product?.unit || (unitsOfMeasurement[0]?.name || ''));
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
-  const [subUnit, setSubUnit] = useState<UnitOfMeasurement | undefined>(product?.subUnit);
+  const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | string>(product?.subUnitQuantity ?? '');
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -271,15 +271,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           
            <div className="grid grid-cols-1 gap-4 items-end md:grid-cols-3">
                 <div className="grid gap-3">
-                    <Label htmlFor="unit">واحد اصلی</Label>
-                    <Select value={unit} onValueChange={(value: UnitOfMeasurement) => setUnit(value)} required>
+                    <Label htmlFor="unit">واحد فروش اصلی</Label>
+                    <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
                         <SelectTrigger id="unit">
                         <SelectValue placeholder="انتخاب واحد" />
                         </SelectTrigger>
                         <SelectContent>
                         {unitsOfMeasurement.map((u) => (
-                            <SelectItem key={u} value={u}>
-                            {u}
+                            <SelectItem key={u.name} value={u.name}>
+                            {u.name}
                             </SelectItem>
                         ))}
                         </SelectContent>
@@ -289,7 +289,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     <Label htmlFor="sub-unit">واحد فرعی (اختیاری)</Label>
                     <Select 
                     value={subUnit || 'none'} 
-                    onValueChange={(value: UnitOfMeasurement) => {
+                    onValueChange={(value: string) => {
                         if (value === 'none') {
                         setSubUnit(undefined);
                         setSubUnitQuantity('');
@@ -303,8 +303,8 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         <SelectContent>
                         <SelectItem key="none" value="none">هیچکدام</SelectItem>
                         {unitsOfMeasurement.map((u) => (
-                            <SelectItem key={u} value={u}>
-                            {u}
+                            <SelectItem key={u.name} value={u.name}>
+                            {u.name}
                             </SelectItem>
                         ))}
                         </SelectContent>

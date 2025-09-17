@@ -75,7 +75,7 @@ const generateProductDetailsFlow = ai.defineFlow(
         } catch (error) {
             console.warn("Imagen API failed, falling back to placeholder image.", error);
             // By adding Math.random(), we ensure a different image is fetched on each attempt.
-            const seed = (input.productName + input.categoryName + Math.random()).replace(/[^a-zA-Z0-9]/g, '');
+            const seed = (input.productName + ' ' + input.categoryName + ' ' + Math.random()).replace(/[^a-zA-Z0-9 ]/g, '');
             const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
             return { imageUrl };
         }

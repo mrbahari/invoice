@@ -65,6 +65,9 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   });
   
   useEffect(() => {
+    // This effect runs when the component mounts or when product/price/subUnitQuantity changes.
+    // It's responsible for initially calculating the sub-unit price in edit mode,
+    // and for recalculating it whenever the main price or conversion quantity changes.
     const mainPriceNum = typeof price === 'string' ? parseFloat(price) : price;
     const subUnitQtyNum = typeof subUnitQuantity === 'string' ? parseFloat(subUnitQuantity) : subUnitQuantity;
 
@@ -75,18 +78,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     } else {
       setSubUnitPrice('');
     }
-  }, [price, subUnitQuantity]);
-  
-  useEffect(() => {
-      if (product) {
-          const mainPriceNum = product.price;
-          const subUnitQtyNum = product.subUnitQuantity;
-          if (mainPriceNum > 0 && subUnitQtyNum && subUnitQtyNum > 0) {
-              const calculatedSubPrice = mainPriceNum / subUnitQtyNum;
-              setSubUnitPrice(Math.round(calculatedSubPrice * 100) / 100);
-          }
-      }
-  }, [product]);
+  }, [price, subUnitQuantity, product]); // Depend on product to re-run on initial load in edit mode
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSubUnitPrice = e.target.value;
@@ -97,6 +89,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     if (subUnitPriceNum >= 0 && subUnitQtyNum > 0) {
         const calculatedMainPrice = subUnitPriceNum * subUnitQtyNum;
+        // Round to 2 decimal places
         setPrice(Math.round(calculatedMainPrice * 100) / 100);
     }
   };

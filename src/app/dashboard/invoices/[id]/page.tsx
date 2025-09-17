@@ -121,9 +121,6 @@ export default function InvoicePreviewPage() {
                               unoptimized
                             />
                          </div>
-                         <div className="text-xs -rotate-90 whitespace-nowrap origin-bottom-left" style={{ transform: 'rotate(-90deg) translateY(50%)', transformOrigin: 'bottom left' }}>
-                           نرم افزار آریا
-                         </div>
                       </div>
                     </td>
                     <td className="w-1/2 text-center align-top">

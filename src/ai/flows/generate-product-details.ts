@@ -11,14 +11,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-// Input Schema
 const GenerateProductDetailsInputSchema = z.object({
   productName: z.string().describe('The name of the product.'),
   feature: z.enum(['description', 'image', 'price']).describe('The specific feature to generate.'),
 });
 export type GenerateProductDetailsInput = z.infer<typeof GenerateProductDetailsInputSchema>;
 
-// Output Schema
 const GenerateProductDetailsOutputSchema = z.object({
   description: z.string().optional().describe('A concise and appealing product description.'),
   imageUrl: z.string().optional().describe('A data URI for the generated product image.'),
@@ -64,11 +62,21 @@ const generateProductDetailsFlow = ai.defineFlow(
     }
     
     if (input.feature === 'image') {
-        // Fallback to a seeded placeholder image to avoid Imagen API billing errors
-        // Using the product name as a seed ensures a consistent image for the same product
-        const seed = input.productName;
-        const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
-        return { imageUrl };
+        try {
+            const { media } = await ai.generate({
+                model: 'googleai/imagen-4.0-fast-generate-001',
+                prompt: `Generate a professional, high-quality product photo of a single '{{productName}}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
+            });
+            if (media.url) {
+                return { imageUrl: media.url };
+            }
+            throw new Error('Image generation failed to return a URL.');
+        } catch (error) {
+            console.warn("Imagen API failed, falling back to placeholder image.", error);
+            const seed = input.productName;
+            const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
+            return { imageUrl };
+        }
     }
 
     return {};

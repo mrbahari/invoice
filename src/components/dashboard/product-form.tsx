@@ -29,7 +29,8 @@ import {
 } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { generateProductDetails, GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
+import { generateProductDetails } from '@/ai/flows/generate-product-details';
+import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 
 type ProductFormProps = {
   product?: Product;

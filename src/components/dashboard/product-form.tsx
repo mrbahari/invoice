@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
 import { initialProducts } from '@/lib/data';
-import { Upload, Trash2, WandSparkles, LoaderCircle } from 'lucide-react';
+import { Search, WandSparkles, LoaderCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import {
   Select,
@@ -38,7 +38,7 @@ type ProductFormProps = {
 
 const unitsOfMeasurement: UnitOfMeasurement[] = ['عدد', 'متر طول', 'متر مربع', 'بسته'];
 
-type AIFeature = 'description' | 'image' | 'price';
+type AIFeature = 'description' | 'price';
 
 export function ProductForm({ product, categories }: ProductFormProps) {
   const router = useRouter();
@@ -52,7 +52,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [unit, setUnit] = useState<UnitOfMeasurement>(product?.unit || 'عدد');
   const [defaultQuantity, setDefaultQuantity] = useState<number | string>(product?.defaultQuantity ?? '');
-  const [image, setImage] = useState<string | null>(product?.imageUrl || null);
+  const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
   const [subUnit, setSubUnit] = useState<UnitOfMeasurement | undefined>(product?.subUnit);
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | string>(product?.subUnitQuantity ?? '');
@@ -60,7 +60,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
     description: false,
-    image: false,
     price: false,
   });
 
@@ -87,20 +86,18 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     const categoryName = categories.find(c => c.id === categoryId)?.name || '';
 
     try {
-      const input: GenerateProductDetailsInput = { productName: name, categoryName, feature };
+      const input = { productName: name, categoryName, feature } as GenerateProductDetailsInput;
       const result = await generateProductDetails(input);
 
       if (feature === 'description' && result.description) {
         setDescription(result.description);
-      } else if (feature === 'image' && result.imageUrl) {
-        setImage(result.imageUrl);
       } else if (feature === 'price' && result.price !== undefined) {
         setPrice(result.price);
       }
       
       toast({
         title: 'هوش مصنوعی انجام شد',
-        description: `فیلد ${feature === 'description' ? 'توضیحات' : feature === 'image' ? 'تصویر' : 'قیمت'} با موفقیت تولید شد.`
+        description: `فیلد ${feature === 'description' ? 'توضیحات' : 'قیمت'} با موفقیت تولید شد.`
       })
 
     } catch (error) {
@@ -115,42 +112,19 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }
   };
 
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = document.createElement('img');
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 300;
-          const MAX_HEIGHT = 300;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL(file.type, 0.8); // Compress image
-          setImage(dataUrl);
-        };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+  const handleImageSearch = () => {
+    if (!name) {
+      toast({
+        variant: 'destructive',
+        title: 'نام محصول خالی است',
+        description: 'برای جستجوی تصویر، ابتدا نام محصول را وارد کنید.',
+      });
+      return;
     }
+    const categoryName = categories.find(c => c.id === categoryId)?.name || '';
+    const query = encodeURIComponent(`${name} ${categoryName}`);
+    const url = `https://www.google.com/search?q=${query}&tbm=isch`;
+    window.open(url, '_blank');
   };
   
   const handlePriceFocus = () => {
@@ -183,7 +157,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
     setIsProcessing(true);
     
-    const finalImage = image || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
+    const finalImage = imageUrl || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
 
     setTimeout(() => {
       if (isEditMode && product) {
@@ -345,59 +319,54 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 placeholder="مثال: 1"
               />
             </div>
-          <div className="grid gap-3">
-              <div className="flex items-center justify-between">
-                <Label>تصویر محصول</Label>
-                 <Button type="button" variant="ghost" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
-                    {aiLoading.image ? <LoaderCircle className="animate-spin ml-2" /> : <WandSparkles className="ml-2" />}
-                    جستجوی تصویر
-                </Button>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
-                          <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">برای آپلود کلیک کنید</span></p>
-                          <p className="text-xs text-muted-foreground">یا فایل را بکشید و رها کنید</p>
-                      </div>
-                      <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
-                  </label>
-                </div>
-                <div className="relative w-40 h-40">
-                  {aiLoading.image ? (
-                    <div className="w-full h-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted">
-                        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-xs text-muted-foreground mt-2">در حال جستجو...</span>
+            <div className="grid gap-6">
+                <div className="grid gap-3">
+                    <Label htmlFor="image-url">URL تصویر</Label>
+                    <div className="flex gap-2">
+                    <Input
+                        id="image-url"
+                        value={imageUrl || ''}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        placeholder="آدرس تصویر را اینجا جای‌گذاری کنید..."
+                    />
+                    <Button type="button" variant="outline" onClick={handleImageSearch}>
+                        <Search className="ml-2 h-4 w-4" />
+                        جستجو
+                    </Button>
                     </div>
-                  ) : image ? (
-                      <>
+                </div>
+
+                <div className="relative w-full h-48">
+                    {imageUrl ? (
+                    <>
                         <Image
-                          src={image}
-                          alt="پیش‌نمایش تصویر"
-                          layout="fill"
-                          objectFit="cover"
-                          className="rounded-md border p-2"
-                          unoptimized={image.startsWith('data:image/')}
+                        src={imageUrl}
+                        alt="پیش‌نمایش تصویر"
+                        layout="fill"
+                        objectFit="contain"
+                        className="rounded-md border p-2"
+                        onError={() => {
+                            toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'});
+                            setImageUrl(null);
+                        }}
                         />
                         <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                          onClick={() => setImage(null)}
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
+                        onClick={() => setImageUrl(null)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                         </Button>
-                      </>
-                  ) : (
+                    </>
+                    ) : (
                     <div className="w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                        <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                        <span className="text-xs text-muted-foreground">پیش‌نمایش تصویر</span>
                     </div>
-                  )}
+                    )}
                 </div>
-              </div>
-          </div>
+            </div>
         </CardContent>
         <CardFooter className="justify-end">
           <Button type="submit" disabled={isProcessing}>

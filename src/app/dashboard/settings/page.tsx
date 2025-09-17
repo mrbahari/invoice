@@ -25,9 +25,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { initialUnitsOfMeasurement } from '@/lib/data';
+import { initialUnitsOfMeasurement, initialCategories, initialCustomers, initialProducts, initialInvoices } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
@@ -78,6 +78,20 @@ export default function SettingsPage() {
       description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
     });
   };
+  
+  const handleLoadDefaults = () => {
+    setCategories(initialCategories);
+    setCustomers(initialCustomers);
+    setProducts(initialProducts);
+    setInvoices(initialInvoices);
+    setUnits(initialUnitsOfMeasurement);
+
+    toast({
+      title: 'داده‌های پیش‌فرض بارگذاری شد',
+      description: 'تمام اطلاعات برنامه به حالت اولیه بازگردانده شد.',
+    });
+  };
+
 
   const handleBackupData = () => {
     const backupData = {
@@ -242,12 +256,12 @@ export default function SettingsPage() {
             این عملیات غیرقابل بازگشت هستند. لطفا با احتیاط عمل کنید.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-4">
           <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
             <div>
               <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
               <p className="text-sm text-muted-foreground">
-                تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، دسته‌بندی‌ها و واحدها) برای همیشه حذف خواهند شد.
+                تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف خواهند شد.
               </p>
             </div>
             <AlertDialog>
@@ -267,6 +281,34 @@ export default function SettingsPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>انصراف</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearData} className='bg-destructive hover:bg-destructive/90'>بله، همه چیز را پاک کن</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+          <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/50">
+            <div>
+              <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
+              <p className="text-sm text-muted-foreground">
+                تمام اطلاعات فعلی حذف شده و داده‌های اولیه برنامه جایگزین آن‌ها می‌شود.
+              </p>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline">
+                    <RefreshCw className='ml-2 h-4 w-4' />
+                    بارگذاری پیش‌فرض
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>بارگذاری داده‌های پیش‌فرض؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    این عمل تمام اطلاعات فعلی شما را پاک کرده و داده‌های اولیه برنامه را بارگذاری می‌کند. آیا مطمئن هستید؟
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>انصراف</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleLoadDefaults}>بله، بارگذاری کن</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

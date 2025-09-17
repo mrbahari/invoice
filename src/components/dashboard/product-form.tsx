@@ -269,7 +269,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             </div>
           </div>
           
-           <div className="grid grid-cols-1 gap-4 items-end md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 items-end md:grid-cols-3">
                 <div className="grid gap-3">
                     <Label htmlFor="unit">واحد فروش اصلی</Label>
                     <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>

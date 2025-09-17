@@ -24,6 +24,7 @@ export function LoginForm() {
     const [password, setPassword] = useState('');
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,6 +56,20 @@ export function LoginForm() {
         }
     };
     
+    const handleGoogleSignIn = async () => {
+        setIsGoogleLoading(true);
+        try {
+            await signInWithGoogle();
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'خطا در ورود با گوگل',
+                description: 'مشکلی در فرآیند ورود با گوگل پیش آمد. لطفا دوباره تلاش کنید.',
+            });
+            setIsGoogleLoading(false);
+        }
+    }
+
     const handlePasswordReset = async () => {
         if (!email) {
             toast({
@@ -109,7 +124,7 @@ export function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -120,7 +135,7 @@ export function LoginForm() {
                     variant="link"
                     className="mr-auto h-auto p-0 text-sm underline"
                     onClick={handlePasswordReset}
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                   >
                    رمز عبور خود را فراموش کرده‌اید؟
                  </Button>
@@ -131,10 +146,10 @@ export function LoginForm() {
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || isGoogleLoading}
               />
             </div>
-            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+            <Button type="submit" className="w-full mt-2" disabled={isLoading || isGoogleLoading}>
               {isLoading ? 'در حال ورود...' : 'ورود'}
             </Button>
           </form>
@@ -148,8 +163,8 @@ export function LoginForm() {
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={signInWithGoogle} disabled={isLoading}>
-            ورود با گوگل
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+            {isGoogleLoading ? 'در حال انتقال...' : 'ورود با گوگل'}
           </Button>
         </div>
         <div className="mt-4 text-center text-sm">

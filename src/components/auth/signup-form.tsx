@@ -24,6 +24,7 @@ export function SignupForm() {
     const [password, setPassword] = useState('');
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,6 +69,20 @@ export function SignupForm() {
             setIsLoading(false);
         }
     };
+    
+    const handleGoogleSignIn = async () => {
+        setIsGoogleLoading(true);
+        try {
+            await signInWithGoogle();
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'خطا در ثبت نام با گوگل',
+                description: 'مشکلی در فرآیند ثبت نام با گوگل پیش آمد. لطفا دوباره تلاش کنید.',
+            });
+            setIsGoogleLoading(false);
+        }
+    }
 
 
   return (
@@ -87,11 +102,11 @@ export function SignupForm() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="first-name">نام</Label>
-                    <Input id="first-name" placeholder="ماکس" required disabled={isLoading} />
+                    <Input id="first-name" placeholder="ماکس" required disabled={isLoading || isGoogleLoading} />
                 </div>
                  <div className="grid gap-2">
                     <Label htmlFor="last-name">نام خانوادگی</Label>
-                    <Input id="last-name" placeholder="رابینسون" required disabled={isLoading} />
+                    <Input id="last-name" placeholder="رابینسون" required disabled={isLoading || isGoogleLoading} />
                 </div>
             </div>
             <div className="grid gap-2">
@@ -103,7 +118,7 @@ export function SignupForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
                 />
             </div>
             <div className="grid gap-2">
@@ -114,10 +129,10 @@ export function SignupForm() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                 />
             </div>
-            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+            <Button type="submit" className="w-full mt-2" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? 'در حال ایجاد حساب...' : 'ایجاد حساب کاربری'}
             </Button>
             </form>
@@ -133,8 +148,8 @@ export function SignupForm() {
                 </div>
             </div>
 
-            <Button variant="outline" className="w-full" onClick={signInWithGoogle} disabled={isLoading}>
-                ثبت نام با گوگل
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                 {isGoogleLoading ? 'در حال انتقال...' : 'ثبت نام با گوگل'}
             </Button>
         </div>
         <div className="mt-4 text-center text-sm">

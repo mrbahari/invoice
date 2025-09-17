@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, getRedirectResult, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 
@@ -31,14 +31,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
+    // Handle redirect result
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // This is the signed-in user
+          const user = result.user;
+          setUser(user);
+        }
+      }).catch((error) => {
+        console.error("Error getting redirect result", error);
+      }).finally(() => {
+        setLoading(false);
+      });
+
     return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // router.push('/dashboard'); handled by page/layout
+      await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google", error);
       throw error;
@@ -48,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = async ({ email, password }: AuthFormValues) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password as string);
-      // router.push('/dashboard'); handled by page/layout
       return userCredential.user;
     } catch (error) {
       console.error("Error signing up with email", error);
@@ -59,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = async ({ email, password }: AuthFormValues) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password as string);
-       // router.push('/dashboard'); handled by page/layout
       return userCredential.user;
     } catch (error) {
       console.error("Error signing in with email", error);

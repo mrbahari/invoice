@@ -111,8 +111,15 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
   };
 
+  const calculateItemTotal = (item: InvoiceItemState): number => {
+    if (item.product.subUnit && item.product.subUnitQuantity) {
+      return item.quantity * item.product.subUnitQuantity * item.product.price;
+    }
+    return item.quantity * item.product.price;
+  };
+
   const subtotal = useMemo(
-    () => items.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
+    () => items.reduce((acc, item) => acc + calculateItemTotal(item), 0),
     [items]
   );
 
@@ -174,20 +181,22 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     setIsProcessing(true);
 
     setTimeout(() => {
+        const invoiceItems: InvoiceItem[] = items.map(item => ({
+            productId: item.product.id,
+            productName: item.product.name,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.product.price,
+            totalPrice: calculateItemTotal(item),
+        }));
+
         if (isEditMode && invoice) {
             const updatedInvoice = {
                 ...invoice,
                 customerId: selectedCustomer.id,
                 customerName: selectedCustomer.name,
                 customerEmail: selectedCustomer.email,
-                items: items.map(item => ({
-                    productId: item.product.id,
-                    productName: item.product.name,
-                    quantity: item.quantity,
-                    unit: item.unit,
-                    unitPrice: item.product.price,
-                    totalPrice: item.product.price * item.quantity,
-                })),
+                items: invoiceItems,
                 subtotal,
                 discount,
                 tax: taxAmount,
@@ -209,14 +218,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                 customerEmail: selectedCustomer.email,
                 date: new Date().toISOString(),
                 status: 'Pending',
-                items: items.map(item => ({
-                    productId: item.product.id,
-                    productName: item.product.name,
-                    quantity: item.quantity,
-                    unit: item.unit,
-                    unitPrice: item.product.price,
-                    totalPrice: item.product.price * item.quantity,
-                })),
+                items: invoiceItems,
                 subtotal,
                 discount,
                 tax: taxAmount,
@@ -294,7 +296,7 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                         />
                       </TableCell>
                       <TableCell className="text-right">{formatCurrency(item.product.price)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.product.price * item.quantity)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(calculateItemTotal(item))}</TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
                           <Trash2 className="h-4 w-4 text-muted-foreground" />

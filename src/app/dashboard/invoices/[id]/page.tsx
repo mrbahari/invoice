@@ -20,7 +20,7 @@ import { Download, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
+import type { Category, Customer, Invoice, Product, InvoiceItem } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 
 function toWords(num: number): string {
@@ -97,6 +97,15 @@ export default function InvoicePreviewPage() {
     phone: category?.storePhone || '',
     themeColor: category?.themeColor || defaultThemeColor,
   };
+  
+  const getDisplayPrice = (item: InvoiceItem): string => {
+    const product = products.find(p => p.id === item.productId);
+    if (product?.subUnit && product?.subUnitQuantity) {
+      return `${formatCurrency(item.unitPrice)} / ${product.subUnit}`;
+    }
+    return formatCurrency(item.unitPrice);
+  };
+
 
   const handleDownloadImage = () => {
     const invoiceElement = document.getElementById('invoice-card');
@@ -190,7 +199,7 @@ export default function InvoicePreviewPage() {
                                 </TableCell>
                                 <TableCell className="text-center py-3 align-top font-bold text-base font-mono">{item.unit}</TableCell>
                                 <TableCell className="text-center py-3 align-top font-bold text-base font-mono">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                                <TableCell className="text-right py-3 align-top font-mono text-base">{formatCurrency(item.unitPrice)}</TableCell>
+                                <TableCell className="text-right py-3 align-top font-mono text-base">{getDisplayPrice(item)}</TableCell>
                                 <TableCell className="text-right py-3 align-top font-mono text-base">{formatCurrency(item.totalPrice)}</TableCell>
                             </TableRow>
                             ))}

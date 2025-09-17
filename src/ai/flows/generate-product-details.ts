@@ -65,7 +65,7 @@ const generateProductDetailsFlow = ai.defineFlow(
         try {
             const { media } = await ai.generate({
                 model: 'googleai/imagen-4.0-fast-generate-001',
-                prompt: `Generate a professional, high-quality product photo of a single '{{productName}}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
+                prompt: `Generate a professional, high-quality product photo of a single '${input.productName}' on a clean, white background. The image should be well-lit and look like it belongs on an e-commerce website. No text, logos, or other objects.`,
             });
             if (media.url) {
                 return { imageUrl: media.url };
@@ -73,7 +73,7 @@ const generateProductDetailsFlow = ai.defineFlow(
             throw new Error('Image generation failed to return a URL.');
         } catch (error) {
             console.warn("Imagen API failed, falling back to placeholder image.", error);
-            const seed = input.productName;
+            const seed = input.productName.replace(/[^a-zA-Z0-9]/g, ''); // Sanitize seed
             const imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
             return { imageUrl };
         }

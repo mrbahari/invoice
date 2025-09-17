@@ -346,7 +346,6 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                         id="image-url"
                         value={imageUrl || ''}
                         onChange={(e) => setImageUrl(e.target.value)}
-                        onFocus={() => setImageUrl('')}
                         placeholder="URL تصویر یا تولید با AI..."
                     />
                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>

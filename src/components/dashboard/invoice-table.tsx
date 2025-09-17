@@ -122,38 +122,12 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
                           <span className="sr-only">مشاهده</span>
                         </Link>
                       </Button>
-                       <Button asChild size="icon" variant="ghost" className="h-8 w-8">
-                        <Link href={`/dashboard/invoices/${invoice.id}/edit`}>
-                          <FilePen className="h-4 w-4" />
-                          <span className="sr-only">ویرایش</span>
-                        </Link>
-                      </Button>
                       {invoice.status !== 'Paid' && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-600" onClick={() => onStatusChange(invoice.id, 'Paid')}>
                           <CheckCircle className="h-4 w-4" />
                           <span className="sr-only">پرداخت</span>
                         </Button>
                       )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-600">
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">حذف</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice.invoiceNumber}» را برای همیشه حذف می‌کند.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDeleteInvoice(invoice.id)} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     </div>
                 </TableCell>
               </TableRow>

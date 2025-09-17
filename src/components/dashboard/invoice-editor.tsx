@@ -34,6 +34,18 @@ import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { initialCategories, initialInvoices, initialCustomers, initialProducts, initialUnitsOfMeasurement } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
 
 type InvoiceItemState = {
   product: Product;
@@ -278,6 +290,21 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
         }
     }, 1000);
   };
+  
+  const handleDeleteInvoice = () => {
+    if (!invoice) return;
+
+    setIsProcessing(true);
+    setTimeout(() => {
+        setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
+        toast({
+            title: 'فاکتور حذف شد',
+            description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
+        });
+        setIsProcessing(false);
+        router.push('/dashboard/invoices');
+    }, 1000);
+  };
 
 
   return (
@@ -447,8 +474,32 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter>
-                <Button className="w-full" onClick={() => handleProcessInvoice('list')} disabled={isProcessing}>
+            <CardFooter className="flex justify-between">
+                <div>
+                  {isEditMode && (
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button type="button" variant="destructive" disabled={isProcessing}>
+                                  <Trash2 className="ml-2 h-4 w-4" />
+                                  حذف فاکتور
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                      این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice.invoiceNumber}» را برای همیشه حذف می‌کند.
+                                  </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                  )}
+                </div>
+                <Button className="w-full max-w-xs" onClick={() => handleProcessInvoice('list')} disabled={isProcessing}>
                     {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
                 </Button>
             </CardFooter>
@@ -561,5 +612,3 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     </div>
   );
 }
-
-    

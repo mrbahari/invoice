@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Category } from '@/lib/definitions';
 import { initialProducts } from '@/lib/data';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, WandSparkles, LoaderCircle } from 'lucide-react';
 import Image from 'next/image';
 import {
   Select,
@@ -29,11 +29,14 @@ import {
 } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { generateProductDetails, GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 
 type ProductFormProps = {
   product?: Product;
   categories: Category[];
 };
+
+type AIFeature = 'description' | 'image' | 'price';
 
 export function ProductForm({ product, categories }: ProductFormProps) {
   const router = useRouter();
@@ -47,6 +50,53 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   const [categoryId, setCategoryId] = useState(product?.categoryId || '');
   const [image, setImage] = useState<string | null>(product?.imageUrl || null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
+    description: false,
+    image: false,
+    price: false,
+  });
+
+  const handleAiGeneration = async (feature: AIFeature) => {
+    if (!name) {
+      toast({
+        variant: 'destructive',
+        title: 'نام محصول خالی است',
+        description: 'برای استفاده از هوش مصنوعی، ابتدا نام محصول را وارد کنید.',
+      });
+      return;
+    }
+
+    setAiLoading(prev => ({ ...prev, [feature]: true }));
+
+    try {
+      const input: GenerateProductDetailsInput = { productName: name, feature };
+      const result = await generateProductDetails(input);
+
+      if (feature === 'description' && result.description) {
+        setDescription(result.description);
+      } else if (feature === 'image' && result.imageUrl) {
+        setImage(result.imageUrl);
+      } else if (feature === 'price' && result.price !== undefined) {
+        setPrice(result.price);
+      }
+      
+      toast({
+        title: 'هوش مصنوعی انجام شد',
+        description: `فیلد ${feature === 'description' ? 'توضیحات' : feature === 'image' ? 'تصویر' : 'قیمت'} با موفقیت تولید شد.`
+      })
+
+    } catch (error) {
+      console.error(`Error generating ${feature}:`, error);
+      toast({
+        variant: 'destructive',
+        title: 'خطا در تولید با هوش مصنوعی',
+        description: 'متاسفانه در ارتباط با سرویس هوش مصنوعی مشکلی پیش آمد.',
+      });
+    } finally {
+      setAiLoading(prev => ({ ...prev, [feature]: false }));
+    }
+  };
+
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,7 +202,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}
           </CardTitle>
           <CardDescription>
-            اطلاعات محصول را وارد کنید.
+            اطلاعات محصول را وارد کنید یا از هوش مصنوعی برای تکمیل خودکار استفاده کنید.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
@@ -167,17 +217,27 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             />
           </div>
           <div className="grid gap-3">
-            <Label htmlFor="description">توضیحات</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">توضیحات</Label>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('description')} disabled={aiLoading.description}>
+                {aiLoading.description ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="توضیحات محصول را اینجا بنویسید..."
+              placeholder="توضیحات محصول را اینجا بنویسید یا با هوش مصنوعی تولید کنید..."
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-3">
-                <Label htmlFor="price">قیمت (ریال)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="price">قیمت (ریال)</Label>
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
+                     {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+                  </Button>
+                </div>
                 <Input
                     id="price"
                     type="number"
@@ -205,7 +265,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
             </div>
           </div>
           <div className="grid gap-3">
-              <Label>تصویر محصول</Label>
+              <div className="flex items-center justify-between">
+                <Label>تصویر محصول</Label>
+                 <Button type="button" variant="ghost" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
+                    {aiLoading.image ? <LoaderCircle className="animate-spin ml-2" /> : <WandSparkles className="ml-2" />}
+                    تولید با هوش مصنوعی
+                </Button>
+              </div>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
@@ -218,7 +284,12 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                   </label>
                 </div>
                 <div className="relative w-40 h-40">
-                  {image ? (
+                  {aiLoading.image ? (
+                    <div className="w-full h-full border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-muted">
+                        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground mt-2">در حال تولید...</span>
+                    </div>
+                  ) : image ? (
                       <>
                         <Image
                           src={image}
@@ -226,6 +297,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                           layout="fill"
                           objectFit="cover"
                           className="rounded-md border p-2"
+                          unoptimized={image.startsWith('data:image/')}
                         />
                         <Button
                           type="button"

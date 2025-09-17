@@ -113,6 +113,15 @@ export default function InvoicePreviewPage() {
                 <tbody>
                   <tr>
                     <td className="w-1/6 align-top">
+                      <div className="flex items-center justify-start h-full">
+                        <Image
+                            src={qrCodeUrl}
+                            alt="QR Code"
+                            width={96}
+                            height={96}
+                            unoptimized
+                        />
+                      </div>
                     </td>
                     <td className="w-2/3 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
@@ -219,7 +228,7 @@ export default function InvoicePreviewPage() {
               
               <div className="border border-black mt-2 p-2 text-sm">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
-                  <p>۲. حداکثر زمان تحویل بار: با توجه به فاکتور، ۳ الی ۵ روز کاری است.</p>
+                  <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
               </div>
 
               <div className="border border-t-0 border-black p-2 text-sm">

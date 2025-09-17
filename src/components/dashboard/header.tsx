@@ -192,7 +192,7 @@ export function Header() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="flex items-center gap-4 ml-auto">
+      <div className="ml-auto flex items-center gap-4">
         <div className={cn("relative flex-1 md:grow-0", !showSearch && 'hidden')}>
             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -246,3 +246,5 @@ const mobileNavItems = [
     { href: '/dashboard/categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
     { href: '/dashboard/reports', icon: LineChart, label: 'گزارشات' },
 ];
+
+    

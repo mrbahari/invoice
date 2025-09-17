@@ -99,6 +99,13 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     [customerList, customerSearch]
   );
   
+  const getUnitPrice = (item: InvoiceItemState): number => {
+      if (item.unit === item.product.subUnit && item.product.subUnitPrice !== undefined) {
+          return item.product.subUnitPrice;
+      }
+      return item.product.price;
+  };
+
   const handleAddNewCustomer = () => {
     const newCustomer: Customer = {
         id: `cust-${Math.random().toString(36).substr(2, 9)}`,
@@ -179,12 +186,6 @@ export function InvoiceEditor({ invoice }: InvoiceEditorProps) {
     setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
   };
   
-  const getUnitPrice = (item: InvoiceItemState): number => {
-      if (item.unit === item.product.subUnit && item.product.subUnitPrice !== undefined) {
-          return item.product.subUnitPrice;
-      }
-      return item.product.price;
-  };
 
   const handleProcessInvoice = (navigateTo: 'list' | 'preview' = 'list') => {
     if (!selectedCustomer) {

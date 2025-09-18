@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { subDays, startOfMonth, format, parseISO } from 'date-fns-jalali';
+import { subDays, format, parseISO } from 'date-fns-jalali';
 import {
   Card,
   CardContent,
@@ -23,10 +23,9 @@ import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, Customer, Product, DailySales } from '@/lib/definitions';
 import { initialData } from '@/lib/data';
-import { DollarSign, CreditCard, Users, Hourglass, Package } from 'lucide-react';
+import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Link from 'next/link';
 import Image from 'next/image';
 
 type Period = 'all' | '30d' | '7d' | 'today';
@@ -250,15 +249,13 @@ export default function ReportsPage() {
                     {topCustomers.map(customer => (
                         <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                             <TableCell>
-                                <Link href={`/dashboard/customers/${customer.id}`}>
-                                    <div className="flex items-center gap-3 hover:underline">
-                                        <Avatar className="hidden h-9 w-9 sm:flex">
-                                            <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                            <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-medium">{customer.name}</span>
-                                    </div>
-                                </Link>
+                                <div className="flex items-center gap-3 hover:underline">
+                                    <Avatar className="hidden h-9 w-9 sm:flex">
+                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
+                                        <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{customer.name}</span>
+                                </div>
                             </TableCell>
                             <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>
                         </TableRow>
@@ -294,12 +291,10 @@ export default function ReportsPage() {
                         {topProducts.map(product => (
                             <TableRow key={product.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                                 <TableCell>
-                                    <Link href={`/dashboard/products/${product.id}/edit`}>
-                                        <div className="flex items-center gap-3 hover:underline">
-                                            <Image src={product.imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
-                                            <span className="font-medium">{product.name}</span>
-                                        </div>
-                                    </Link>
+                                    <div className="flex items-center gap-3 hover:underline">
+                                        <Image src={product.imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                                        <span className="font-medium">{product.name}</span>
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-center font-mono font-bold">{product.quantity.toLocaleString('fa-IR')}</TableCell>
                             </TableRow>

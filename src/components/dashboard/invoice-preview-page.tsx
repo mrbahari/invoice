@@ -6,13 +6,12 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { initialData } from '@/lib/data';
-import { notFound, useParams, useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Category, Customer, Invoice, Product, InvoiceItem } from '@/lib/definitions';
+import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
@@ -61,11 +60,11 @@ function toWords(num: number): string {
     return word.trim();
 }
 
-
-export default function InvoicePreviewPage() {
-  const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const invoiceId = params.id;
+type InvoicePreviewPageProps = {
+    invoiceId: string;
+    onBack: () => void;
+}
+export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewPageProps) {
   
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [products] = useLocalStorage<Product[]>('products', initialData.products);
@@ -91,8 +90,17 @@ export default function InvoicePreviewPage() {
   }, [invoice, customer]);
 
   if (!invoice) {
-    // We can show a loading state here
-    return null;
+    return (
+        <Card>
+            <CardContent className="py-16 text-center">
+                <p className="text-muted-foreground mb-4">فاکتور مورد نظر یافت نشد.</p>
+                 <Button onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست فاکتورها
+                </Button>
+            </CardContent>
+        </Card>
+    );
   }
   
   if(!customer) {
@@ -132,7 +140,7 @@ export default function InvoicePreviewPage() {
     <div id="invoice-preview" className="font-sans animate-fade-in-up">
         <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
             <div className="flex justify-between gap-2 mb-6">
-                <Button type="button" variant="outline" onClick={() => router.push('/dashboard/invoices')}>
+                <Button type="button" variant="outline" onClick={onBack}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                 </Button>

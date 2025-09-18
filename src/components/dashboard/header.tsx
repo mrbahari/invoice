@@ -55,8 +55,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearch } from './search-provider';
 import { cn } from '@/lib/utils';
 import { LiveClock } from './live-clock';
-import type { DashboardTab } from '@/app/dashboard/layout';
-import { useRouter } from 'next/navigation';
+import type { DashboardTab } from '@/app/dashboard/page';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
     dashboard: 'خانه',
@@ -88,7 +87,6 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
   const { searchTerm, setSearchTerm } = useSearch();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const router = useRouter();
 
 
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
@@ -99,7 +97,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   };
   
   const handleSettingsClick = () => {
-      router.push('/dashboard/settings');
+      onTabChange('settings');
   };
 
   const showSearch = showSearchTabs.includes(activeTab);

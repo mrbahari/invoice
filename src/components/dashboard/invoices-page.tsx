@@ -1,7 +1,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { initialData } from '@/lib/data';
@@ -11,18 +10,36 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { InvoiceEditor } from './invoice-editor';
+import InvoicePreviewPage from './invoice-preview-page';
+
+type View = 
+    | { type: 'list' }
+    | { type: 'form'; invoice?: Invoice }
+    | { type: 'preview'; invoiceId: string };
 
 export default function InvoicesPage() {
   const [allInvoices, setAllInvoices, reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
+  const [view, setView] = useState<View>({ type: 'list' });
 
   useEffect(() => {
     reloadInvoices();
     reloadCustomers();
   }, []);
 
+  const handleAddClick = () => setView({ type: 'form' });
+  const handleEditClick = (invoice: Invoice) => setView({ type: 'form', invoice });
+  const handlePreviewClick = (invoiceId: string) => setView({ type: 'preview', invoiceId });
+
+  const handleFormCancel = () => setView({ type: 'list' });
+  const handleFormSaveAndPreview = (invoiceId: string) => {
+      reloadInvoices();
+      setView({ type: 'preview', invoiceId });
+  };
+  
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
     setAllInvoices(prev => 
       prev.map(inv => 
@@ -42,6 +59,7 @@ export default function InvoicesPage() {
       title: 'فاکتور حذف شد',
       description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
     });
+    setView({ type: 'list' });
   };
   
   const filteredInvoices = useMemo(() => {
@@ -63,6 +81,14 @@ export default function InvoicesPage() {
     { value: 'overdue', label: `سررسید گذشته (${overdueInvoices.length})`, invoices: overdueInvoices, className: 'hidden sm:flex' },
   ], [filteredInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
   
+  if (view.type === 'form') {
+      return <InvoiceEditor invoice={view.invoice} onCancel={handleFormCancel} onSaveAndPreview={handleFormSaveAndPreview} />;
+  }
+
+  if (view.type === 'preview') {
+      return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={handleFormCancel} />;
+  }
+
   return (
     <InvoiceTabs
         tabs={tabsData}
@@ -70,14 +96,14 @@ export default function InvoicesPage() {
         defaultTab="all"
         onStatusChange={handleUpdateStatus}
         onDeleteInvoice={handleDeleteInvoice}
+        onEditInvoice={handleEditClick}
+        onPreviewInvoice={handlePreviewClick}
         pageActions={
-            <Button size="sm" className="h-8 gap-1" asChild>
-                <Link href="/dashboard/invoices/new">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        ایجاد فاکتور
-                    </span>
-                </Link>
+            <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    ایجاد فاکتور
+                </span>
             </Button>
         }
     />

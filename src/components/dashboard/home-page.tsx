@@ -3,7 +3,7 @@
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { initialData } from '@/lib/data';
-import type { Invoice, Customer, InvoiceStatus } from '@/lib/definitions';
+import type { Invoice, Customer, InvoiceStatus, DailySales } from '@/lib/definitions';
 import {
     Card,
     CardContent,
@@ -25,6 +25,7 @@ import { DollarSign, CreditCard, Users, ArrowUp } from 'lucide-react';
 import { useMemo } from 'react';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import Link from 'next/link';
+import { subDays, format, parseISO } from 'date-fns-jalali';
 
 const statusStyles: Record<InvoiceStatus, string> = {
     Paid: 'text-green-600 bg-green-500/10',
@@ -41,20 +42,47 @@ export default function DashboardHomePageContent() {
   const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
 
-  const { totalRevenue, totalPaidInvoices, newCustomers, paidInvoices } = useMemo(() => {
+  const { totalRevenue, totalPaidInvoices, newCustomers, paidInvoices, chartData } = useMemo(() => {
     const paid = allInvoices.filter(inv => inv.status === 'Paid');
     const revenue = paid.reduce((acc, inv) => acc + inv.total, 0);
 
-    // Placeholder logic for "new" customers in the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const newCustomerCount = allCustomers.length; // Simplified for now
+    const newCustomerCount = allCustomers.length;
     
+    // Chart Data for last 7 days
+    const salesByDay: Record<string, { paid: number; unpaid: number }> = {};
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const date = subDays(today, i);
+        const dayString = format(date, 'yyyy-MM-dd');
+        salesByDay[dayString] = { paid: 0, unpaid: 0 };
+    }
+
+    const sevenDaysAgo = subDays(today, 7);
+    const invoicesInPeriod = allInvoices.filter(inv => parseISO(inv.date) >= sevenDaysAgo);
+
+    invoicesInPeriod.forEach(invoice => {
+        const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
+        if (salesByDay[day]) {
+            if (invoice.status === 'Paid') {
+                salesByDay[day].paid += invoice.total;
+            } else {
+                salesByDay[day].unpaid += invoice.total;
+            }
+        }
+    });
+
+    const finalChartData: DailySales[] = Object.keys(salesByDay).sort().map(dayString => ({
+        date: format(parseISO(dayString), 'MM/dd'),
+        paid: salesByDay[dayString].paid,
+        unpaid: salesByDay[dayString].unpaid,
+    }));
+
     return { 
         totalRevenue: revenue, 
         totalPaidInvoices: paid.length, 
         newCustomers: newCustomerCount,
         paidInvoices: paid,
+        chartData: finalChartData,
     };
   }, [allInvoices, allCustomers]);
   
@@ -113,7 +141,7 @@ export default function DashboardHomePageContent() {
                     <CardDescription>نمای کلی درآمد در ۷ روز گذشته.</CardDescription>
                 </CardHeader>
                 <CardContent className="pr-2">
-                    <OverviewChart invoices={paidInvoices} period="7d" />
+                    <OverviewChart data={chartData} />
                 </CardContent>
             </Card>
             <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>

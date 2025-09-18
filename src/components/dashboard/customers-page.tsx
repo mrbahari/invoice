@@ -3,7 +3,6 @@
 
 import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -27,16 +26,35 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Customer, Invoice } from '@/lib/definitions';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { CustomerForm } from './customer-form';
+import CustomerDetailPage from './customer-detail-page';
+
+type View = 
+    | { type: 'list' }
+    | { type: 'form'; customer?: Customer }
+    | { type: 'detail'; customerId: string };
 
 export default function CustomersPage() {
   const [customerList, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [invoices, , reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const { searchTerm } = useSearch();
+  const [view, setView] = useState<View>({ type: 'list' });
+
 
   useEffect(() => {
     reloadCustomers();
     reloadInvoices();
   }, []);
+  
+  const handleAddClick = () => setView({ type: 'form' });
+  const handleEditClick = (customer: Customer) => setView({ type: 'form', customer });
+  const handleRowClick = (customer: Customer) => setView({ type: 'detail', customerId: customer.id });
+  
+  const handleFormSuccess = () => {
+    setView({ type: 'list' });
+    reloadCustomers();
+  };
+  const handleFormCancel = () => setView({ type: 'list' });
 
   const filteredCustomers = useMemo(() => {
     return customerList.filter(customer =>
@@ -60,6 +78,19 @@ export default function CustomersPage() {
     };
     downloadCSV(filteredCustomers, 'customers.csv', headers);
   };
+  
+  if (view.type === 'form') {
+      return <CustomerForm customer={view.customer} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
+  }
+
+  if (view.type === 'detail') {
+      return <CustomerDetailPage 
+        customerId={view.customerId} 
+        onBack={() => setView({ type: 'list' })}
+        onEdit={(customer) => handleEditClick(customer)}
+        onInvoiceClick={() => { /* Not implemented, needs state lift to main dashboard page */}}
+      />;
+  }
 
   return (
     <Card className="animate-fade-in-up">
@@ -73,18 +104,16 @@ export default function CustomersPage() {
             </div>
             <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                    <File className="h-3.5 w-3.5" />
+                    <File className="h-3.5 w-4" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         خروجی
                     </span>
                 </Button>
-                <Button size="sm" className="h-8 gap-1" asChild>
-                    <Link href="/dashboard/customers/new">
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        افزودن مشتری
-                        </span>
-                    </Link>
+                <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    افزودن مشتری
+                    </span>
                 </Button>
             </div>
         </div>
@@ -107,7 +136,7 @@ export default function CustomersPage() {
               const { totalSpent, orderCount } = getCustomerStats(customer.id);
               const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
               return (
-                <TableRow key={customer.id}>
+                <TableRow key={customer.id} onClick={() => handleRowClick(customer)} className="cursor-pointer">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
@@ -127,9 +156,7 @@ export default function CustomersPage() {
                     {formatCurrency(totalSpent)}
                   </TableCell>
                   <TableCell className="text-left">
-                      <Button asChild variant="outline" size="sm">
-                          <Link href={`/dashboard/customers/${customer.id}/edit`}>ویرایش</Link>
-                      </Button>
+                      <Button onClick={(e) => { e.stopPropagation(); handleEditClick(customer); }} variant="outline" size="sm">ویرایش</Button>
                   </TableCell>
                 </TableRow>
               );

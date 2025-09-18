@@ -1,9 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Eye, FilePen, CheckCircle, Trash2 } from 'lucide-react';
+import { Eye, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,17 +22,6 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -51,12 +38,11 @@ type InvoiceTableProps = {
   invoiceList: Invoice[];
   customers: Customer[];
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
-  onDeleteInvoice: (invoiceId: string) => void;
+  onEditInvoice: (invoice: Invoice) => void;
+  onPreviewInvoice: (invoiceId: string) => void;
 };
 
-export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
-  const router = useRouter();
-
+export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInvoice, onPreviewInvoice }: InvoiceTableProps) {
   return (
      <Card className="animate-fade-in-up">
       <CardHeader className="px-7">
@@ -87,7 +73,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
               return (
               <TableRow 
                 key={invoice.id} 
-                onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}
+                onClick={() => onEditInvoice(invoice)}
                 className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
               >
                 <TableCell>
@@ -112,11 +98,9 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
                 </TableCell>
                 <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1 justify-end">
-                      <Button asChild size="icon" variant="ghost" className="h-8 w-8">
-                          <Link href={`/dashboard/invoices/${invoice.id}`}>
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">مشاهده</span>
-                          </Link>
+                      <Button onClick={() => onPreviewInvoice(invoice.id)} size="icon" variant="ghost" className="h-8 w-8">
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">مشاهده</span>
                       </Button>
                       {invoice.status !== 'Paid' && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-600" onClick={() => onStatusChange(invoice.id, 'Paid')}>
@@ -133,7 +117,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
       </CardContent>
        <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>1-{invoiceList.length}</strong> از <strong>{invoiceList.length}</strong> فاکتور
+          نمایش <strong>{invoiceList.length}</strong> از <strong>{invoiceList.length}</strong> فاکتور
         </div>
       </CardFooter>
     </Card>

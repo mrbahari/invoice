@@ -1,7 +1,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import {
   Home,
   Package,
@@ -19,7 +18,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { DashboardTab } from '@/app/dashboard/layout';
+import type { DashboardTab } from '@/app/dashboard/page';
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },

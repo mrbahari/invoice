@@ -23,9 +23,11 @@ type InvoiceTabsProps = {
   pageActions: React.ReactNode;
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
   onDeleteInvoice: (invoiceId: string) => void;
+  onEditInvoice: (invoice: Invoice) => void;
+  onPreviewInvoice: (invoiceId: string) => void;
 };
 
-export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onDeleteInvoice }: InvoiceTabsProps) {
+export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onDeleteInvoice, onEditInvoice, onPreviewInvoice }: InvoiceTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   const handleExport = () => {
@@ -60,7 +62,7 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
         <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
             <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            <span className="sr-only sm:not-sr-only sm:whitespace-rap">
               خروجی
             </span>
           </Button>
@@ -74,6 +76,8 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
             customers={customers} 
             onStatusChange={onStatusChange}
             onDeleteInvoice={onDeleteInvoice}
+            onEditInvoice={onEditInvoice}
+            onPreviewInvoice={onPreviewInvoice}
           />
         </TabsContent>
       ))}

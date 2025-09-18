@@ -24,26 +24,48 @@ import {
 import { initialData } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { useSearch } from '@/components/dashboard/search-provider';
+import { ProductForm } from './product-form';
 
 export default function ProductsPage() {
   const [products, setProducts, reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
-  const router = useRouter();
   const { searchTerm } = useSearch();
+
+  const [view, setView] = useState<'list' | 'form'>('list');
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
 
   useEffect(() => {
     reloadProducts();
     reloadCategories();
   }, []);
+  
+  const handleAddClick = () => {
+    setEditingProduct(undefined);
+    setView('form');
+  }
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setView('form');
+  }
+
+  const handleFormSuccess = () => {
+    setView('list');
+    setEditingProduct(undefined);
+    reloadProducts();
+  }
+
+  const handleFormCancel = () => {
+    setView('list');
+    setEditingProduct(undefined);
+  }
 
   const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
 
@@ -133,6 +155,10 @@ export default function ProductsPage() {
     return sorted;
   }, [categories]);
 
+  if (view === 'form') {
+      return <ProductForm product={editingProduct} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
+  }
+
   return (
     <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
       <div className="flex items-center justify-between">
@@ -151,13 +177,11 @@ export default function ProductsPage() {
               خروجی
             </span>
           </Button>
-          <Button size="sm" className="h-8 gap-1" asChild>
-            <Link href="/dashboard/products/new">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                افزودن محصول
-                </span>
-            </Link>
+          <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+            <PlusCircle className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            افزودن محصول
+            </span>
           </Button>
         </div>
       </div>
@@ -185,7 +209,7 @@ export default function ProductsPage() {
             </TableHeader>
             <TableBody>
                 {filteredProducts.map((product) => (
-                <TableRow key={product.id} onClick={() => router.push(`/dashboard/products/${product.id}/edit`)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
+                <TableRow key={product.id} onClick={() => handleEditClick(product)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
                     <TableCell className="hidden sm:table-cell">
                     <Image
                         alt={product.name}

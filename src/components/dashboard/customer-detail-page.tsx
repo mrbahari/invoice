@@ -1,7 +1,6 @@
 
 'use client';
 
-import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { initialData } from '@/lib/data';
@@ -19,6 +18,7 @@ import {
   DollarSign,
   ShoppingBag,
   FilePen,
+  ArrowRight,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
@@ -44,13 +44,18 @@ const statusTranslation: Record<Invoice['status'], string> = {
     Overdue: 'سررسید گذشته',
 };
 
+type CustomerDetailPageProps = {
+    customerId: string;
+    onBack: () => void;
+    onEdit: (customer: Customer) => void;
+    onInvoiceClick: (invoiceId: string) => void;
+}
 
-export default function CustomerDetailPage() {
-  const params = useParams<{ id: string }>();
+export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoiceClick }: CustomerDetailPageProps) {
   const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
 
-  const customer = customers.find((c) => c.id === params.id);
+  const customer = customers.find((c) => c.id === customerId);
 
   const customerInvoices = useMemo(() => {
     if (!customer) return [];
@@ -66,30 +71,41 @@ export default function CustomerDetailPage() {
   }, [customerInvoices]);
 
   if (!customer) {
-    notFound();
+    return (
+        <Card>
+            <CardContent className="py-16 text-center">
+                <p className="text-muted-foreground mb-4">مشتری مورد نظر یافت نشد.</p>
+                 <Button onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست مشتریان
+                </Button>
+            </CardContent>
+        </Card>
+    );
   }
   
   const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8 animate-fade-in-up">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border">
-                <AvatarImage src={`https://picsum.photos/seed/${customer.id}/64/64`} alt={customer.name} />
-                <AvatarFallback>{nameInitials}</AvatarFallback>
-            </Avatar>
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight">{customer.name}</h1>
-                <p className="text-muted-foreground">{customer.phone}</p>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+                 <Button onClick={onBack} variant="outline" size="icon" className="h-8 w-8">
+                    <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Avatar className="h-16 w-16 border">
+                    <AvatarImage src={`https://picsum.photos/seed/${customer.id}/64/64`} alt={customer.name} />
+                    <AvatarFallback>{nameInitials}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">{customer.name}</h1>
+                    <p className="text-muted-foreground">{customer.phone}</p>
+                </div>
             </div>
-        </div>
-        <Link href={`/dashboard/customers/${customer.id}/edit`}>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => onEdit(customer)}>
                 <FilePen className="ml-2 h-4 w-4" />
                 ویرایش مشتری
             </Button>
-        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -119,7 +135,7 @@ export default function CustomerDetailPage() {
             <CardDescription>نمودار میزان خرید مشتری (فقط پرداخت شده‌ها).</CardDescription>
         </CardHeader>
         <CardContent>
-            <OverviewChart invoices={paidInvoices} period="all" />
+            <OverviewChart data={[]} />
         </CardContent>
       </Card>
       
@@ -144,7 +160,7 @@ export default function CustomerDetailPage() {
                 <TableBody>
                     {customerInvoices.length > 0 ? (
                         customerInvoices.map(invoice => (
-                            <TableRow key={invoice.id}>
+                            <TableRow key={invoice.id} onClick={() => onInvoiceClick(invoice.id)} className="cursor-pointer">
                                 <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                                 <TableCell>{new Date(invoice.date).toLocaleDateString('fa-IR')}</TableCell>
                                 <TableCell>
@@ -155,7 +171,7 @@ export default function CustomerDetailPage() {
                                 <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
                                  <TableCell className="text-right">
                                     <Button asChild variant="ghost" size="sm">
-                                        <Link href={`/dashboard/invoices/${invoice.id}/edit`}>مشاهده</Link>
+                                        <button>مشاهده</button>
                                     </Button>
                                 </TableCell>
                             </TableRow>

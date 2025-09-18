@@ -17,59 +17,63 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 
 function toWords(num: number): string {
-    if (num === 0) return "صفر";
-    if (num < 0) return "منفی " + toWords(Math.abs(num));
+  if (num === 0) return "صفر";
+  const absNum = Math.abs(num);
+  let words = "";
 
-    const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
-    const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
-    const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
-    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
-    const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
+  const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
+  const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
+  const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+  const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
+  const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
 
-    let word = "";
-    let i = 0;
+  function convertThreeDigits(n: number): string {
+    let result = "";
+    const h = Math.floor(n / 100);
+    const t = Math.floor((n % 100) / 10);
+    const u = n % 10;
 
-    if (num === 0) return "صفر";
-
-    while (num > 0) {
-        let chunk = num % 1000;
-        if (chunk > 0) {
-            let chunkWord = "";
-            const h = Math.floor(chunk / 100);
-            const t = Math.floor((chunk % 100) / 10);
-            const u = chunk % 10;
-
-            if (h > 0) {
-                chunkWord += hundreds[h];
-                if (t > 0 || u > 0) chunkWord += " و ";
-            }
-
-            if (t > 1) {
-                chunkWord += tens[t];
-                if (u > 0) chunkWord += " و ";
-            } else if (t === 1) {
-                chunkWord += teens[u];
-            } else if (u > 0) {
-                chunkWord += units[u];
-            }
-            
-            chunkWord = chunkWord.trim();
-            if(chunkWord.endsWith(" و")) {
-                chunkWord = chunkWord.slice(0, -2);
-            }
-
-            const separator = thousands[i] ? thousands[i] : "";
-            if (word) {
-                word = chunkWord + separator + " و " + word;
-            } else {
-                word = chunkWord + separator;
-            }
-        }
-        num = Math.floor(num / 1000);
-        i++;
+    if (h > 0) {
+      result += hundreds[h];
+      if (t > 0 || u > 0) result += " و ";
     }
 
-    return word.replace(/ و\s*$/, "").trim();
+    if (t > 1) {
+      result += tens[t];
+      if (u > 0) result += " و ";
+    } else if (t === 1) {
+      result += teens[u];
+    } else if (u > 0) {
+      result += units[u];
+    }
+    
+    return result;
+  }
+
+  if (absNum === 0) {
+    return "صفر";
+  }
+
+  let tempNum = absNum;
+  let i = 0;
+  let parts: string[] = [];
+
+  while (tempNum > 0) {
+    let chunk = tempNum % 1000;
+    if (chunk > 0) {
+      parts.push(convertThreeDigits(chunk) + thousands[i]);
+    }
+    tempNum = Math.floor(tempNum / 1000);
+    i++;
+  }
+
+  words = parts.reverse().join(" و ");
+
+  if (num < 0) {
+      return "منفی " + words;
+  }
+  
+  return words;
 }
 
 
@@ -87,6 +91,26 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
   
   const invoice = useMemo(() => invoices.find((inv) => inv.id === invoiceId), [invoices, invoiceId]);
   const customer = useMemo(() => customers.find((c) => c.id === invoice?.customerId), [customers, invoice]);
+
+
+  const getRootParent = (categoryId: string): Category | undefined => {
+    let current = categories.find(c => c.id === categoryId);
+    while (current && current.parentId) {
+      const parent = categories.find(p => p.id === current.parentId);
+      if (!parent) return current;
+      current = parent;
+    }
+    return current;
+  };
+  
+  const storeCategory = useMemo(() => {
+    if (!invoice?.items.length) return undefined;
+    const firstItem = invoice.items[0];
+    const productInfo = products.find(p => p.id === firstItem?.productId);
+    if (!productInfo) return undefined;
+    return getRootParent(productInfo.categoryId);
+  }, [invoice, products, categories]);
+
 
 
   useEffect(() => {
@@ -116,14 +140,11 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     );
   }
   
-  if(!customer) {
+  if(!customer || !storeCategory) {
       // Data might be inconsistent for a moment
       return null;
   }
 
-  const firstItem = invoice.items[0];
-  const productInfo = products.find(p => p.id === firstItem?.productId);
-  const category = categories.find(c => c.id === productInfo?.categoryId);
   
   const handleDownloadImage = () => {
     const invoiceElement = document.getElementById('invoice-card');
@@ -181,8 +202,8 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                     </td>
                     <td className="w-2/3 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
-                      <h2 className="text-lg font-semibold">{category?.storeName}</h2>
-                      <p className="text-sm">{category?.description}</p>
+                      <h2 className="text-lg font-semibold">{storeCategory?.storeName}</h2>
+                      <p className="text-sm">{storeCategory?.description}</p>
                       <div className="flex justify-center gap-8 mt-2 text-sm">
                         <span>شماره پیش فاکتور: <span className="font-mono">{invoice.invoiceNumber}</span></span>
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
@@ -199,8 +220,8 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                 <table className="w-full text-sm">
                   <tbody>
                     <tr>
-                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {category?.storeName}</td>
-                      <td className="p-1 w-3/4 align-middle">شماره تماس: {category?.storePhone}<span className='mx-4'>|</span>آدرس: {category?.storeAddress}</td>
+                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {storeCategory?.storeName}</td>
+                      <td className="p-1 w-3/4 align-middle">شماره تماس: {storeCategory?.storePhone}<span className='mx-4'>|</span>آدرس: {storeCategory?.storeAddress}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -256,13 +277,12 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                 </table>
               </div>
 
-              {/* Summary and Signatures */}
               
               <div className="border border-black mt-2 p-2 text-sm">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
-                  <p>اسماعیل بهاری شماره شبا IR - 69 0560 0816 8000 2151 7910 01</p>
-                  <p>شماره کارت: 6219861051578325</p>
+                  {storeCategory.bankIban && <p>{storeCategory.bankAccountHolder} شماره شبا {storeCategory.bankIban}</p>}
+                  {storeCategory.bankCardNumber && <p>شماره کارت: {storeCategory.bankCardNumber}</p>}
               </div>
 
 

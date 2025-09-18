@@ -20,6 +20,12 @@ export type Category = {
   storePhone?: string;
   themeColor?: string;
   parentId?: string;
+  // Bank details for the store
+  bankAccountHolder?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIban?: string;
+  bankCardNumber?: string;
 };
 
 export type Product = {

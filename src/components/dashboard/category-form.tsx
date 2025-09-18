@@ -55,10 +55,20 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
 
   const isSubCategory = !!parentId;
 
+  // Store Info
   const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
+  
+  // Bank Info
+  const [bankAccountHolder, setBankAccountHolder] = useState(category?.bankAccountHolder || '');
+  const [bankName, setBankName] = useState(category?.bankName || '');
+  const [bankAccountNumber, setBankAccountNumber] = useState(category?.bankAccountNumber || '');
+  const [bankIban, setBankIban] = useState(category?.bankIban || '');
+  const [bankCardNumber, setBankCardNumber] = useState(category?.bankCardNumber || '');
+
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -69,6 +79,11 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
         setStoreAddress(parent.storeAddress || '');
         setStorePhone(parent.storePhone || '');
         setLogo(parent.logoUrl || null);
+        setBankAccountHolder(parent.bankAccountHolder || '');
+        setBankName(parent.bankName || '');
+        setBankAccountNumber(parent.bankAccountNumber || '');
+        setBankIban(parent.bankIban || '');
+        setBankCardNumber(parent.bankCardNumber || '');
       }
     }
   }, [parentId, categories]);
@@ -107,6 +122,11 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
         storeAddress: isSubCategory ? undefined : storeAddress,
         storePhone: isSubCategory ? undefined : storePhone,
         logoUrl: isSubCategory ? undefined : (logo || `https://picsum.photos/seed/${Math.random()}/110/110`),
+        bankAccountHolder: isSubCategory ? undefined : bankAccountHolder,
+        bankName: isSubCategory ? undefined : bankName,
+        bankAccountNumber: isSubCategory ? undefined : bankAccountNumber,
+        bankIban: isSubCategory ? undefined : bankIban,
+        bankCardNumber: isSubCategory ? undefined : bankCardNumber,
     };
 
     if (isEditMode && category) {
@@ -299,6 +319,72 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
                 </div>
             </div>
           </div>
+          
+          <Separator />
+          
+          <div className={cn("grid gap-6 transition-opacity", isSubCategory && 'opacity-50 pointer-events-none')}>
+            <div>
+              <h3 className='text-lg font-semibold'>اطلاعات حساب بانکی</h3>
+              <p className="text-sm text-muted-foreground">این اطلاعات به صورت خودکار در فاکتورها نمایش داده می‌شود.</p>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-3">
+                <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
+                <Input
+                  id="bank-account-holder"
+                  value={bankAccountHolder}
+                  onChange={(e) => setBankAccountHolder(e.target.value)}
+                  placeholder="مثال: اسماعیل بهاری"
+                  disabled={isSubCategory}
+                />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="bank-name">نام بانک</Label>
+                <Input
+                  id="bank-name"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="مثال: بانک سامان"
+                  disabled={isSubCategory}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-3">
+                <Label htmlFor="bank-account-number">شماره حساب</Label>
+                <Input
+                  id="bank-account-number"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
+                  placeholder="اختیاری"
+                  disabled={isSubCategory}
+                />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="bank-card-number">شماره کارت</Label>
+                <Input
+                  id="bank-card-number"
+                  value={bankCardNumber}
+                  onChange={(e) => setBankCardNumber(e.target.value)}
+                  placeholder="اختیاری"
+                  disabled={isSubCategory}
+                />
+              </div>
+            </div>
+             <div className="grid gap-3">
+                <Label htmlFor="bank-iban">شماره شبا (IBAN)</Label>
+                <Input
+                  id="bank-iban"
+                  value={bankIban}
+                  onChange={(e) => setBankIban(e.target.value)}
+                  placeholder="مثال: IR..."
+                  dir="ltr"
+                  className="text-left"
+                  disabled={isSubCategory}
+                />
+              </div>
+          </div>
+
 
         </CardContent>
         <CardFooter className="flex justify-between">
@@ -340,5 +426,3 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
     </form>
   );
 }
-
-    

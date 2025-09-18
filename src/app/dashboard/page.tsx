@@ -1,9 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import DashboardLayout from './layout';
-
+import React from 'react';
 import CustomersPage from '@/components/dashboard/customers-page';
 import ProductsPage from '@/components/dashboard/products-page';
 import CategoriesPage from '@/components/dashboard/categories-page';
@@ -53,8 +51,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <DashboardLayout>
-      {renderContent()}
-    </DashboardLayout>
+      <>
+        {renderContent()}
+      </>
   );
 }

@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, Copy, ArrowRight, Save } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, Copy, ArrowRight, Save, GripVertical } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
 
 
 type InvoiceItemState = {
@@ -98,8 +99,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
     if (!invoice) return;
 
+    const originalItemsOrder = invoice.items.map(i => ({ p: i.productId, q: i.quantity, u: i.unit }));
+    const currentItemsOrder = items.map(i => ({ p: i.product.id, q: i.quantity, u: i.unit }));
+
     // Compare initial state with current state for edit mode
-    const itemsChanged = JSON.stringify(items.map(i => ({ p: i.product.id, q: i.quantity, u: i.unit }))) !== JSON.stringify(invoice.items.map(i => ({ p: i.productId, q: i.quantity, u: i.unit })));
+    const itemsChanged = JSON.stringify(currentItemsOrder) !== JSON.stringify(originalItemsOrder);
     const customerChanged = selectedCustomer?.id !== invoice.customerId;
     const descriptionChanged = description !== invoice.description;
     const discountChanged = overallDiscount !== invoice.discount;
@@ -237,6 +241,16 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const handleRemoveItem = (productId: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
   };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const reorderedItems = Array.from(items);
+    const [removed] = reorderedItems.splice(result.source.index, 1);
+    reorderedItems.splice(result.destination.index, 0, removed);
+
+    setItems(reorderedItems);
+  };
   
   const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
 
@@ -371,81 +385,96 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             </div>
           </CardHeader>
           <CardContent className="grid gap-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
-                  <TableHead>نام کالا</TableHead>
-                  <TableHead className="w-[110px]">واحد</TableHead>
-                  <TableHead className="w-[100px] text-center">مقدار</TableHead>
-                  <TableHead className="w-[120px] text-right">قیمت</TableHead>
-                  <TableHead className="w-[120px] text-right">جمع کل</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.length > 0 ? (
-                  items.map((item) => {
-                      const availableUnits = [item.product.unit];
-                      if (item.product.subUnit) {
-                          availableUnits.push(item.product.subUnit);
-                      }
+            <DragDropContext onDragEnd={handleDragEnd}>
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="w-[30px] p-2"></TableHead>
+                    <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
+                    <TableHead>نام کالا</TableHead>
+                    <TableHead className="w-[110px]">واحد</TableHead>
+                    <TableHead className="w-[100px] text-center">مقدار</TableHead>
+                    <TableHead className="w-[120px] text-right">قیمت</TableHead>
+                    <TableHead className="w-[120px] text-right">جمع کل</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <Droppable droppableId="invoiceItems">
+                    {(provided) => (
+                    <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+                        {items.length > 0 ? (
+                        items.map((item, index) => {
+                            const availableUnits = [item.product.unit];
+                            if (item.product.subUnit) {
+                                availableUnits.push(item.product.subUnit);
+                            }
 
-                      return (
-                        <TableRow key={item.product.id}>
-                          <TableCell className="hidden md:table-cell">
-                            <Image
-                                src={item.product.imageUrl}
-                                alt={item.product.name}
-                                width={64}
-                                height={64}
-                                className="rounded-md object-cover"
-                            />
-                          </TableCell>
-                          <TableCell className="font-medium">{item.product.name}</TableCell>
-                          <TableCell>
-                              <Select
-                                value={item.unit}
-                                onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
-                              >
-                                <SelectTrigger className="w-[100px]">
-                                  <SelectValue placeholder="واحد" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableUnits.map(unit => (
-                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
-                              step="0.01"
-                              className="w-20 text-center mx-auto"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">{formatCurrency(getUnitPrice(item))}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(calculateItemTotal(item))}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </TableCell>
+                            return (
+                                <Draggable key={item.product.id} draggableId={item.product.id} index={index}>
+                                {(provided) => (
+                                <TableRow ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                <TableCell className="p-2">
+                                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    <Image
+                                        src={item.product.imageUrl}
+                                        alt={item.product.name}
+                                        width={64}
+                                        height={64}
+                                        className="rounded-md object-cover"
+                                    />
+                                </TableCell>
+                                <TableCell className="font-medium">{item.product.name}</TableCell>
+                                <TableCell>
+                                    <Select
+                                        value={item.unit}
+                                        onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
+                                    >
+                                        <SelectTrigger className="w-[100px]">
+                                        <SelectValue placeholder="واحد" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                        {availableUnits.map(unit => (
+                                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                        ))}
+                                        </SelectContent>
+                                    </Select>
+                                </TableCell>
+                                <TableCell>
+                                    <Input
+                                    type="number"
+                                    value={item.quantity}
+                                    onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
+                                    step="0.01"
+                                    className="w-20 text-center mx-auto"
+                                    />
+                                </TableCell>
+                                <TableCell className="text-right">{formatCurrency(getUnitPrice(item))}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(calculateItemTotal(item))}</TableCell>
+                                <TableCell>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
+                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </TableCell>
+                                </TableRow>
+                                )}
+                                </Draggable>
+                            )
+                            })
+                        ) : (
+                        <TableRow>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                            برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
+                            </TableCell>
                         </TableRow>
-                      )
-                    })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                        )}
+                        {provided.placeholder}
+                    </TableBody>
+                    )}
+                </Droppable>
+                </Table>
+            </DragDropContext>
             <div className="grid gap-2">
                 <div className="flex justify-between items-center">
                     <Label htmlFor="description">توضیحات</Label>
@@ -663,5 +692,3 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
   );
 }
-
-    

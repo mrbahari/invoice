@@ -250,7 +250,7 @@ export default function ReportsPage() {
                     {topCustomers.map(customer => (
                         <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                             <TableCell>
-                                <Link href={`/dashboard/customers/${customer.id}/edit`}>
+                                <Link href={`/dashboard/customers/${customer.id}`}>
                                     <div className="flex items-center gap-3 hover:underline">
                                         <Avatar className="hidden h-9 w-9 sm:flex">
                                             <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />

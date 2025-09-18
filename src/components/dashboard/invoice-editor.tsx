@@ -270,6 +270,15 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     return current;
   };
 
+  const handlePreviewClick = () => {
+      if (isDirty) {
+          handleProcessInvoice(true);
+      } else if(invoice) {
+          onSaveAndPreview(invoice.id);
+      } else {
+          toast({ variant: 'destructive', title: 'فاکتور ذخیره نشده است', description: 'ابتدا فاکتور را ایجاد و ذخیره کنید تا بتوانید پیش‌نمایش آن را ببینید.' });
+      }
+  }
 
   const handleProcessInvoice = (navigateToPreview: boolean = false) => {
     if (!selectedCustomer) {
@@ -379,12 +388,10 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                   </Button>
-                  {isDirty && (
-                    <Button onClick={() => handleProcessInvoice(true)} variant="outline" size="sm" className="h-10 gap-1">
-                      <Eye className="ml-2 h-3.5 w-3.5" />
-                      <span>ثبت و پیش‌نمایش</span>
-                    </Button>
-                  )}
+                  <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1">
+                    <Eye className="ml-2 h-3.5 w-3.5" />
+                    <span>{isDirty ? 'ثبت و پیش‌نمایش' : 'پیش‌نمایش'}</span>
+                  </Button>
                </div>
             </div>
           </CardHeader>
@@ -404,7 +411,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                             <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
-                    {isClient && (
+                    {isClient ? (
                     <DragDropContext onDragEnd={handleDragEnd}>
                         <Droppable droppableId="invoiceItems">
                             {(provided) => (
@@ -477,11 +484,16 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                             )}
                         </Droppable>
                     </DragDropContext>
+                    ) : (
+                      <TableBody>
+                          <TableRow>
+                              <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                                  در حال بارگذاری آیتم‌ها...
+                              </TableCell>
+                          </TableRow>
+                      </TableBody>
                     )}
                 </Table>
-                 {!isClient && (
-                    <div className="text-center text-muted-foreground py-8">در حال بارگذاری آیتم‌ها...</div>
-                )}
                  {isClient && items.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.</div>
                 )}

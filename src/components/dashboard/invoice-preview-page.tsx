@@ -28,14 +28,17 @@ function toWords(num: number): string {
 
     let word = "";
     let i = 0;
+
+    if (num === 0) return "صفر";
+
     while (num > 0) {
-        const chunk = num % 1000;
+        let chunk = num % 1000;
         if (chunk > 0) {
             let chunkWord = "";
             const h = Math.floor(chunk / 100);
             const t = Math.floor((chunk % 100) / 10);
             const u = chunk % 10;
-            
+
             if (h > 0) {
                 chunkWord += hundreds[h];
                 if (t > 0 || u > 0) chunkWord += " و ";
@@ -45,20 +48,27 @@ function toWords(num: number): string {
                 chunkWord += tens[t];
                 if (u > 0) chunkWord += " و ";
             }
-            
+
             if (t === 1) {
                 chunkWord += teens[u];
             } else if (u > 0) {
                 chunkWord += units[u];
             }
             
-            word = chunkWord + thousands[i] + (word ? " و " + word : "");
+            // Add thousands separator only if it's not the first chunk and there's more to come
+            const separator = thousands[i] ? thousands[i] : "";
+            if (word) {
+                word = chunkWord + separator + " و " + word;
+            } else {
+                word = chunkWord + separator;
+            }
         }
         num = Math.floor(num / 1000);
         i++;
     }
 
-    return word.trim();
+    // Clean up extra " و " at the end
+    return word.replace(/ و\s*$/, "").trim();
 }
 
 
@@ -237,7 +247,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                   </tbody>
                   <tfoot>
                     <tr className="font-bold">
-                        <td colSpan={4} className="border border-black p-1 align-middle text-center">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</td>
+                        <td colSpan={4} className="border border-black p-1 text-center align-middle font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</td>
                         <td className="border border-black p-1 text-center align-middle">جمع کل</td>
                         <td className="border border-black p-1 text-center font-mono align-middle">{formatCurrency(invoice.total)}</td>
                     </tr>
@@ -250,6 +260,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
               <div className="border border-black mt-2 p-2 text-sm">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
+                  <p>شماره کارت : 6219861051578325</p>
               </div>
 
 

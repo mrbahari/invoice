@@ -44,7 +44,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 
 
 type InvoiceItemState = {
@@ -59,9 +59,18 @@ type InvoiceEditorProps = {
     onSaveAndPreview: (invoiceId: string) => void;
 }
 
+const useIsClient = () => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  return isClient;
+};
+
 export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
+  const isClient = useIsClient();
 
   const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
@@ -350,7 +359,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
     toast({
         title: 'فاکتور حذف شد',
-        description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
+        description: `فاکتور شماره "${invoice?.invoiceNumber}" با موفقیت حذف شد.`,
     });
 
     onCancel();
@@ -386,25 +395,24 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
           <CardContent className="grid gap-6">
             
             <div className="border rounded-lg overflow-hidden">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[50px]"></TableHead>
-                            <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
-                            <TableHead>نام کالا</TableHead>
-                            <TableHead className="w-[110px]">واحد</TableHead>
-                            <TableHead className="w-[100px] text-center">مقدار</TableHead>
-                            <TableHead className="w-[120px] text-left">قیمت</TableHead>
-                            <TableHead className="w-[120px] text-left">جمع کل</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="invoiceItems">
-                            {(provided) => (
+              <DragDropContext onDragEnd={handleDragEnd}>
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead className="w-[50px]"></TableHead>
+                              <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
+                              <TableHead>نام کالا</TableHead>
+                              <TableHead className="w-[110px]">واحد</TableHead>
+                              <TableHead className="w-[100px] text-center">مقدار</TableHead>
+                              <TableHead className="w-[120px] text-left">قیمت</TableHead>
+                              <TableHead className="w-[120px] text-left">جمع کل</TableHead>
+                              <TableHead className="w-[50px]"></TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <Droppable droppableId="invoiceItems">
+                          {(provided) => (
                             <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                                {items.length > 0 ? (
-                                items.map((item, index) => {
+                                {isClient && items.map((item, index) => {
                                     const availableUnits = [item.product.unit];
                                     if (item.product.subUnit) {
                                         availableUnits.push(item.product.subUnit);
@@ -466,20 +474,27 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                                         )}
                                         </Draggable>
                                     )
-                                    })
-                                ) : (
-                                  <TableRow>
-                                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                                        برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
-                                    </TableCell>
-                                  </TableRow>
-                                )}
+                                })}
                                 {provided.placeholder}
+                                {!isClient && items.length > 0 && (
+                                    <TableRow>
+                                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                                          در حال بارگذاری آیتم‌ها...
+                                      </TableCell>
+                                    </TableRow>
+                                )}
+                                {items.length === 0 && (
+                                    <TableRow>
+                                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                                          برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
+                                      </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
-                </Table>
+                          )}
+                      </Droppable>
+                  </Table>
+              </DragDropContext>
             </div>
 
             <div className="grid gap-2">

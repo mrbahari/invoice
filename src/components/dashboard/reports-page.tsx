@@ -27,6 +27,12 @@ import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -218,100 +224,122 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:gap-8">
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-          <CardHeader>
-            <CardTitle>نمای کلی فروش</CardTitle>
-            <CardDescription>مقایسه درآمد پرداخت شده و پرداخت نشده در بازه زمانی انتخاب شده.</CardDescription>
-          </CardHeader>
-          <CardContent className="pr-2">
-             <OverviewChart data={chartData} />
-          </CardContent>
-        </Card>
+      <Accordion 
+        type="multiple" 
+        defaultValue={["sales-overview", "top-customers", "top-products"]}
+        className="grid gap-4 md:gap-8"
+      >
+        <AccordionItem value="sales-overview" className="border-b-0">
+          <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              <AccordionTrigger className="p-6 hover:no-underline">
+                <div className='text-right'>
+                  <CardTitle>نمای کلی فروش</CardTitle>
+                  <CardDescription className='mt-2'>مقایسه درآمد پرداخت شده و پرداخت نشده در بازه زمانی انتخاب شده.</CardDescription>
+                </div>
+              </AccordionTrigger>
+            <AccordionContent>
+              <CardContent className="pr-2">
+                <OverviewChart data={chartData} />
+              </CardContent>
+            </AccordionContent>
+          </Card>
+        </AccordionItem>
         
         <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
+          <AccordionItem value="top-customers" className="border-b-0">
             <Card className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-            <CardHeader>
-                <CardTitle>مشتریان برتر</CardTitle>
-                <CardDescription>
-                مشتریانی با بیشترین میزان خرید در این دوره.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>مشتری</TableHead>
-                            <TableHead className="text-left">مجموع خرید</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {topCustomers.map(customer => (
-                        <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
-                            <TableCell>
-                                <div className="flex items-center gap-3 hover:underline">
-                                    <Avatar className="hidden h-9 w-9 sm:flex">
-                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                        <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="font-medium">{customer.name}</span>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>
-                        </TableRow>
-                    ))}
-                    {topCustomers.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                هیچ مشتری در این بازه زمانی خریدی نداشته است.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-            </Card>
-
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-                <CardHeader>
-                    <CardTitle>پرفروش‌ترین محصولات</CardTitle>
-                    <CardDescription>
-                        محصولاتی که بیشترین تعداد فروش را در این دوره داشته‌اند.
+              <AccordionTrigger className="p-6 hover:no-underline">
+                 <div className='text-right'>
+                    <CardTitle>مشتریان برتر</CardTitle>
+                    <CardDescription className='mt-2'>
+                    مشتریانی با بیشترین میزان خرید در این دوره.
                     </CardDescription>
-                </CardHeader>
+                  </div>
+              </AccordionTrigger>
+              <AccordionContent>
                 <CardContent>
-                     <Table>
+                    <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>محصول</TableHead>
-                                <TableHead className="text-center">تعداد فروش</TableHead>
+                                <TableHead>مشتری</TableHead>
+                                <TableHead className="text-left">مجموع خرید</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {topProducts.map(product => (
-                            <TableRow key={product.id} className="transition-all hover:shadow-md hover:-translate-y-1">
+                        {topCustomers.map(customer => (
+                            <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                                 <TableCell>
                                     <div className="flex items-center gap-3 hover:underline">
-                                        <Image src={product.imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
-                                        <span className="font-medium">{product.name}</span>
+                                        <Avatar className="hidden h-9 w-9 sm:flex">
+                                            <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
+                                            <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-medium">{customer.name}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center font-mono font-bold">{product.quantity.toLocaleString('fa-IR')}</TableCell>
+                                <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>
                             </TableRow>
                         ))}
-                        {topProducts.length === 0 && (
+                        {topCustomers.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                    هیچ محصولی در این بازه زمانی فروخته نشده است.
+                                    هیچ مشتری در این بازه زمانی خریدی نداشته است.
                                 </TableCell>
                             </TableRow>
                         )}
                         </TableBody>
                     </Table>
                 </CardContent>
+              </AccordionContent>
             </Card>
+          </AccordionItem>
+
+          <AccordionItem value="top-products" className="border-b-0">
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                <AccordionTrigger className="p-6 hover:no-underline">
+                  <div className='text-right'>
+                    <CardTitle>پرفروش‌ترین محصولات</CardTitle>
+                    <CardDescription className='mt-2'>
+                        محصولاتی که بیشترین تعداد فروش را در این دوره داشته‌اند.
+                    </CardDescription>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>محصول</TableHead>
+                                    <TableHead className="text-center">تعداد فروش</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {topProducts.map(product => (
+                                <TableRow key={product.id} className="transition-all hover:shadow-md hover:-translate-y-1">
+                                    <TableCell>
+                                        <div className="flex items-center gap-3 hover:underline">
+                                            <Image src={product.imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                                            <span className="font-medium">{product.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center font-mono font-bold">{product.quantity.toLocaleString('fa-IR')}</TableCell>
+                                </TableRow>
+                            ))}
+                            {topProducts.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+                                        هیچ محصولی در این بازه زمانی فروخته نشده است.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </AccordionContent>
+            </Card>
+          </AccordionItem>
         </div>
-      </div>
+      </Accordion>
     </div>
   );
 }

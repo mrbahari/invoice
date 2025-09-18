@@ -18,6 +18,7 @@ import QRCode from 'qrcode';
 
 function toWords(num: number): string {
     if (num === 0) return "صفر";
+    if (num < 0) return "منفی " + toWords(Math.abs(num));
 
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
@@ -25,37 +26,32 @@ function toWords(num: number): string {
     const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
     const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
 
-    const convertThreeDigits = (n: number): string => {
-        if (n === 0) return "";
-        let str = "";
-        if (n >= 100) {
-            str += hundreds[Math.floor(n / 100)];
-            n %= 100;
-            if (n > 0) str += " و ";
-        }
-        if (n >= 20) {
-            str += tens[Math.floor(n / 10)];
-            n %= 10;
-            if (n > 0) str += " و ";
-        }
-        if (n >= 10) {
-            str += teens[n - 10];
-            n = 0;
-        }
-        if (n > 0) {
-            str += units[n];
-        }
-        return str;
-    };
-    
-    if (num < 0) return "منفی " + toWords(Math.abs(num));
-
     let word = "";
     let i = 0;
     while (num > 0) {
-        let chunk = num % 1000;
+        const chunk = num % 1000;
         if (chunk > 0) {
-            let chunkWord = convertThreeDigits(chunk);
+            let chunkWord = "";
+            const h = Math.floor(chunk / 100);
+            const t = Math.floor((chunk % 100) / 10);
+            const u = chunk % 10;
+            
+            if (h > 0) {
+                chunkWord += hundreds[h];
+                if (t > 0 || u > 0) chunkWord += " و ";
+            }
+
+            if (t > 1) {
+                chunkWord += tens[t];
+                if (u > 0) chunkWord += " و ";
+            }
+            
+            if (t === 1) {
+                chunkWord += teens[u];
+            } else if (u > 0) {
+                chunkWord += units[u];
+            }
+            
             word = chunkWord + thousands[i] + (word ? " و " + word : "");
         }
         num = Math.floor(num / 1000);
@@ -241,7 +237,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                   </tbody>
                   <tfoot>
                     <tr className="font-bold">
-                        <td colSpan={4} className="border border-black p-1 align-middle"></td>
+                        <td colSpan={4} className="border border-black p-1 align-middle text-center">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</td>
                         <td className="border border-black p-1 text-center align-middle">جمع کل</td>
                         <td className="border border-black p-1 text-center font-mono align-middle">{formatCurrency(invoice.total)}</td>
                     </tr>
@@ -252,7 +248,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
               {/* Summary and Signatures */}
               
               <div className="border border-black mt-2 p-2 text-sm">
-                  <p className="font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
               </div>

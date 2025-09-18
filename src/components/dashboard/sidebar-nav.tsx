@@ -42,9 +42,9 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <button
           onClick={() => onTabChange('dashboard')}
-          className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+          className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-10 md:w-10 md:text-base"
         >
-          <Package2 className="h-4 w-4 transition-all group-hover:scale-110" />
+          <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
           <span className="sr-only">حسابگر</span>
         </button>
         <TooltipProvider>
@@ -54,11 +54,11 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
                 <button
                   onClick={() => onTabChange(item.tab)}
                   className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
+                    'flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-10 md:w-10',
                     activeTab === item.tab && 'bg-accent text-accent-foreground'
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-6 w-6" />
                   <span className="sr-only">{item.label}</span>
                 </button>
               </TooltipTrigger>

@@ -1,22 +1,12 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import {
-  Home,
-  Package,
-  Users,
-  LineChart,
-  Settings,
-  FileText,
-  Shapes,
-  Package2,
-  PanelLeft,
   Search,
   LogOut,
   Sparkles,
-  Calculator,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -26,13 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import {
   Dialog,
   DialogContent,
@@ -69,16 +52,6 @@ const tabToNameMapping: Record<DashboardTab, string> = {
     settings: 'تنظیمات',
 };
 
-const mobileNavItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
-    { tab: 'dashboard', icon: Home, label: 'داشبورد' },
-    { tab: 'invoices', icon: FileText, label: 'فاکتورها' },
-    { tab: 'products', icon: Package, label: 'محصولات' },
-    { tab: 'customers', icon: Users, label: 'مشتریان' },
-    { tab: 'categories', icon: Shapes, label: 'فروشگاه‌ها' },
-    { tab: 'estimators', icon: Calculator, label: 'برآورد مصالح' },
-    { tab: 'reports', icon: LineChart, label: 'گزارشات' },
-];
-
 const showSearchTabs: DashboardTab[] = ['products', 'categories', 'customers', 'invoices'];
 
 interface HeaderProps {
@@ -89,15 +62,8 @@ interface HeaderProps {
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
   const { searchTerm, setSearchTerm } = useSearch();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-
 
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
-  
-  const handleSheetLinkClick = (tab: DashboardTab) => {
-    onTabChange(tab);
-    setIsSheetOpen(false);
-  };
   
   const handleSettingsClick = () => {
       onTabChange('settings');
@@ -105,7 +71,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   const showSearch = showSearchTabs.includes(activeTab);
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (!showSearch) {
       setSearchTerm('');
     }
@@ -113,46 +79,6 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
-      <div className="flex items-center gap-4">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="sm:hidden">
-              <PanelLeft className="h-5 w-5" />
-              <span className="sr-only">باز کردن منو</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="sm:max-w-xs">
-            <SheetHeader>
-                <SheetTitle className="sr-only">منوی ناوبری اصلی</SheetTitle>
-            </SheetHeader>
-            <nav className="grid gap-6 text-lg font-medium">
-              <button
-                onClick={() => handleSheetLinkClick('dashboard')}
-                className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-              >
-                <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-                <span className="sr-only">حسابگر</span>
-              </button>
-              {mobileNavItems.map((item) => (
-                  <button
-                      key={item.tab}
-                      onClick={() => handleSheetLinkClick(item.tab)}
-                      className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                  >
-                      <item.icon className="h-5 w-5" />
-                      {item.label}
-                  </button>
-              ))}
-               <button
-                  onClick={() => handleSheetLinkClick('settings')}
-                  className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-              >
-                  <Settings className="h-5 w-5" />
-                  تنظیمات
-              </button>
-            </nav>
-          </SheetContent>
-        </Sheet>
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -166,9 +92,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-      </div>
-
-      <div className={cn("relative md:grow-0", !showSearch && 'hidden')}>
+      <div className={cn("relative ml-auto md:grow-0", !showSearch && 'hidden')}>
         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
@@ -179,7 +103,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
         />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 ml-4">
         <div className="hidden md:flex">
             <LiveClock />
         </div>

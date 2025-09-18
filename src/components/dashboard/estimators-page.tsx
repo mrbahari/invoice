@@ -13,6 +13,7 @@ import { Box, Grid, MinusSquare, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
+import { FlatCeilingForm } from './estimators/flat-ceiling-form';
 import type { Invoice } from '@/lib/definitions';
 
 type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling';
@@ -37,7 +38,7 @@ const estimatorTypes = [
         title: 'محاسبه مصالح سقف فلت',
         description: 'مساحت سقف را وارد کرده و برآورد مصالح لازم را دریافت کنید.',
         icon: MinusSquare,
-        component: null, // Placeholder for future component
+        component: FlatCeilingForm,
     }
 ];
 

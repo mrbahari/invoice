@@ -346,14 +346,12 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const handleDeleteInvoice = () => {
     if (!invoice) return;
 
-    setIsProcessing(true);
     setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
     toast({
         title: 'فاکتور حذف شد',
         description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
     });
 
-    setIsProcessing(false);
     onCancel();
   };
 
@@ -692,3 +690,5 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
   );
 }
+
+    

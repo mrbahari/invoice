@@ -26,6 +26,7 @@ import { useMemo } from 'react';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import Link from 'next/link';
 import { subDays, format, parseISO } from 'date-fns-jalali';
+import type { DashboardTab } from '@/app/dashboard/page';
 
 const statusStyles: Record<InvoiceStatus, string> = {
     Paid: 'text-green-600 bg-green-500/10',
@@ -38,7 +39,12 @@ const statusTranslation: Record<InvoiceStatus, string> = {
       Overdue: 'سررسید گذشته',
 };
 
-export default function DashboardHomePageContent() {
+type DashboardHomePageProps = {
+  onNavigate: (tab: DashboardTab) => void;
+};
+
+
+export default function DashboardHomePageContent({ onNavigate }: DashboardHomePageProps) {
   const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
 
@@ -94,44 +100,50 @@ export default function DashboardHomePageContent() {
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-          <Card className="animate-fade-in-up">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                درآمد کل
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-              <p className="text-xs text-muted-foreground">
-                فقط از فاکتورهای پرداخت شده
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+{totalPaidInvoices}</div>
-              <p className="text-xs text-muted-foreground">
-                تعداد کل فاکتورهای پرداخت شده
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">مشتریان</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+{newCustomers}</div>
-              <p className="text-xs text-muted-foreground">
-                تعداد کل مشتریان ثبت شده
-              </p>
-            </CardContent>
-          </Card>
+          <button onClick={() => onNavigate('reports')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+            <Card className="animate-fade-in-up">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  درآمد کل
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+                <p className="text-xs text-muted-foreground">
+                  فقط از فاکتورهای پرداخت شده
+                </p>
+              </CardContent>
+            </Card>
+          </button>
+          <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">+{totalPaidInvoices}</div>
+                <p className="text-xs text-muted-foreground">
+                  تعداد کل فاکتورهای پرداخت شده
+                </p>
+              </CardContent>
+            </Card>
+          </button>
+          <button onClick={() => onNavigate('customers')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">مشتریان</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">+{newCustomers}</div>
+                <p className="text-xs text-muted-foreground">
+                  تعداد کل مشتریان ثبت شده
+                </p>
+              </CardContent>
+            </Card>
+          </button>
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2">

@@ -37,7 +37,7 @@ export default function DashboardPage() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardHomePageContent />;
+        return <DashboardHomePageContent onNavigate={handleNavigation} />;
       case 'invoices':
         return <InvoicesPage initialInvoice={navigationData?.invoice} />;
       case 'products':
@@ -57,7 +57,7 @@ export default function DashboardPage() {
         if (typeof window !== 'undefined') {
             router.replace('/dashboard?tab=dashboard');
         }
-        return <DashboardHomePageContent />;
+        return <DashboardHomePageContent onNavigate={handleNavigation} />;
     }
   };
 

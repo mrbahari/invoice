@@ -12,6 +12,7 @@ import {
 import { Box, Grid, MinusSquare, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
+import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import type { Invoice } from '@/lib/definitions';
 
 type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling';
@@ -22,7 +23,7 @@ const estimatorTypes = [
         title: 'محاسبه مصالح باکس و نورمخفی',
         description: 'طول باکس را وارد کرده و لیست مصالح مورد نیاز را دریافت کنید.',
         icon: Box,
-        component: null, // Placeholder for future component
+        component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,

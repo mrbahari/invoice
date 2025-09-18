@@ -19,15 +19,8 @@ export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' |
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
+  const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
 
-  const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
-
-  const handleTabChange = (tab: DashboardTab) => {
-    setActiveTab(tab);
-    // Update URL to reflect the new tab state
-    router.push(`/dashboard?tab=${tab}`, { scroll: false });
-  };
   
   const renderContent = () => {
     switch (activeTab) {
@@ -46,17 +39,21 @@ export default function DashboardPage() {
       case 'settings':
         return <SettingsPage />;
       default:
+        // Redirect to a default tab if the tab is invalid
+        if (typeof window !== 'undefined') {
+            router.replace('/dashboard?tab=dashboard');
+        }
         return <DashboardHomePageContent />;
     }
   };
 
-  // If someone lands on /dashboard, redirect them to the default tab view
+  // If someone lands on /dashboard without a tab, redirect them to the default tab view
   if (!searchParams.get('tab')) {
       redirect('/dashboard?tab=dashboard');
   }
 
   return (
-    <DashboardLayout activeTab={activeTab} onTabChange={handleTabChange}>
+    <DashboardLayout>
       {renderContent()}
     </DashboardLayout>
   );

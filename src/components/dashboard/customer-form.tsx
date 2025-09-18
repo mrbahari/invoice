@@ -214,7 +214,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
             />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col-reverse sm:flex-row justify-between gap-2">
           <div>
             {isEditMode && (
               <AlertDialog>
@@ -239,14 +239,14 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
               </AlertDialog>
             )}
           </div>
-           <div className='flex gap-2'>
+           <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
               {isEditMode && (
-                  <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                  <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-full">
                      <Copy className="ml-2 h-4 w-4" />
                       ذخیره با عنوان جدید
                   </Button>
               )}
-              <Button type="submit" disabled={isProcessing}>
+              <Button type="submit" disabled={isProcessing} className="w-full">
                 {isProcessing
                   ? isEditMode
                     ? 'در حال ذخیره...'
@@ -261,5 +261,3 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     </form>
   );
 }
-
-    

@@ -373,7 +373,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             </CardContent>
         </Card>
 
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col-reverse sm:flex-row justify-between gap-2">
             <div>
             {isEditMode && (
                 <AlertDialog>
@@ -398,7 +398,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </AlertDialog>
             )}
             </div>
-            <Button type="button" onClick={handleSaveAll} disabled={isProcessing} size="lg">
+            <Button type="button" onClick={handleSaveAll} disabled={isProcessing} size="lg" className="w-full sm:w-auto">
             {isProcessing ? 'در حال ذخیره...' : 'ذخیره کل تغییرات'}
             </Button>
         </CardFooter>

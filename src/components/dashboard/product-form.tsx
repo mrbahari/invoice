@@ -574,7 +574,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             
             {isDirty && (
                 <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t lg:col-span-3">
-                    <div className="max-w-5xl mx-auto flex justify-between items-center gap-2">
+                    <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
                         <div>
                              {isEditMode && (
                                 <AlertDialog>
@@ -599,14 +599,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 </AlertDialog>
                             )}
                         </div>
-                        <div className='flex gap-2'>
+                        <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
                             {isEditMode && (
                                 <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
                                    <Copy className="ml-2 h-4 w-4" />
                                     ذخیره با عنوان محصول جدید
                                 </Button>
                             )}
-                            <Button type="submit" disabled={isProcessing} size="lg">
+                            <Button type="submit" disabled={isProcessing} size="lg" className="w-full">
                                 {isProcessing
                                 ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
                                 : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}

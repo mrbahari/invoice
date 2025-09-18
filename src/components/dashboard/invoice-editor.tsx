@@ -30,7 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { initialData } from '@/lib/data';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
@@ -75,7 +75,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
   const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
-  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
@@ -86,7 +86,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const [description, setDescription] = useState(invoice?.description || '');
   const [overallDiscount, setOverallDiscount] = useState(invoice?.discount || 0);
   const [additions, setAdditions] = useState(invoice?.additions || 0);
-  const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
+  const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - (invoice.discount || 0))) * 100 : 0);
   const [status, setStatus] = useState<InvoiceStatus>(invoice?.status || 'Pending');
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -94,6 +94,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   
   const isClient = useIsClient();
 
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -101,10 +102,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (view.type === 'list' && scrollPosition > 0) {
+        window.scrollTo(0, scrollPosition);
+        setScrollPosition(0); // Reset after scroll
     }
-  }, []);
+  }, [view, scrollPosition]);
 
   // Track changes to mark the form as dirty
   useEffect(() => {
@@ -124,10 +126,13 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     // Compare initial state with current state for edit mode
     const itemsChanged = JSON.stringify(currentItemsOrder) !== JSON.stringify(originalItemsOrder);
     const customerChanged = selectedCustomer?.id !== invoice.customerId;
-    const descriptionChanged = description !== invoice.description;
-    const discountChanged = overallDiscount !== invoice.discount;
+    const descriptionChanged = description !== (invoice.description || '');
+    const discountChanged = overallDiscount !== (invoice.discount || 0);
     const additionsChanged = additions !== (invoice.additions || 0);
-    const taxChanged = tax !== (invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
+    
+    const initialTaxPercent = invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - (invoice.discount || 0))) * 100 : 0;
+    const taxChanged = tax !== initialTaxPercent;
+
     const statusChanged = status !== invoice.status;
 
     if (itemsChanged || customerChanged || descriptionChanged || discountChanged || additionsChanged || taxChanged || statusChanged) {
@@ -141,7 +146,8 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   useEffect(() => {
     reloadProducts();
     reloadCustomers();
-  }, [reloadProducts, reloadCustomers]);
+    reloadCategories();
+  }, [reloadProducts, reloadCustomers, reloadCategories]);
   
   useEffect(() => {
     if (isEditMode && invoice && customerList.length > 0 && !selectedCustomer) {
@@ -167,11 +173,42 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
 
 
+  const { groupedCategories, categoryMap } = useMemo(() => {
+    const grouped: Record<string, Category[]> = {};
+    const map = new Map<string, Category>();
+
+    categories.forEach(category => {
+      map.set(category.id, category);
+      if (!category.parentId) {
+        if (!grouped[category.storeId]) {
+          grouped[category.storeId] = [];
+        }
+        grouped[category.storeId].push(category);
+      }
+    });
+
+    return { groupedCategories: grouped, categoryMap: map };
+  }, [categories]);
+
   const filteredProducts = useMemo(() => {
-    return products
-      .filter(p => selectedCategory === 'all' || p.categoryId === selectedCategory)
-      .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
-  }, [products, productSearch, selectedCategory]);
+    let intermediateProducts = products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+
+    if (selectedCategory === 'all') {
+      return intermediateProducts;
+    }
+
+    const category = categoryMap.get(selectedCategory);
+    if (!category) return intermediateProducts;
+    
+    if (category.parentId) { // It's a subcategory
+        return intermediateProducts.filter(p => p.subCategoryId === selectedCategory);
+    } else { // It's a main category
+        const subCategoryIds = categories.filter(c => c.parentId === selectedCategory).map(c => c.id);
+        return intermediateProducts.filter(p => subCategoryIds.includes(p.subCategoryId));
+    }
+
+  }, [products, productSearch, selectedCategory, categories, categoryMap]);
+
 
   const filteredCustomers = useMemo(() => {
     const trimmedSearch = customerSearch.trim();
@@ -212,14 +249,14 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     [items]
   );
 
-  const totalBeforeTax = subtotal - overallDiscount;
+  const totalBeforeTax = subtotal - (overallDiscount || 0);
 
   const taxAmount = useMemo(() => {
-    return totalBeforeTax * (tax / 100);
+    return totalBeforeTax * ((tax || 0) / 100);
   }, [totalBeforeTax, tax]);
 
   const total = useMemo(() => {
-    return totalBeforeTax + taxAmount + additions;
+    return totalBeforeTax + taxAmount + (additions || 0);
   }, [totalBeforeTax, taxAmount, additions]);
 
   const handleAddProduct = (product: Product) => {
@@ -311,7 +348,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     }));
     
     const finalSubtotal = invoiceItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
-    const finalTotal = finalSubtotal - overallDiscount + (totalBeforeTax * (tax/100)) + additions;
+    const finalTotal = finalSubtotal - (overallDiscount || 0) + (totalBeforeTax * ((tax || 0)/100)) + (additions || 0);
 
     let processedInvoiceId = '';
 
@@ -334,8 +371,8 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
           toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
     } else {
-        const firstItemCategory = items[0].product.categoryId ? getRootParent(items[0].product.categoryId) : undefined;
-        const storeName = firstItemCategory?.storeName || 'Store';
+        const firstItemCategory = items[0].product.subCategoryId ? getRootParent(items[0].product.subCategoryId) : undefined;
+        const storeName = firstItemCategory?.name || 'Store';
         const prefix = getStorePrefix(storeName);
 
         const newInvoice: Invoice = {
@@ -585,14 +622,22 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                         <SelectTrigger>
                             <SelectValue placeholder="انتخاب دسته‌بندی" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
-                            {categories.map((cat: Category) => (
-                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                            {Object.values(groupedCategories).flat().map(mainCategory => (
+                                <SelectGroup key={mainCategory.id}>
+                                    <SelectLabel>{mainCategory.name}</SelectLabel>
+                                    <SelectItem value={mainCategory.id}>همه محصولات {mainCategory.name}</SelectItem>
+                                    {categories.filter(sub => sub.parentId === mainCategory.id).map(subCategory => (
+                                        <SelectItem key={subCategory.id} value={subCategory.id}>
+                                            {subCategory.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
                             ))}
                         </SelectContent>
                     </Select>
@@ -735,5 +780,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </>
   );
 }
+
+    
 
     

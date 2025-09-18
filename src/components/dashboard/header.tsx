@@ -92,21 +92,24 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-      <div className={cn("relative ml-auto md:grow-0", !showSearch && 'hidden')}>
-        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="جستجو..."
-          className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      <div className="flex items-center gap-4 ml-4">
+      <div className="ml-auto flex items-center gap-4">
         <div className="hidden md:flex">
             <LiveClock />
         </div>
+        <div className={cn("relative md:grow-0", !showSearch && 'hidden')}>
+            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+            type="search"
+            placeholder="جستجو..."
+            className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
+      </div>
+
+
+      <div className="flex items-center gap-4">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button

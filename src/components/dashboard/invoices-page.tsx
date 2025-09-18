@@ -18,7 +18,11 @@ type View =
     | { type: 'form'; invoice?: Invoice }
     | { type: 'preview'; invoiceId: string };
 
-export default function InvoicesPage() {
+type InvoicesPageProps = {
+  initialInvoice?: Invoice;
+};
+
+export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   const [allInvoices, setAllInvoices, reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const { toast } = useToast();
@@ -30,11 +34,24 @@ export default function InvoicesPage() {
     reloadCustomers();
   }, []);
 
+  useEffect(() => {
+    if (initialInvoice) {
+      setView({ type: 'form', invoice: initialInvoice });
+    }
+  }, [initialInvoice]);
+
   const handleAddClick = () => setView({ type: 'form' });
   const handleEditClick = (invoice: Invoice) => setView({ type: 'form', invoice });
   const handlePreviewClick = (invoiceId: string) => setView({ type: 'preview', invoiceId });
 
-  const handleFormCancel = () => setView({ type: 'list' });
+  const handleFormCancel = () => {
+    // Clear initialInvoice state if we navigate away
+    if (initialInvoice) {
+      window.history.replaceState(null, '', window.location.pathname + '?tab=estimators');
+    }
+    setView({ type: 'list' });
+  };
+  
   const handleFormSaveAndPreview = (invoiceId: string) => {
       reloadInvoices();
       setView({ type: 'preview', invoiceId });

@@ -12,6 +12,7 @@ import {
 import { Box, Grid, MinusSquare, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
+import type { Invoice } from '@/lib/definitions';
 
 type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling';
 
@@ -39,7 +40,11 @@ const estimatorTypes = [
     }
 ];
 
-export default function EstimatorsPage() {
+type EstimatorsPageProps = {
+    onNavigate: (tab: 'invoices', data?: { invoice: Invoice }) => void;
+};
+
+export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [activeEstimator, setActiveEstimator] = useState<EstimatorType | null>(null);
 
   const handleCardClick = (estimatorId: EstimatorType) => {
@@ -64,7 +69,7 @@ export default function EstimatorsPage() {
                         بازگشت به لیست برآوردها
                     </Button>
                 </div>
-                <ActiveComponent />
+                <ActiveComponent onNavigate={onNavigate} />
             </div>
         );
     }

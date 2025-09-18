@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -19,6 +20,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { FilePlus } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { initialData } from '@/lib/data';
+import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
+import { useToast } from '@/hooks/use-toast';
+import { getStorePrefix } from '@/lib/utils';
 
 interface MaterialResult {
   material: string;
@@ -26,9 +34,17 @@ interface MaterialResult {
   unit: string;
 }
 
-export function GridCeilingForm() {
+type GridCeilingFormProps = {
+    onNavigate: (tab: 'invoices', data: { invoice: Invoice }) => void;
+};
+
+
+export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
+  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -41,41 +57,28 @@ export function GridCeilingForm() {
     const perimeter = (l + w) * 2;
     const area = l * w;
     
-    // Ensure length is always the longer side for calculation consistency
     const longSide = Math.max(l, w);
     const shortSide = Math.min(l, w);
 
-    // 1. نبشی L24 (دور کار)
-    const lProfile = perimeter;
-
-    // 2. سپری T360 (پروفیل اصلی)
+    const lProfilePieces = Math.ceil(perimeter / 3);
     const t360Count = Math.ceil(shortSide / 1.2);
     const t360TotalLength = t360Count * longSide;
     const t360Pieces = Math.ceil(t360TotalLength / 3.6);
-
-    // 3. سپری T120
     const t120Count = Math.ceil(longSide / 0.6) - 1;
     const t120TotalLength = t120Count * shortSide;
     const t120Pieces = Math.ceil(t120TotalLength / 1.2);
-
-    // 4. سپری T60
-    const t60TotalLength = t360TotalLength; // Same length as T360 runs
-    const t60Pieces = Math.ceil(t60TotalLength / 0.6);
-
-    // 5. تایل 60x60
-    const tiles = Math.ceil(area / 0.36);
-
-    // 6. آویز (میخ و فنر)
-    const hangers = Math.ceil(area * 1); // Approximation: 1 hanger per sq meter
+    const t60Pieces = Math.ceil(area / 0.72);
+    const tiles = Math.ceil((area / 0.36) * 1.03);
+    const hangers = Math.ceil(area * 0.8);
 
     return [
-      { material: 'نبشی L24 (دور کار)', quantity: parseFloat(lProfile.toFixed(2)), unit: 'متر' },
-      { material: 'سپری T360 (پروفیل اصلی)', quantity: t360Pieces, unit: 'شاخه ۳.۶ متری' },
-      { material: 'سپری T120', quantity: t120Pieces, unit: 'شاخه ۱.۲ متری' },
-      { material: 'سپری T60', quantity: t60Pieces, unit: 'شاخه ۰.۶ متری' },
-      { material: 'تایل ۶۰x۶۰', quantity: tiles, unit: 'عدد' },
-      { material: 'آویز (میخ و فنر)', quantity: hangers, unit: 'عدد' },
-    ];
+      { material: 'نبشی L24', quantity: lProfilePieces, unit: 'شاخه' },
+      { material: 'سپری T360', quantity: t360Pieces, unit: 'شاخه' },
+      { material: 'سپری T120', quantity: t120Pieces, unit: 'شاخه' },
+      { material: 'سپری T60', quantity: t60Pieces, unit: 'شاخه' },
+      { material: 'تایل', quantity: tiles, unit: 'عدد' },
+      { material: 'آویز', quantity: hangers, unit: 'عدد' },
+    ].filter(item => item.quantity > 0);
   }, [length, width]);
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +89,72 @@ export function GridCeilingForm() {
       const num = parseFloat(value);
       setter(isNaN(num) ? '' : num);
     }
+  };
+
+  const handleCreateInvoice = () => {
+    if (results.length === 0) {
+      toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا ابعاد را وارد کرده و مصالح را محاسبه کنید.'});
+      return;
+    }
+
+    const invoiceItems: InvoiceItem[] = [];
+    let notFoundProducts: string[] = [];
+
+    results.forEach(item => {
+      const product = products.find(p => p.name.includes(item.material));
+      if (product) {
+        invoiceItems.push({
+          productId: product.id,
+          productName: product.name,
+          quantity: item.quantity,
+          unit: product.unit,
+          unitPrice: product.price,
+          totalPrice: item.quantity * product.price,
+        });
+      } else {
+        notFoundProducts.push(item.material);
+      }
+    });
+
+    if (notFoundProducts.length > 0) {
+      toast({
+        variant: 'destructive',
+        title: 'برخی محصولات یافت نشدند',
+        description: `محصولات زیر در لیست شما یافت نشدند و به فاکتور اضافه نشدند: ${notFoundProducts.join(', ')}`,
+      });
+    }
+
+    if (invoiceItems.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'هیچ محصولی به فاکتور اضافه نشد',
+        description: 'هیچ‌کدام از مصالح محاسبه شده در لیست محصولات شما یافت نشد.',
+      });
+      return;
+    }
+
+    const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
+
+    const newInvoice: Invoice = {
+      id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+      invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
+      customerId: '', // To be selected in editor
+      customerName: '',
+      customerEmail: '',
+      date: new Date().toISOString(),
+      status: 'Pending',
+      items: invoiceItems,
+      subtotal: subtotal,
+      discount: 0,
+      additions: 0,
+      tax: 0,
+      total: subtotal,
+      description: 'ایجاد شده از برآورد مصالح سقف مشبک',
+    };
+    
+    setInvoices(prev => [newInvoice, ...prev]);
+    toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
+    onNavigate('invoices', { invoice: newInvoice });
   };
 
   return (
@@ -143,12 +212,20 @@ export function GridCeilingForm() {
                 ))}
               </TableBody>
             </Table>
-             <p className="text-xs text-muted-foreground mt-4">
-                توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد. همیشه مقداری مصالح اضافی تهیه فرمایید.
-            </p>
           </div>
         )}
       </CardContent>
+      {results.length > 0 && (
+        <CardFooter className="flex-col items-stretch gap-4">
+             <p className="text-xs text-muted-foreground">
+                توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد. همیشه مقداری مصالح اضافی تهیه فرمایید. این محاسبه برای سازه گذاری ۱۲۰ * ۶۰ می باشد.
+            </p>
+            <Button onClick={handleCreateInvoice} size="lg" className="w-full">
+                <FilePlus className="ml-2 h-5 w-5" />
+                ایجاد فاکتور از این لیست
+            </Button>
+        </CardFooter>
+       )}
     </Card>
   );
 }

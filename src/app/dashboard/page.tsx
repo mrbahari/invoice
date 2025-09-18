@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import CustomersPage from '@/components/dashboard/customers-page';
 import ProductsPage from '@/components/dashboard/products-page';
 import CategoriesPage from '@/components/dashboard/categories-page';
@@ -11,6 +11,7 @@ import SettingsPage from '@/components/dashboard/settings-page';
 import EstimatorsPage from '@/components/dashboard/estimators-page';
 import DashboardHomePageContent from '@/components/dashboard/home-page';
 import { redirect, useSearchParams, useRouter } from 'next/navigation';
+import type { Invoice } from '@/lib/definitions';
 
 
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
@@ -19,14 +20,21 @@ export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
+  
+  // A state to hold data for navigation, e.g., an invoice to edit
+  const [navigationData, setNavigationData] = useState<any>(null);
 
+  const handleNavigation = (tab: DashboardTab, data?: any) => {
+    setNavigationData(data);
+    router.push(`/dashboard?tab=${tab}`, { scroll: false });
+  };
   
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardHomePageContent />;
       case 'invoices':
-        return <InvoicesPage />;
+        return <InvoicesPage initialInvoice={navigationData?.invoice} />;
       case 'products':
         return <ProductsPage />;
       case 'customers':
@@ -34,7 +42,7 @@ export default function DashboardPage() {
       case 'categories':
         return <CategoriesPage />;
       case 'estimators':
-        return <EstimatorsPage />;
+        return <EstimatorsPage onNavigate={handleNavigation} />;
       case 'reports':
         return <ReportsPage />;
       case 'settings':

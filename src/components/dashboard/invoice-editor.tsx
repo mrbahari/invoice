@@ -59,18 +59,9 @@ type InvoiceEditorProps = {
     onSaveAndPreview: (invoiceId: string) => void;
 }
 
-const useIsClient = () => {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  return isClient;
-};
-
 export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
-  const isClient = useIsClient();
 
   const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
@@ -90,12 +81,17 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Track changes to mark the form as dirty
   useEffect(() => {
     if (!isEditMode) {
@@ -395,24 +391,25 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
           <CardContent className="grid gap-6">
             
             <div className="border rounded-lg overflow-hidden">
-              <DragDropContext onDragEnd={handleDragEnd}>
-                  <Table>
-                      <TableHeader>
-                          <TableRow>
-                              <TableHead className="w-[50px]"></TableHead>
-                              <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
-                              <TableHead>نام کالا</TableHead>
-                              <TableHead className="w-[110px]">واحد</TableHead>
-                              <TableHead className="w-[100px] text-center">مقدار</TableHead>
-                              <TableHead className="w-[120px] text-left">قیمت</TableHead>
-                              <TableHead className="w-[120px] text-left">جمع کل</TableHead>
-                              <TableHead className="w-[50px]"></TableHead>
-                          </TableRow>
-                      </TableHeader>
-                      <Droppable droppableId="invoiceItems">
-                          {(provided) => (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]"></TableHead>
+                            <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
+                            <TableHead>نام کالا</TableHead>
+                            <TableHead className="w-[110px]">واحد</TableHead>
+                            <TableHead className="w-[100px] text-center">مقدار</TableHead>
+                            <TableHead className="w-[120px] text-left">قیمت</TableHead>
+                            <TableHead className="w-[120px] text-left">جمع کل</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    {isClient && (
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="invoiceItems">
+                            {(provided) => (
                             <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                                {isClient && items.map((item, index) => {
+                                {items.map((item, index) => {
                                     const availableUnits = [item.product.unit];
                                     if (item.product.subUnit) {
                                         availableUnits.push(item.product.subUnit);
@@ -476,25 +473,18 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                                     )
                                 })}
                                 {provided.placeholder}
-                                {!isClient && items.length > 0 && (
-                                    <TableRow>
-                                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                                          در حال بارگذاری آیتم‌ها...
-                                      </TableCell>
-                                    </TableRow>
-                                )}
-                                {items.length === 0 && (
-                                    <TableRow>
-                                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                                          برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
-                                      </TableCell>
-                                    </TableRow>
-                                )}
                             </TableBody>
-                          )}
-                      </Droppable>
-                  </Table>
-              </DragDropContext>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
+                    )}
+                </Table>
+                 {!isClient && (
+                    <div className="text-center text-muted-foreground py-8">در حال بارگذاری آیتم‌ها...</div>
+                )}
+                 {isClient && items.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.</div>
+                )}
             </div>
 
             <div className="grid gap-2">

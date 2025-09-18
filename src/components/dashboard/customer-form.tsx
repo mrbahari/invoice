@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -58,6 +58,12 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
   const [isProcessing, setIsProcessing] = useState(false);
   
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
   const validateForm = () => {
     if (!phone) {
       toast({

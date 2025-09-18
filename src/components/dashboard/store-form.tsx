@@ -70,6 +70,12 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
+  useEffect(() => {
     if (store) {
       setStoreCategories(categories.filter(c => c.storeId === store.id));
     }

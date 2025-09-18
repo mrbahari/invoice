@@ -86,6 +86,12 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   });
   
   
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, []);
+
     // Effect to track form changes
   useEffect(() => {
     if (!isEditMode) {

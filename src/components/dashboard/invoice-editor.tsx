@@ -100,6 +100,12 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
   // Track changes to mark the form as dirty
   useEffect(() => {
     if (!isEditMode) {

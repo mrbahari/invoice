@@ -46,6 +46,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { DragDropContext, Droppable, Draggable, type DropResult } from 'react-beautiful-dnd';
 
+const useIsClient = () => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  return isClient;
+};
 
 type InvoiceItemState = {
   product: Product;
@@ -62,6 +69,7 @@ type InvoiceEditorProps = {
 export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
+  const isClient = useIsClient();
 
   const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
@@ -383,6 +391,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             </div>
           </CardHeader>
           <CardContent className="grid gap-6">
+            {isClient && (
             <DragDropContext onDragEnd={handleDragEnd}>
                 <Table>
                 <TableHeader>
@@ -473,6 +482,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 </Droppable>
                 </Table>
             </DragDropContext>
+            )}
             <div className="grid gap-2">
                 <div className="flex justify-between items-center">
                     <Label htmlFor="description">توضیحات</Label>
@@ -690,3 +700,5 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
   );
 }
+
+    

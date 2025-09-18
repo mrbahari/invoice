@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import {
   Card,
   CardContent,
@@ -83,46 +83,62 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   });
   
   const formatNumber = (num: number | ''): string => {
-    if (num === '' || isNaN(Number(num))) return '';
+    if (num === '' || num === null || isNaN(Number(num))) return '';
     return new Intl.NumberFormat('fa-IR').format(Number(num));
   };
   
   const parseFormattedNumber = (str: string): number | '' => {
     if (!str) return '';
-    // This regex handles both English and Persian digits and removes any non-digit characters.
     const numericString = str.replace(/[^۰-۹0-9]/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString());
     const number = parseInt(numericString, 10);
     return isNaN(number) ? '' : number;
   };
   
   
+  // Calculate sub-unit price from main price
   useEffect(() => {
     const mainPriceNum = Number(price);
     const subUnitQtyNum = Number(subUnitQuantity);
 
     if (mainPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
       const calculatedSubPrice = Math.round(mainPriceNum / subUnitQtyNum);
-      setSubUnitPrice(calculatedSubPrice);
-      setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
-    } else {
+      if (calculatedSubPrice !== subUnitPrice) {
+        setSubUnitPrice(calculatedSubPrice);
+        setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
+      }
+    } else if (!subUnit) {
        setSubUnitPrice('');
        setDisplaySubUnitPrice('');
     }
   }, [price, subUnitQuantity, subUnit]);
+
+  // Calculate main price from sub-unit price
+  useEffect(() => {
+    const subPriceNum = Number(subUnitPrice);
+    const subUnitQtyNum = Number(subUnitQuantity);
+
+    if (subPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
+        const calculatedMainPrice = Math.round(subPriceNum * subUnitQtyNum);
+        if (calculatedMainPrice !== price) {
+            setPrice(calculatedMainPrice);
+            setDisplayPrice(formatNumber(calculatedMainPrice));
+        }
+    }
+  }, [subUnitPrice, subUnitQuantity, subUnit]);
 
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setPrice(numericValue);
-    setDisplayPrice(formatNumber(numericValue));
+    setDisplayPrice(value);
   };
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setSubUnitPrice(numericValue);
-    setDisplaySubUnitPrice(formatNumber(numericValue));
+    setDisplaySubUnitPrice(value);
   };
   
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -415,12 +431,24 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                     </Button>
                                 </div>
-                                <Input id="price" value={displayPrice} onChange={handlePriceChange} required />
+                                <Input 
+                                  id="price" 
+                                  value={displayPrice} 
+                                  onChange={handlePriceChange} 
+                                  onBlur={(e) => setDisplayPrice(formatNumber(price))}
+                                  required 
+                                />
                             </div>
                             
                             <div className="grid gap-3">
                                 <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
-                                <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} disabled={!showSubUnitFields} />
+                                <Input 
+                                  id="sub-unit-price" 
+                                  value={displaySubUnitPrice} 
+                                  onChange={handleSubUnitPriceChange}
+                                  onBlur={(e) => setDisplaySubUnitPrice(formatNumber(subUnitPrice))}
+                                  disabled={!showSubUnitFields} 
+                                />
                             </div>
                         </div>
                     </CardContent>

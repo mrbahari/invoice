@@ -16,6 +16,7 @@ import {
   Search,
   LogOut,
   Sparkles,
+  Calculator,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -63,6 +64,7 @@ const tabToNameMapping: Record<DashboardTab, string> = {
     products: 'محصولات',
     customers: 'مشتریان',
     categories: 'فروشگاه‌ها',
+    estimators: 'برآورد مصالح',
     reports: 'گزارشات',
     settings: 'تنظیمات',
 };
@@ -73,6 +75,7 @@ const mobileNavItems: { tab: DashboardTab; icon: React.ElementType; label: strin
     { tab: 'products', icon: Package, label: 'محصولات' },
     { tab: 'customers', icon: Users, label: 'مشتریان' },
     { tab: 'categories', icon: Shapes, label: 'فروشگاه‌ها' },
+    { tab: 'estimators', icon: Calculator, label: 'برآورد مصالح' },
     { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];
 

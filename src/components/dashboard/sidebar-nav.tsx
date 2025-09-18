@@ -10,6 +10,7 @@ import {
   FileText,
   Shapes,
   Package2,
+  Calculator,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -26,6 +27,7 @@ const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] 
   { tab: 'products', icon: Package, label: 'محصولات' },
   { tab: 'customers', icon: Users, label: 'مشتریان' },
   { tab: 'categories', icon: Shapes, label: 'فروشگاه‌ها' },
+  { tab: 'estimators', icon: Calculator, label: 'برآورد مصالح' },
   { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];
 

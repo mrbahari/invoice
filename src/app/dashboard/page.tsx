@@ -8,11 +8,12 @@ import CategoriesPage from '@/components/dashboard/categories-page';
 import InvoicesPage from '@/components/dashboard/invoices-page';
 import ReportsPage from '@/components/dashboard/reports-page';
 import SettingsPage from '@/components/dashboard/settings-page';
+import EstimatorsPage from '@/components/dashboard/estimators-page';
 import DashboardHomePageContent from '@/components/dashboard/home-page';
 import { redirect, useSearchParams, useRouter } from 'next/navigation';
 
 
-export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings';
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function DashboardPage() {
         return <CustomersPage />;
       case 'categories':
         return <CategoriesPage />;
+      case 'estimators':
+        return <EstimatorsPage />;
       case 'reports':
         return <ReportsPage />;
       case 'settings':

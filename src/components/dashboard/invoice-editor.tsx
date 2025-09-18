@@ -690,5 +690,3 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
   );
 }
-
-    

@@ -9,6 +9,7 @@ import { Header } from '@/components/dashboard/header';
 import { useAuth } from '@/components/auth/auth-provider';
 import { SearchProvider } from '@/components/dashboard/search-provider';
 import type { DashboardTab } from './page';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -27,7 +28,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return <div className="flex h-screen items-center justify-center">در حال بارگذاری...</div>;
+    return <div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>;
   }
 
   return (

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, getRedirectResult, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
+import { LoadingSpinner } from '../ui/loading-spinner';
 
 
 type AuthContextType = {
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = { user, signInWithGoogle, signUpWithEmail, signInWithEmail, resetPassword, logout, loading };
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">در حال بارگذاری...</div>;
+    return <div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>;
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

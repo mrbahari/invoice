@@ -239,11 +239,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                         <td className="border border-black p-1 text-center align-middle">جمع کل</td>
                         <td className="border border-black p-1 text-center font-mono align-middle">{formatCurrency(invoice.total)}</td>
                     </tr>
-                    <tr>
-                        <td colSpan={6} className="border border-black p-2 text-sm text-center align-middle">
-                            مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال
-                        </td>
-                    </tr>
                   </tfoot>
                 </table>
               </div>
@@ -251,6 +246,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
               {/* Summary and Signatures */}
               
               <div className="border border-black mt-2 p-2 text-sm">
+                  <p className="font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
               </div>

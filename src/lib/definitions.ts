@@ -15,7 +15,6 @@ export type Store = {
   address?: string;
   phone?: string;
   logoUrl?: string;
-  themeColor?: string;
   // Bank details for the store
   bankAccountHolder?: string;
   bankName?: string;
@@ -95,3 +94,5 @@ export type DailySales = {
 };
 
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
+
+    

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, ChangeEvent, useState } from 'react';
+import { useRef, ChangeEvent, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -33,6 +33,15 @@ import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+const colorThemes = [
+    { name: 'Blue', value: '248 82% 50%', ring: '248 82% 50%' },
+    { name: 'Rose', value: '340 82% 50%', ring: '340 82% 50%' },
+    { name: 'Green', value: '142 64% 42%', ring: '142 64% 42%' },
+    { name: 'Orange', value: '25 95% 53%', ring: '25 95% 53%' },
+    { name: 'Purple', value: '262 84% 58%', ring: '262 84% 58%' },
+];
+
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,8 +52,18 @@ export default function SettingsPage() {
   const [products, setProducts] = useLocalStorage<Product[]>('products', []);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
   const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
+  const [activeColor, setActiveColor] = useLocalStorage('app-theme-color', colorThemes[0].value);
   
   const [newUnitName, setNewUnitName] = useState('');
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary-hsl', activeColor);
+    document.documentElement.style.setProperty('--ring-hsl', activeColor);
+  }, [activeColor]);
+
+  const handleThemeColorChange = (colorValue: string) => {
+    setActiveColor(colorValue);
+  };
 
 
   const handleAddUnit = () => {
@@ -219,18 +238,24 @@ export default function SettingsPage() {
             </CardContent>
         </Card>
         
-        <Card className="animate-fade-in-up opacity-50 cursor-not-allowed" style={{ animationDelay: '0.2s' }}>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <CardHeader>
                 <CardTitle>تم رنگی</CardTitle>
                 <CardDescription>
-                    رنگ اصلی برنامه را انتخاب کنید. این گزینه غیرفعال است زیرا رنگ تم اکنون از طریق تنظیمات هر فروشگاه کنترل می‌شود.
+                    رنگ اصلی برنامه را انتخاب کنید.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-5 gap-2">
-                    {['#2563eb', '#db2777', '#16a34a', '#f97316', '#6d28d9'].map(color => (
-                        <Button key={color} variant="outline" size="icon" className="h-12 w-12 rounded-lg disabled:opacity-50" disabled>
-                            <Palette className="h-5 w-5" style={{ color }} />
+                    {colorThemes.map(color => (
+                        <Button 
+                            key={color.name}
+                            variant={activeColor === color.value ? 'default' : 'outline'}
+                            size="icon" 
+                            className="h-12 w-12 rounded-lg"
+                            onClick={() => handleThemeColorChange(color.value)}
+                        >
+                            <span className="h-6 w-6 rounded-full" style={{ backgroundColor: `hsl(${color.value})` }}></span>
                         </Button>
                     ))}
                 </div>
@@ -371,3 +396,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

@@ -20,7 +20,6 @@ import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save } from 'lucide-rea
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Separator } from '../ui/separator';
-import { Textarea } from '../ui/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +51,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const [address, setAddress] = useState(store?.address || '');
   const [phone, setPhone] = useState(store?.phone || '');
   const [logoUrl, setLogoUrl] = useState<string | null>(store?.logoUrl || null);
-  const [themeColor, setThemeColor] = useState(store?.themeColor || '#2563eb');
   
   const [bankAccountHolder, setBankAccountHolder] = useState(store?.bankAccountHolder || '');
   const [bankName, setBankName] = useState(store?.bankName || '');
@@ -109,7 +107,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       address,
       phone,
       logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-      themeColor,
       bankAccountHolder,
       bankName,
       bankAccountNumber,
@@ -216,7 +213,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                             {isEditMode ? `ویرایش فروشگاه: ${store?.name}` : 'افزودن فروشگاه جدید'}
                         </CardTitle>
                         <CardDescription>
-                           اطلاعات اصلی، حساب بانکی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
+                           اطلاعات اصلی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
                         </CardDescription>
                     </div>
                     <Button type="button" variant="outline" onClick={onCancel}>
@@ -264,14 +261,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                               </div> 
                           </div>
                         </div>
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="theme-color">رنگ تم فروشگاه</Label>
-                        <div className="relative">
-                            <Input id="theme-color" type="text" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className="pr-12" />
-                            <Input type="color" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-1 cursor-pointer" />
-                        </div>
-                         <p className="text-xs text-muted-foreground">رنگ اصلی برنامه هنگام کار با این فروشگاه.</p>
                     </div>
                 </div>
             </CardContent>
@@ -417,3 +406,5 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </div>
   );
 }
+
+    

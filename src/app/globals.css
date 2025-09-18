@@ -5,13 +5,18 @@
 
 @layer base {
   :root {
-    --background: 220 14.3% 95.9%; /* Light Gray */
-    --foreground: 224 71.4% 4.1%;
+    --background-hsl: 220 14.3% 95.9%; /* Light Gray HSL */
+    --foreground-hsl: 224 71.4% 4.1%;
+    --primary-hsl: 248 82% 50%; /* Default Blue HSL */
+    --ring-hsl: 248 82% 50%; /* Default Blue HSL for ring */
+    
+    --background: hsl(var(--background-hsl));
+    --foreground: hsl(var(--foreground-hsl));
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 248 82% 50%; /* New Purple/Blue */
+    --primary: hsl(var(--primary-hsl));
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14.3% 95.9%;
     --secondary-foreground: 224 71.4% 4.1%;
@@ -23,9 +28,9 @@
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 248 82% 50%;
+    --ring: hsl(var(--ring-hsl));
     --radius: 0.5rem;
-    --chart-1: 248 82% 50%; /* Primary color for paid */
+    --chart-1: hsl(var(--primary-hsl)); /* Primary color for paid */
     --chart-2: 38 92% 50%;  /* Orange for unpaid */
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
@@ -41,13 +46,17 @@
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
+    --background-hsl: 224 71.4% 4.1%;
+    --foreground-hsl: 210 20% 98%;
+    /* The primary-hsl and ring-hsl will be overridden by JS if a theme is set */
+    
+    --background: hsl(var(--background-hsl));
+    --foreground: hsl(var(--foreground-hsl));
     --card: 224 71.4% 4.1%;
     --card-foreground: 210 20% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 248 82% 55%;
+    --primary: hsl(var(--primary-hsl));
     --primary-foreground: 224 71.4% 4.1%;
     --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 20% 98%;
@@ -59,8 +68,8 @@
     --destructive-foreground: 0 0% 98%;
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 248 82% 55%;
-    --chart-1: 248 82% 55%; /* Primary for paid in dark */
+    --ring: hsl(var(--ring-hsl));
+    --chart-1: hsl(var(--primary-hsl)); /* Primary for paid in dark */
     --chart-2: 38 92% 50%; /* Orange for unpaid in dark */
     --sidebar-background: 240 10% 3.9%;
     --sidebar-foreground: 0 0% 98%;
@@ -124,3 +133,5 @@
         animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 }
+
+    

@@ -45,10 +45,6 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   const handlePreviewClick = (invoiceId: string) => setView({ type: 'preview', invoiceId });
 
   const handleFormCancel = () => {
-    // Clear initialInvoice state if we navigate away
-    if (initialInvoice) {
-      window.history.replaceState(null, '', window.location.pathname + '?tab=estimators');
-    }
     setView({ type: 'list' });
   };
   

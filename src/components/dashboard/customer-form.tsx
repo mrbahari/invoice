@@ -34,9 +34,10 @@ import { Trash2, ArrowRight, Copy } from 'lucide-react';
 type CustomerFormProps = {
   customer?: Customer;
   onBack: () => void;
+  onDataChange: () => void;
 };
 
-export function CustomerForm({ customer, onBack }: CustomerFormProps) {
+export function CustomerForm({ customer, onBack, onDataChange }: CustomerFormProps) {
   const { toast } = useToast();
   const isEditMode = !!customer;
 
@@ -93,7 +94,8 @@ export function CustomerForm({ customer, onBack }: CustomerFormProps) {
           description: `مشتری "${name}" با موفقیت ایجاد شد.`,
         });
       }
-
+      
+      onDataChange();
       setIsProcessing(false);
       onBack();
     }, 1000);
@@ -112,6 +114,7 @@ export function CustomerForm({ customer, onBack }: CustomerFormProps) {
           description: `مشتری جدید "${name}" با موفقیت ایجاد شد.`,
         });
         
+        onDataChange();
         setIsProcessing(false);
         onBack();
     }, 1000);
@@ -127,6 +130,8 @@ export function CustomerForm({ customer, onBack }: CustomerFormProps) {
         title: 'مشتری حذف شد',
         description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
       });
+
+      onDataChange();
       setIsProcessing(false);
       onBack();
     }, 1000);

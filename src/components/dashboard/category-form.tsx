@@ -39,6 +39,7 @@ import {
 type CategoryFormProps = {
   category?: Category;
   onBack: () => void;
+  onDataChange: () => void;
 };
 
 const iconList = [
@@ -79,7 +80,7 @@ const colorPalette = [
     '#65a30d', // Lime 600
 ];
 
-export function CategoryForm({ category, onBack }: CategoryFormProps) {
+export function CategoryForm({ category, onBack, onDataChange }: CategoryFormProps) {
   const { toast } = useToast();
   const isEditMode = !!category;
 
@@ -178,6 +179,7 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
         });
       }
 
+      onDataChange();
       setIsProcessing(false);
       onBack();
     }, 1000);
@@ -213,6 +215,8 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
         title: 'دسته‌بندی حذف شد',
         description: `دسته‌بندی "${category.name}" با موفقیت حذف شد.`,
       });
+
+      onDataChange();
       setIsProcessing(false);
       onBack();
     }, 1000);

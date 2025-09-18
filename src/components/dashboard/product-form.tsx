@@ -47,11 +47,12 @@ type ProductFormProps = {
   product?: Product;
   categories: Category[];
   onBack: () => void;
+  onDataChange: () => void;
 };
 
 type AIFeature = 'description' | 'price' | 'image';
 
-export function ProductForm({ product, categories, onBack }: ProductFormProps) {
+export function ProductForm({ product, categories, onBack, onDataChange }: ProductFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const isEditMode = !!product;
@@ -287,8 +288,9 @@ export function ProductForm({ product, categories, onBack }: ProductFormProps) {
         });
       }
 
+      onDataChange();
       setIsProcessing(false);
-      onBack(); // Go back to the list view
+      onBack();
     }, 1000);
   };
   
@@ -305,6 +307,7 @@ export function ProductForm({ product, categories, onBack }: ProductFormProps) {
           description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
         });
         
+        onDataChange();
         setIsProcessing(false);
         onBack();
     }, 1000);
@@ -320,6 +323,8 @@ export function ProductForm({ product, categories, onBack }: ProductFormProps) {
             title: 'محصول حذف شد',
             description: `محصول "${product.name}" با موفقیت حذف شد.`,
         });
+
+        onDataChange();
         setIsProcessing(false);
         onBack();
     }, 1000);

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { File, PlusCircle, Trash2 } from 'lucide-react';
+import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,16 +36,21 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from '@/components/dashboard/customer-form';
 
 export default function CustomersPage() {
-  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [invoices, , reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | 'new' | null>(null);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
+
+  const handleDataChange = () => {
+    reloadCustomers();
+    reloadInvoices();
+  };
 
   const filteredCustomers = useMemo(() => {
     return customerList.filter(customer =>
@@ -82,18 +87,9 @@ export default function CustomersPage() {
     downloadCSV(filteredCustomers, 'customers.csv', headers);
   };
   
-  const handleDeleteCustomer = (customerId: string) => {
-    const customerToDelete = customerList.find(c => c.id === customerId);
-    setCustomerList(prev => prev.filter(c => c.id !== customerId));
-    toast({
-        title: 'مشتری حذف شد',
-        description: `مشتری "${customerToDelete?.name}" با موفقیت حذف شد.`,
-    });
-  };
-
   if (selectedCustomer) {
       const customerToEdit = selectedCustomer === 'new' ? undefined : selectedCustomer;
-      return <CustomerForm customer={customerToEdit} onBack={handleBackToList} />;
+      return <CustomerForm customer={customerToEdit} onBack={handleBackToList} onDataChange={handleDataChange} />;
   }
 
 

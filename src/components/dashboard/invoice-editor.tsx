@@ -56,9 +56,10 @@ type InvoiceEditorProps = {
     invoice?: Invoice;
     onBack: () => void;
     onSaveAndPreview: (invoiceId: string) => void;
+    onDataChange: () => void;
 }
 
-export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
@@ -274,6 +275,7 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
             toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
         }
 
+        onDataChange();
         setIsProcessing(false);
         if (navigateToPreview && processedInvoiceId) {
              onSaveAndPreview(processedInvoiceId);
@@ -293,6 +295,8 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
             title: 'فاکتور حذف شد',
             description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
         });
+
+        onDataChange();
         setIsProcessing(false);
         onBack();
     }, 1000);
@@ -599,5 +603,3 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview }: InvoiceEdit
     </div>
   );
 }
-
-    

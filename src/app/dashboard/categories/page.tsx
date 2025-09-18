@@ -41,11 +41,16 @@ import { useSearch } from '@/components/dashboard/search-provider';
 import { CategoryForm } from '@/components/dashboard/category-form';
 
 export default function CategoriesPage() {
-  const [categoryList, setCategoryList] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const [categoryList, setCategoryList, reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'new' | null>(null);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
+
+  const handleDataChange = () => {
+    reloadCategories();
+    reloadProducts();
+  };
 
   const categoriesById = useMemo(() => new Map(categoryList.map(c => [c.id, c])), [categoryList]);
   
@@ -143,7 +148,7 @@ export default function CategoriesPage() {
 
   if (selectedCategory) {
     const categoryToEdit = selectedCategory === 'new' ? undefined : selectedCategory;
-    return <CategoryForm category={categoryToEdit} onBack={handleBackToList} />;
+    return <CategoryForm category={categoryToEdit} onBack={handleBackToList} onDataChange={handleDataChange} />;
   }
 
 

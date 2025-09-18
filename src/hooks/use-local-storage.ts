@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 // To use it with Next.js or other SSR frameworks, ensure the component
 // using this hook is dynamically imported with `ssr: false`.
 
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
+export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void, () => void] {
     // A function to safely get the value from localStorage
     const readValue = useCallback((): T => {
         // Prevent build errors "window is not defined"
@@ -33,7 +33,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
     // State to store our value
     // Pass initial state function to useState so logic is only executed once
-    const [storedValue, setStoredValue] = useState<T>(readValue);
+    const [storedValue, setStoredValue] = useState<T>(initialValue);
 
     // Return a wrapped version of useState's setter function that ...
     // ... persists the new value to localStorage.
@@ -53,30 +53,35 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
             setStoredValue(valueToStore);
             // Save to local storage
             window.localStorage.setItem(key, JSON.stringify(valueToStore));
+            // Dispatch a storage event so other hooks in the same window can update
+            window.dispatchEvent(new StorageEvent('storage', { key }));
         } catch (error) {
             console.warn(`Error setting localStorage key “${key}”:`, error);
         }
     };
     
+    const reload = useCallback(() => {
+        setStoredValue(readValue());
+    }, [readValue]);
+    
     // Read the value from local storage on mount
     useEffect(() => {
-        setStoredValue(readValue());
+        reload();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Listen for changes to the local storage
+    // Listen for changes to the local storage from other tabs
     useEffect(() => {
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === key) {
-                setStoredValue(readValue());
+                reload();
             }
         };
 
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [key, reload]);
 
 
-    return [storedValue, setValue];
+    return [storedValue, setValue, reload];
 }

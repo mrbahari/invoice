@@ -34,13 +34,18 @@ import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from '@/components/dashboard/product-form';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
-  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [products, setProducts, reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | 'new' | null>(null);
   const { toast } = useToast();
   const router = useRouter();
   const { searchTerm } = useSearch();
+
+  const handleDataChange = () => {
+    reloadProducts();
+    reloadCategories();
+  };
 
   const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
 
@@ -140,7 +145,7 @@ export default function ProductsPage() {
 
   if (selectedProduct) {
       const productToEdit = selectedProduct === 'new' ? undefined : selectedProduct;
-      return <ProductForm product={productToEdit} categories={categories} onBack={handleBackToList} />;
+      return <ProductForm product={productToEdit} categories={categories} onBack={handleBackToList} onDataChange={handleDataChange} />;
   }
 
   return (

@@ -15,13 +15,18 @@ import { InvoiceEditor } from '@/components/dashboard/invoice-editor';
 import InvoicePreviewPage from './[id]/page';
 
 export default function InvoicesPage() {
-  const [allInvoices, setAllInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [allInvoices, setAllInvoices, reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | 'new' | null>(null);
   const [viewingInvoiceId, setViewingInvoiceId] = useState<string | null>(null);
+
+  const handleDataChange = () => {
+    reloadInvoices();
+    reloadCustomers();
+  };
 
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
     setAllInvoices(prev => 
@@ -33,6 +38,7 @@ export default function InvoicesPage() {
       title: 'وضعیت فاکتور به‌روزرسانی شد',
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status}" تغییر یافت.`,
     });
+    handleDataChange();
   };
   
   const handleDeleteInvoice = (invoiceId: string) => {
@@ -42,6 +48,7 @@ export default function InvoicesPage() {
       title: 'فاکتور حذف شد',
       description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
     });
+    handleDataChange();
   };
   
   const filteredInvoices = useMemo(() => {
@@ -84,6 +91,7 @@ export default function InvoicesPage() {
   };
   
   const handleSaveAndPreview = (invoiceId: string) => {
+    handleDataChange();
     setSelectedInvoice(null);
     setViewingInvoiceId(invoiceId);
   }
@@ -94,7 +102,7 @@ export default function InvoicesPage() {
 
   if (selectedInvoice) {
     const invoiceToEdit = selectedInvoice === 'new' ? undefined : selectedInvoice;
-    return <InvoiceEditor invoice={invoiceToEdit} onBack={handleBackToList} onSaveAndPreview={handleSaveAndPreview} />;
+    return <InvoiceEditor invoice={invoiceToEdit} onBack={handleBackToList} onSaveAndPreview={handleSaveAndPreview} onDataChange={handleDataChange} />;
   }
 
   return (

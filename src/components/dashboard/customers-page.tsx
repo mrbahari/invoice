@@ -19,15 +19,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { initialData } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Customer, Invoice } from '@/lib/definitions';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from './customer-form';
 import CustomerDetailPage from './customer-detail-page';
+import { useCollection } from '@/hooks/use-collection';
 
 type View = 
     | { type: 'list' }
@@ -35,16 +34,10 @@ type View =
     | { type: 'detail'; customerId: string };
 
 export default function CustomersPage() {
-  const [customerList, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [invoices, , reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const { data: customerList, loading: customersLoading } = useCollection<Customer>('customers');
+  const { data: invoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
   const { searchTerm } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
-
-
-  useEffect(() => {
-    reloadCustomers();
-    reloadInvoices();
-  }, []);
   
   const handleAddClick = () => setView({ type: 'form' });
   const handleEditClick = (customer: Customer) => setView({ type: 'form', customer });
@@ -52,7 +45,6 @@ export default function CustomersPage() {
   
   const handleFormSuccess = () => {
     setView({ type: 'list' });
-    reloadCustomers();
   };
   const handleFormCancel = () => setView({ type: 'list' });
 

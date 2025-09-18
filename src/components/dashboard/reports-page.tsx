@@ -33,6 +33,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { useCollection } from '@/hooks/use-collection';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -42,9 +43,10 @@ type ReportsPageProps = {
 
 
 export default function ReportsPage({ onNavigate }: ReportsPageProps) {
-  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [allProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const { data: allInvoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
+  const { data: allCustomers, loading: customersLoading } = useCollection<Customer>('customers');
+  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+
   const [period, setPeriod] = useState<Period>('all');
 
   const { 
@@ -159,7 +161,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
-       <div className="flex items-center justify-between">
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">گزارشات</h1>
                 <p className="text-muted-foreground">

@@ -31,8 +31,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
-import { initialData } from '@/lib/data';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +43,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
+import { useCollection } from '@/hooks/use-collection';
+import { addDoc, deleteDoc, updateDoc } from '@/lib/firestore-service';
 
 
 type InvoiceItemState = {
@@ -73,11 +73,12 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
-  const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
-  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
+  const { data: customerList, loading: customerLoading, add: addCustomer } = useCollection<Customer>('customers');
+  const { data: products, loading: productsLoading } = useCollection<Product>('products');
+  const { data: categories, loading: categoriesLoading } = useCollection<Category>('categories');
+  const { data: invoices, loading: invoicesLoading, add: addInvoice, update: updateInvoice, remove: removeInvoice } = useCollection<Invoice>('invoices');
+  const { data: unitsOfMeasurement, loading: unitsLoading } = useCollection<UnitOfMeasurement>('units');
+  
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   
@@ -138,13 +139,6 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
       setIsDirty(false);
     }
   }, [items, selectedCustomer, description, overallDiscount, additions, tax, status, invoice, isEditMode]);
-
-
-  useEffect(() => {
-    reloadProducts();
-    reloadCustomers();
-    reloadCategories();
-  }, [reloadProducts, reloadCustomers, reloadCategories]);
   
   useEffect(() => {
     if (isEditMode && invoice && customerList.length > 0 && !selectedCustomer) {
@@ -221,20 +215,21 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
       return item.product.price;
   };
 
-  const handleAddNewCustomer = () => {
+  const handleAddNewCustomer = async () => {
     const customerName = customerSearch.trim() || `مشتری جدید ${Math.floor(Math.random() * 1000)}`;
-    const newCustomer: Customer = {
-        id: `cust-${Math.random().toString(36).substr(2, 9)}`,
+    const newCustomerData: Omit<Customer, 'id'> = {
         name: customerName,
         email: 'ایمیل ثبت نشده',
         phone: 'شماره ثبت نشده',
         address: 'آدرس ثبت نشده',
         purchaseHistory: 'مشتری جدید',
     };
-    setCustomerList(prev => [newCustomer, ...prev]);
-    setSelectedCustomer(newCustomer);
-    setCustomerSearch('');
-    toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
+    const newCustomer = await addCustomer(newCustomerData);
+    if (newCustomer) {
+      setSelectedCustomer({ id: newCustomer.id, ...newCustomerData });
+      setCustomerSearch('');
+      toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
+    }
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
@@ -324,7 +319,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
       handleProcessInvoice(true);
   }
 
-  const handleProcessInvoice = (navigateToPreview: boolean = false) => {
+  const handleProcessInvoice = async (navigateToPreview: boolean = false) => {
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
       return;
@@ -352,8 +347,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
     if (isEditMode && invoice) {
         processedInvoiceId = invoice.id;
-        const updatedInvoice: Invoice = {
-            ...invoice,
+        const updatedInvoice: Omit<Invoice, 'id'> = {
             customerId: selectedCustomer.id,
             customerName: selectedCustomer.name,
             customerEmail: selectedCustomer.email,
@@ -365,16 +359,17 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             total: finalTotal,
             description: description || 'فاکتور ویرایش شده',
             status,
+            invoiceNumber: invoice.invoiceNumber,
+            date: invoice.date
         };
-        setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
-          toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
+        await updateInvoice(invoice.id, updatedInvoice);
+        toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
     } else {
         const firstItemCategory = items[0].product.subCategoryId ? getRootParent(items[0].product.subCategoryId) : undefined;
         const storeName = firstItemCategory?.name || 'Store';
         const prefix = getStorePrefix(storeName);
 
-        const newInvoice: Invoice = {
-            id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+        const newInvoiceData: Omit<Invoice, 'id'> = {
             invoiceNumber: `${prefix}-${(invoices.length + 1546).toString().padStart(3, '0')}`,
             customerId: selectedCustomer.id,
             customerName: selectedCustomer.name,
@@ -389,9 +384,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             total: finalTotal,
             description: description || 'فاکتور ایجاد شده',
         };
-        processedInvoiceId = newInvoice.id;
-        setInvoices(prev => [newInvoice, ...prev]);
-        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
+        const newInvoice = await addInvoice(newInvoiceData);
+        if (newInvoice) {
+            processedInvoiceId = newInvoice.id;
+            toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoiceData.invoiceNumber} ایجاد شد.` });
+        }
     }
 
     setIsProcessing(false);
@@ -402,10 +399,9 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     }
   };
   
-  const handleDeleteInvoice = () => {
+  const handleDeleteInvoice = async () => {
     if (!invoice) return;
-
-    setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
+    await removeInvoice(invoice.id);
     toast({
         title: 'فاکتور حذف شد',
         description: `فاکتور شماره "${invoice?.invoiceNumber}" با موفقیت حذف شد.`,
@@ -421,9 +417,9 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card className="animate-fade-in-up">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
+                <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                 <CardDescription>
                     اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
                 </CardDescription>
@@ -431,7 +427,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                <div className='flex items-center gap-2'>
                   <Button type="button" variant="outline" onClick={onCancel}>
                     <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت به لیست
+                    بازگشت
                   </Button>
                   <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1">
                     <Eye className="ml-2 h-3.5 w-3.5" />
@@ -560,7 +556,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 <CardTitle>پرداخت</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="additions">اضافات (ریال)</Label>
                     <Input id="additions" type="number" value={additions} onChange={(e) => setAdditions(parseFloat(e.target.value) || 0)} />
@@ -615,7 +611,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative">
                         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
@@ -721,7 +717,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
     
     {isDirty && (
-        <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t mt-4 lg:col-span-3">
+        <div className="sticky bottom-20 sm:bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t mt-4 lg:col-span-3">
             <div className="max-w-5xl mx-auto flex justify-between items-center">
                  <div>
                   {isEditMode && (
@@ -775,8 +771,3 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </>
   );
 }
-
-    
-
-    
-

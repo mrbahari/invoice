@@ -16,8 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Customer } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +28,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Trash2, ArrowRight, Copy } from 'lucide-react';
+import { useCollection } from '@/hooks/use-collection';
+import { addDoc, deleteDoc, updateDoc } from '@/lib/firestore-service';
+
 
 type CustomerFormProps = {
   customer?: Customer;
@@ -41,7 +42,8 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   const { toast } = useToast();
   const isEditMode = !!customer;
 
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const { data: customers, loading: customersLoading, error: customersError } = useCollection<Customer>('customers');
+
 
   const [name, setName] = useState(
     isEditMode && customer?.name === 'مشتری بدون نام' ? '' : customer?.name || ''
@@ -76,8 +78,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     return true;
   }
   
-  const buildCustomerData = (id: string): Customer => ({
-    id,
+  const buildCustomerData = (): Omit<Customer, 'id'> => ({
     name: name || 'مشتری بدون نام',
     email: email || 'ایمیل ثبت نشده',
     phone: phone || 'شماره ثبت نشده',
@@ -86,27 +87,25 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   });
 
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateForm()) return;
 
     setIsProcessing(true);
 
     if (isEditMode && customer) {
-      const updatedCustomer = buildCustomerData(customer.id);
-      setCustomers(prev => prev.map(c => 
-          c.id === customer.id ? updatedCustomer : c
-      ));
+      const updatedData = buildCustomerData();
+      await updateDoc('customers', customer.id, updatedData);
       toast({
         title: 'مشتری با موفقیت ویرایش شد',
-        description: `تغییرات برای مشتری "${updatedCustomer.name}" ذخیره شد.`,
+        description: `تغییرات برای مشتری "${updatedData.name}" ذخیره شد.`,
       });
     } else {
-      const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
-      setCustomers(prev => [newCustomer, ...prev]);
+      const newData = buildCustomerData();
+      await addDoc('customers', newData);
       toast({
         title: 'مشتری جدید ایجاد شد',
-        description: `مشتری "${newCustomer.name}" با موفقیت ایجاد شد.`,
+        description: `مشتری "${newData.name}" با موفقیت ایجاد شد.`,
       });
     }
     
@@ -114,27 +113,26 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     onSave();
   };
   
-  const handleSaveAsCopy = () => {
+  const handleSaveAsCopy = async () => {
     if (!validateForm()) return;
     
     setIsProcessing(true);
-
-    const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
-    setCustomers(prev => [newCustomer, ...prev]);
+    const newData = buildCustomerData();
+    await addDoc('customers', newData);
     toast({
       title: 'مشتری جدید از روی کپی ایجاد شد',
-      description: `مشتری جدید "${newCustomer.name}" با موفقیت ایجاد شد.`,
+      description: `مشتری جدید "${newData.name}" با موفقیت ایجاد شد.`,
     });
     
     setIsProcessing(false);
     onSave();
   }
   
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!customer) return;
 
     setIsProcessing(true);
-    setCustomers(prev => prev.filter(c => c.id !== customer.id));
+    await deleteDoc('customers', customer.id);
     toast({
       title: 'مشتری حذف شد',
       description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
@@ -152,7 +150,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     <form onSubmit={handleSubmit}>
       <Card className="max-w-2xl mx-auto animate-fade-in-up">
         <CardHeader>
-            <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <CardTitle>
                         {isEditMode ? `ویرایش مشتری: ${customer?.name}` : 'افزودن مشتری جدید'}
@@ -178,7 +176,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
               placeholder="مثال: شرکت نوآوران"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="grid gap-3">
                 <Label htmlFor="customer-email">ایمیل (اختیاری)</Label>
                 <Input

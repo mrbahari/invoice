@@ -15,6 +15,7 @@ import type { Store, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
+import { useCollection } from '@/hooks/use-collection';
 
 function toWords(num: number): string {
   if (num === 0) return "صفر";
@@ -83,10 +84,11 @@ type InvoicePreviewPageProps = {
 }
 export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewPageProps) {
   
-  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
-  const [stores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const { data: invoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
+  const { data: products, loading: productsLoading } = useCollection<Product>('products');
+  const { data: stores, loading: storesLoading } = useCollection<Store>('stores');
+  const { data: customers, loading: customersLoading } = useCollection<Customer>('customers');
+
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
   const invoice = useMemo(() => invoices.find((inv) => inv.id === invoiceId), [invoices, invoiceId]);
@@ -172,49 +174,34 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                     <span>دانلود تصویر</span>
                 </Button>
             </div>
-            <div className="max-w-5xl mx-auto bg-white p-8 border" id="invoice-card">
+            <div className="max-w-5xl mx-auto bg-white p-4 sm:p-8 border" id="invoice-card">
               {/* Header */}
-              <table className="w-full mb-4">
-                <tbody>
-                  <tr>
-                    <td className="w-1/6 align-top">
-                      <div className="flex items-center justify-start h-full">
-                        {qrCodeUrl && (
-                            <Image
-                                src={qrCodeUrl}
-                                alt="QR Code"
-                                width={96}
-                                height={96}
-                            />
-                        )}
-                      </div>
-                    </td>
-                    <td className="w-2/3 text-center align-top">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
+                  <div className="flex items-center justify-center sm:justify-start w-full sm:w-1/6 order-2 sm:order-1">
+                      {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
+                  </div>
+                  <div className="text-center w-full sm:w-2/3 order-1 sm:order-2">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
                       <h2 className="text-lg font-semibold">{store?.name}</h2>
-                      <p className="text-sm">{store?.name}</p>
-                      <div className="flex justify-center gap-8 mt-2 text-sm">
+                      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-8 mt-2 text-sm">
                         <span>شماره پیش فاکتور: <span className="font-mono">{invoice.invoiceNumber}</span></span>
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
-                    </td>
-                    <td className="w-1/6">
+                  </div>
+                  <div className="flex justify-center sm:justify-end w-full sm:w-1/6 order-3">
                       {store.logoUrl && (
-                        <div className="flex justify-end">
-                            <Image
-                                src={store.logoUrl}
-                                alt={`لوگوی ${store.name}`}
-                                width={96}
-                                height={96}
-                                className="object-contain"
-                                unoptimized
-                            />
-                        </div>
+                        <Image
+                            src={store.logoUrl}
+                            alt={`لوگوی ${store.name}`}
+                            width={96}
+                            height={96}
+                            className="object-contain"
+                            unoptimized
+                        />
                       )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                  </div>
+              </div>
+
 
               {/* Seller and Buyer Info */}
               <div className="border border-black">

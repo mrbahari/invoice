@@ -21,33 +21,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { initialData } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Store, Category } from '@/lib/definitions';
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
+import { useCollection } from '@/hooks/use-collection';
 
 export default function ProductsPage() {
-  const [products, setProducts, reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
-  const [stores, , reloadStores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const { data: products, loading: productsLoading } = useCollection<Product>('products');
+  const { data: stores, loading: storesLoading } = useCollection<Store>('stores');
+  const { data: categories, loading: categoriesLoading } = useCollection<Category>('categories');
   const [activeTab, setActiveTab] = useState('all');
-  const { toast } = useToast();
   const { searchTerm } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
 
-  useEffect(() => {
-    reloadProducts();
-    reloadStores();
-    reloadCategories();
-  }, []);
-  
   const handleAddClick = () => {
     setEditingProduct(undefined);
     setView('form');
@@ -61,7 +52,6 @@ export default function ProductsPage() {
   const handleFormSuccess = () => {
     setView('list');
     setEditingProduct(undefined);
-    reloadProducts();
   }
 
   const handleFormCancel = () => {

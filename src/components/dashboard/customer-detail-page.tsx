@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useMemo } from 'react';
+import { useCollection } from '@/hooks/use-collection';
 
 const statusStyles: Record<Invoice['status'], string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -52,8 +53,8 @@ type CustomerDetailPageProps = {
 }
 
 export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoiceClick }: CustomerDetailPageProps) {
-  const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const { data: customers, loading: customersLoading } = useCollection<Customer>('customers');
+  const { data: invoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
 
   const customer = customers.find((c) => c.id === customerId);
 
@@ -88,7 +89,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8 animate-fade-in-up">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
                  <Button onClick={onBack} variant="outline" size="icon" className="h-8 w-8">
                     <ArrowRight className="h-4 w-4" />

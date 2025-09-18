@@ -375,6 +375,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
 
   return (
+    <>
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card className="animate-fade-in-up">
@@ -563,54 +564,6 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-between items-center">
-                <div>
-                  {isEditMode && (
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button type="button" variant="destructive" disabled={isProcessing}>
-                                  <Trash2 className="ml-2 h-4 w-4" />
-                                  حذف فاکتور
-                              </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                      این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice?.invoiceNumber}» را برای همیشه حذف می‌کند.
-                                  </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                  <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-4">
-                    {isEditMode && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="status" className="sr-only">وضعیت</Label>
-                            <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
-                                <SelectTrigger id="status" className="w-[180px]">
-                                    <SelectValue placeholder="تغییر وضعیت" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Pending">در انتظار</SelectItem>
-                                    <SelectItem value="Paid">پرداخت شده</SelectItem>
-                                    <SelectItem value="Overdue">سررسید گذشته</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
-                    <Button className="min-w-[120px]" onClick={() => handleProcessInvoice(false)} disabled={isProcessing || !isDirty}>
-                        {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
-                    </Button>
-                </div>
-            </CardFooter>
         </Card>
       </div>
 
@@ -720,6 +673,60 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         </Card>
       </div>
     </div>
+    
+    {isDirty && (
+        <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t mt-4 lg:col-span-3">
+            <div className="max-w-5xl mx-auto flex justify-between items-center">
+                 <div>
+                  {isEditMode && (
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button type="button" variant="destructive" disabled={isProcessing}>
+                                  <Trash2 className="ml-2 h-4 w-4" />
+                                  حذف فاکتور
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                      این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice?.invoiceNumber}» را برای همیشه حذف می‌کند.
+                                  </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-4">
+                    {isEditMode && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="status" className="sr-only">وضعیت</Label>
+                            <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
+                                <SelectTrigger id="status" className="w-[180px]">
+                                    <SelectValue placeholder="تغییر وضعیت" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Pending">در انتظار</SelectItem>
+                                    <SelectItem value="Paid">پرداخت شده</SelectItem>
+                                    <SelectItem value="Overdue">سررسید گذشته</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    <Button className="min-w-[120px]" size="lg" onClick={() => handleProcessInvoice(false)} disabled={isProcessing || !isDirty}>
+                        {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    )}
+    </>
   );
 }
 

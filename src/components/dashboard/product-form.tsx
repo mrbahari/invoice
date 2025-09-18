@@ -78,11 +78,46 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
     description: false,
     price: false,
     image: false,
   });
+  
+  
+    // Effect to track form changes
+  useEffect(() => {
+    if (!isEditMode) {
+        // For new products, any input makes it dirty
+        if (name || code || description || price || storeId || subCategoryId || imageUrl) {
+            setIsDirty(true);
+        }
+        return;
+    }
+    if (!product) return;
+
+    const priceNum = Number(price);
+    const subUnitPriceNum = Number(subUnitPrice);
+    const subUnitQuantityNum = Number(subUnitQuantity);
+    
+    // Compare current state with initial product state
+    const fieldsChanged =
+      name !== product.name ||
+      code !== product.code ||
+      description !== product.description ||
+      priceNum !== product.price ||
+      storeId !== product.storeId ||
+      subCategoryId !== product.subCategoryId ||
+      unit !== product.unit ||
+      subUnit !== (product.subUnit || undefined) ||
+      subUnitQuantityNum !== (product.subUnitQuantity || '') ||
+      subUnitPriceNum !== (product.subUnitPrice || '') ||
+      imageUrl !== product.imageUrl;
+
+    setIsDirty(fieldsChanged);
+  }, [name, code, description, price, storeId, subCategoryId, unit, subUnit, subUnitQuantity, subUnitPrice, imageUrl, product, isEditMode]);
+
 
   const availableSubCategories = categories.filter(c => c.storeId === storeId && c.parentId);
   
@@ -337,7 +372,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     <form onSubmit={handleSubmit}>
         <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
             
-            <div className="grid gap-6 lg:col-span-2">
+            <div className="grid gap-6 lg:col-span-2 auto-rows-min">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -487,7 +522,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </Card>
             </div>
             
-            <div className="grid gap-6">
+            <div className="grid gap-6 auto-rows-min">
                 <Card>
                     <CardHeader>
                         <CardTitle>تصویر محصول</CardTitle>
@@ -530,46 +565,50 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                     </CardContent>
                 </Card>
             </div>
-
-            <div className="flex justify-between items-center gap-2 lg:col-span-3">
-                <div>
-                     {isEditMode && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button type="button" variant="destructive" disabled={isProcessing}>
-                                    <Trash2 className="ml-2 h-4 w-4" />
-                                    حذف محصول
+            
+            {isDirty && (
+                <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t lg:col-span-3">
+                    <div className="max-w-5xl mx-auto flex justify-between items-center gap-2">
+                        <div>
+                             {isEditMode && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button type="button" variant="destructive" disabled={isProcessing}>
+                                            <Trash2 className="ml-2 h-4 w-4" />
+                                            حذف محصول
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                        </div>
+                        <div className='flex gap-2'>
+                            {isEditMode && (
+                                <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                                   <Copy className="ml-2 h-4 w-4" />
+                                    ذخیره با عنوان محصول جدید
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                            )}
+                            <Button type="submit" disabled={isProcessing} size="lg">
+                                {isProcessing
+                                ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
+                                : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-                <div className='flex gap-2'>
-                    {isEditMode && (
-                        <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                           <Copy className="ml-2 h-4 w-4" />
-                            ذخیره با عنوان محصول جدید
-                        </Button>
-                    )}
-                    <Button type="submit" disabled={isProcessing} size="lg">
-                        {isProcessing
-                        ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
-                        : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
-                    </Button>
-                </div>
-            </div>
+            )}
         </div>
     </form>
   );

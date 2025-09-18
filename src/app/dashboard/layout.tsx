@@ -20,6 +20,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const handleTabChange = (tab: DashboardTab) => {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
+    if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
   
   React.useEffect(() => {

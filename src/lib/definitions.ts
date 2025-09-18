@@ -12,7 +12,6 @@ export type Customer = {
 export type Category = {
   id: string;
   name: string;
-  parentId?: string;
   description?: string;
   // Store-related properties are only for top-level categories
   storeName?: string;

@@ -46,50 +46,14 @@ export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | 'new' | null>(null);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
+  const [dataVersion, setDataVersion] = useState(0);
 
-  const handleDataChange = () => {
+  const triggerDataRefresh = () => {
+    setDataVersion(prev => prev + 1);
     reloadCategories();
     reloadProducts();
   };
 
-  const categoriesById = useMemo(() => new Map(categoryList.map(c => [c.id, c])), [categoryList]);
-  
-  const getIndentation = (category: Category): number => {
-    let depth = 0;
-    let current = category;
-    while (current.parentId) {
-      const parent = categoriesById.get(current.parentId);
-      if (!parent) {
-        break;
-      }
-      depth++;
-      current = parent;
-    }
-    return depth;
-  };
-
-  const getCategoryName = (categoryId: string) => {
-    return categoriesById.get(categoryId)?.name;
-  };
-
-  const getRootParent = (categoryId: string): Category | undefined => {
-    let current = categoriesById.get(categoryId);
-    while (current && current.parentId) {
-      const parent = categoriesById.get(current.parentId);
-      if (!parent) return current; // Should not happen in clean data
-      current = parent;
-    }
-    return current;
-  };
-
-  const getStoreName = (category: Category): string => {
-    if (category.parentId) {
-        const root = getRootParent(category.id);
-        return root?.storeName || '-';
-    }
-    return category.storeName || '-';
-  };
-  
   const handleAddNew = () => {
     setSelectedCategory('new');
   };
@@ -103,44 +67,12 @@ export default function CategoriesPage() {
   };
 
   const sortedAndFilteredCategories = useMemo(() => {
-    const filtered = categoryList.filter(category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const filteredIds = new Set(filtered.map(c => c.id));
-
-    const categoriesById = new Map(categoryList.map(c => [c.id, c]));
-    
-    // Function to check if a category should be in the final list (is in filtered list or one of its ancestors is)
-    const isVisible = (cat: Category): boolean => {
-        if (filteredIds.has(cat.id)) return true;
-        if (!cat.parentId) return false;
-        const parent = categoriesById.get(cat.parentId);
-        return parent ? isVisible(parent) : false;
-    }
-
-    const visibleCategories = categoryList.filter(isVisible);
-    const topLevelCategories = visibleCategories.filter(c => !c.parentId);
-    
-    const sorted: Category[] = [];
-    
-    const addChildrenToSortedList = (parentId: string) => {
-        const children = visibleCategories
-            .filter(child => child.parentId === parentId)
-            .sort((a, b) => a.name.localeCompare(b.name));
-            
-        children.forEach(child => {
-            sorted.push(child);
-            addChildrenToSortedList(child.id); // Recursively find grandchildren
-        });
-    };
-    
-    topLevelCategories.sort((a, b) => a.name.localeCompare(b.name)).forEach(parent => {
-      sorted.push(parent);
-      addChildrenToSortedList(parent.id);
-    });
-    
-    return sorted;
-  }, [categoryList, searchTerm]);
+    return categoryList
+      .filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [categoryList, searchTerm, dataVersion]);
   
   const getProductCount = (categoryId: string) => {
     return products.filter(p => p.categoryId === categoryId).length;
@@ -148,7 +80,7 @@ export default function CategoriesPage() {
 
   if (selectedCategory) {
     const categoryToEdit = selectedCategory === 'new' ? undefined : selectedCategory;
-    return <CategoryForm category={categoryToEdit} onBack={handleBackToList} onDataChange={handleDataChange} />;
+    return <CategoryForm category={categoryToEdit} onBack={handleBackToList} onDataChange={triggerDataRefresh} />;
   }
 
 
@@ -159,7 +91,7 @@ export default function CategoriesPage() {
             <div>
                 <CardTitle>دسته‌بندی‌ها</CardTitle>
                 <CardDescription>
-                دسته‌بندی‌ها و زیرمجموعه‌های محصولات خود را مدیریت کنید.
+                دسته‌بندی‌ها و فروشگاه‌های خود را مدیریت کنید.
                 </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -177,37 +109,26 @@ export default function CategoriesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>نام دسته‌بندی</TableHead>
-              <TableHead>دسته‌بندی والد</TableHead>
               <TableHead>فروشگاه</TableHead>
               <TableHead className="text-left">محصولات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedAndFilteredCategories.map((category) => {
-              const indentation = getIndentation(category);
-              return (
+            {sortedAndFilteredCategories.map((category) => (
               <TableRow 
                 key={category.id} 
                 onClick={() => handleEdit(category)}
-                className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-1 ${category.parentId ? 'bg-muted/50' : ''}`}
+                className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
               >
-                <TableCell className="font-medium" style={{ paddingRight: `${1 + indentation * 1.5}rem` }}>
-                  {category.parentId && '– '}
+                <TableCell className="font-medium">
                   {category.name}
                 </TableCell>
-                <TableCell>
-                  {category.parentId ? (
-                     <Badge variant="outline">{getCategoryName(category.parentId)}</Badge>
-                  ) : (
-                    <span className='text-muted-foreground'>-</span>
-                  )}
-                </TableCell>
-                <TableCell>{getStoreName(category)}</TableCell>
+                <TableCell>{category.storeName || '-'}</TableCell>
                 <TableCell className="text-left">
                   {getProductCount(category.id)}
                 </TableCell>
               </TableRow>
-            )})}
+            ))}
           </TableBody>
         </Table>
       </CardContent>

@@ -63,7 +63,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const isEditMode = !!invoice;
 
   const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
@@ -84,28 +84,31 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  // Effect to set initial state when in edit mode
   useEffect(() => {
-    if (isEditMode && invoice) {
-        // Set customer
-        if (customerList.length > 0) {
-            setSelectedCustomer(customerList.find(c => c.id === invoice.customerId));
-        }
-        // Set items
-        if (products.length > 0) {
-            const initialItems = invoice.items.map(item => {
-                const product = products.find(p => p.id === item.productId);
-                if (!product) return null;
-                return {
-                    product,
-                    quantity: item.quantity,
-                    unit: item.unit,
-                };
-            }).filter((item): item is InvoiceItemState => item !== null);
-            setItems(initialItems);
-        }
+    reloadProducts();
+  }, [reloadProducts]);
+
+  useEffect(() => {
+    if (isEditMode && invoice && customerList.length > 0) {
+      setSelectedCustomer(customerList.find(c => c.id === invoice.customerId));
     }
-  }, [invoice, isEditMode, products, customerList]);
+  }, [invoice, isEditMode, customerList]);
+
+  useEffect(() => {
+    if (isEditMode && invoice && products.length > 0) {
+        const initialItems = invoice.items.map(item => {
+            const product = products.find(p => p.id === item.productId);
+            if (!product) return null;
+            return {
+                product,
+                quantity: item.quantity,
+                unit: item.unit,
+            };
+        }).filter((item): item is InvoiceItemState => item !== null);
+        setItems(initialItems);
+    }
+  }, [invoice, isEditMode, products]);
+
 
 
   const filteredProducts = useMemo(() => {
@@ -127,9 +130,10 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   };
 
   const handleAddNewCustomer = () => {
+    const customerName = customerSearch.trim() || `مشتری جدید ${Math.floor(Math.random() * 1000)}`;
     const newCustomer: Customer = {
         id: `cust-${Math.random().toString(36).substr(2, 9)}`,
-        name: customerSearch,
+        name: customerName,
         email: 'ایمیل ثبت نشده',
         phone: 'شماره ثبت نشده',
         address: 'آدرس ثبت نشده',
@@ -497,25 +501,27 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                   )}
                 </div>
                 
-                {isEditMode && (
-                    <div className="grid gap-2">
-                        <Label htmlFor="status">وضعیت فاکتور</Label>
-                        <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
-                            <SelectTrigger id="status" className="w-[180px]">
-                                <SelectValue placeholder="تغییر وضعیت" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Pending">در انتظار</SelectItem>
-                                <SelectItem value="Paid">پرداخت شده</SelectItem>
-                                <SelectItem value="Overdue">سررسید گذشته</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
+                <div className="flex items-center gap-4">
+                    {isEditMode && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="status" className="sr-only">وضعیت</Label>
+                            <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
+                                <SelectTrigger id="status" className="w-[180px]">
+                                    <SelectValue placeholder="تغییر وضعیت" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Pending">در انتظار</SelectItem>
+                                    <SelectItem value="Paid">پرداخت شده</SelectItem>
+                                    <SelectItem value="Overdue">سررسید گذشته</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
-                <Button className="w-full max-w-xs" onClick={() => handleProcessInvoice(false)} disabled={isProcessing}>
-                    {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
-                </Button>
+                    <Button className="min-w-[120px]" onClick={() => handleProcessInvoice(false)} disabled={isProcessing}>
+                        {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
+                    </Button>
+                </div>
             </CardFooter>
         </Card>
       </div>

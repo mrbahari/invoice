@@ -11,7 +11,7 @@ import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Category, Customer, Invoice, Product } from '@/lib/definitions';
+import type { Store, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
@@ -85,31 +85,20 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
   
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [products] = useLocalStorage<Product[]>('products', initialData.products);
-  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [stores] = useLocalStorage<Store[]>('stores', initialData.stores);
   const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
   const invoice = useMemo(() => invoices.find((inv) => inv.id === invoiceId), [invoices, invoiceId]);
   const customer = useMemo(() => customers.find((c) => c.id === invoice?.customerId), [customers, invoice]);
-
-
-  const getRootParent = (categoryId: string): Category | undefined => {
-    let current = categories.find(c => c.id === categoryId);
-    while (current && current.parentId) {
-      const parent = categories.find(p => p.id === current.parentId);
-      if (!parent) return current;
-      current = parent;
-    }
-    return current;
-  };
   
-  const storeCategory = useMemo(() => {
+  const store = useMemo(() => {
     if (!invoice?.items.length) return undefined;
     const firstItem = invoice.items[0];
     const productInfo = products.find(p => p.id === firstItem?.productId);
     if (!productInfo) return undefined;
-    return getRootParent(productInfo.categoryId);
-  }, [invoice, products, categories]);
+    return stores.find(s => s.id === productInfo.storeId);
+  }, [invoice, products, stores]);
 
 
 
@@ -140,7 +129,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     );
   }
   
-  if(!customer || !storeCategory) {
+  if(!customer || !store) {
       // Data might be inconsistent for a moment
       return null;
   }
@@ -202,19 +191,19 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                     </td>
                     <td className="w-2/3 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
-                      <h2 className="text-lg font-semibold">{storeCategory?.name}</h2>
-                      <p className="text-sm">{storeCategory?.description}</p>
+                      <h2 className="text-lg font-semibold">{store?.name}</h2>
+                      <p className="text-sm">{store?.name}</p>
                       <div className="flex justify-center gap-8 mt-2 text-sm">
                         <span>شماره پیش فاکتور: <span className="font-mono">{invoice.invoiceNumber}</span></span>
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
                     </td>
                     <td className="w-1/6">
-                      {storeCategory.logoUrl && (
+                      {store.logoUrl && (
                         <div className="flex justify-end">
                             <Image
-                                src={storeCategory.logoUrl}
-                                alt={`لوگوی ${storeCategory.name}`}
+                                src={store.logoUrl}
+                                alt={`لوگوی ${store.name}`}
                                 width={96}
                                 height={96}
                                 className="object-contain"
@@ -233,8 +222,8 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                 <table className="w-full text-sm">
                   <tbody>
                     <tr>
-                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {storeCategory?.name}</td>
-                      <td className="p-1 w-3/4 align-middle">شماره تماس: {storeCategory?.storePhone}<span className='mx-4'>|</span>آدرس: {storeCategory?.storeAddress}</td>
+                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {store?.name}</td>
+                      <td className="p-1 w-3/4 align-middle">شماره تماس: {store?.phone}<span className='mx-4'>|</span>آدرس: {store?.address}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -294,8 +283,9 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
               <div className="border border-black mt-2 p-2 text-sm">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
-                  {storeCategory.bankIban && <p>{storeCategory.bankAccountHolder} شماره شبا {storeCategory.bankIban}</p>}
-                  {storeCategory.bankCardNumber && <p>شماره کارت: {storeCategory.bankCardNumber}</p>}
+                  {store.bankAccountHolder && <p>صاحب حساب: {store.bankAccountHolder}</p>}
+                  {store.bankIban && <p>شماره شبا: {store.bankIban}</p>}
+                  {store.bankCardNumber && <p>شماره کارت: {store.bankCardNumber}</p>}
               </div>
 
 

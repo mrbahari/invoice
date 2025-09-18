@@ -1,9 +1,9 @@
 
 [
-  { "id": "prod-1", "code": "LP-001", "name": "لپتاپ پرو", "description": "لپتاپ با کارایی بالا برای حرفه‌ای‌ها.", "price": 1499.99, "imageUrl": "https://picsum.photos/seed/101/400/300", "categoryId": "cat-1", "unit": "عدد" },
-  { "id": "prod-2", "code": "MS-002", "name": "موس بی‌سیم", "description": "موس بی‌سیم ارگونومیک.", "price": 49.99, "imageUrl": "https://picsum.photos/seed/102/400/300", "categoryId": "cat-3", "unit": "عدد" },
-  { "id": "prod-3", "code": "KB-003", "name": "کیبورد مکانیکی", "description": "کیبورد مکانیکی با نورپردازی RGB.", "price": 129.99, "imageUrl": "https://picsum.photos/seed/103/400/300", "categoryId": "cat-3", "unit": "عدد" },
-  { "id": "prod-4", "code": "MN-004", "name": "مانیتور 4K", "description": "مانیتور ۲۷ اینچ 4K UHD.", "price": 499.99, "imageUrl": "https://picsum.photos/seed/104/400/300", "categoryId": "cat-1", "unit": "عدد" },
-  { "id": "prod-5", "code": "CH-005", "name": "صندلی ارگونومیک", "description": "صندلی اداری ارگونومیک.", "price": 399.00, "imageUrl": "https://picsum.photos/seed/105/400/300", "categoryId": "cat-2", "unit": "عدد" },
-  { "id": "prod-6", "code": "HP-006", "name": "هدفون نویز کنسلینگ", "description": "هدفون روی گوش با قابلیت حذف نویز.", "price": 249.50, "imageUrl": "https://picsum.photos/seed/106/400/300", "categoryId": "cat-3", "unit": "عدد" }
+  { "id": "prod-1", "code": "LP-001", "name": "لپتاپ پرو", "description": "لپتاپ با کارایی بالا برای حرفه‌ای‌ها.", "price": 1499.99, "imageUrl": "https://picsum.photos/seed/101/400/300", "storeId": "store-dekorband", "subCategoryId": "cat-panels", "unit": "عدد" },
+  { "id": "prod-2", "code": "MS-002", "name": "موس بی‌سیم", "description": "موس بی‌سیم ارگونومیک.", "price": 49.99, "imageUrl": "https://picsum.photos/seed/102/400/300", "storeId": "store-sepehr", "subCategoryId": "cat-acc", "unit": "عدد" },
+  { "id": "prod-3", "code": "KB-003", "name": "کیبورد مکانیکی", "description": "کیبورد مکانیکی با نورپردازی RGB.", "price": 129.99, "imageUrl": "https://picsum.photos/seed/103/400/300", "storeId": "store-sepehr", "subCategoryId": "cat-acc", "unit": "عدد" },
+  { "id": "prod-4", "code": "MN-004", "name": "مانیتور 4K", "description": "مانیتور ۲۷ اینچ 4K UHD.", "price": 499.99, "imageUrl": "https://picsum.photos/seed/104/400/300", "storeId": "store-sepehr", "subCategoryId": "cat-acc", "unit": "عدد" },
+  { "id": "prod-5", "code": "CH-005", "name": "صندلی ارگونومیک", "description": "صندلی اداری ارگونومیک.", "price": 399.00, "imageUrl": "https://picsum.photos/seed/105/400/300", "storeId": "store-artin", "subCategoryId": "cat-furn", "unit": "عدد" },
+  { "id": "prod-6", "code": "HP-006", "name": "هدفون نویز کنسلینگ", "description": "هدفون روی گوش با قابلیت حذف نویز.", "price": 249.50, "imageUrl": "https://picsum.photos/seed/106/400/300", "storeId": "store-sepehr", "subCategoryId": "cat-acc", "unit": "عدد" }
 ]

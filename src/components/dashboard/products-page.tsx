@@ -25,7 +25,7 @@ import { initialData } from '@/lib/data';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Product, Category } from '@/lib/definitions';
+import type { Product, Store, Category } from '@/lib/definitions';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
@@ -33,6 +33,7 @@ import { ProductForm } from './product-form';
 
 export default function ProductsPage() {
   const [products, setProducts, reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [stores, , reloadStores] = useLocalStorage<Store[]>('stores', initialData.stores);
   const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
@@ -43,6 +44,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     reloadProducts();
+    reloadStores();
     reloadCategories();
   }, []);
   
@@ -67,26 +69,6 @@ export default function ProductsPage() {
     setEditingProduct(undefined);
   }
 
-  const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
-
-  const getDescendantIds = useCallback((categoryId: string): string[] => {
-    const descendants = new Set<string>();
-    const queue = [categoryId];
-    descendants.add(categoryId);
-
-    while (queue.length > 0) {
-      const currentId = queue.shift()!;
-      const children = categories.filter(c => c.parentId === currentId);
-      for (const child of children) {
-        if (!descendants.has(child.id)) {
-          descendants.add(child.id);
-          queue.push(child.id);
-        }
-      }
-    }
-    return Array.from(descendants);
-  }, [categories]);
-
   const filteredProducts = useMemo(() => {
     const productFilter = (product: Product) => product.name.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -94,66 +76,34 @@ export default function ProductsPage() {
       return products.filter(productFilter);
     }
     
-    const descendantIds = getDescendantIds(activeTab);
     return products
-        .filter(p => descendantIds.includes(p.categoryId))
+        .filter(p => p.storeId === activeTab)
         .filter(productFilter);
 
-  }, [products, activeTab, searchTerm, getDescendantIds]);
+  }, [products, activeTab, searchTerm]);
 
 
   const getCategoryName = (categoryId: string) => {
-    return categoriesById.get(categoryId)?.name || 'بدون دسته‌بندی';
+    return categories.find(c => c.id === categoryId)?.name || 'بدون زیردسته';
   };
 
   const handleExport = () => {
     const dataToExport = filteredProducts.map(p => ({
         ...p,
-        categoryName: getCategoryName(p.categoryId),
+        categoryName: getCategoryName(p.subCategoryId),
+        storeName: stores.find(s => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
     }));
 
     const headers = {
       name: 'نام محصول',
       description: 'توضیحات',
       price: 'قیمت',
-      categoryName: 'دسته‌بندی',
+      storeName: 'فروشگاه',
+      categoryName: 'زیردسته',
     };
     
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
-  
-  const sortedCategoriesForTabs = useMemo(() => {
-    const categoryMap: Map<string, Category & { children: Category[] }> = new Map(
-      categories.map(c => [c.id, { ...c, children: [] }])
-    );
-    const topLevel: Category[] = [];
-
-    categories.forEach(cat => {
-        if (cat.parentId && categoryMap.has(cat.parentId)) {
-            categoryMap.get(cat.parentId)!.children.push(cat);
-        } else if (!cat.parentId) {
-            topLevel.push(cat);
-        }
-    });
-
-    const sorted: { id: string; name: string }[] = [];
-    const addCategoryToTabs = (category: Category, depth: number) => {
-        sorted.push({
-            id: category.id,
-            name: `${'– '.repeat(depth)}${category.name}`
-        });
-        const children = categoryMap.get(category.id)?.children || [];
-        children
-            .sort((a,b) => a.name.localeCompare(b.name))
-            .forEach(child => addCategoryToTabs(child, depth + 1));
-    };
-
-    topLevel
-        .sort((a,b) => a.name.localeCompare(b.name))
-        .forEach(parent => addCategoryToTabs(parent, 0));
-
-    return sorted;
-  }, [categories]);
 
   if (view === 'form') {
       return <ProductForm product={editingProduct} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
@@ -164,9 +114,9 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <TabsList className="overflow-x-auto">
           <TabsTrigger value="all">همه</TabsTrigger>
-          {sortedCategoriesForTabs.map(cat => (
-            <TabsTrigger key={cat.id} value={cat.id} className="whitespace-nowrap">
-              {cat.name}
+          {stores.map(store => (
+            <TabsTrigger key={store.id} value={store.id} className="whitespace-nowrap">
+              {store.name}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -200,7 +150,7 @@ export default function ProductsPage() {
                     <span className="sr-only">تصویر</span>
                 </TableHead>
                 <TableHead>نام</TableHead>
-                <TableHead>دسته‌بندی</TableHead>
+                <TableHead>زیردسته</TableHead>
                 <TableHead className="hidden md:table-cell">
                     توضیحات
                 </TableHead>
@@ -222,7 +172,7 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
-                    <Badge variant="outline">{getCategoryName(product.categoryId)}</Badge>
+                    <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell max-w-xs truncate">
                     {product.description}

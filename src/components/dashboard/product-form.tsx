@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import type { Product, Category, UnitOfMeasurement } from '@/lib/definitions';
+import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
 import { initialData } from '@/lib/data';
 import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
@@ -55,6 +55,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
 
   const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [stores] = useLocalStorage<Store[]>('stores', initialData.stores);
   const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
@@ -68,7 +69,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [displayPrice, setDisplayPrice] = useState(product?.price ? new Intl.NumberFormat('fa-IR').format(product.price) : '');
   const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(product?.subUnitPrice ? new Intl.NumberFormat('fa-IR').format(product.subUnitPrice) : '');
   
-  const [categoryId, setCategoryId] = useState(product?.categoryId || '');
+  const [storeId, setStoreId] = useState(product?.storeId || '');
+  const [subCategoryId, setSubCategoryId] = useState(product?.subCategoryId || '');
   const [unit, setUnit] = useState<string>(product?.unit || (unitsOfMeasurement[0]?.name || ''));
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
@@ -81,6 +83,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     price: false,
     image: false,
   });
+
+  const availableSubCategories = categories.filter(c => c.storeId === storeId && c.parentId);
   
   const formatNumber = (num: number | ''): string => {
     if (num === '' || num === null || isNaN(Number(num))) return '';
@@ -175,18 +179,18 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       });
       return;
     }
-     if (!categoryId) {
+     if (!storeId || !subCategoryId) {
       toast({
         variant: 'destructive',
-        title: 'دسته‌بندی انتخاب نشده',
-        description: 'برای دریافت نتیجه بهتر، ابتدا دسته‌بندی محصول را انتخاب کنید.',
+        title: 'فروشگاه یا زیردسته انتخاب نشده',
+        description: 'برای دریافت نتیجه بهتر، ابتدا فروشگاه و زیردسته محصول را انتخاب کنید.',
       });
       return;
     }
 
     setAiLoading(prev => ({ ...prev, [feature]: true }));
     
-    const categoryName = categories.find(c => c.id === categoryId)?.name || '';
+    const categoryName = categories.find(c => c.id === subCategoryId)?.name || '';
 
     try {
       const input = { productName: name, categoryName, feature } as GenerateProductDetailsInput;
@@ -228,7 +232,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       });
       return;
     }
-    const categoryName = categories.find(c => c.id === categoryId)?.name || '';
+    const categoryName = categories.find(c => c.id === subCategoryId)?.name || '';
     const query = encodeURIComponent(`${name} ${categoryName}`);
     const url = `https://www.google.com/search?q=${query}&tbm=isch`;
     window.open(url, '_blank');
@@ -237,11 +241,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const validateForm = () => {
     const numericPrice = Number(price);
 
-    if (!name || isNaN(numericPrice) || numericPrice <= 0 || !categoryId) {
+    if (!name || isNaN(numericPrice) || numericPrice <= 0 || !storeId || !subCategoryId) {
       toast({
         variant: 'destructive',
         title: 'فیلدهای الزامی خالی یا نامعتبر است',
-        description: 'لطفاً نام، قیمت معتبر و دسته‌بندی محصول را وارد کنید.',
+        description: 'لطفاً نام، قیمت معتبر، فروشگاه و زیردسته محصول را وارد کنید.',
       });
       return false;
     }
@@ -252,7 +256,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const numericPrice = Number(price);
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
-    const finalImage = imageUrl || `https://picsum.photos/seed/${name}${categoryId}/400/300`;
+    const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
     return {
       id,
@@ -260,7 +264,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       code,
       description,
       price: numericPrice,
-      categoryId,
+      storeId,
+      subCategoryId,
       unit,
       subUnit: subUnit || undefined,
       subUnitQuantity: isNaN(numericSubUnitQuantity) ? undefined : numericSubUnitQuantity,
@@ -366,21 +371,35 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 />
                             </div>
                         </div>
-                        <div className="grid gap-3">
-                             <Label htmlFor="category">دسته‌بندی</Label>
-                            <Select value={categoryId} onValueChange={setCategoryId} required>
-                                <SelectTrigger id="category">
-                                <SelectValue placeholder="انتخاب دسته‌بندی" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                {categories.map((cat) => (
-                                    <SelectItem key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
+                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="grid gap-3">
+                                <Label htmlFor="store">فروشگاه</Label>
+                                <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
+                                    <SelectTrigger id="store">
+                                        <SelectValue placeholder="انتخاب فروشگاه" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {stores.map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="grid gap-3">
+                                <Label htmlFor="sub-category">زیردسته</Label>
+                                <Select value={subCategoryId} onValueChange={setSubCategoryId} required disabled={!storeId}>
+                                    <SelectTrigger id="sub-category">
+                                        <SelectValue placeholder={storeId ? "انتخاب زیردسته" : "ابتدا فروشگاه را انتخاب کنید"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableSubCategories.map((cat) => (
+                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
+
                         <div className="grid gap-3">
                             <div className="flex items-center justify-between">
                             <Label htmlFor="description">توضیحات</Label>
@@ -555,5 +574,3 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </form>
   );
 }
-
-    

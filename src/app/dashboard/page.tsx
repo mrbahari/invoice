@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import CustomersPage from '@/components/dashboard/customers-page';
 import ProductsPage from '@/components/dashboard/products-page';
-import CategoriesPage from '@/components/dashboard/categories-page';
+import StoresPage from '@/components/dashboard/stores-page';
 import InvoicesPage from '@/components/dashboard/invoices-page';
 import ReportsPage from '@/components/dashboard/reports-page';
 import SettingsPage from '@/components/dashboard/settings-page';
@@ -45,7 +45,7 @@ export default function DashboardPage() {
       case 'customers':
         return <CustomersPage />;
       case 'categories':
-        return <CategoriesPage />;
+        return <StoresPage />;
       case 'estimators':
         return <EstimatorsPage onNavigate={handleNavigation} />;
       case 'reports':

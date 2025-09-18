@@ -9,22 +9,28 @@ export type Customer = {
   purchaseHistory: string; // Simplified for AI prompt
 };
 
-export type Category = {
-  id:string;
+export type Store = {
+  id: string;
   name: string;
-  description?: string;
-  // Store-related properties are only for top-level categories
-  storeAddress?: string;
-  storePhone?: string;
+  address?: string;
+  phone?: string;
   logoUrl?: string;
   themeColor?: string;
-  parentId?: string;
   // Bank details for the store
   bankAccountHolder?: string;
   bankName?: string;
   bankAccountNumber?: string;
   bankIban?: string;
   bankCardNumber?: string;
+};
+
+
+export type Category = {
+  id:string;
+  name: string;
+  storeId: string;
+  parentId?: string;
+  description?: string;
 };
 
 export type Product = {
@@ -34,7 +40,8 @@ export type Product = {
   description: string;
   price: number;
   imageUrl: string;
-  categoryId: string;
+  storeId: string;
+  subCategoryId: string;
   unit: string;
   subUnit?: string;
   subUnitQuantity?: number;

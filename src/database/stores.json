@@ -1,0 +1,32 @@
+
+[
+  { 
+    "id": "store-dekorband", 
+    "name": "دکوربند", 
+    "address": "میدان پونک، برج تجاری، واحد ۱۱۰",
+    "phone": "۰۲۱-۴۴۴۴۸۸۸۸",
+    "logoUrl": "https://picsum.photos/seed/kanaf/48/48",
+    "themeColor": "#10b981",
+    "bankAccountHolder": "اسماعیل بهاری",
+    "bankName": "سامان",
+    "bankAccountNumber": "123-456-789",
+    "bankIban": "IR690560081680002151791001",
+    "bankCardNumber": "6219861051578325"
+  },
+  { 
+    "id": "store-sepehr", 
+    "name": "سپهر الکترونیک", 
+    "address": "میدان توحید، خیابان ولیعصر، پلاک ۱۲",
+    "phone": "۰۲۱-۸۸۴۴۴۴۰۰",
+    "logoUrl": "https://picsum.photos/seed/sepehr/48/48",
+    "themeColor": "#4f46e5"
+  },
+  { 
+    "id": "store-artin", 
+    "name": "مبلمان اداری آرتین",
+    "address": "خیابان سهروردی، برج اداری، طبقه ۴",
+    "phone": "۰۲۱-۸۸۵۵۵۵۰۰",
+    "logoUrl": "https://picsum.photos/seed/artin/48/48",
+    "themeColor": "#0d9488"
+  }
+]

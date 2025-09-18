@@ -7,7 +7,7 @@ import {
   Users,
   LineChart,
   PlusCircle,
-  Building,
+  Store,
   Calculator,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,7 @@ const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] 
   { tab: 'products', icon: Package, label: 'محصولات' },
   { tab: 'customers', icon: Users, label: 'مشتریان' },
   // Central button placeholder
-  { tab: 'categories', icon: Building, label: 'فروشگاه‌ها' },
+  { tab: 'categories', icon: Store, label: 'فروشگاه‌ها' },
   { tab: 'estimators', icon: Calculator, label: 'برآورد' },
   { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];

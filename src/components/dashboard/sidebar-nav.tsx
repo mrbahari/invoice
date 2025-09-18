@@ -8,7 +8,7 @@ import {
   LineChart,
   Settings,
   FileText,
-  Building,
+  Store,
   Package2,
   Calculator,
 } from 'lucide-react';
@@ -26,7 +26,7 @@ const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] 
   { tab: 'invoices', icon: FileText, label: 'فاکتورها' },
   { tab: 'products', icon: Package, label: 'محصولات' },
   { tab: 'customers', icon: Users, label: 'مشتریان' },
-  { tab: 'categories', icon: Building, label: 'فروشگاه‌ها' },
+  { tab: 'categories', icon: Store, label: 'فروشگاه‌ها' },
   { tab: 'estimators', icon: Calculator, label: 'برآورد مصالح' },
   { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];

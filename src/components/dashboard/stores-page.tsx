@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, Building } from 'lucide-react';
+import { PlusCircle, Store as StoreIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -115,7 +115,7 @@ export default function StoresPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                            <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                             {store.logoUrl ? <Image src={store.logoUrl} alt={store.name} width={48} height={48} className="object-contain rounded-md" unoptimized/> : <Building className='w-6 h-6 text-muted-foreground' />}
+                             {store.logoUrl ? <Image src={store.logoUrl} alt={store.name} width={48} height={48} className="object-contain rounded-md" unoptimized/> : <StoreIcon className='w-6 h-6 text-muted-foreground' />}
                            </div>
                            <span>{store.name}</span>
                         </CardTitle>

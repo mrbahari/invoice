@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, Copy, ArrowRight } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, Copy, ArrowRight, Save } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -79,26 +79,56 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const [status, setStatus] = useState<InvoiceStatus>(invoice?.status || 'Pending');
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
+  // Track changes to mark the form as dirty
+  useEffect(() => {
+    if (!isEditMode) {
+      // For new invoices, any item or customer selection makes it dirty
+      if (items.length > 0 || selectedCustomer) {
+        setIsDirty(true);
+      }
+      return;
+    }
+
+    if (!invoice) return;
+
+    // Compare initial state with current state for edit mode
+    const itemsChanged = JSON.stringify(items.map(i => ({ p: i.product.id, q: i.quantity, u: i.unit }))) !== JSON.stringify(invoice.items.map(i => ({ p: i.productId, q: i.quantity, u: i.unit })));
+    const customerChanged = selectedCustomer?.id !== invoice.customerId;
+    const descriptionChanged = description !== invoice.description;
+    const discountChanged = overallDiscount !== invoice.discount;
+    const additionsChanged = additions !== (invoice.additions || 0);
+    const taxChanged = tax !== (invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
+    const statusChanged = status !== invoice.status;
+
+    if (itemsChanged || customerChanged || descriptionChanged || discountChanged || additionsChanged || taxChanged || statusChanged) {
+      setIsDirty(true);
+    } else {
+      setIsDirty(false);
+    }
+  }, [items, selectedCustomer, description, overallDiscount, additions, tax, status, invoice, isEditMode]);
+
+
   useEffect(() => {
     reloadProducts();
     reloadCustomers();
   }, [reloadProducts, reloadCustomers]);
   
   useEffect(() => {
-    // Only run this if we are in edit mode and the necessary data is loaded.
-    if (isEditMode && invoice && customerList.length > 0) {
+    if (isEditMode && invoice && customerList.length > 0 && !selectedCustomer) {
       const customerForInvoice = customerList.find(c => c.id === invoice.customerId);
       setSelectedCustomer(customerForInvoice);
     }
-  }, [invoice, isEditMode, customerList]);
+  }, [invoice, isEditMode, customerList, selectedCustomer]);
 
   useEffect(() => {
-    if (isEditMode && invoice && products.length > 0) {
+    if (isEditMode && invoice && products.length > 0 && items.length === 0) {
         const initialItems = invoice.items.map(item => {
             const product = products.find(p => p.id === item.productId);
             if (!product) return null;
@@ -110,7 +140,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         }).filter((item): item is InvoiceItemState => item !== null);
         setItems(initialItems);
     }
-  }, [invoice, isEditMode, products]);
+  }, [invoice, isEditMode, products, items.length]);
 
 
 
@@ -144,7 +174,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     };
     setCustomerList(prev => [newCustomer, ...prev]);
     setSelectedCustomer(newCustomer);
-    setCustomerSearch(''); // Clear search after adding
+    setCustomerSearch('');
     toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
   };
 
@@ -331,10 +361,10 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                   </Button>
-                  {isEditMode && invoice && (
-                    <Button onClick={() => onSaveAndPreview(invoice.id)} variant="outline" size="sm" className="h-10 gap-1">
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>پیش‌نمایش</span>
+                  {isDirty && (
+                    <Button onClick={() => handleProcessInvoice(true)} variant="outline" size="sm" className="h-10 gap-1">
+                      <Eye className="ml-2 h-3.5 w-3.5" />
+                      <span>ثبت و پیش‌نمایش</span>
                     </Button>
                   )}
                </div>
@@ -517,7 +547,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                         </div>
                     )}
 
-                    <Button className="min-w-[120px]" onClick={() => handleProcessInvoice(false)} disabled={isProcessing}>
+                    <Button className="min-w-[120px]" onClick={() => handleProcessInvoice(false)} disabled={isProcessing || !isDirty}>
                         {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
                     </Button>
                 </div>

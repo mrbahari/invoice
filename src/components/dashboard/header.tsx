@@ -7,6 +7,7 @@ import {
   Search,
   LogOut,
   Sparkles,
+  Settings,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -34,6 +35,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearch } from './search-provider';
@@ -93,11 +100,25 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
       
-      <div className="flex items-center gap-4 ml-auto">
+      <div className="ml-auto flex items-center gap-2">
         <div className="flex">
             <LiveClock />
         </div>
-        <div className={cn("relative md:grow-0", !showSearch && 'hidden')}>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSettingsClick}>
+                        <Settings className="h-4 w-4" />
+                        <span className="sr-only">تنظیمات</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                    <p>تنظیمات</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+
+        <div className={cn("relative hidden md:flex md:grow-0", !showSearch && 'hidden')}>
             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
             type="search"
@@ -127,7 +148,6 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSettingsClick}>تنظیمات</DropdownMenuItem>
             <Dialog>
                 <DialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>پشتیبانی</DropdownMenuItem>

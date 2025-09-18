@@ -57,23 +57,30 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     const area = l * w;
     const perimeter = (l + w) * 2;
     
-    // Let's assume F47 profiles are installed along the length (l), spaced every 60cm across the width (w)
+    // F47 profiles are installed along the length (l), spaced every 60cm across the width (w)
     const f47RowCount = Math.ceil(w / 0.6);
     const totalF47Length = f47RowCount * l;
     const f47Profiles = Math.ceil(totalF47Length / 4); // Assuming 4m length for F47 profiles
 
-    const hangerRowCount = Math.ceil(w / 0.6);
+    // Hangers (aviz) calculation based on user's new logic
     const hangersPerRun = Math.ceil(l / 0.6);
-    const totalHangers = hangerRowCount * hangersPerRun;
+    const totalHangers = f47RowCount * hangersPerRun;
 
     const u36HangerLength = totalHangers * 0.30; // 30cm per hanger
     const u36Profiles = Math.ceil(u36HangerLength / 4); // Assuming 4m length for U36 profiles
 
     const l25Profiles = Math.ceil(perimeter / 3); // Assuming 3m length for L25 profiles
+    
+    // Fasteners calculation based on user's new logic
+    const nailAndChargeCount = totalHangers;
+    const nailAndChargePacks = nailAndChargeCount < 100 && nailAndChargeCount > 0 ? 1 : Math.ceil(nailAndChargeCount / 100);
 
-    const nailAndCharge = totalHangers;
-    const structureScrews = totalHangers * 2;
-    const panelScrews = Math.ceil(perimeter / 0.2);
+    const structureScrews = totalHangers * 2; // پیچ سازه به سازه (LN)
+    
+    const panelScrewsForPerimeter = Math.ceil(perimeter / 0.2);
+    const panelScrewsForF47 = Math.ceil(totalF47Length / 0.2);
+    const totalPanelScrews = panelScrewsForPerimeter + panelScrewsForF47;
+
 
     const panels = Math.ceil(area / 2.88); // Assuming panel size 1.2m x 2.4m = 2.88 sqm
 
@@ -82,9 +89,9 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       { material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
-      { material: 'میخ و چاشنی', quantity: nailAndCharge, unit: 'عدد' },
+      { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
       { material: 'پیچ سازه به سازه (LN)', quantity: structureScrews, unit: 'عدد' },
-      { material: 'پیچ پانل به سازه (TN)', quantity: panelScrews, unit: 'عدد' },
+      { material: 'پیچ پانل به سازه (TN)', quantity: totalPanelScrews, unit: 'عدد' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   

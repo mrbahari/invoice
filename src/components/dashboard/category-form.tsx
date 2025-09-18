@@ -56,7 +56,6 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
   const isSubCategory = !!parentId;
 
   // Store Info
-  const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
@@ -75,7 +74,6 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
     if (parentId) {
       const parent = categories.find(c => c.id === parentId);
       if (parent) {
-        setStoreName(parent.storeName || '');
         setStoreAddress(parent.storeAddress || '');
         setStorePhone(parent.storePhone || '');
         setLogo(parent.logoUrl || null);
@@ -101,7 +99,7 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const requiredField = isSubCategory ? 'نام زیردسته' : 'نام فروشگاه (دسته‌بندی اصلی)';
+    const requiredField = isSubCategory ? 'نام زیردسته' : 'نام فروشگاه';
     if (!name) {
       toast({
         variant: 'destructive',
@@ -118,7 +116,6 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
         name,
         description,
         parentId,
-        storeName: isSubCategory ? undefined : storeName,
         storeAddress: isSubCategory ? undefined : storeAddress,
         storePhone: isSubCategory ? undefined : storePhone,
         logoUrl: isSubCategory ? undefined : (logo || `https://picsum.photos/seed/${Math.random()}/110/110`),
@@ -141,7 +138,7 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
     } else {
       setCategories(prev => [newOrUpdatedCategory, ...prev]);
       toast({
-        title: 'فروشگاه جدید ایجاد شد',
+        title: 'آیتم جدید با موفقیت ایجاد شد',
       });
     }
 
@@ -176,8 +173,8 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
     
     setCategories(prev => prev.filter(c => c.id !== category.id));
     toast({
-      title: 'فروشگاه حذف شد',
-      description: `فروشگاه "${category.name}" با موفقیت حذف شد.`,
+      title: 'آیتم حذف شد',
+      description: `"${category.name}" با موفقیت حذف شد.`,
     });
 
     setIsProcessing(false);
@@ -193,7 +190,7 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
             <div className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>
-                        {isEditMode ? `ویرایش فروشگاه: ${category?.name}` : 'افزودن فروشگاه یا زیردسته جدید'}
+                        {isEditMode ? `ویرایش: ${category?.name}` : 'افزودن فروشگاه یا زیردسته'}
                     </CardTitle>
                     <CardDescription>
                         اطلاعات فروشگاه یا زیردسته جدید را وارد کنید.
@@ -226,12 +223,12 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
         
             <div className="grid gap-6">
                 <div className="grid gap-3">
-                <Label htmlFor="category-name">{isSubCategory ? 'نام زیردسته' : 'نام شاخه اصلی (مثلا کناف)'}</Label>
+                <Label htmlFor="category-name">{isSubCategory ? 'نام زیردسته (مانند کناف)' : 'نام فروشگاه (مانند دکوربند)'}</Label>
                 <Input
                     id="category-name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={isSubCategory ? "مثال: پروفیل گالوانیزه" : "مثال: کناف ایران"}
+                    placeholder={isSubCategory ? "مثال: پروفیل گالوانیزه" : "مثال: فروشگاه بزرگ دکوربند"}
                     required
                 />
                 </div>
@@ -250,18 +247,8 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
           
           <div className={cn("grid gap-6 transition-opacity", isSubCategory && 'opacity-50 pointer-events-none')}>
             <div>
-              <h3 className='text-lg font-semibold'>اطلاعات فروشگاه</h3>
-              <p className="text-sm text-muted-foreground">این اطلاعات فقط برای دسته‌بندی‌های اصلی (فروشگاه) اعمال می‌شود.</p>
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="store-name">نام نمایشی فروشگاه (مثلا دکوربند)</Label>
-              <Input
-                id="store-name"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                placeholder="مثال: فروشگاه کناف ایران"
-                disabled={isSubCategory}
-              />
+              <h3 className='text-lg font-semibold'>اطلاعات تکمیلی فروشگاه</h3>
+              <p className="text-sm text-muted-foreground">این اطلاعات فقط برای فروشگاه‌های اصلی اعمال می‌شود و در فاکتورها نمایش داده می‌شود.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-3">
@@ -324,8 +311,8 @@ export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) 
           
           <div className={cn("grid gap-6 transition-opacity", isSubCategory && 'opacity-50 pointer-events-none')}>
             <div>
-              <h3 className='text-lg font-semibold'>اطلاعات حساب بانکی</h3>
-              <p className="text-sm text-muted-foreground">این اطلاعات به صورت خودکار در فاکتورها نمایش داده می‌شود.</p>
+              <h3 className='text-lg font-semibold'>اطلاعات حساب بانکی فروشگاه</h3>
+              <p className="text-sm text-muted-foreground">این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</p>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="grid gap-3">

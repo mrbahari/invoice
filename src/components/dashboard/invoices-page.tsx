@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type View = 
     | { type: 'list' }
@@ -27,6 +28,11 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromEstimator = searchParams.get('fromEstimator');
+
   const [view, setView] = useState<View>({ type: 'list' });
 
   useEffect(() => {

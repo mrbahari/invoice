@@ -202,14 +202,27 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                     </td>
                     <td className="w-2/3 text-center align-top">
                       <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
-                      <h2 className="text-lg font-semibold">{storeCategory?.storeName}</h2>
+                      <h2 className="text-lg font-semibold">{storeCategory?.name}</h2>
                       <p className="text-sm">{storeCategory?.description}</p>
                       <div className="flex justify-center gap-8 mt-2 text-sm">
                         <span>شماره پیش فاکتور: <span className="font-mono">{invoice.invoiceNumber}</span></span>
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
                     </td>
-                    <td className="w-1/6"></td>
+                    <td className="w-1/6">
+                      {storeCategory.logoUrl && (
+                        <div className="flex justify-end">
+                            <Image
+                                src={storeCategory.logoUrl}
+                                alt={`لوگوی ${storeCategory.name}`}
+                                width={96}
+                                height={96}
+                                className="object-contain"
+                                unoptimized
+                            />
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -220,7 +233,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                 <table className="w-full text-sm">
                   <tbody>
                     <tr>
-                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {storeCategory?.storeName}</td>
+                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {storeCategory?.name}</td>
                       <td className="p-1 w-3/4 align-middle">شماره تماس: {storeCategory?.storePhone}<span className='mx-4'>|</span>آدرس: {storeCategory?.storeAddress}</td>
                     </tr>
                   </tbody>

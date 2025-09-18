@@ -14,10 +14,9 @@ export type Category = {
   name: string;
   description?: string;
   // Store-related properties are only for top-level categories
-  storeName?: string;
-  logoUrl?: string;
   storeAddress?: string;
   storePhone?: string;
+  logoUrl?: string;
   themeColor?: string;
   parentId?: string;
   // Bank details for the store

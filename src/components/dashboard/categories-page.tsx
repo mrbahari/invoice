@@ -87,7 +87,7 @@ export default function CategoriesPage() {
                     <div>
                         <CardTitle>فروشگاه‌ها</CardTitle>
                         <CardDescription>
-                        فروشگاه‌ها و دسته‌بندی محصولات خود را مدیریت کنید.
+                        فروشگاه‌های خود را مدیریت کرده و برای هرکدام زیردسته‌های محصولات تعریف کنید.
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
@@ -128,7 +128,6 @@ export default function CategoriesPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="text-xs text-muted-foreground justify-between">
-                        <span>{category.storeName}</span>
                         <span>{getProductCount(category.id)} محصول</span>
                     </CardFooter>
                 </Card>

@@ -62,7 +62,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
-  const [customerList, setCustomerList] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
@@ -86,11 +86,14 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   
   useEffect(() => {
     reloadProducts();
-  }, [reloadProducts]);
-
+    reloadCustomers();
+  }, [reloadProducts, reloadCustomers]);
+  
   useEffect(() => {
+    // Only run this if we are in edit mode and the necessary data is loaded.
     if (isEditMode && invoice && customerList.length > 0) {
-      setSelectedCustomer(customerList.find(c => c.id === invoice.customerId));
+      const customerForInvoice = customerList.find(c => c.id === invoice.customerId);
+      setSelectedCustomer(customerForInvoice);
     }
   }, [invoice, isEditMode, customerList]);
 
@@ -230,88 +233,84 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
     setIsProcessing(true);
 
-    setTimeout(() => {
-        const invoiceItems: InvoiceItem[] = items.map(item => ({
-            productId: item.product.id,
-            productName: item.product.name,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitPrice: getUnitPrice(item),
-            totalPrice: calculateItemTotal(item),
-        }));
-        
-        const finalSubtotal = invoiceItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
-        const finalTotal = finalSubtotal - overallDiscount + (totalBeforeTax * (tax/100)) + additions;
+    const invoiceItems: InvoiceItem[] = items.map(item => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unit: item.unit,
+        unitPrice: getUnitPrice(item),
+        totalPrice: calculateItemTotal(item),
+    }));
+    
+    const finalSubtotal = invoiceItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
+    const finalTotal = finalSubtotal - overallDiscount + (totalBeforeTax * (tax/100)) + additions;
 
-        let processedInvoiceId = '';
+    let processedInvoiceId = '';
 
-        if (isEditMode && invoice) {
-            processedInvoiceId = invoice.id;
-            const updatedInvoice: Invoice = {
-                ...invoice,
-                customerId: selectedCustomer.id,
-                customerName: selectedCustomer.name,
-                customerEmail: selectedCustomer.email,
-                items: invoiceItems,
-                subtotal: finalSubtotal,
-                discount: overallDiscount,
-                additions: additions,
-                tax: taxAmount,
-                total: finalTotal,
-                description: description || 'فاکتور ویرایش شده',
-                status,
-            };
-            setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
-             toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
-        } else {
-            const firstItemCategory = items[0].product.categoryId ? getRootParent(items[0].product.categoryId) : undefined;
-            const storeName = firstItemCategory?.storeName || 'Store';
-            const prefix = getStorePrefix(storeName);
+    if (isEditMode && invoice) {
+        processedInvoiceId = invoice.id;
+        const updatedInvoice: Invoice = {
+            ...invoice,
+            customerId: selectedCustomer.id,
+            customerName: selectedCustomer.name,
+            customerEmail: selectedCustomer.email,
+            items: invoiceItems,
+            subtotal: finalSubtotal,
+            discount: overallDiscount,
+            additions: additions,
+            tax: taxAmount,
+            total: finalTotal,
+            description: description || 'فاکتور ویرایش شده',
+            status,
+        };
+        setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
+          toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
+    } else {
+        const firstItemCategory = items[0].product.categoryId ? getRootParent(items[0].product.categoryId) : undefined;
+        const storeName = firstItemCategory?.storeName || 'Store';
+        const prefix = getStorePrefix(storeName);
 
-            const newInvoice: Invoice = {
-                id: `inv-${Math.random().toString(36).substr(2, 9)}`,
-                invoiceNumber: `${prefix}-${(invoices.length + 1546).toString().padStart(3, '0')}`,
-                customerId: selectedCustomer.id,
-                customerName: selectedCustomer.name,
-                customerEmail: selectedCustomer.email,
-                date: new Date().toISOString(),
-                status: 'Pending',
-                items: invoiceItems,
-                subtotal: finalSubtotal,
-                discount: overallDiscount,
-                additions: additions,
-                tax: taxAmount,
-                total: finalTotal,
-                description: description || 'فاکتور ایجاد شده',
-            };
-            processedInvoiceId = newInvoice.id;
-            setInvoices(prev => [newInvoice, ...prev]);
-            toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
-        }
+        const newInvoice: Invoice = {
+            id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+            invoiceNumber: `${prefix}-${(invoices.length + 1546).toString().padStart(3, '0')}`,
+            customerId: selectedCustomer.id,
+            customerName: selectedCustomer.name,
+            customerEmail: selectedCustomer.email,
+            date: new Date().toISOString(),
+            status: 'Pending',
+            items: invoiceItems,
+            subtotal: finalSubtotal,
+            discount: overallDiscount,
+            additions: additions,
+            tax: taxAmount,
+            total: finalTotal,
+            description: description || 'فاکتور ایجاد شده',
+        };
+        processedInvoiceId = newInvoice.id;
+        setInvoices(prev => [newInvoice, ...prev]);
+        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
+    }
 
-        setIsProcessing(false);
-        if (navigateToPreview && processedInvoiceId) {
-             onSaveAndPreview(processedInvoiceId);
-        } else {
-             onCancel();
-        }
-    }, 1000);
+    setIsProcessing(false);
+    if (navigateToPreview && processedInvoiceId) {
+          onSaveAndPreview(processedInvoiceId);
+    } else {
+          onCancel();
+    }
   };
   
   const handleDeleteInvoice = () => {
     if (!invoice) return;
 
     setIsProcessing(true);
-    setTimeout(() => {
-        setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
-        toast({
-            title: 'فاکتور حذف شد',
-            description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
-        });
+    setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
+    toast({
+        title: 'فاکتور حذف شد',
+        description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
+    });
 
-        setIsProcessing(false);
-        onCancel();
-    }, 1000);
+    setIsProcessing(false);
+    onCancel();
   };
 
 
@@ -332,7 +331,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                   </Button>
-                  {isEditMode && (
+                  {isEditMode && invoice && (
                     <Button onClick={() => onSaveAndPreview(invoice.id)} variant="outline" size="sm" className="h-10 gap-1">
                       <Eye className="h-3.5 w-3.5" />
                       <span>پیش‌نمایش</span>
@@ -634,3 +633,5 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
   );
 }
+
+    

@@ -269,26 +269,24 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
     setIsProcessing(true);
     
-    setTimeout(() => {
-      if (isEditMode && product) {
-        const updatedProduct = buildProductData(product.id);
-        setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
-        toast({
-          title: 'محصول با موفقیت ویرایش شد',
-          description: `تغییرات برای محصول "${name}" ذخیره شد.`,
-        });
-      } else {
-        const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-        setProducts(prev => [newProduct, ...prev]);
-        toast({
-          title: 'محصول جدید ایجاد شد',
-          description: `محصول "${name}" با موفقیت ایجاد شد.`,
-        });
-      }
+    if (isEditMode && product) {
+      const updatedProduct = buildProductData(product.id);
+      setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
+      toast({
+        title: 'محصول با موفقیت ویرایش شد',
+        description: `تغییرات برای محصول "${name}" ذخیره شد.`,
+      });
+    } else {
+      const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
+      setProducts(prev => [newProduct, ...prev]);
+      toast({
+        title: 'محصول جدید ایجاد شد',
+        description: `محصول "${name}" با موفقیت ایجاد شد.`,
+      });
+    }
 
-      setIsProcessing(false);
-      onSave();
-    }, 1000);
+    setIsProcessing(false);
+    onSave();
   };
   
   const handleSaveAsCopy = () => {
@@ -296,33 +294,29 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     
     setIsProcessing(true);
 
-    setTimeout(() => {
-        const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-        setProducts(prev => [newProduct, ...prev]);
-        toast({
-          title: 'محصول جدید از روی کپی ایجاد شد',
-          description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
-        });
-        
-        setIsProcessing(false);
-        onSave();
-    }, 1000);
+    const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
+    setProducts(prev => [newProduct, ...prev]);
+    toast({
+      title: 'محصول جدید از روی کپی ایجاد شد',
+      description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
+    });
+    
+    setIsProcessing(false);
+    onSave();
   }
   
   const handleDelete = () => {
     if (!product) return;
     
     setIsProcessing(true);
-    setTimeout(() => {
-        setProducts(prev => prev.filter(p => p.id !== product.id));
-        toast({
-            title: 'محصول حذف شد',
-            description: `محصول "${product.name}" با موفقیت حذف شد.`,
-        });
+    setProducts(prev => prev.filter(p => p.id !== product.id));
+    toast({
+        title: 'محصول حذف شد',
+        description: `محصول "${product.name}" با موفقیت حذف شد.`,
+    });
 
-        setIsProcessing(false);
-        onSave();
-    }, 1000);
+    setIsProcessing(false);
+    onSave();
   };
 
 
@@ -545,3 +539,5 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </form>
   );
 }
+
+    

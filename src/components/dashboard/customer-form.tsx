@@ -74,7 +74,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     id,
     name: name || 'مشتری بدون نام',
     email: email || 'ایمیل ثبت نشده',
-    phone,
+    phone: phone || 'شماره ثبت نشده',
     address: address || 'آدرس ثبت نشده',
     purchaseHistory: customer?.purchaseHistory || 'مشتری جدید',
   });
@@ -86,28 +86,26 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
     setIsProcessing(true);
 
-    setTimeout(() => {
-      if (isEditMode && customer) {
-        const updatedCustomer = buildCustomerData(customer.id);
-        setCustomers(prev => prev.map(c => 
-            c.id === customer.id ? updatedCustomer : c
-        ));
-        toast({
-          title: 'مشتری با موفقیت ویرایش شد',
-          description: `تغییرات برای مشتری "${updatedCustomer.name}" ذخیره شد.`,
-        });
-      } else {
-        const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
-        setCustomers(prev => [newCustomer, ...prev]);
-        toast({
-          title: 'مشتری جدید ایجاد شد',
-          description: `مشتری "${newCustomer.name}" با موفقیت ایجاد شد.`,
-        });
-      }
-      
-      setIsProcessing(false);
-      onSave();
-    }, 1000);
+    if (isEditMode && customer) {
+      const updatedCustomer = buildCustomerData(customer.id);
+      setCustomers(prev => prev.map(c => 
+          c.id === customer.id ? updatedCustomer : c
+      ));
+      toast({
+        title: 'مشتری با موفقیت ویرایش شد',
+        description: `تغییرات برای مشتری "${updatedCustomer.name}" ذخیره شد.`,
+      });
+    } else {
+      const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
+      setCustomers(prev => [newCustomer, ...prev]);
+      toast({
+        title: 'مشتری جدید ایجاد شد',
+        description: `مشتری "${newCustomer.name}" با موفقیت ایجاد شد.`,
+      });
+    }
+    
+    setIsProcessing(false);
+    onSave();
   };
   
   const handleSaveAsCopy = () => {
@@ -115,33 +113,29 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     
     setIsProcessing(true);
 
-    setTimeout(() => {
-        const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
-        setCustomers(prev => [newCustomer, ...prev]);
-        toast({
-          title: 'مشتری جدید از روی کپی ایجاد شد',
-          description: `مشتری جدید "${newCustomer.name}" با موفقیت ایجاد شد.`,
-        });
-        
-        setIsProcessing(false);
-        onSave();
-    }, 1000);
+    const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
+    setCustomers(prev => [newCustomer, ...prev]);
+    toast({
+      title: 'مشتری جدید از روی کپی ایجاد شد',
+      description: `مشتری جدید "${newCustomer.name}" با موفقیت ایجاد شد.`,
+    });
+    
+    setIsProcessing(false);
+    onSave();
   }
   
   const handleDelete = () => {
     if (!customer) return;
 
     setIsProcessing(true);
-    setTimeout(() => {
-      setCustomers(prev => prev.filter(c => c.id !== customer.id));
-      toast({
-        title: 'مشتری حذف شد',
-        description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
-      });
+    setCustomers(prev => prev.filter(c => c.id !== customer.id));
+    toast({
+      title: 'مشتری حذف شد',
+      description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
+    });
 
-      setIsProcessing(false);
-      onSave();
-    }, 1000);
+    setIsProcessing(false);
+    onSave();
   };
   
   const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -174,6 +168,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
               id="customer-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onFocus={handleFocus}
               placeholder="مثال: شرکت نوآوران"
             />
           </div>
@@ -260,3 +255,5 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     </form>
   );
 }
+
+    

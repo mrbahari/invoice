@@ -21,9 +21,9 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Invoice, Customer, Product } from '@/lib/definitions';
+import type { Invoice, Customer, Product, DailySales } from '@/lib/definitions';
 import { initialData } from '@/lib/data';
-import { DollarSign, CreditCard, Users, ArrowUp, Package } from 'lucide-react';
+import { DollarSign, CreditCard, Users, Hourglass, Package } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -37,7 +37,15 @@ export default function ReportsPage() {
   const [allProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [period, setPeriod] = useState<Period>('all');
 
-  const { invoicesInPeriod, totalRevenue, invoiceCount, customerCount, topCustomers, topProducts } = useMemo(() => {
+  const { 
+    totalRevenue, 
+    paidInvoiceCount, 
+    unpaidInvoiceCount,
+    customerCount, 
+    topCustomers, 
+    topProducts,
+    chartData
+  } = useMemo(() => {
     const now = new Date();
     let startDate: Date;
 
@@ -56,17 +64,39 @@ export default function ReportsPage() {
         startDate = new Date(0); // The beginning of time
     }
 
-    const invoicesInPeriod = allInvoices
-      .filter(inv => parseISO(inv.date) >= startDate)
-      .filter(inv => inv.status === 'Paid');
+    const invoicesInPeriod = allInvoices.filter(inv => parseISO(inv.date) >= startDate);
+    
+    const paidInvoicesInPeriod = invoicesInPeriod.filter(inv => inv.status === 'Paid');
+    const unpaidInvoicesInPeriod = invoicesInPeriod.filter(inv => inv.status !== 'Paid');
 
-    const totalRevenue = invoicesInPeriod.reduce((acc, inv) => acc + inv.total, 0);
-    const invoiceCount = invoicesInPeriod.length;
-
-    const uniqueCustomerIds = new Set(invoicesInPeriod.map(inv => inv.customerId));
+    const totalRevenue = paidInvoicesInPeriod.reduce((acc, inv) => acc + inv.total, 0);
+    
+    const uniqueCustomerIds = new Set(paidInvoicesInPeriod.map(inv => inv.customerId));
     const customerCount = uniqueCustomerIds.size;
     
-    const customerSpending = invoicesInPeriod.reduce<Record<string, { total: number, name: string }>>((acc, inv) => {
+    // Process chart data
+    const salesByDay: Record<string, { paid: number; unpaid: number }> = {};
+    
+    invoicesInPeriod.forEach(invoice => {
+        const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
+        if (!salesByDay[day]) {
+            salesByDay[day] = { paid: 0, unpaid: 0 };
+        }
+        if (invoice.status === 'Paid') {
+            salesByDay[day].paid += invoice.total;
+        } else {
+            salesByDay[day].unpaid += invoice.total;
+        }
+    });
+
+    const chartData: DailySales[] = Object.keys(salesByDay).sort().map(dayString => ({
+        date: format(parseISO(dayString), 'MM/dd'),
+        paid: salesByDay[dayString].paid,
+        unpaid: salesByDay[dayString].unpaid,
+    }));
+
+
+    const customerSpending = paidInvoicesInPeriod.reduce<Record<string, { total: number, name: string }>>((acc, inv) => {
         if (!acc[inv.customerId]) {
           acc[inv.customerId] = { total: 0, name: inv.customerName };
         }
@@ -84,7 +114,7 @@ export default function ReportsPage() {
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
 
-    const productSales = invoicesInPeriod.flatMap(inv => inv.items).reduce<Record<string, number>>((acc, item) => {
+    const productSales = paidInvoicesInPeriod.flatMap(inv => inv.items).reduce<Record<string, number>>((acc, item) => {
         if (!acc[item.productId]) {
             acc[item.productId] = 0;
         }
@@ -106,7 +136,15 @@ export default function ReportsPage() {
         .slice(0, 10);
 
 
-    return { invoicesInPeriod, totalRevenue, invoiceCount, customerCount, topCustomers, topProducts };
+    return { 
+        totalRevenue, 
+        paidInvoiceCount: paidInvoicesInPeriod.length,
+        unpaidInvoiceCount: unpaidInvoicesInPeriod.length, 
+        customerCount, 
+        topCustomers, 
+        topProducts,
+        chartData
+    };
   }, [allInvoices, allCustomers, allProducts, period]);
 
   return (
@@ -128,7 +166,7 @@ export default function ReportsPage() {
             </Tabs>
        </div>
 
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card className="animate-fade-in-up">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -149,13 +187,25 @@ export default function ReportsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{invoiceCount}</div>
+            <div className="text-2xl font-bold">+{paidInvoiceCount}</div>
              <p className="text-xs text-muted-foreground">
               تعداد فاکتورهای پرداخت شده در این دوره
             </p>
           </CardContent>
         </Card>
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+         <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
+            <Hourglass className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{unpaidInvoiceCount}</div>
+            <p className="text-xs text-muted-foreground">
+              فاکتورهای در انتظار و سررسید گذشته
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -170,18 +220,18 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid gap-4 md:gap-8">
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <CardHeader>
             <CardTitle>نمای کلی فروش</CardTitle>
-            <CardDescription>نمای کلی درآمد در بازه زمانی انتخاب شده.</CardDescription>
+            <CardDescription>مقایسه درآمد پرداخت شده و پرداخت نشده در بازه زمانی انتخاب شده.</CardDescription>
           </CardHeader>
           <CardContent className="pr-2">
-             <OverviewChart invoices={invoicesInPeriod} period={period} />
+             <OverviewChart data={chartData} />
           </CardContent>
         </Card>
         
         <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <CardHeader>
                 <CardTitle>مشتریان برتر</CardTitle>
                 <CardDescription>
@@ -225,7 +275,7 @@ export default function ReportsPage() {
             </CardContent>
             </Card>
 
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <Card className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
                 <CardHeader>
                     <CardTitle>پرفروش‌ترین محصولات</CardTitle>
                     <CardDescription>

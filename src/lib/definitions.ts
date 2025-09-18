@@ -76,4 +76,8 @@ export type AuthFormValues = {
   lastName?: string;
 };
 
-    
+export type DailySales = {
+  date: string;
+  paid: number;
+  unpaid: number;
+};

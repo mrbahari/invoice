@@ -17,16 +17,16 @@
     --secondary-foreground: 224 71.4% 4.1%;
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
-    --accent: 248 82% 40%; /* Darker Purple/Blue */
-    --accent-foreground: 0 0% 100%;
+    --accent: 34 94% 87%; /* Creamy Accent */
+    --accent-foreground: 224 71.4% 4.1%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 248 82% 50%;
     --radius: 0.5rem;
-    --chart-1: 248 82% 50%;
-    --chart-2: 248 82% 40%;
+    --chart-1: 248 82% 50%; /* Primary color for paid */
+    --chart-2: 38 92% 50%;  /* Orange for unpaid */
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
@@ -53,15 +53,15 @@
     --secondary-foreground: 210 20% 98%;
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 248 82% 45%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 34 94% 87%;
+    --accent-foreground: 224 71.4% 4.1%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 248 82% 55%;
-    --chart-1: 248 82% 55%;
-    --chart-2: 248 82% 45%;
+    --chart-1: 248 82% 55%; /* Primary for paid in dark */
+    --chart-2: 38 92% 50%; /* Orange for unpaid in dark */
     --sidebar-background: 240 10% 3.9%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 224.3 76.3% 48%;

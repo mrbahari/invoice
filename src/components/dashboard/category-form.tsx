@@ -241,48 +241,8 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
             </div>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="grid gap-3">
-              <Label htmlFor="category-name">نام دسته‌بندی</Label>
-              <Input
-                id="category-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: موبایل و تبلت"
-                required
-              />
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="parent-category">دسته‌بندی والد (اختیاری)</Label>
-              <Select value={parentId || 'none'} onValueChange={setParentId}>
-                <SelectTrigger id="parent-category">
-                  <SelectValue placeholder="انتخاب دسته‌بندی والد" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">هیچکدام (دسته‌بندی اصلی/فروشگاه)</SelectItem>
-                  {possibleParents.map(parent => (
-                    <SelectItem key={parent.id} value={parent.id}>
-                      {parent.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid gap-3">
-              <Label htmlFor="description">توضیحات</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="توضیحات مختصری در مورد دسته‌بندی بنویسید..."
-              />
-          </div>
-          
-          <Separator />
-          
           <div className={cn("grid gap-6", parentId && "opacity-50 pointer-events-none")}>
-            <div className='relative -top-3'>
+            <div className='relative'>
               <h3 className='text-lg font-semibold'>اطلاعات فروشگاه</h3>
               <p className='text-sm text-muted-foreground'>این بخش تنها برای دسته‌بندی‌های اصلی (والد) قابل ویرایش است.</p>
             </div>
@@ -400,6 +360,49 @@ export function CategoryForm({ category, onBack }: CategoryFormProps) {
                 </div>
             </div>
           </div>
+          
+          <Separator />
+
+           <div className="grid gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid gap-3">
+                <Label htmlFor="category-name">نام دسته‌بندی</Label>
+                <Input
+                    id="category-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="مثال: موبایل و تبلت"
+                    required
+                />
+                </div>
+                <div className="grid gap-3">
+                <Label htmlFor="parent-category">دسته‌بندی والد (اختیاری)</Label>
+                <Select value={parentId || 'none'} onValueChange={setParentId}>
+                    <SelectTrigger id="parent-category">
+                    <SelectValue placeholder="انتخاب دسته‌بندی والد" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="none">هیچکدام (دسته‌بندی اصلی/فروشگاه)</SelectItem>
+                    {possibleParents.map(parent => (
+                        <SelectItem key={parent.id} value={parent.id}>
+                        {parent.name}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                </div>
+            </div>
+            <div className="grid gap-3">
+                <Label htmlFor="description">توضیحات</Label>
+                <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="توضیحات مختصری در مورد دسته‌بندی بنویسید..."
+                />
+            </div>
+          </div>
+
         </CardContent>
         <CardFooter className="flex justify-between">
            <div>

@@ -94,19 +94,16 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   
   const isClient = useIsClient();
 
-  const [scrollPosition, setScrollPosition] = useState(0);
-
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-
   useEffect(() => {
-    if (view.type === 'list' && scrollPosition > 0) {
-        window.scrollTo(0, scrollPosition);
-        setScrollPosition(0); // Reset after scroll
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [view, scrollPosition]);
+  }, []);
+
 
   // Track changes to mark the form as dirty
   useEffect(() => {

@@ -170,21 +170,19 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
 
 
-  const { groupedCategories, categoryMap } = useMemo(() => {
-    const grouped: Record<string, Category[]> = {};
+  const { categoryMap, mainCategories, subCategories } = useMemo(() => {
     const map = new Map<string, Category>();
-
+    const main: Category[] = [];
+    const sub: Category[] = [];
     categories.forEach(category => {
       map.set(category.id, category);
-      if (!category.parentId) {
-        if (!grouped[category.storeId]) {
-          grouped[category.storeId] = [];
-        }
-        grouped[category.storeId].push(category);
+      if (category.parentId) {
+        sub.push(category);
+      } else {
+        main.push(category);
       }
     });
-
-    return { groupedCategories: grouped, categoryMap: map };
+    return { categoryMap: map, mainCategories: main, subCategories: sub };
   }, [categories]);
 
   const filteredProducts = useMemo(() => {
@@ -197,11 +195,14 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     const category = categoryMap.get(selectedCategory);
     if (!category) return intermediateProducts;
     
-    if (category.parentId) { // It's a subcategory
-        return intermediateProducts.filter(p => p.subCategoryId === selectedCategory);
-    } else { // It's a main category
-        const subCategoryIds = categories.filter(c => c.parentId === selectedCategory).map(c => c.id);
+    // If it's a main category, get all products from its subcategories
+    if (!category.parentId) {
+        const subCategoryIds = categories
+            .filter(c => c.parentId === selectedCategory)
+            .map(c => c.id);
         return intermediateProducts.filter(p => subCategoryIds.includes(p.subCategoryId));
+    } else { // It's a subcategory
+        return intermediateProducts.filter(p => p.subCategoryId === selectedCategory);
     }
 
   }, [products, productSearch, selectedCategory, categories, categoryMap]);
@@ -624,18 +625,15 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                             <SelectValue placeholder="انتخاب دسته‌بندی" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
-                            {Object.values(groupedCategories).flat().map(mainCategory => (
-                                <SelectGroup key={mainCategory.id}>
-                                    <SelectLabel>{mainCategory.name}</SelectLabel>
-                                    <SelectItem value={mainCategory.id}>همه محصولات {mainCategory.name}</SelectItem>
-                                    {categories.filter(sub => sub.parentId === mainCategory.id).map(subCategory => (
-                                        <SelectItem key={subCategory.id} value={subCategory.id}>
-                                            {subCategory.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            ))}
+                             <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                             <Separator />
+                             {mainCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                             ))}
+                             <Separator />
+                             {subCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id} className="pr-6">{cat.name}</SelectItem>
+                             ))}
                         </SelectContent>
                     </Select>
                 </div>
@@ -781,3 +779,4 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     
 
     
+

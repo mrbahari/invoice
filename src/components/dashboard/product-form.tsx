@@ -89,11 +89,16 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const parseFormattedNumber = (str: string): number | '' => {
     if (!str) return '';
-    const numericString = str.replace(/[^۰-۹0-9]/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString());
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    const englishDigits = '0123456789';
+    let numericString = str;
+    for (let i = 0; i < 10; i++) {
+        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
+    }
+    numericString = numericString.replace(/[^0-9]/g, '');
     const number = parseInt(numericString, 10);
     return isNaN(number) ? '' : number;
   };
-  
   
   // Calculate sub-unit price from main price
   useEffect(() => {
@@ -102,10 +107,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
     if (mainPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
       const calculatedSubPrice = Math.round(mainPriceNum / subUnitQtyNum);
-      if (calculatedSubPrice !== subUnitPrice) {
-        setSubUnitPrice(calculatedSubPrice);
-        setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
-      }
+      setSubUnitPrice(calculatedSubPrice);
+      setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
     } else if (!subUnit) {
        setSubUnitPrice('');
        setDisplaySubUnitPrice('');
@@ -114,6 +117,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   // Calculate main price from sub-unit price
   useEffect(() => {
+    // This effect should only run if the user changes the sub-unit price directly.
+    // It is commented out to prevent loops but can be re-enabled with guards.
+    /*
     const subPriceNum = Number(subUnitPrice);
     const subUnitQtyNum = Number(subUnitQuantity);
 
@@ -124,6 +130,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             setDisplayPrice(formatNumber(calculatedMainPrice));
         }
     }
+    */
   }, [subUnitPrice, subUnitQuantity, subUnit]);
 
 
@@ -131,14 +138,22 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setPrice(numericValue);
-    setDisplayPrice(value);
+    setDisplayPrice(formatNumber(numericValue));
   };
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setSubUnitPrice(numericValue);
-    setDisplaySubUnitPrice(value);
+    setDisplaySubUnitPrice(formatNumber(numericValue));
+
+    // Also update main price when sub unit price changes
+    const subUnitQtyNum = Number(subUnitQuantity);
+    if (numericValue !== '' && subUnitQtyNum > 0 && subUnit) {
+        const calculatedMainPrice = Math.round(numericValue * subUnitQtyNum);
+        setPrice(calculatedMainPrice);
+        setDisplayPrice(formatNumber(calculatedMainPrice));
+    }
   };
   
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -435,7 +450,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                   id="price" 
                                   value={displayPrice} 
                                   onChange={handlePriceChange} 
-                                  onBlur={(e) => setDisplayPrice(formatNumber(price))}
                                   required 
                                 />
                             </div>
@@ -446,7 +460,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                   id="sub-unit-price" 
                                   value={displaySubUnitPrice} 
                                   onChange={handleSubUnitPriceChange}
-                                  onBlur={(e) => setDisplaySubUnitPrice(formatNumber(subUnitPrice))}
                                   disabled={!showSubUnitFields} 
                                 />
                             </div>
@@ -542,3 +555,5 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </form>
   );
 }
+
+    

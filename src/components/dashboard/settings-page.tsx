@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Palette } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
@@ -188,7 +188,7 @@ export default function SettingsPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             <CardHeader>
             <CardTitle>ظاهر برنامه</CardTitle>
@@ -218,8 +218,26 @@ export default function SettingsPage() {
                 </RadioGroup>
             </CardContent>
         </Card>
+        
+        <Card className="animate-fade-in-up opacity-50 cursor-not-allowed" style={{ animationDelay: '0.2s' }}>
+            <CardHeader>
+                <CardTitle>تم رنگی</CardTitle>
+                <CardDescription>
+                    رنگ اصلی برنامه را انتخاب کنید. این گزینه غیرفعال است زیرا رنگ تم اکنون از طریق تنظیمات هر فروشگاه کنترل می‌شود.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-5 gap-2">
+                    {['#2563eb', '#db2777', '#16a34a', '#f97316', '#6d28d9'].map(color => (
+                        <Button key={color} variant="outline" size="icon" className="h-12 w-12 rounded-lg disabled:opacity-50" disabled>
+                            <Palette className="h-5 w-5" style={{ color }} />
+                        </Button>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
 
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <CardHeader>
             <CardTitle>مدیریت واحدها</CardTitle>
             <CardDescription>
@@ -256,7 +274,7 @@ export default function SettingsPage() {
         </Card>
       </div>
       
-      <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+      <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
         <CardHeader>
           <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
           <CardDescription>
@@ -284,7 +302,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+      <Card className="border-destructive animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
         <CardHeader>
           <CardTitle className="text-destructive">منطقه خطر</CardTitle>
           <CardDescription>

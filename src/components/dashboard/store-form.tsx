@@ -52,6 +52,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const [address, setAddress] = useState(store?.address || '');
   const [phone, setPhone] = useState(store?.phone || '');
   const [logoUrl, setLogoUrl] = useState<string | null>(store?.logoUrl || null);
+  const [themeColor, setThemeColor] = useState(store?.themeColor || '#2563eb');
   
   const [bankAccountHolder, setBankAccountHolder] = useState(store?.bankAccountHolder || '');
   const [bankName, setBankName] = useState(store?.bankName || '');
@@ -108,6 +109,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       address,
       phone,
       logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+      themeColor,
       bankAccountHolder,
       bankName,
       bankAccountNumber,
@@ -238,28 +240,38 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     <Label htmlFor="store-address">آدرس</Label>
                     <Input id="store-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="مثال: میدان ولیعصر، برج فناوری" />
                 </div>
-                <div className="grid gap-4">
-                    <Label>لوگوی فروشگاه</Label>
-                    <div className='flex items-start gap-6'>
-                      {logoUrl ? (
-                        <div className="relative w-24 h-24">
-                          <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2" key={logoUrl} unoptimized />
-                        </div>
-                      ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                              <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
-                          </div>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid gap-4">
+                        <Label>لوگوی فروشگاه</Label>
+                        <div className='flex items-start gap-6'>
+                          {logoUrl ? (
+                            <div className="relative w-24 h-24">
+                              <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2" key={logoUrl} unoptimized />
+                            </div>
+                          ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                                  <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                              </div>}
 
-                      <div className='flex-1 grid gap-4'>
-                          <div className="flex items-center justify-center w-full">
-                            <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                                    <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
-                                </div>
-                                <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
-                            </label>
-                          </div> 
-                      </div>
+                          <div className='flex-1 grid gap-4'>
+                              <div className="flex items-center justify-center w-full">
+                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                                        <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
+                                    </div>
+                                    <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                                </label>
+                              </div> 
+                          </div>
+                        </div>
+                    </div>
+                    <div className="grid gap-3">
+                        <Label htmlFor="theme-color">رنگ تم فروشگاه</Label>
+                        <div className="relative">
+                            <Input id="theme-color" type="text" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className="pr-12" />
+                            <Input type="color" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-10 p-1 cursor-pointer" />
+                        </div>
+                         <p className="text-xs text-muted-foreground">رنگ اصلی برنامه هنگام کار با این فروشگاه.</p>
                     </div>
                 </div>
             </CardContent>

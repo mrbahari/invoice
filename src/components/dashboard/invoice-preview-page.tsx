@@ -17,41 +17,46 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 
 function toWords(num: number): string {
+    if (num === 0) return "صفر";
+
     const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
     const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
-    const tens = ["", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+    const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
     const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
     const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
 
-    if (num === 0) return "صفر";
+    const convertThreeDigits = (n: number): string => {
+        if (n === 0) return "";
+        let str = "";
+        if (n >= 100) {
+            str += hundreds[Math.floor(n / 100)];
+            n %= 100;
+            if (n > 0) str += " و ";
+        }
+        if (n >= 20) {
+            str += tens[Math.floor(n / 10)];
+            n %= 10;
+            if (n > 0) str += " و ";
+        }
+        if (n >= 10) {
+            str += teens[n - 10];
+            n = 0;
+        }
+        if (n > 0) {
+            str += units[n];
+        }
+        return str;
+    };
+    
     if (num < 0) return "منفی " + toWords(Math.abs(num));
 
     let word = "";
     let i = 0;
-
     while (num > 0) {
         let chunk = num % 1000;
         if (chunk > 0) {
-            let chunkWord = "";
-            let h = Math.floor(chunk / 100);
-            if (h > 0) {
-                chunkWord += hundreds[h];
-                if (chunk % 100 > 0) chunkWord += " و ";
-            }
-            let t = chunk % 100;
-            if (t > 0) {
-                if (t < 10) {
-                    chunkWord += units[t];
-                } else if (t < 20) {
-                    chunkWord += teens[t - 10];
-                } else {
-                    chunkWord += tens[Math.floor(t / 10)];
-                    if (t % 10 > 0) {
-                        chunkWord += " و " + units[t % 10];
-                    }
-                }
-            }
-            word = chunkWord + thousands[i] + (word ? " و " : "") + word;
+            let chunkWord = convertThreeDigits(chunk);
+            word = chunkWord + thousands[i] + (word ? " و " + word : "");
         }
         num = Math.floor(num / 1000);
         i++;
@@ -59,6 +64,7 @@ function toWords(num: number): string {
 
     return word.trim();
 }
+
 
 type InvoicePreviewPageProps = {
     invoiceId: string;

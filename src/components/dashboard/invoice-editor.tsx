@@ -69,11 +69,15 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
   const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(
-    isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   
   const [items, setItems] = useState<InvoiceItemState[]>([]);
+
+  useEffect(() => {
+    if (isEditMode && invoice && customerList.length > 0) {
+      setSelectedCustomer(customerList.find(c => c.id === invoice.customerId));
+    }
+  }, [invoice, isEditMode, customerList]);
 
   useEffect(() => {
     if (isEditMode && invoice && products.length > 0) {

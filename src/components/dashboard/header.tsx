@@ -92,8 +92,9 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-      <div className="ml-auto flex items-center gap-4">
-        <div className="hidden md:flex">
+      
+      <div className="flex items-center gap-4 ml-auto">
+        <div className="flex">
             <LiveClock />
         </div>
         <div className={cn("relative md:grow-0", !showSearch && 'hidden')}>

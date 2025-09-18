@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2, ArrowRight, Copy } from 'lucide-react';
 import { useCollection } from '@/hooks/use-collection';
-import { addDoc, deleteDoc, updateDoc } from '@/lib/firestore-service';
 
 
 type CustomerFormProps = {
@@ -42,7 +41,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   const { toast } = useToast();
   const isEditMode = !!customer;
 
-  const { data: customers, loading: customersLoading, error: customersError } = useCollection<Customer>('customers');
+  const { add: addCustomer, update: updateCustomer, remove: removeCustomer } = useCollection<Customer>('customers');
 
 
   const [name, setName] = useState(
@@ -95,14 +94,14 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
     if (isEditMode && customer) {
       const updatedData = buildCustomerData();
-      await updateDoc('customers', customer.id, updatedData);
+      await updateCustomer(customer.id, updatedData);
       toast({
         title: 'مشتری با موفقیت ویرایش شد',
         description: `تغییرات برای مشتری "${updatedData.name}" ذخیره شد.`,
       });
     } else {
       const newData = buildCustomerData();
-      await addDoc('customers', newData);
+      await addCustomer(newData);
       toast({
         title: 'مشتری جدید ایجاد شد',
         description: `مشتری "${newData.name}" با موفقیت ایجاد شد.`,
@@ -118,7 +117,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     
     setIsProcessing(true);
     const newData = buildCustomerData();
-    await addDoc('customers', newData);
+    await addCustomer(newData);
     toast({
       title: 'مشتری جدید از روی کپی ایجاد شد',
       description: `مشتری جدید "${newData.name}" با موفقیت ایجاد شد.`,
@@ -132,7 +131,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     if (!customer) return;
 
     setIsProcessing(true);
-    await deleteDoc('customers', customer.id);
+    await removeCustomer(customer.id);
     toast({
       title: 'مشتری حذف شد',
       description: `مشتری "${customer.name}" با موفقیت حذف شد.`,

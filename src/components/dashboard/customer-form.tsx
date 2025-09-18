@@ -133,6 +133,10 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
       onSave();
     }, 1000);
   };
+  
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      e.target.select();
+  }
 
   return (
     <form onSubmit={handleSubmit}>
@@ -172,6 +176,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onFocus={handleFocus}
                 placeholder="مثال: contact@innovate.com"
                 />
             </div>
@@ -182,6 +187,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                onFocus={handleFocus}
                 placeholder="مثال: ۰۲۱-۵۵۵۰۱۰۱"
                 required
                 />
@@ -193,6 +199,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
               id="customer-address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              onFocus={handleFocus}
               placeholder="آدرس کامل مشتری را وارد کنید..."
             />
           </div>

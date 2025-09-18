@@ -42,10 +42,20 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   const isEditMode = !!customer;
 
   const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
-  const [name, setName] = useState(customer?.name || '');
-  const [email, setEmail] = useState(customer?.email || '');
-  const [phone, setPhone] = useState(customer?.phone || '');
-  const [address, setAddress] = useState(customer?.address || '');
+
+  const [name, setName] = useState(
+    isEditMode && customer?.name === 'مشتری بدون نام' ? '' : customer?.name || ''
+  );
+  const [email, setEmail] = useState(
+    isEditMode && customer?.email === 'ایمیل ثبت نشده' ? '' : customer?.email || ''
+  );
+  const [phone, setPhone] = useState(
+    isEditMode && customer?.phone === 'شماره ثبت نشده' ? '' : customer?.phone || ''
+  );
+  const [address, setAddress] = useState(
+    isEditMode && customer?.address === 'آدرس ثبت نشده' ? '' : customer?.address || ''
+  );
+
   const [isProcessing, setIsProcessing] = useState(false);
   
   const validateForm = () => {

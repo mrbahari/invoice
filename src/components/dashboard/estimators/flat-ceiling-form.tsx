@@ -90,8 +90,8 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
-      { material: 'پیچ سازه به سازه (LN)', quantity: structureScrews, unit: 'عدد' },
-      { material: 'پیچ پانل به سازه (TN)', quantity: totalPanelScrews, unit: 'عدد' },
+      { material: 'پیچ سازه به سازه (LN)', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
+      { material: 'پیچ پانل به سازه (TN)', quantity: Math.ceil(totalPanelScrews / 1000), unit: 'بسته' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   
@@ -115,14 +115,21 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      const product = products.find(p => p.name.includes(item.material));
+      // For screws, we need to find a product that includes the name and is sold by 'بسته'
+      let productQuery = item.material;
+      if(item.material.includes('پیچ')) {
+        productQuery = 'پیچ'; // Generic search for 'پیچ'
+      }
+
+      const product = products.find(p => p.name.includes(productQuery) && (item.material.includes('پیچ') ? p.unit === 'بسته' : true));
+
       if (product) {
         invoiceItems.push({
           productId: product.id,
-          productName: product.name,
+          productName: item.material, // Use the specific material name for the invoice
           quantity: item.quantity,
-          unit: product.unit,
-          unitPrice: product.price,
+          unit: item.unit,
+          unitPrice: product.price, // Price per package/item
           totalPrice: item.quantity * product.price,
         });
       } else {

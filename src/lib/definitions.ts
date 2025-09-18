@@ -93,3 +93,5 @@ export type DailySales = {
   paid: number;
   unpaid: number;
 };
+
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';

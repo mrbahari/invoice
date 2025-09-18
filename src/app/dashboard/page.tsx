@@ -55,7 +55,7 @@ export default function DashboardPage() {
           <EstimatorsPage onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'reports' ? '' : 'hidden'}>
-          <ReportsPage />
+          <ReportsPage onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'settings' ? '' : 'hidden'}>
           <SettingsPage />

@@ -21,7 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Invoice, Customer, Product, DailySales } from '@/lib/definitions';
+import type { Invoice, Customer, Product, DailySales, DashboardTab } from '@/lib/definitions';
 import { initialData } from '@/lib/data';
 import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -36,7 +36,12 @@ import {
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
-export default function ReportsPage() {
+type ReportsPageProps = {
+  onNavigate: (tab: DashboardTab) => void;
+};
+
+
+export default function ReportsPage({ onNavigate }: ReportsPageProps) {
   const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [allProducts] = useLocalStorage<Product[]>('products', initialData.products);
@@ -172,56 +177,64 @@ export default function ReportsPage() {
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <Card className="animate-fade-in-up">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              درآمد کل
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              فقط از فاکتورهای پرداخت شده
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{paidInvoiceCount}</div>
-             <p className="text-xs text-muted-foreground">
-              تعداد فاکتورهای پرداخت شده در این دوره
-            </p>
-          </CardContent>
-        </Card>
-         <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
-            <Hourglass className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{unpaidInvoiceCount}</div>
-            <p className="text-xs text-muted-foreground">
-              فاکتورهای در انتظار و سررسید گذشته
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{customerCount}</div>
-            <p className="text-xs text-muted-foreground">
-              مشتریانی که در این دوره خرید کرده‌اند
-            </p>
-          </CardContent>
-        </Card>
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+          <Card className="animate-fade-in-up">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                درآمد کل
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+              <p className="text-xs text-muted-foreground">
+                فقط از فاکتورهای پرداخت شده
+              </p>
+            </CardContent>
+          </Card>
+        </button>
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+          <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+{paidInvoiceCount}</div>
+               <p className="text-xs text-muted-foreground">
+                تعداد فاکتورهای پرداخت شده در این دوره
+              </p>
+            </CardContent>
+          </Card>
+        </button>
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+           <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
+              <Hourglass className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+{unpaidInvoiceCount}</div>
+              <p className="text-xs text-muted-foreground">
+                فاکتورهای در انتظار و سررسید گذشته
+              </p>
+            </CardContent>
+          </Card>
+        </button>
+        <button onClick={() => onNavigate('customers')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
+          <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+{customerCount}</div>
+              <p className="text-xs text-muted-foreground">
+                مشتریانی که در این دوره خرید کرده‌اند
+              </p>
+            </CardContent>
+          </Card>
+        </button>
       </div>
 
       <Accordion 

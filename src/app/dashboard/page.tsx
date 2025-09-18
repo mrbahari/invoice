@@ -34,37 +34,32 @@ export default function DashboardPage() {
       router.replace('/dashboard?tab=dashboard');
   }
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardHomePageContent onNavigate={handleNavigation} />;
-      case 'invoices':
-        return <InvoicesPage initialInvoice={navigationData?.invoice} />;
-      case 'products':
-        return <ProductsPage />;
-      case 'customers':
-        return <CustomersPage />;
-      case 'categories':
-        return <StoresPage />;
-      case 'estimators':
-        return <EstimatorsPage onNavigate={handleNavigation} />;
-      case 'reports':
-        return <ReportsPage />;
-      case 'settings':
-        return <SettingsPage />;
-      default:
-        // Redirect to a default tab if the tab is invalid
-        if (typeof window !== 'undefined') {
-            router.replace('/dashboard?tab=dashboard');
-        }
-        return <DashboardHomePageContent onNavigate={handleNavigation} />;
-    }
-  };
-
-
   return (
       <>
-        {renderContent()}
+        <div className={activeTab === 'dashboard' ? '' : 'hidden'}>
+          <DashboardHomePageContent onNavigate={handleNavigation} />
+        </div>
+        <div className={activeTab === 'invoices' ? '' : 'hidden'}>
+          <InvoicesPage initialInvoice={navigationData?.invoice} />
+        </div>
+        <div className={activeTab === 'products' ? '' : 'hidden'}>
+          <ProductsPage />
+        </div>
+        <div className={activeTab === 'customers' ? '' : 'hidden'}>
+          <CustomersPage />
+        </div>
+        <div className={activeTab === 'categories' ? '' : 'hidden'}>
+          <StoresPage />
+        </div>
+        <div className={activeTab === 'estimators' ? '' : 'hidden'}>
+          <EstimatorsPage onNavigate={handleNavigation} />
+        </div>
+        <div className={activeTab === 'reports' ? '' : 'hidden'}>
+          <ReportsPage />
+        </div>
+        <div className={activeTab === 'settings' ? '' : 'hidden'}>
+          <SettingsPage />
+        </div>
       </>
   );
 }

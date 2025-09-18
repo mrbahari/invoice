@@ -16,8 +16,10 @@ import type { DashboardTab } from '@/app/dashboard/page';
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },
   { tab: 'products', icon: Package, label: 'محصولات' },
-  // Central button placeholder
   { tab: 'customers', icon: Users, label: 'مشتریان' },
+  // Central button placeholder
+  { tab: 'categories', icon: Shapes, label: 'فروشگاه‌ها' },
+  { tab: 'estimators', icon: Calculator, label: 'برآورد' },
   { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];
 
@@ -29,8 +31,8 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm sm:hidden no-print">
-      <div className="grid h-20 grid-cols-5 items-center justify-items-center">
-        {navItems.slice(0, 2).map((item) => (
+      <div className="grid h-20 grid-cols-7 items-center justify-items-center">
+        {navItems.slice(0, 3).map((item) => (
           <button
             key={item.tab}
             onClick={() => onTabChange(item.tab)}
@@ -59,7 +61,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         </div>
 
 
-        {navItems.slice(2, 4).map((item) => (
+        {navItems.slice(3, 6).map((item) => (
            <button
             key={item.tab}
             onClick={() => onTabChange(item.tab)}

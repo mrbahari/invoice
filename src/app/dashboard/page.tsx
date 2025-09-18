@@ -10,7 +10,7 @@ import ReportsPage from '@/components/dashboard/reports-page';
 import SettingsPage from '@/components/dashboard/settings-page';
 import EstimatorsPage from '@/components/dashboard/estimators-page';
 import DashboardHomePageContent from '@/components/dashboard/home-page';
-import { redirect, useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import type { Invoice } from '@/lib/definitions';
 
 
@@ -29,6 +29,11 @@ export default function DashboardPage() {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
+  // If someone lands on /dashboard without a tab, redirect them to the default tab view
+  if (typeof window !== 'undefined' && !searchParams.get('tab')) {
+      router.replace('/dashboard?tab=dashboard');
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -56,10 +61,6 @@ export default function DashboardPage() {
     }
   };
 
-  // If someone lands on /dashboard without a tab, redirect them to the default tab view
-  if (!searchParams.get('tab')) {
-      redirect('/dashboard?tab=dashboard');
-  }
 
   return (
       <>

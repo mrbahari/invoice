@@ -6,14 +6,11 @@ import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
-import { useAuth } from '@/components/auth/auth-provider';
 import { SearchProvider } from '@/components/dashboard/search-provider';
 import type { DashboardTab } from './page';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { BottomNav } from '@/components/dashboard/bottom-nav';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
@@ -24,16 +21,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
-  
-  React.useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  if (loading || !user) {
-    return <div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>;
-  }
 
   return (
     <SearchProvider>

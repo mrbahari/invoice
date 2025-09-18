@@ -3,6 +3,7 @@
 
 import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -24,51 +25,24 @@ import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Customer, Invoice } from '@/lib/definitions';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
 import { useState, useMemo, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
-import { CustomerForm } from '@/components/dashboard/customer-form';
 
 export default function CustomersPage() {
-  const [customerList, setCustomerList, reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const [customerList, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [invoices, , reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | 'new' | null>(null);
-  const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  const handleDataChange = () => {
+  useEffect(() => {
     reloadCustomers();
     reloadInvoices();
-  };
+  }, []);
 
   const filteredCustomers = useMemo(() => {
     return customerList.filter(customer =>
       customer.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [customerList, searchTerm]);
-
-  const handleRowClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
-  };
-  
-  const handleAddNew = () => {
-    setSelectedCustomer('new');
-  };
-
-  const handleBackToList = () => {
-    setSelectedCustomer(null);
-  };
 
   const getCustomerStats = (customerId: string) => {
     const customerInvoices = invoices.filter(inv => inv.customerId === customerId);
@@ -86,12 +60,6 @@ export default function CustomersPage() {
     };
     downloadCSV(filteredCustomers, 'customers.csv', headers);
   };
-  
-  if (selectedCustomer) {
-      const customerToEdit = selectedCustomer === 'new' ? undefined : selectedCustomer;
-      return <CustomerForm customer={customerToEdit} onBack={handleBackToList} onDataChange={handleDataChange} />;
-  }
-
 
   return (
     <Card className="animate-fade-in-up">
@@ -110,11 +78,13 @@ export default function CustomersPage() {
                         خروجی
                     </span>
                 </Button>
-                <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    افزودن مشتری
-                    </span>
+                <Button size="sm" className="h-8 gap-1" asChild>
+                    <Link href="/dashboard/customers/new">
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        افزودن مشتری
+                        </span>
+                    </Link>
                 </Button>
             </div>
         </div>
@@ -127,6 +97,9 @@ export default function CustomersPage() {
               <TableHead className="hidden sm:table-cell">شماره تماس</TableHead>
               <TableHead className="hidden sm:table-cell text-center">سفارش‌ها</TableHead>
               <TableHead className="hidden md:table-cell text-left">جمع مبلغ سفارشات</TableHead>
+              <TableHead>
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -134,11 +107,7 @@ export default function CustomersPage() {
               const { totalSpent, orderCount } = getCustomerStats(customer.id);
               const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
               return (
-                <TableRow 
-                  key={customer.id} 
-                  onClick={() => handleRowClick(customer)} 
-                  className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
-                >
+                <TableRow key={customer.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
@@ -156,6 +125,11 @@ export default function CustomersPage() {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-left">
                     {formatCurrency(totalSpent)}
+                  </TableCell>
+                  <TableCell className="text-left">
+                      <Button asChild variant="outline" size="sm">
+                          <Link href={`/dashboard/customers/${customer.id}/edit`}>ویرایش</Link>
+                      </Button>
                   </TableCell>
                 </TableRow>
               );

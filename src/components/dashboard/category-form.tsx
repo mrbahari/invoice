@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, ChangeEvent, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -37,11 +38,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 type CategoryFormProps = {
   category?: Category;
-  onBack: () => void;
-  onDataChange: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 };
 
-export function CategoryForm({ category, onBack, onDataChange }: CategoryFormProps) {
+export function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
   const { toast } = useToast();
   const isEditMode = !!category;
 
@@ -85,7 +86,7 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const requiredField = isSubCategory ? 'نام دسته‌بندی' : 'نام فروشگاه';
+    const requiredField = isSubCategory ? 'نام زیردسته' : 'نام فروشگاه (دسته‌بندی اصلی)';
     if (!name || (!isSubCategory && !storeName)) {
       toast({
         variant: 'destructive',
@@ -116,18 +117,17 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
             : c
         ));
         toast({
-          title: 'دسته‌بندی با موفقیت ویرایش شد',
+          title: 'فروشگاه با موفقیت ویرایش شد',
         });
       } else {
         setCategories(prev => [newOrUpdatedCategory, ...prev]);
         toast({
-          title: 'دسته‌بندی جدید ایجاد شد',
+          title: 'فروشگاه جدید ایجاد شد',
         });
       }
 
-      onDataChange();
       setIsProcessing(false);
-      onBack();
+      onSave();
     }, 1000);
   };
 
@@ -158,13 +158,12 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
     setTimeout(() => {
       setCategories(prev => prev.filter(c => c.id !== category.id));
       toast({
-        title: 'دسته‌بندی حذف شد',
-        description: `دسته‌بندی "${category.name}" با موفقیت حذف شد.`,
+        title: 'فروشگاه حذف شد',
+        description: `فروشگاه "${category.name}" با موفقیت حذف شد.`,
       });
 
-      onDataChange();
       setIsProcessing(false);
-      onBack();
+      onSave();
     }, 1000);
   };
 
@@ -177,13 +176,13 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
             <div className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>
-                        {isEditMode ? `ویرایش: ${category?.name}` : 'افزودن دسته‌بندی یا فروشگاه جدید'}
+                        {isEditMode ? `ویرایش فروشگاه: ${category?.name}` : 'افزودن فروشگاه یا زیردسته جدید'}
                     </CardTitle>
                     <CardDescription>
-                        اطلاعات دسته‌بندی یا فروشگاه جدید را وارد کنید.
+                        اطلاعات فروشگاه یا زیردسته جدید را وارد کنید.
                     </CardDescription>
                 </div>
-                <Button type="button" variant="outline" onClick={onBack}>
+                <Button type="button" variant="outline" onClick={onCancel}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                 </Button>
@@ -212,7 +211,7 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
 
            <div className="grid gap-6">
                 <div className="grid gap-3">
-                <Label htmlFor="category-name">{isSubCategory ? 'نام زیردسته' : 'نام فروشگاه (دسته‌بندی اصلی)'}</Label>
+                <Label htmlFor="category-name">{isSubCategory ? 'نام زیردسته' : 'نام شاخه اصلی (مثلا کناف)'}</Label>
                 <Input
                     id="category-name"
                     value={name}
@@ -239,7 +238,7 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
               <p className="text-sm text-muted-foreground">این اطلاعات فقط برای دسته‌بندی‌های اصلی (فروشگاه) اعمال می‌شود.</p>
             </div>
             <div className="grid gap-3">
-              <Label htmlFor="store-name">نام نمایشی فروشگاه</Label>
+              <Label htmlFor="store-name">نام نمایشی فروشگاه (مثلا دکوربند)</Label>
               <Input
                 id="store-name"
                 value={storeName}
@@ -320,7 +319,7 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
                   <AlertDialogHeader>
                     <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
                     <AlertDialogDescription>
-                        این عمل غیرقابل بازگشت است و دسته‌بندی «{category.name}» را برای همیشه حذف می‌کند.
+                        این عمل غیرقابل بازگشت است و آیتم «{category.name}» را برای همیشه حذف می‌کند.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

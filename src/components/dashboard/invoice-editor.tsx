@@ -54,12 +54,11 @@ type InvoiceItemState = {
 
 type InvoiceEditorProps = {
     invoice?: Invoice;
-    onBack: () => void;
+    onCancel: () => void;
     onSaveAndPreview: (invoiceId: string) => void;
-    onDataChange: () => void;
 }
 
-export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
 
@@ -72,27 +71,6 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   
   const [items, setItems] = useState<InvoiceItemState[]>([]);
-
-  useEffect(() => {
-    if (isEditMode && invoice && customerList.length > 0) {
-      setSelectedCustomer(customerList.find(c => c.id === invoice.customerId));
-    }
-  }, [invoice, isEditMode, customerList]);
-
-  useEffect(() => {
-    if (isEditMode && invoice && products.length > 0) {
-        const initialItems = invoice.items.map(item => {
-            const product = products.find(p => p.id === item.productId);
-            if (!product) return null;
-            return {
-                product,
-                quantity: item.quantity,
-                unit: item.unit,
-            };
-        }).filter((item): item is InvoiceItemState => item !== null);
-        setItems(initialItems);
-    }
-  }, [invoice, isEditMode, products]);
   
   const [description, setDescription] = useState(invoice?.description || '');
   const [overallDiscount, setOverallDiscount] = useState(invoice?.discount || 0);
@@ -105,6 +83,30 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  // Effect to set initial state when in edit mode
+  useEffect(() => {
+    if (isEditMode && invoice) {
+        // Set customer
+        if (customerList.length > 0) {
+            setSelectedCustomer(customerList.find(c => c.id === invoice.customerId));
+        }
+        // Set items
+        if (products.length > 0) {
+            const initialItems = invoice.items.map(item => {
+                const product = products.find(p => p.id === item.productId);
+                if (!product) return null;
+                return {
+                    product,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                };
+            }).filter((item): item is InvoiceItemState => item !== null);
+            setItems(initialItems);
+        }
+    }
+  }, [invoice, isEditMode, products, customerList]);
+
 
   const filteredProducts = useMemo(() => {
     return products
@@ -283,12 +285,11 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
             toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoice.invoiceNumber} ایجاد شد.` });
         }
 
-        onDataChange();
         setIsProcessing(false);
         if (navigateToPreview && processedInvoiceId) {
              onSaveAndPreview(processedInvoiceId);
         } else {
-             onBack();
+             onCancel();
         }
     }, 1000);
   };
@@ -304,9 +305,8 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
             description: `فاکتور شماره "${invoice.invoiceNumber}" با موفقیت حذف شد.`,
         });
 
-        onDataChange();
         setIsProcessing(false);
-        onBack();
+        onCancel();
     }, 1000);
   };
 
@@ -324,14 +324,14 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
                 </CardDescription>
               </div>
                <div className='flex items-center gap-2'>
-                  <Button type="button" variant="outline" onClick={onBack}>
+                  <Button type="button" variant="outline" onClick={onCancel}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                   </Button>
                   {isEditMode && (
-                    <Button onClick={() => handleProcessInvoice(true)} variant="outline" size="sm" className="h-10 gap-1">
+                    <Button onClick={() => onSaveAndPreview(invoice.id)} variant="outline" size="sm" className="h-10 gap-1">
                       <Eye className="h-3.5 w-3.5" />
-                      <span>ذخیره و پیش‌نمایش</span>
+                      <span>پیش‌نمایش</span>
                     </Button>
                   )}
                </div>

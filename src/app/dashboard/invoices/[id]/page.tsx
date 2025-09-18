@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { initialData } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import Image from 'next/image';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, InvoiceItem } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 
 function toWords(num: number): string {
@@ -61,26 +61,21 @@ function toWords(num: number): string {
     return word.trim();
 }
 
-type InvoicePreviewProps = {
-    invoiceId: string;
-    onBack: () => void;
-};
 
-
-export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewProps) {
+export default function InvoicePreviewPage() {
+  const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const invoiceId = params.id;
+  
   const [invoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
   const [products] = useLocalStorage<Product[]>('products', initialData.products);
   const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [customers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
-  const invoice = invoices.find((inv) => inv.id === invoiceId);
-  const customer = customers.find((c) => c.id === invoice?.customerId);
+  const invoice = useMemo(() => invoices.find((inv) => inv.id === invoiceId), [invoices, invoiceId]);
+  const customer = useMemo(() => customers.find((c) => c.id === invoice?.customerId), [customers, invoice]);
 
-
-  if (!invoice) {
-    notFound();
-  }
 
   useEffect(() => {
     if (invoice && customer) {
@@ -94,6 +89,16 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
             });
     }
   }, [invoice, customer]);
+
+  if (!invoice) {
+    // We can show a loading state here
+    return null;
+  }
+  
+  if(!customer) {
+      // Data might be inconsistent for a moment
+      return null;
+  }
 
   const firstItem = invoice.items[0];
   const productInfo = products.find(p => p.id === firstItem?.productId);
@@ -127,7 +132,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     <div id="invoice-preview" className="font-sans animate-fade-in-up">
         <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
             <div className="flex justify-between gap-2 mb-6">
-                <Button type="button" variant="outline" onClick={onBack}>
+                <Button type="button" variant="outline" onClick={() => router.push('/dashboard/invoices')}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                 </Button>

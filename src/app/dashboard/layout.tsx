@@ -2,63 +2,54 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
 import { useAuth } from '@/components/auth/auth-provider';
-import { useRouter } from 'next/navigation';
 import { SearchProvider } from '@/components/dashboard/search-provider';
-import InvoicesPage from './invoices/page';
-import ProductsPage from './products/page';
-import CustomersPage from './customers/page';
-import CategoriesPage from './categories/page';
-import ReportsPage from './reports/page';
-import SettingsPage from './settings/page';
-import DashboardHomePageContent from './home/page';
-
 
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings';
+
+const pathToTabMapping: Record<string, DashboardTab> = {
+  '/dashboard/home': 'dashboard',
+  '/dashboard/invoices': 'invoices',
+  '/dashboard/products': 'products',
+  '/dashboard/customers': 'customers',
+  '/dashboard/categories': 'categories',
+  '/dashboard/reports': 'reports',
+  '/dashboard/settings': 'settings',
+};
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<DashboardTab>('dashboard');
+  const pathname = usePathname();
 
-  useEffect(() => {
+  const activeTab = React.useMemo(() => {
+    for (const path in pathToTabMapping) {
+      if (pathname.startsWith(path)) {
+        return pathToTabMapping[path];
+      }
+    }
+    return 'dashboard';
+  }, [pathname]);
+
+
+  React.useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return null;
+    return <div className="flex h-screen items-center justify-center">در حال بارگذاری...</div>;
   }
-
-  const handleTabChange = (tab: DashboardTab) => {
-    setActiveTab(tab);
-  };
   
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardHomePageContent />;
-      case 'invoices':
-        return <InvoicesPage />;
-      case 'products':
-        return <ProductsPage />;
-      case 'customers':
-        return <CustomersPage />;
-      case 'categories':
-        return <CategoriesPage />;
-      case 'reports':
-        return <ReportsPage />;
-      case 'settings':
-        return <SettingsPage />;
-      default:
-        return children;
-    }
+  const handleTabChange = (tab: DashboardTab) => {
+    const newPath = tab === 'dashboard' ? '/dashboard/home' : `/dashboard/${tab}`;
+    router.push(newPath);
   };
-
 
   return (
     <SearchProvider>
@@ -67,7 +58,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex flex-col sm:gap-4 sm:py-4 sm:pr-14">
           <Header activeTab={activeTab} onTabChange={handleTabChange} />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-             {renderContent()}
+             {children}
           </main>
         </div>
       </div>

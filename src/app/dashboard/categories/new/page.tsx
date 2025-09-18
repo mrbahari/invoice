@@ -1,16 +1,16 @@
 
 'use client';
 
+import { CategoryForm } from '@/components/dashboard/category-form';
 import { useRouter } from 'next/navigation';
 
 export default function NewCategoryPage() {
-  const router = useRouter();
-  
-  // This page is now handled within CategoriesPage.
-  // We redirect to the main categories page.
-  if (typeof window !== 'undefined') {
-    router.replace('/dashboard/categories');
-  }
+    const router = useRouter();
+    const handleSuccess = () => {
+        router.push('/dashboard/categories');
+        // A full refresh might be needed if data isn't updating across pages.
+        // router.refresh(); 
+    };
 
-  return null; // or a loading indicator
+    return <CategoryForm onSave={handleSuccess} onCancel={handleSuccess} />;
 }

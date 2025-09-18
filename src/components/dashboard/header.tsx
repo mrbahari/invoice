@@ -56,13 +56,14 @@ import { useSearch } from './search-provider';
 import { cn } from '@/lib/utils';
 import { LiveClock } from './live-clock';
 import type { DashboardTab } from '@/app/dashboard/layout';
+import { useRouter } from 'next/navigation';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
     dashboard: 'خانه',
     invoices: 'فاکتورها',
     products: 'محصولات',
     customers: 'مشتریان',
-    categories: 'دسته‌بندی‌ها',
+    categories: 'فروشگاه‌ها',
     reports: 'گزارشات',
     settings: 'تنظیمات',
 };
@@ -72,7 +73,7 @@ const mobileNavItems: { tab: DashboardTab; icon: React.ElementType; label: strin
     { tab: 'invoices', icon: FileText, label: 'فاکتورها' },
     { tab: 'products', icon: Package, label: 'محصولات' },
     { tab: 'customers', icon: Users, label: 'مشتریان' },
-    { tab: 'categories', icon: Shapes, label: 'دسته‌بندی‌ها' },
+    { tab: 'categories', icon: Shapes, label: 'فروشگاه‌ها' },
     { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];
 
@@ -87,12 +88,18 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
   const { searchTerm, setSearchTerm } = useSearch();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const router = useRouter();
+
 
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
   
   const handleSheetLinkClick = (tab: DashboardTab) => {
     onTabChange(tab);
     setIsSheetOpen(false);
+  };
+  
+  const handleSettingsClick = () => {
+      router.push('/dashboard/settings');
   };
 
   const showSearch = showSearchTabs.includes(activeTab);
@@ -191,9 +198,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <button onClick={() => onTabChange('settings')} className="w-full text-right">تنظیمات</button>
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSettingsClick}>تنظیمات</DropdownMenuItem>
             <Dialog>
                 <DialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>پشتیبانی</DropdownMenuItem>

@@ -52,11 +52,11 @@ type InvoiceTableProps = {
   customers: Customer[];
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
   onDeleteInvoice: (invoiceId: string) => void;
-  onRowClick: (invoice: Invoice) => void;
-  onViewInvoice: (invoiceId: string) => void;
 };
 
-export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice, onRowClick, onViewInvoice }: InvoiceTableProps) {
+export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteInvoice }: InvoiceTableProps) {
+  const router = useRouter();
+
   return (
      <Card className="animate-fade-in-up">
       <CardHeader className="px-7">
@@ -87,7 +87,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
               return (
               <TableRow 
                 key={invoice.id} 
-                onClick={() => onRowClick(invoice)}
+                onClick={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}
                 className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
               >
                 <TableCell>
@@ -112,9 +112,11 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onDeleteI
                 </TableCell>
                 <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1 justify-end">
-                      <Button onClick={() => onViewInvoice(invoice.id)} size="icon" variant="ghost" className="h-8 w-8">
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">مشاهده</span>
+                      <Button asChild size="icon" variant="ghost" className="h-8 w-8">
+                          <Link href={`/dashboard/invoices/${invoice.id}`}>
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">مشاهده</span>
+                          </Link>
                       </Button>
                       {invoice.status !== 'Paid' && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-600" onClick={() => onStatusChange(invoice.id, 'Paid')}>

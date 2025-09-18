@@ -27,25 +27,23 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Product, Category } from '@/lib/definitions';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useSearch } from '@/components/dashboard/search-provider';
-import { ProductForm } from '@/components/dashboard/product-form';
 
 export default function ProductsPage() {
   const [products, setProducts, reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedProduct, setSelectedProduct] = useState<Product | 'new' | null>(null);
   const { toast } = useToast();
   const router = useRouter();
   const { searchTerm } = useSearch();
 
-  const handleDataChange = () => {
+  useEffect(() => {
     reloadProducts();
     reloadCategories();
-  };
+  }, []);
 
   const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
 
@@ -81,30 +79,22 @@ export default function ProductsPage() {
 
   }, [products, activeTab, searchTerm, getDescendantIds]);
 
-  const handleRowClick = (product: Product) => {
-    setSelectedProduct(product);
-  };
-  
-  const handleAddNew = () => {
-    setSelectedProduct('new');
-  };
-
-  const handleBackToList = () => {
-    setSelectedProduct(null);
-  };
 
   const getCategoryName = (categoryId: string) => {
     return categoriesById.get(categoryId)?.name || 'بدون دسته‌بندی';
   };
 
   const handleExport = () => {
-    const dataToExport = filteredProducts;
+    const dataToExport = filteredProducts.map(p => ({
+        ...p,
+        categoryName: getCategoryName(p.categoryId),
+    }));
 
     const headers = {
       name: 'نام محصول',
       description: 'توضیحات',
       price: 'قیمت',
-      categoryId: 'شناسه دسته‌بندی',
+      categoryName: 'دسته‌بندی',
     };
     
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
@@ -119,7 +109,7 @@ export default function ProductsPage() {
     categories.forEach(cat => {
         if (cat.parentId && categoryMap.has(cat.parentId)) {
             categoryMap.get(cat.parentId)!.children.push(cat);
-        } else {
+        } else if (!cat.parentId) {
             topLevel.push(cat);
         }
     });
@@ -143,18 +133,13 @@ export default function ProductsPage() {
     return sorted;
   }, [categories]);
 
-  if (selectedProduct) {
-      const productToEdit = selectedProduct === 'new' ? undefined : selectedProduct;
-      return <ProductForm product={productToEdit} categories={categories} onBack={handleBackToList} onDataChange={handleDataChange} />;
-  }
-
   return (
     <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
       <div className="flex items-center justify-between">
-        <TabsList>
+        <TabsList className="overflow-x-auto">
           <TabsTrigger value="all">همه</TabsTrigger>
           {sortedCategoriesForTabs.map(cat => (
-            <TabsTrigger key={cat.id} value={cat.id}>
+            <TabsTrigger key={cat.id} value={cat.id} className="whitespace-nowrap">
               {cat.name}
             </TabsTrigger>
           ))}
@@ -166,11 +151,13 @@ export default function ProductsPage() {
               خروجی
             </span>
           </Button>
-          <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              افزودن محصول
-            </span>
+          <Button size="sm" className="h-8 gap-1" asChild>
+            <Link href="/dashboard/products/new">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                افزودن محصول
+                </span>
+            </Link>
           </Button>
         </div>
       </div>
@@ -198,7 +185,7 @@ export default function ProductsPage() {
             </TableHeader>
             <TableBody>
                 {filteredProducts.map((product) => (
-                <TableRow key={product.id} onClick={() => handleRowClick(product)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
+                <TableRow key={product.id} onClick={() => router.push(`/dashboard/products/${product.id}/edit`)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
                     <TableCell className="hidden sm:table-cell">
                     <Image
                         alt={product.name}

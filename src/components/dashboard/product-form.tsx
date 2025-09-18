@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -45,19 +44,18 @@ import {
 
 type ProductFormProps = {
   product?: Product;
-  categories: Category[];
-  onBack: () => void;
-  onDataChange: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 };
 
 type AIFeature = 'description' | 'price' | 'image';
 
-export function ProductForm({ product, categories, onBack, onDataChange }: ProductFormProps) {
-  const router = useRouter();
+export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
   const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
   const [name, setName] = useState(product?.name || '');
@@ -288,9 +286,8 @@ export function ProductForm({ product, categories, onBack, onDataChange }: Produ
         });
       }
 
-      onDataChange();
       setIsProcessing(false);
-      onBack();
+      onSave();
     }, 1000);
   };
   
@@ -307,9 +304,8 @@ export function ProductForm({ product, categories, onBack, onDataChange }: Produ
           description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
         });
         
-        onDataChange();
         setIsProcessing(false);
-        onBack();
+        onSave();
     }, 1000);
   }
   
@@ -324,9 +320,8 @@ export function ProductForm({ product, categories, onBack, onDataChange }: Produ
             description: `محصول "${product.name}" با موفقیت حذف شد.`,
         });
 
-        onDataChange();
         setIsProcessing(false);
-        onBack();
+        onSave();
     }, 1000);
   };
 
@@ -344,7 +339,7 @@ export function ProductForm({ product, categories, onBack, onDataChange }: Produ
                             <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
                             <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
                         </div>
-                        <Button type="button" variant="outline" onClick={onBack}>
+                        <Button type="button" variant="outline" onClick={onCancel}>
                             <ArrowRight className="ml-2 h-4 w-4" />
                             بازگشت به لیست
                         </Button>

@@ -33,11 +33,11 @@ import { Trash2, ArrowRight, Copy } from 'lucide-react';
 
 type CustomerFormProps = {
   customer?: Customer;
-  onBack: () => void;
-  onDataChange: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 };
 
-export function CustomerForm({ customer, onBack, onDataChange }: CustomerFormProps) {
+export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) {
   const { toast } = useToast();
   const isEditMode = !!customer;
 
@@ -95,9 +95,8 @@ export function CustomerForm({ customer, onBack, onDataChange }: CustomerFormPro
         });
       }
       
-      onDataChange();
       setIsProcessing(false);
-      onBack();
+      onSave();
     }, 1000);
   };
   
@@ -114,9 +113,8 @@ export function CustomerForm({ customer, onBack, onDataChange }: CustomerFormPro
           description: `مشتری جدید "${name}" با موفقیت ایجاد شد.`,
         });
         
-        onDataChange();
         setIsProcessing(false);
-        onBack();
+        onSave();
     }, 1000);
   }
   
@@ -131,9 +129,8 @@ export function CustomerForm({ customer, onBack, onDataChange }: CustomerFormPro
         description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
       });
 
-      onDataChange();
       setIsProcessing(false);
-      onBack();
+      onSave();
     }, 1000);
   };
 
@@ -150,7 +147,7 @@ export function CustomerForm({ customer, onBack, onDataChange }: CustomerFormPro
                         اطلاعات مشتری را وارد کنید.
                     </CardDescription>
                 </div>
-                 <Button type="button" variant="outline" onClick={onBack}>
+                 <Button type="button" variant="outline" onClick={onCancel}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                 </Button>

@@ -1,16 +1,19 @@
 
 'use client';
 
+import { InvoiceEditor } from '@/components/dashboard/invoice-editor';
 import { useRouter } from 'next/navigation';
 
 export default function NewInvoicePage() {
-  const router = useRouter();
-  
-  // This page is now handled within InvoicesPage.
-  // We redirect to the main invoices page.
-  if (typeof window !== 'undefined') {
-    router.replace('/dashboard/invoices');
-  }
+    const router = useRouter();
 
-  return null; // or a loading indicator
+    const handleSaveAndPreview = (invoiceId: string) => {
+        router.push(`/dashboard/invoices/${invoiceId}`);
+    }
+
+    const handleCancel = () => {
+        router.push('/dashboard/invoices');
+    }
+
+    return <InvoiceEditor onSaveAndPreview={handleSaveAndPreview} onCancel={handleCancel} />;
 }

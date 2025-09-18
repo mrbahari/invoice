@@ -59,6 +59,16 @@ type InvoiceEditorProps = {
     onSaveAndPreview: (invoiceId: string) => void;
 }
 
+// A custom hook that returns true only after the component has mounted on the client.
+const useIsClient = () => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  return isClient;
+};
+
+
 export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
   const { toast } = useToast();
   const isEditMode = !!invoice;
@@ -81,16 +91,14 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  
+  const isClient = useIsClient();
 
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Track changes to mark the form as dirty
   useEffect(() => {
@@ -271,13 +279,8 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   };
 
   const handlePreviewClick = () => {
-      if (isDirty) {
-          handleProcessInvoice(true);
-      } else if(invoice) {
-          onSaveAndPreview(invoice.id);
-      } else {
-          toast({ variant: 'destructive', title: 'فاکتور ذخیره نشده است', description: 'ابتدا فاکتور را ایجاد و ذخیره کنید تا بتوانید پیش‌نمایش آن را ببینید.' });
-      }
+      // Always save/process the invoice, then navigate to preview.
+      handleProcessInvoice(true);
   }
 
   const handleProcessInvoice = (navigateToPreview: boolean = false) => {
@@ -390,7 +393,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                   </Button>
                   <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1">
                     <Eye className="ml-2 h-3.5 w-3.5" />
-                    <span>{isDirty ? 'ثبت و پیش‌نمایش' : 'پیش‌نمایش'}</span>
+                    <span>ثبت و پیش‌نمایش</span>
                   </Button>
                </div>
             </div>
@@ -416,7 +419,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                         <Droppable droppableId="invoiceItems">
                             {(provided) => (
                             <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                                {items.map((item, index) => {
+                                {items.length > 0 ? items.map((item, index) => {
                                     const availableUnits = [item.product.unit];
                                     if (item.product.subUnit) {
                                         availableUnits.push(item.product.subUnit);
@@ -478,7 +481,13 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                                         )}
                                         </Draggable>
                                     )
-                                })}
+                                }) : (
+                                  <TableRow>
+                                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                                      برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
+                                    </TableCell>
+                                  </TableRow>
+                                )}
                                 {provided.placeholder}
                             </TableBody>
                             )}
@@ -494,9 +503,6 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                       </TableBody>
                     )}
                 </Table>
-                 {isClient && items.length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.</div>
-                )}
             </div>
 
             <div className="grid gap-2">
@@ -716,3 +722,5 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
   );
 }
+
+    

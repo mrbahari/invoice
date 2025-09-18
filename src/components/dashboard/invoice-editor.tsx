@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice } from '@/lib/definitions';
+import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice, InvoiceStatus } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -92,7 +92,8 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
   const [overallDiscount, setOverallDiscount] = useState(invoice?.discount || 0);
   const [additions, setAdditions] = useState(invoice?.additions || 0);
   const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount)) * 100 : 0);
-  
+  const [status, setStatus] = useState<InvoiceStatus>(invoice?.status || 'Pending');
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [productSearch, setProductSearch] = useState('');
@@ -246,6 +247,7 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
                 tax: taxAmount,
                 total: finalTotal,
                 description: description || 'فاکتور ویرایش شده',
+                status,
             };
             setInvoices(prev => prev.map(inv => inv.id === invoice.id ? updatedInvoice : inv));
              toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
@@ -463,7 +465,7 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between items-center">
                 <div>
                   {isEditMode && (
                       <AlertDialog>
@@ -488,6 +490,23 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
                       </AlertDialog>
                   )}
                 </div>
+                
+                {isEditMode && (
+                    <div className="grid gap-2">
+                        <Label htmlFor="status">وضعیت فاکتور</Label>
+                        <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
+                            <SelectTrigger id="status" className="w-[180px]">
+                                <SelectValue placeholder="تغییر وضعیت" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Pending">در انتظار</SelectItem>
+                                <SelectItem value="Paid">پرداخت شده</SelectItem>
+                                <SelectItem value="Overdue">سررسید گذشته</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+
                 <Button className="w-full max-w-xs" onClick={() => handleProcessInvoice(false)} disabled={isProcessing}>
                     {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
                 </Button>

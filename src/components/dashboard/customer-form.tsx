@@ -49,11 +49,11 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   const [isProcessing, setIsProcessing] = useState(false);
   
   const validateForm = () => {
-    if (!name || !phone) {
+    if (!phone) {
       toast({
         variant: 'destructive',
-        title: 'فیلدهای الزامی خالی است',
-        description: 'لطفاً نام و شماره تماس مشتری را وارد کنید.',
+        title: 'فیلد الزامی خالی است',
+        description: 'لطفاً شماره تماس مشتری را وارد کنید.',
       });
       return false;
     }
@@ -62,7 +62,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   
   const buildCustomerData = (id: string): Customer => ({
     id,
-    name,
+    name: name || 'مشتری بدون نام',
     email: email || 'ایمیل ثبت نشده',
     phone,
     address: address || 'آدرس ثبت نشده',
@@ -84,14 +84,14 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
         ));
         toast({
           title: 'مشتری با موفقیت ویرایش شد',
-          description: `تغییرات برای مشتری "${name}" ذخیره شد.`,
+          description: `تغییرات برای مشتری "${updatedCustomer.name}" ذخیره شد.`,
         });
       } else {
         const newCustomer = buildCustomerData(`cust-${Math.random().toString(36).substr(2, 9)}`);
         setCustomers(prev => [newCustomer, ...prev]);
         toast({
           title: 'مشتری جدید ایجاد شد',
-          description: `مشتری "${name}" با موفقیت ایجاد شد.`,
+          description: `مشتری "${newCustomer.name}" با موفقیت ایجاد شد.`,
         });
       }
       
@@ -110,7 +110,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
         setCustomers(prev => [newCustomer, ...prev]);
         toast({
           title: 'مشتری جدید از روی کپی ایجاد شد',
-          description: `مشتری جدید "${name}" با موفقیت ایجاد شد.`,
+          description: `مشتری جدید "${newCustomer.name}" با موفقیت ایجاد شد.`,
         });
         
         setIsProcessing(false);
@@ -165,7 +165,6 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="مثال: شرکت نوآوران"
-              required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

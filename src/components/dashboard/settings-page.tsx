@@ -25,15 +25,18 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useTheme } from 'next-themes';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme, setTheme } = useTheme();
 
   const [categories, setCategories] = useLocalStorage<Category[]>('categories', []);
   const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
@@ -185,43 +188,75 @@ export default function SettingsPage() {
         </CardHeader>
       </Card>
 
-      <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-        <CardHeader>
-          <CardTitle>مدیریت واحدها</CardTitle>
-          <CardDescription>
-            واحدهای اندازه‌گیری قابل استفاده در فاکتورها را مدیریت کنید.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              <div className="grid gap-1.5 flex-grow">
-                <Label htmlFor="new-unit-name">نام واحد جدید</Label>
-                <Input
-                    id="new-unit-name"
-                    placeholder="مثال: کارتن"
-                    value={newUnitName}
-                    onChange={(e) => setNewUnitName(e.target.value)}
-                />
-              </div>
-              <Button onClick={handleAddUnit} className="self-end">
-                  <PlusCircle className="ml-2 h-4 w-4" />
-                  افزودن
-              </Button>
-          </div>
-          <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
-            {units.length > 0 ? units.map(unit => (
-                <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
-                    <span>{unit.name}</span>
-                    <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
-                        <X className="h-3 w-3" />
-                    </button>
-                </Badge>
-            )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <CardHeader>
+            <CardTitle>ظاهر برنامه</CardTitle>
+            <CardDescription>
+                حالت نمایش روشن، تاریک یا هماهنگ با سیستم را انتخاب کنید.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <RadioGroup value={theme} onValueChange={setTheme}>
+                    <div className="grid grid-cols-3 gap-4">
+                        <Label htmlFor="theme-light" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                            <RadioGroupItem value="light" id="theme-light" className="sr-only" />
+                            <Sun className="h-6 w-6" />
+                            <span>روشن</span>
+                        </Label>
+                         <Label htmlFor="theme-dark" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                            <RadioGroupItem value="dark" id="theme-dark" className="sr-only" />
+                            <Moon className="h-6 w-6" />
+                            <span>تاریک</span>
+                        </Label>
+                         <Label htmlFor="theme-system" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                            <RadioGroupItem value="system" id="theme-system" className="sr-only" />
+                            <Monitor className="h-6 w-6" />
+                            <span>سیستم</span>
+                        </Label>
+                    </div>
+                </RadioGroup>
+            </CardContent>
+        </Card>
+
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <CardHeader>
+            <CardTitle>مدیریت واحدها</CardTitle>
+            <CardDescription>
+                واحدهای اندازه‌گیری قابل استفاده در فاکتورها را مدیریت کنید.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <div className="grid gap-1.5 flex-grow">
+                    <Label htmlFor="new-unit-name">نام واحد جدید</Label>
+                    <Input
+                        id="new-unit-name"
+                        placeholder="مثال: کارتن"
+                        value={newUnitName}
+                        onChange={(e) => setNewUnitName(e.target.value)}
+                    />
+                </div>
+                <Button onClick={handleAddUnit} className="self-end">
+                    <PlusCircle className="ml-2 h-4 w-4" />
+                    افزودن
+                </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
+                {units.length > 0 ? units.map(unit => (
+                    <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
+                        <span>{unit.name}</span>
+                        <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                            <X className="h-3 w-3" />
+                        </button>
+                    </Badge>
+                )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
+            </div>
+            </CardContent>
+        </Card>
+      </div>
       
-      <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+      <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
         <CardHeader>
           <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
           <CardDescription>
@@ -249,7 +284,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+      <Card className="border-destructive animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
         <CardHeader>
           <CardTitle className="text-destructive">منطقه خطر</CardTitle>
           <CardDescription>
@@ -318,5 +353,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

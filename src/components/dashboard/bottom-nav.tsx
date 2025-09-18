@@ -6,7 +6,7 @@ import {
   Package,
   Users,
   LineChart,
-  PlusCircle,
+  FileText,
   Store,
   Calculator,
 } from 'lucide-react';
@@ -53,9 +53,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         <div className="flex h-full w-full items-center justify-center">
             <button 
               onClick={() => onTabChange('invoices')}
-              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95"
+              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-background/80 text-primary shadow-lg shadow-black/10 backdrop-blur-sm transition-all hover:scale-110 hover:shadow-primary/20 active:scale-95"
             >
-              <PlusCircle className="h-8 w-8 transition-transform group-hover:rotate-90" />
+              <FileText className="h-8 w-8 transition-transform group-hover:rotate-[-5deg] group-active:rotate-[-10deg]" />
               <span className="sr-only">ایجاد فاکتور</span>
             </button>
         </div>

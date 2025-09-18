@@ -73,20 +73,22 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
     isEditMode ? customerList.find(c => c.id === invoice.customerId) : undefined
   );
   
-  const [items, setItems] = useState<InvoiceItemState[]>(() => {
-    if (!isEditMode || !invoice) {
-        return [];
+  const [items, setItems] = useState<InvoiceItemState[]>([]);
+
+  useEffect(() => {
+    if (isEditMode && invoice && products.length > 0) {
+        const initialItems = invoice.items.map(item => {
+            const product = products.find(p => p.id === item.productId);
+            if (!product) return null;
+            return {
+                product,
+                quantity: item.quantity,
+                unit: item.unit,
+            };
+        }).filter((item): item is InvoiceItemState => item !== null);
+        setItems(initialItems);
     }
-    return invoice.items.map(item => {
-        const product = products.find(p => p.id === item.productId);
-        if (!product) return null;
-        return {
-          product,
-          quantity: item.quantity,
-          unit: item.unit,
-        }
-      }).filter((item): item is InvoiceItemState => item !== null);
-  });
+  }, [invoice, isEditMode, products]);
   
   const [description, setDescription] = useState(invoice?.description || '');
   const [overallDiscount, setOverallDiscount] = useState(invoice?.discount || 0);
@@ -479,7 +481,7 @@ export function InvoiceEditor({ invoice, onBack, onSaveAndPreview, onDataChange 
                               <AlertDialogHeader>
                                   <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                      این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice.invoiceNumber}» را برای همیشه حذف می‌کند.
+                                      این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice?.invoiceNumber}» را برای همیشه حذف می‌کند.
                                   </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

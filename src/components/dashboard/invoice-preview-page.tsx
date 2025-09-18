@@ -47,15 +47,17 @@ function toWords(num: number): string {
             if (t > 1) {
                 chunkWord += tens[t];
                 if (u > 0) chunkWord += " و ";
-            }
-
-            if (t === 1) {
+            } else if (t === 1) {
                 chunkWord += teens[u];
             } else if (u > 0) {
                 chunkWord += units[u];
             }
             
-            // Add thousands separator only if it's not the first chunk and there's more to come
+            chunkWord = chunkWord.trim();
+            if(chunkWord.endsWith(" و")) {
+                chunkWord = chunkWord.slice(0, -2);
+            }
+
             const separator = thousands[i] ? thousands[i] : "";
             if (word) {
                 word = chunkWord + separator + " و " + word;
@@ -67,7 +69,6 @@ function toWords(num: number): string {
         i++;
     }
 
-    // Clean up extra " و " at the end
     return word.replace(/ و\s*$/, "").trim();
 }
 
@@ -260,7 +261,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
               <div className="border border-black mt-2 p-2 text-sm">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
-                  <p>شماره کارت : 6219861051578325</p>
+                  <p>اسماعیل بهاری شماره شبا IR - 69 0560 0816 8000 2151 7910 01</p>
               </div>
 
 

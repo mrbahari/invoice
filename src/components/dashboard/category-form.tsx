@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type CategoryFormProps = {
   category?: Category;
@@ -46,15 +47,30 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
 
   const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
   const [products] = useLocalStorage<Product[]>('products', initialData.products);
-
+  
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
-  
+  const [parentId, setParentId] = useState<string | undefined>(category?.parentId);
+
+  const isSubCategory = !!parentId;
+
   const [storeName, setStoreName] = useState(category?.storeName || '');
   const [storeAddress, setStoreAddress] = useState(category?.storeAddress || '');
   const [storePhone, setStorePhone] = useState(category?.storePhone || '');
   const [logo, setLogo] = useState<string | null>(category?.logoUrl || null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (parentId) {
+      const parent = categories.find(c => c.id === parentId);
+      if (parent) {
+        setStoreName(parent.storeName || '');
+        setStoreAddress(parent.storeAddress || '');
+        setStorePhone(parent.storePhone || '');
+        setLogo(parent.logoUrl || null);
+      }
+    }
+  }, [parentId, categories]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,11 +85,12 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name || !storeName) {
+    const requiredField = isSubCategory ? 'نام دسته‌بندی' : 'نام فروشگاه';
+    if (!name || (!isSubCategory && !storeName)) {
       toast({
         variant: 'destructive',
         title: 'فیلدهای الزامی خالی است',
-        description: 'لطفاً نام دسته‌بندی و نام فروشگاه را وارد کنید.',
+        description: `لطفاً ${requiredField} را وارد کنید.`,
       });
       return;
     }
@@ -85,10 +102,11 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
           id: isEditMode ? category.id : `cat-${Math.random().toString(36).substr(2, 9)}`,
           name,
           description,
-          storeName: storeName,
-          storeAddress: storeAddress,
-          storePhone: storePhone,
-          logoUrl: logo || `https://picsum.photos/seed/${Math.random()}/110/110`,
+          parentId,
+          storeName: isSubCategory ? undefined : storeName,
+          storeAddress: isSubCategory ? undefined : storeAddress,
+          storePhone: isSubCategory ? undefined : storePhone,
+          logoUrl: isSubCategory ? undefined : (logo || `https://picsum.photos/seed/${Math.random()}/110/110`),
       };
 
       if (isEditMode && category) {
@@ -99,13 +117,11 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
         ));
         toast({
           title: 'دسته‌بندی با موفقیت ویرایش شد',
-          description: `تغییرات برای دسته‌بندی "${name}" ذخیره شد.`,
         });
       } else {
         setCategories(prev => [newOrUpdatedCategory, ...prev]);
         toast({
           title: 'دسته‌بندی جدید ایجاد شد',
-          description: `دسته‌بندی "${name}" با موفقیت ایجاد شد.`,
         });
       }
 
@@ -118,7 +134,17 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
   const handleDelete = () => {
     if (!category) return;
     
-     const productCount = products.filter(p => p.categoryId === category.id).length;
+    const childCategories = categories.filter(c => c.parentId === category.id);
+    if(childCategories.length > 0){
+       toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: `این دسته‌بندی دارای ${childCategories.length} زیردسته است و قابل حذف نیست.`,
+        });
+        return;
+    }
+
+    const productCount = products.filter(p => p.categoryId === category.id).length;
     if (productCount > 0) {
         toast({
             variant: 'destructive',
@@ -127,7 +153,6 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
         });
         return;
     }
-
 
     setIsProcessing(true);
     setTimeout(() => {
@@ -143,18 +168,19 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
     }, 1000);
   };
 
+  const parentCategories = useMemo(() => categories.filter(c => !c.parentId), [categories]);
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="max-w-2xl mx-auto animate-fade-in-up">
+      <Card className="max-w-3xl mx-auto animate-fade-in-up">
         <CardHeader>
             <div className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>
-                        {isEditMode ? `ویرایش دسته‌بندی: ${category?.name}` : 'افزودن دسته‌بندی جدید'}
+                        {isEditMode ? `ویرایش: ${category?.name}` : 'افزودن دسته‌بندی یا فروشگاه جدید'}
                     </CardTitle>
                     <CardDescription>
-                        اطلاعات دسته‌بندی و فروشگاه مربوطه را وارد کنید.
+                        اطلاعات دسته‌بندی یا فروشگاه جدید را وارد کنید.
                     </CardDescription>
                 </div>
                 <Button type="button" variant="outline" onClick={onBack}>
@@ -163,41 +189,88 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
                 </Button>
             </div>
         </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="grid gap-6">
+        <CardContent className="grid gap-8">
+            <div className="grid gap-3">
+              <Label htmlFor="parent-category">این یک زیرمجموعه از کدام فروشگاه است؟</Label>
+              <Select
+                value={parentId || 'none'}
+                onValueChange={(value) => setParentId(value === 'none' ? undefined : value)}
+              >
+                <SelectTrigger id="parent-category">
+                  <SelectValue placeholder="یک فروشگاه انتخاب کنید..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">هیچکدام (این یک فروشگاه اصلی است)</SelectItem>
+                  {parentCategories.map(parent => (
+                    <SelectItem key={parent.id} value={parent.id} disabled={isEditMode && category.id === parent.id}>{parent.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+        
+            <Separator />
+
+           <div className="grid gap-6">
+                <div className="grid gap-3">
+                <Label htmlFor="category-name">{isSubCategory ? 'نام زیردسته' : 'نام فروشگاه (دسته‌بندی اصلی)'}</Label>
+                <Input
+                    id="category-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={isSubCategory ? "مثال: پروفیل گالوانیزه" : "مثال: کناف ایران"}
+                    required
+                />
+                </div>
+                <div className="grid gap-3">
+                    <Label htmlFor="description">توضیحات</Label>
+                    <Textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="توضیحات مختصری در مورد این آیتم بنویسید..."
+                    />
+                </div>
+          </div>
+          
+          <div className={cn("grid gap-6 transition-opacity", isSubCategory && 'opacity-50 pointer-events-none')}>
+            <Separator />
             <div>
               <h3 className='text-lg font-semibold'>اطلاعات فروشگاه</h3>
+              <p className="text-sm text-muted-foreground">این اطلاعات فقط برای دسته‌بندی‌های اصلی (فروشگاه) اعمال می‌شود.</p>
             </div>
             <div className="grid gap-3">
-              <Label htmlFor="store-name">نام فروشگاه</Label>
+              <Label htmlFor="store-name">نام نمایشی فروشگاه</Label>
               <Input
                 id="store-name"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
-                placeholder="مثال: فروشگاه سپهر"
-                required
+                placeholder="مثال: فروشگاه کناف ایران"
+                disabled={isSubCategory}
               />
             </div>
-            <div className="grid gap-3">
-              <Label htmlFor="store-address">آدرس فروشگاه</Label>
-              <Input
-                id="store-address"
-                value={storeAddress}
-                onChange={(e) => setStoreAddress(e.target.value)}
-                placeholder="مثال: میدان ولیعصر، برج فناوری، طبقه ۵"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-3">
+                <Label htmlFor="store-address">آدرس</Label>
+                <Input
+                  id="store-address"
+                  value={storeAddress}
+                  onChange={(e) => setStoreAddress(e.target.value)}
+                  placeholder="مثال: میدان ولیعصر، برج فناوری"
+                  disabled={isSubCategory}
+                />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="store-phone">تلفن</Label>
+                <Input
+                  id="store-phone"
+                  type="tel"
+                  value={storePhone}
+                  onChange={(e) => setStorePhone(e.target.value)}
+                  placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴"
+                  disabled={isSubCategory}
+                />
+              </div>
             </div>
-            <div className="grid gap-3">
-              <Label htmlFor="store-phone">تلفن فروشگاه</Label>
-              <Input
-                id="store-phone"
-                type="tel"
-                value={storePhone}
-                onChange={(e) => setStorePhone(e.target.value)}
-                placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴"
-              />
-            </div>
-            
             <div className="grid gap-4">
                 <Label>لوگوی فروشگاه</Label>
                 <div className='flex items-start gap-6'>
@@ -212,15 +285,6 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
                         key={logo} 
                         unoptimized
                       />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full"
-                        onClick={() => setLogo(null)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
                           <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
@@ -228,42 +292,16 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
 
                   <div className='flex-1 grid gap-4'>
                       <div className="flex items-center justify-center w-full">
-                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
+                        <label htmlFor="dropzone-file" className={cn("flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg bg-muted", !isSubCategory && "cursor-pointer hover:bg-muted/80")}>
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
                                 <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
                             </div>
-                            <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                            <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" disabled={isSubCategory} />
                         </label>
                       </div> 
                   </div>
                 </div>
-            </div>
-          </div>
-          
-          <Separator />
-
-           <div className="grid gap-6">
-            <div className="grid grid-cols-1 gap-4">
-                <div className="grid gap-3">
-                <Label htmlFor="category-name">نام دسته‌بندی</Label>
-                <Input
-                    id="category-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="مثال: موبایل و تبلت"
-                    required
-                />
-                </div>
-            </div>
-            <div className="grid gap-3">
-                <Label htmlFor="description">توضیحات</Label>
-                <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="توضیحات مختصری در مورد دسته‌بندی بنویسید..."
-                />
             </div>
           </div>
 
@@ -275,7 +313,7 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive" disabled={isProcessing}>
                     <Trash2 className="ml-2 h-4 w-4" />
-                    حذف دسته‌بندی
+                    حذف
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -300,7 +338,7 @@ export function CategoryForm({ category, onBack, onDataChange }: CategoryFormPro
                 : 'در حال ایجاد...'
               : isEditMode
               ? 'ذخیره تغییرات'
-              : 'ایجاد دسته‌بندی'}
+              : 'ایجاد'}
           </Button>
         </CardFooter>
       </Card>

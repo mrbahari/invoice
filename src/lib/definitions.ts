@@ -10,7 +10,7 @@ export type Customer = {
 };
 
 export type Category = {
-  id: string;
+  id:string;
   name: string;
   description?: string;
   // Store-related properties are only for top-level categories
@@ -19,6 +19,7 @@ export type Category = {
   storeAddress?: string;
   storePhone?: string;
   themeColor?: string;
+  parentId?: string;
 };
 
 export type Product = {

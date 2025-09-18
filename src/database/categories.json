@@ -1,7 +1,27 @@
 
 [
   { 
-    "id": "cat-1", 
+    "id": "cat-kanaf", 
+    "name": "کناف کاری", 
+    "description": "سیستم‌های ساخت و ساز خشک",
+    "storeName": "فروشگاه کناف ایران", 
+    "logoUrl": "https://picsum.photos/seed/kanaf/48/48",
+    "storeAddress": "میدان پونک، برج تجاری، واحد ۱۱۰",
+    "storePhone": "۰۲۱-۴۴۴۴۸۸۸۸",
+    "themeColor": "#10b981"
+  },
+  {
+    "id": "cat-profiles",
+    "name": "پروفیل‌های گالوانیزه",
+    "parentId": "cat-kanaf"
+  },
+  {
+    "id": "cat-panels",
+    "name": "پانل‌های گچی",
+    "parentId": "cat-kanaf"
+  },
+  { 
+    "id": "cat-elec", 
     "name": "الکترونیک", 
     "storeName": "فروشگاه سپهر الکترونیک", 
     "logoUrl": "https://picsum.photos/seed/sepehr/48/48",
@@ -10,7 +30,7 @@
     "themeColor": "#4f46e5"
   },
   { 
-    "id": "cat-2", 
+    "id": "cat-furn", 
     "name": "مبلمان اداری",
     "storeName": "مبلمان اداری آرتین",
     "logoUrl": "https://picsum.photos/seed/artin/48/48",
@@ -19,8 +39,8 @@
     "themeColor": "#0d9488"
   },
   { 
-    "id": "cat-3", 
-    "name": "لوازم جانبی",
-    "parentId": "cat-1"
+    "id": "cat-acc", 
+    "name": "لوازم جانبی موبایل",
+    "parentId": "cat-elec"
   }
 ]

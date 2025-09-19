@@ -419,7 +419,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card className="animate-fade-in-up">
           <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                 <CardDescription>
@@ -427,11 +427,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 </CardDescription>
               </div>
                <div className='flex items-center gap-2'>
-                  <Button type="button" variant="outline" onClick={onCancel}>
+                  <Button type="button" variant="outline" onClick={onCancel} className="dark:bg-white dark:text-black">
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                   </Button>
-                  <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1">
+                  <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1 dark:bg-white dark:text-black">
                     <Eye className="ml-2 h-3.5 w-3.5" />
                     <span>ثبت و پیش‌نمایش</span>
                   </Button>

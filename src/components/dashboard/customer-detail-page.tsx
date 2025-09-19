@@ -2,8 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialData } from '@/lib/data';
 import type { Customer, Invoice } from '@/lib/definitions';
 import {
   Card,
@@ -32,7 +30,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useMemo } from 'react';
-import { useCollection } from '@/hooks/use-collection';
+import { useData } from '@/context/data-context';
 
 const statusStyles: Record<Invoice['status'], string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -53,8 +51,8 @@ type CustomerDetailPageProps = {
 }
 
 export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoiceClick }: CustomerDetailPageProps) {
-  const { data: customers, loading: customersLoading } = useCollection<Customer>('customers');
-  const { data: invoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
+  const { data } = useData();
+  const { customers, invoices } = data;
 
   const customer = customers.find((c) => c.id === customerId);
 

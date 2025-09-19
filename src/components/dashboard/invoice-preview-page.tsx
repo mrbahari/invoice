@@ -5,17 +5,15 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
-import { initialData } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Store, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
-import { useCollection } from '@/hooks/use-collection';
+import { useData } from '@/context/data-context';
 
 function toWords(num: number): string {
   if (num === 0) return "صفر";
@@ -84,10 +82,8 @@ type InvoicePreviewPageProps = {
 }
 export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewPageProps) {
   
-  const { data: invoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
-  const { data: products, loading: productsLoading } = useCollection<Product>('products');
-  const { data: stores, loading: storesLoading } = useCollection<Store>('stores');
-  const { data: customers, loading: customersLoading } = useCollection<Customer>('customers');
+  const { data } = useData();
+  const { invoices, products, stores, customers } = data;
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   

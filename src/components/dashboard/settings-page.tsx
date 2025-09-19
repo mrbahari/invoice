@@ -23,11 +23,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { UnitOfMeasurement } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
@@ -47,9 +45,9 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const { data, setData, resetData } = useData(); // Use the central data context
+  const { units } = data;
 
-  const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
-  const [activeColor, setActiveColor] = useLocalStorage('app-theme-color', colorThemes[0].value);
+  const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
   const [newUnitName, setNewUnitName] = useState('');
 
@@ -74,26 +72,18 @@ export default function SettingsPage() {
         return;
     }
     
-    setUnits(prev => [...prev, { name, defaultQuantity: 1 }]);
+    setData({...data, units: [...data.units, { name, defaultQuantity: 1 }]});
     setNewUnitName('');
     toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
   const handleDeleteUnit = (unitNameToDelete: string) => {
-    setUnits(prev => prev.filter(u => u.name !== unitNameToDelete));
+    setData({...data, units: data.units.filter(u => u.name !== unitNameToDelete)});
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
   const handleClearData = () => {
-    setData({
-        customers: [],
-        products: [],
-        invoices: [],
-        stores: [],
-        categories: [],
-    });
-    setUnits(initialData.units); // Also clear units
-
+    resetData(true); // pass true to skip confirmation here
     toast({
       title: 'اطلاعات پاک شد',
       description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
@@ -107,7 +97,6 @@ export default function SettingsPage() {
   const handleBackupData = () => {
     const backupData = {
       ...data, // get all data from the context
-      units,
       backupDate: new Date().toISOString(),
     };
     
@@ -151,10 +140,8 @@ export default function SettingsPage() {
               invoices: restoredData.invoices,
               stores: restoredData.stores || [],
               categories: restoredData.categories || [],
+              units: restoredData.units || [],
           });
-          if (restoredData.units) {
-            setUnits(restoredData.units);
-          }
           
           toast({
             title: 'بازیابی موفق',

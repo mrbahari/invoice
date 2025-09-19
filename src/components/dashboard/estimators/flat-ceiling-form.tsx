@@ -22,11 +22,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { FilePlus } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialData } from '@/lib/data';
 import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { getStorePrefix } from '@/lib/utils';
+import { useData } from '@/context/data-context';
 
 interface MaterialResult {
   material: string;
@@ -42,8 +41,8 @@ type FlatCeilingFormProps = {
 export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const { data, setData } = useData();
+  const { products, invoices } = data;
   const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
@@ -156,8 +155,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
 
-    const newInvoice: Invoice = {
-      id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+    const newInvoice: Omit<Invoice, 'id'> = {
       invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
       customerId: '', // To be selected in editor
       customerName: '',
@@ -173,9 +171,10 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       description: 'ایجاد شده از برآورد مصالح سقف فلت',
     };
     
-    setInvoices(prev => [newInvoice, ...prev]);
+    // The navigation logic passes the invoice object to the InvoicesPage,
+    // which then sets it as the initialInvoice for the editor.
     toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice });
+    onNavigate('invoices', { invoice: newInvoice as Invoice });
   };
 
   return (

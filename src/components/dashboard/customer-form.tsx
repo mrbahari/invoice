@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Trash2, ArrowRight, Copy } from 'lucide-react';
-import { useCollection } from '@/hooks/use-collection';
+import { useData } from '@/context/data-context';
 
 
 type CustomerFormProps = {
@@ -40,8 +40,7 @@ type CustomerFormProps = {
 export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) {
   const { toast } = useToast();
   const isEditMode = !!customer;
-
-  const { add: addCustomer, update: updateCustomer, remove: removeCustomer } = useCollection<Customer>('customers');
+  const { data, setData } = useData();
 
 
   const [name, setName] = useState(
@@ -94,14 +93,15 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
     if (isEditMode && customer) {
       const updatedData = buildCustomerData();
-      await updateCustomer(customer.id, updatedData);
+       setData({ ...data, customers: data.customers.map(c => c.id === customer.id ? { ...c, ...updatedData } : c) });
       toast({
         title: 'مشتری با موفقیت ویرایش شد',
         description: `تغییرات برای مشتری "${updatedData.name}" ذخیره شد.`,
       });
     } else {
-      const newData = buildCustomerData();
-      await addCustomer(newData);
+      const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
+      const newData = { ...buildCustomerData(), id: newId };
+      setData({ ...data, customers: [newData, ...data.customers] });
       toast({
         title: 'مشتری جدید ایجاد شد',
         description: `مشتری "${newData.name}" با موفقیت ایجاد شد.`,
@@ -116,8 +116,9 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     if (!validateForm()) return;
     
     setIsProcessing(true);
-    const newData = buildCustomerData();
-    await addCustomer(newData);
+    const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
+    const newData = { ...buildCustomerData(), id: newId };
+    setData({ ...data, customers: [newData, ...data.customers] });
     toast({
       title: 'مشتری جدید از روی کپی ایجاد شد',
       description: `مشتری جدید "${newData.name}" با موفقیت ایجاد شد.`,
@@ -131,7 +132,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     if (!customer) return;
 
     setIsProcessing(true);
-    await removeCustomer(customer.id);
+    setData({ ...data, customers: data.customers.filter(c => c.id !== customer.id) });
     toast({
       title: 'مشتری حذف شد',
       description: `مشتری "${customer.name}" با موفقیت حذف شد.`,

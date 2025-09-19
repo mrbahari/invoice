@@ -15,10 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
 import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save } from 'lucide-react';
 import Image from 'next/image';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Separator } from '../ui/separator';
 import {
   AlertDialog,
@@ -31,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useData } from '@/context/data-context';
 
 type StoreFormProps = {
   store?: Store;
@@ -43,9 +42,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const { toast } = useToast();
   const isEditMode = !!store;
 
-  const [stores, setStores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const { data, setData } = useData();
+  const { stores, categories, products } = data;
   
   const [name, setName] = useState(store?.name || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -115,10 +113,11 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     };
     
     // Update store
+    let updatedStores;
     if (isEditMode) {
-      setStores(prev => prev.map(s => s.id === storeId ? newOrUpdatedStore : s));
+      updatedStores = stores.map(s => s.id === storeId ? newOrUpdatedStore : s);
     } else {
-      setStores(prev => [newOrUpdatedStore, ...prev]);
+      updatedStores = [newOrUpdatedStore, ...stores];
     }
 
     // Update categories (delete removed, update existing, add new)
@@ -129,7 +128,11 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     const otherStoresCategories = categories.filter(c => c.storeId !== storeId);
     const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId}))];
     
-    setCategories(finalCategories);
+    setData(prev => ({
+        ...prev,
+        stores: updatedStores,
+        categories: finalCategories,
+    }));
 
     toast({ title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
     setIsProcessing(false);
@@ -406,5 +409,3 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </div>
   );
 }
-
-    

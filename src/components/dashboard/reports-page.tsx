@@ -20,9 +20,7 @@ import {
   } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, Customer, Product, DailySales, DashboardTab } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
 import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +31,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { useCollection } from '@/hooks/use-collection';
+import { useData } from '@/context/data-context';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -43,9 +41,8 @@ type ReportsPageProps = {
 
 
 export default function ReportsPage({ onNavigate }: ReportsPageProps) {
-  const { data: allInvoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
-  const { data: allCustomers, loading: customersLoading } = useCollection<Customer>('customers');
-  const { data: allProducts, loading: productsLoading } = useCollection<Product>('products');
+  const { data } = useData();
+  const { invoices: allInvoices, customers: allCustomers, products: allProducts } = data;
 
   const [period, setPeriod] = useState<Period>('all');
 

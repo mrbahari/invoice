@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
 import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -26,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
@@ -40,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useData } from '@/context/data-context';
 
 
 type ProductFormProps = {
@@ -54,10 +53,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
-  const [stores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
+  const { data, setData } = useData();
+  const { products, stores, categories, units: unitsOfMeasurement } = data;
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');
@@ -323,14 +320,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     
     if (isEditMode && product) {
       const updatedProduct = buildProductData(product.id);
-      setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
+      setData(prev => ({...prev, products: prev.products.map(p => p.id === product.id ? updatedProduct : p)}));
       toast({
         title: 'محصول با موفقیت ویرایش شد',
         description: `تغییرات برای محصول "${name}" ذخیره شد.`,
       });
     } else {
       const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-      setProducts(prev => [newProduct, ...prev]);
+      setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
       toast({
         title: 'محصول جدید ایجاد شد',
         description: `محصول "${name}" با موفقیت ایجاد شد.`,
@@ -347,7 +344,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     setIsProcessing(true);
 
     const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-    setProducts(prev => [newProduct, ...prev]);
+    setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
     toast({
       title: 'محصول جدید از روی کپی ایجاد شد',
       description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
@@ -361,7 +358,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     if (!product) return;
     
     setIsProcessing(true);
-    setProducts(prev => prev.filter(p => p.id !== product.id));
+    setData(prev => ({...prev, products: prev.products.filter(p => p.id !== product.id)}));
     toast({
         title: 'محصول حذف شد',
         description: `محصول "${product.name}" با موفقیت حذف شد.`,

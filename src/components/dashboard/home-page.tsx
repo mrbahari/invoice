@@ -1,8 +1,6 @@
 
 'use client';
 
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialData } from '@/lib/data';
 import type { Invoice, Customer, InvoiceStatus, DailySales } from '@/lib/definitions';
 import {
     Card,
@@ -26,7 +24,8 @@ import { useMemo } from 'react';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import Link from 'next/link';
 import { subDays, format, parseISO } from 'date-fns-jalali';
-import type { DashboardTab } from '@/app/dashboard/page';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import { useData } from '@/context/data-context';
 
 const statusStyles: Record<InvoiceStatus, string> = {
     Paid: 'text-green-600 bg-green-500/10',
@@ -45,8 +44,8 @@ type DashboardHomePageProps = {
 
 
 export default function DashboardHomePageContent({ onNavigate }: DashboardHomePageProps) {
-  const [allInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [allCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const { data } = useData();
+  const { invoices: allInvoices, customers: allCustomers } = data;
 
   const { totalRevenue, totalPaidInvoices, newCustomers, paidInvoices, chartData } = useMemo(() => {
     const paid = allInvoices.filter(inv => inv.status === 'Paid');

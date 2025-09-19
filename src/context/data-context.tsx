@@ -19,8 +19,8 @@ interface AppData {
 // Define the context type
 interface DataContextType {
   data: AppData;
-  setData: (data: AppData) => void;
-  resetData: () => void;
+  setData: React.Dispatch<React.SetStateAction<AppData>>;
+  resetData: (skipConfirm?: boolean) => void;
   isInitialized: boolean;
 }
 
@@ -30,8 +30,8 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [data, setData] = useState<AppData>(initialData);
-  const [isInitialized, setIsInitialized] = useState(false);
+  // We use a state that can be null initially to represent the "not yet loaded" state.
+  const [data, setData] = useState<AppData | null>(null);
 
   // Load data from localStorage on initial render
   useEffect(() => {
@@ -39,40 +39,52 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const storedData = localStorage.getItem('appData');
       if (storedData) {
         setData(JSON.parse(storedData));
+      } else {
+        // If nothing is in localStorage, use initialData
+        setData(initialData);
       }
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
-      setData(initialData); // Fallback to initial data
-    } finally {
-      setIsInitialized(true);
+      setData(initialData); // Fallback to initial data on error
     }
   }, []);
 
   // Persist data to localStorage whenever it changes
   useEffect(() => {
-    if (isInitialized) {
+    if (data !== null) { // Only save if data has been initialized
       try {
         localStorage.setItem('appData', JSON.stringify(data));
       } catch (error) {
         console.error("Failed to save data to localStorage", error);
       }
     }
-  }, [data, isInitialized]);
+  }, [data]);
 
   // Function to reset data to the initial state from JSON files
-  const resetData = () => {
-    if (window.confirm('آیا مطمئن هستید؟ تمام تغییرات فعلی از بین خواهند رفت و اطلاعات به حالت پیش‌فرض کارخانه بازنشانی می‌شود.')) {
-      setData(initialData);
-      toast({
-        title: 'موفقیت‌آمیز',
-        description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
-      });
+  const resetData = (skipConfirm = false) => {
+    const performReset = () => {
+        setData(initialData);
+        toast({
+            title: 'موفقیت‌آمیز',
+            description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
+        });
+    };
+
+    if (skipConfirm) {
+        performReset();
+    } else {
+        if (window.confirm('آیا مطمئن هستید؟ تمام تغییرات فعلی از بین خواهند رفت و اطلاعات به حالت پیش‌فرض کارخانه بازنشانی می‌شود.')) {
+            performReset();
+        }
     }
   };
+  
+  // The context is initialized once data is not null.
+  const isInitialized = data !== null;
 
   const value = {
-    data,
-    setData,
+    data: data || initialData, // Provide initialData as a fallback if data is null
+    setData: setData as React.Dispatch<React.SetStateAction<AppData>>, // Cast to non-null version
     resetData,
     isInitialized,
   };

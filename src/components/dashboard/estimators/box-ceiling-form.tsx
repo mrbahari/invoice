@@ -22,8 +22,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { FilePlus } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialData } from '@/lib/data';
 import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { getStorePrefix } from '@/lib/utils';
@@ -53,7 +51,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
       return [];
     }
 
-    const screws = l * 5; // Updated calculation: 100/20 = 5 screws per meter
+    const screws = l * 25; // Corrected calculation
     const screwPacks = screws > 0 ? Math.ceil(screws / 1000) : 0;
     const l25Profiles = Math.ceil(l);
     const panels = Math.ceil(l / 4.5);
@@ -120,8 +118,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
 
-    const newInvoice: Invoice = {
-      id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+    const newInvoice: Omit<Invoice, 'id'> = {
       invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
       customerId: '', // To be selected in editor
       customerName: '',
@@ -140,7 +137,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     // This part should be handled by a proper state management solution that updates the context
     // For now, we'll navigate and pass the data. The invoices page should handle it.
     toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice });
+    onNavigate('invoices', { invoice: newInvoice as Invoice });
   };
 
   return (

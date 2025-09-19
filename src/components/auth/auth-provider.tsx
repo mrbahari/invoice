@@ -37,12 +37,15 @@ const publicRoutes = ['/login', '/signup'];
 
 const seedInitialData = async (userId: string) => {
     const defaultData = getDefaultData();
-    await batchAdd(userId, 'stores', defaultData.stores);
-    await batchAdd(userId, 'categories', defaultData.categories);
-    await batchAdd(userId, 'products', defaultData.products);
-    await batchAdd(userId, 'customers', defaultData.customers);
-    await batchAdd(userId, 'units', defaultData.units);
-    await batchAdd(userId, 'invoices', defaultData.invoices);
+    if (!defaultData) return;
+    const collectionOrder: (keyof typeof defaultData)[] = ['stores', 'categories', 'units', 'products', 'customers', 'invoices'];
+    
+    for (const collectionName of collectionOrder) {
+        const dataToSeed = defaultData[collectionName];
+        if (dataToSeed && dataToSeed.length > 0) {
+            await batchAdd(userId, collectionName, dataToSeed);
+        }
+    }
 };
 
 

@@ -12,20 +12,28 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useCollection } from '@/hooks/use-collection';
+import { initialData } from '@/lib/data';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { StoreForm } from './store-form';
 
 export default function StoresPage() {
-  const { data: stores, loading: storesLoading, remove: deleteStore } = useCollection<Store>('stores');
-  const { data: categories, loading: categoriesLoading } = useCollection<Category>('categories');
-  const { data: products, loading: productsLoading } = useCollection<Product>('products');
+  const [stores, setStores, reloadStores] = useLocalStorage<Store[]>('stores', initialData.stores);
+  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
   const { searchTerm } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingStore, setEditingStore] = useState<Store | undefined>(undefined);
+
+
+  useEffect(() => {
+    reloadStores();
+    reloadCategories();
+    reloadProducts();
+  }, []);
 
   const handleAddClick = () => {
     setEditingStore(undefined);
@@ -40,6 +48,7 @@ export default function StoresPage() {
   const handleFormSuccess = () => {
     setView('list');
     setEditingStore(undefined);
+    reloadStores();
   }
   
   const handleFormCancel = () => {
@@ -47,9 +56,9 @@ export default function StoresPage() {
     setEditingStore(undefined);
   }
   
-  const handleDeleteStore = async (storeId: string) => {
-    // In a real app, you'd check for dependencies (products, etc.) before deleting.
-    await deleteStore(storeId);
+  const handleDeleteStore = (storeId: string) => {
+    setStores(prev => prev.filter(s => s.id !== storeId));
+    // Also delete associated categories and products if needed
     handleFormSuccess();
   }
 
@@ -68,11 +77,6 @@ export default function StoresPage() {
   const getProductCount = useCallback((storeId: string) => {
     return products.filter(p => p.storeId === storeId).length;
   }, [products]);
-  
-  if (storesLoading || categoriesLoading || productsLoading) {
-      return <div>در حال بارگذاری فروشگاه‌ها...</div>
-  }
-
 
   if (view === 'form') {
     return <StoreForm store={editingStore} onSave={handleFormSuccess} onCancel={handleFormCancel} onDelete={handleDeleteStore} />;

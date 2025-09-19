@@ -3,14 +3,16 @@
 
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { initialData } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
-import { useCollection } from '@/hooks/use-collection';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type View = 
     | { type: 'list' }
@@ -22,12 +24,21 @@ type InvoicesPageProps = {
 };
 
 export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
-  const { data: allInvoices, update: updateInvoice, remove: removeInvoice, loading: invoicesLoading } = useCollection<Invoice>('invoices');
-  const { data: customers, loading: customersLoading } = useCollection<Customer>('customers');
+  const [allInvoices, setAllInvoices, reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromEstimator = searchParams.get('fromEstimator');
+
   const [view, setView] = useState<View>({ type: 'list' });
+
+  useEffect(() => {
+    reloadInvoices();
+    reloadCustomers();
+  }, []);
 
   useEffect(() => {
     if (initialInvoice) {
@@ -44,20 +55,25 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   };
   
   const handleFormSaveAndPreview = (invoiceId: string) => {
+      reloadInvoices();
       setView({ type: 'preview', invoiceId });
   };
   
-  const handleUpdateStatus = async (invoiceId: string, status: InvoiceStatus) => {
-    await updateInvoice(invoiceId, { status });
+  const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
+    setAllInvoices(prev => 
+      prev.map(inv => 
+        inv.id === invoiceId ? { ...inv, status } : inv
+      )
+    );
     toast({
       title: 'وضعیت فاکتور به‌روزرسانی شد',
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status === 'Pending' ? 'در انتظار' : 'سررسید گذشته'}" تغییر یافت.`,
     });
   };
   
-  const handleDeleteInvoice = async (invoiceId: string) => {
+  const handleDeleteInvoice = (invoiceId: string) => {
     const invoiceToDelete = allInvoices.find(inv => inv.id === invoiceId);
-    await removeInvoice(invoiceId);
+    setAllInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
     toast({
       title: 'فاکتور حذف شد',
       description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
@@ -90,10 +106,6 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
 
   if (view.type === 'preview') {
       return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={handleFormCancel} />;
-  }
-  
-  if (invoicesLoading || customersLoading) {
-      return <div>در حال بارگذاری فاکتورها...</div>
   }
 
   return (

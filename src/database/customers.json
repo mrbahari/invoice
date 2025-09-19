@@ -1,5 +1,27 @@
 
 [
-    { "id": "cust-1", "name": "اصغر حسن زاده | شرکت همراه کوشا کیش", "email": "a.hassanzadeh@example.com", "phone": "09121372580", "address": "فرودگاه امام خمینی", "purchaseHistory": "مشتری جدید" },
-    { "id": "cust-2", "name": "راهکارهای خلاق", "email": "hello@creative.io", "phone": "021-5550102", "address": "خیابان هنر، تهران", "purchaseHistory": "خریدار لوازم جانبی و گاهی مبلمان. مجموع خرج: ۱,۲۰۰ تومان در ۵ سفارش." }
+  {
+    "id": "cust-t7qq0wtzl",
+    "name": "09197166675",
+    "email": "ایمیل ثبت نشده",
+    "phone": "شماره ثبت نشده",
+    "address": "آدرس ثبت نشده",
+    "purchaseHistory": "مشتری جدید"
+  },
+  {
+    "id": "cust-zv7mf3v4i",
+    "name": "مشتری بدون نام",
+    "email": "ایمیل ثبت نشده",
+    "phone": "09398330932",
+    "address": "آدرس ثبت نشده",
+    "purchaseHistory": "مشتری جدید"
+  },
+  {
+    "id": "cust-uv6dic62a",
+    "name": "اصغر حسن زاده | شرکت همراه کوشا کیش",
+    "email": "ایمیل ثبت نشده",
+    "phone": "09121372580",
+    "address": "فرودگاه امام خمینی",
+    "purchaseHistory": "مشتری جدید"
+  }
 ]

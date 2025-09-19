@@ -24,7 +24,7 @@ import {
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Product, Store, Category } from '@/lib/definitions';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
 import { useCollection } from '@/hooks/use-collection';
@@ -98,11 +98,6 @@ export default function ProductsPage() {
   if (view === 'form') {
       return <ProductForm product={editingProduct} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
   }
-  
-  if (productsLoading || storesLoading || categoriesLoading) {
-      return <div>در حال بارگذاری محصولات...</div>
-  }
-
 
   return (
     <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>

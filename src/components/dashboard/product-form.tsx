@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
+import { initialData } from '@/lib/data';
 import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -25,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
@@ -38,7 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useCollection } from '@/hooks/use-collection';
+
 
 type ProductFormProps = {
   product?: Product;
@@ -52,10 +54,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const { add: addProduct, update: updateProduct, remove: removeProduct } = useCollection<Product>('products');
-  const { data: stores } = useCollection<Store>('stores');
-  const { data: categories } = useCollection<Category>('categories');
-  const { data: unitsOfMeasurement } = useCollection<UnitOfMeasurement>('units');
+  const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const [stores] = useLocalStorage<Store[]>('stores', initialData.stores);
+  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
+  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');
@@ -157,6 +159,24 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
        setDisplaySubUnitPrice('');
     }
   }, [price, subUnitQuantity, subUnit]);
+
+  // Calculate main price from sub-unit price
+  useEffect(() => {
+    // This effect should only run if the user changes the sub-unit price directly.
+    // It is commented out to prevent loops but can be re-enabled with guards.
+    /*
+    const subPriceNum = Number(subUnitPrice);
+    const subUnitQtyNum = Number(subUnitQuantity);
+
+    if (subPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
+        const calculatedMainPrice = Math.round(subPriceNum * subUnitQtyNum);
+        if (calculatedMainPrice !== price) {
+            setPrice(calculatedMainPrice);
+            setDisplayPrice(formatNumber(calculatedMainPrice));
+        }
+    }
+    */
+  }, [subUnitPrice, subUnitQuantity, subUnit]);
 
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,13 +293,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (): Omit<Product, 'id'> => {
+  const buildProductData = (id: string): Product => {
     const numericPrice = Number(price);
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
     return {
+      id,
       name,
       code,
       description,
@@ -294,22 +315,22 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     };
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateForm()) return;
 
     setIsProcessing(true);
     
     if (isEditMode && product) {
-      const updatedData = buildProductData();
-      await updateProduct(product.id, updatedData);
+      const updatedProduct = buildProductData(product.id);
+      setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
       toast({
         title: 'محصول با موفقیت ویرایش شد',
         description: `تغییرات برای محصول "${name}" ذخیره شد.`,
       });
     } else {
-      const newData = buildProductData();
-      await addProduct(newData);
+      const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
+      setProducts(prev => [newProduct, ...prev]);
       toast({
         title: 'محصول جدید ایجاد شد',
         description: `محصول "${name}" با موفقیت ایجاد شد.`,
@@ -320,13 +341,13 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     onSave();
   };
   
-  const handleSaveAsCopy = async () => {
+  const handleSaveAsCopy = () => {
     if (!validateForm()) return;
     
     setIsProcessing(true);
 
-    const newData = buildProductData();
-    await addProduct(newData);
+    const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
+    setProducts(prev => [newProduct, ...prev]);
     toast({
       title: 'محصول جدید از روی کپی ایجاد شد',
       description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
@@ -336,11 +357,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     onSave();
   }
   
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!product) return;
     
     setIsProcessing(true);
-    await removeProduct(product.id);
+    setProducts(prev => prev.filter(p => p.id !== product.id));
     toast({
         title: 'محصول حذف شد',
         description: `محصول "${product.name}" با موفقیت حذف شد.`,
@@ -452,7 +473,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
+                                        <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -466,7 +487,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     <SelectContent>
                                         <SelectItem key="none" value="none">هیچکدام</SelectItem>
                                         {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
+                                        <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -551,7 +572,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </Card>
             </div>
             
-            {(isDirty || !isEditMode) && (
+            {isDirty && (
                 <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t lg:col-span-3">
                     <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
                         <div>

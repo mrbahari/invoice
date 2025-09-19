@@ -66,10 +66,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     
     // Read the value from local storage on mount
     useEffect(() => {
-        // This check ensures we only read from localStorage on the client side
-        if (typeof window !== 'undefined') {
-            setStoredValue(readValue());
-        }
+        reload();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

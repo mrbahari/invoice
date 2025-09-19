@@ -1,10 +1,67 @@
-
 [
-  { "id": "cat-kanaf", "name": "کناف", "storeId": "store-dekorband" },
-  { "id": "cat-profiles", "name": "پروفیل‌های گالوانیزه", "storeId": "store-dekorband", "parentId": "cat-kanaf" },
-  { "id": "cat-panels", "name": "پانل‌های گچی", "storeId": "store-dekorband", "parentId": "cat-kanaf" },
-  { "id": "cat-lighting", "name": "روشنایی", "storeId": "store-sepehr" },
-  { "id": "cat-acc", "name": "لوازم جانبی کامپیوتر", "storeId": "store-sepehr", "parentId": "cat-lighting" },
-  { "id": "cat-office", "name": "اداری", "storeId": "store-artin" },
-  { "id": "cat-furn", "name": "مبلمان", "storeId": "store-artin", "parentId": "cat-office" }
+  {
+    "id": "cat-5qmk2cymq",
+    "name": "سقف کاذب",
+    "storeId": "store-dekorband"
+  },
+  {
+    "id": "cat-5barmsbxr",
+    "name": "پنل",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-2qtm2q3ui",
+    "name": "سازه سقف",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-k8geqzhtv",
+    "name": "ملزومات نصب",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-uu5zv61v0",
+    "name": "تایل",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-8rd1h42l2",
+    "name": "سپری",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-kymcjdgzs",
+    "name": "پیچ",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-t4qy2aurx",
+    "name": "میخ و چاشنی",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-lyf6c3wdd",
+    "name": "بتونه و ماستیک",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-dikklt4ld",
+    "name": "سازه دیوار",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  },
+  {
+    "id": "cat-upvglp6gs",
+    "name": "سازه سقف مشبک",
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qmk2cymq"
+  }
 ]

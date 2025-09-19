@@ -23,29 +23,52 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import type { Category, Customer, Invoice, Product, UnitOfMeasurement, Store } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Palette } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useAuth } from '@/components/auth/auth-provider';
-import { useCollection } from '@/hooks/use-collection';
-import { seedInitialData, deleteAllUserData, restoreDataFromBackup, getCollection } from '@/lib/firestore-service';
+
+const colorThemes = [
+    { name: 'Blue', value: '248 82% 50%', ring: '248 82% 50%' },
+    { name: 'Rose', value: '340 82% 50%', ring: '340 82% 50%' },
+    { name: 'Green', value: '142 64% 42%', ring: '142 64% 42%' },
+    { name: 'Orange', value: '25 95% 53%', ring: '25 95% 53%' },
+    { name: 'Purple', value: '262 84% 58%', ring: '262 84% 58%' },
+];
+
 
 export default function SettingsPage() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
 
-  const { data: units, add: addUnit, remove: removeUnit } = useCollection<UnitOfMeasurement>('units');
+  const [categories, setCategories] = useLocalStorage<Category[]>('categories', []);
+  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
+  const [products, setProducts] = useLocalStorage<Product[]>('products', []);
+  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
+  const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
+  const [activeColor, setActiveColor] = useLocalStorage('app-theme-color', colorThemes[0].value);
   
   const [newUnitName, setNewUnitName] = useState('');
 
-  const handleAddUnit = async () => {
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary-hsl', activeColor);
+    document.documentElement.style.setProperty('--ring-hsl', activeColor);
+  }, [activeColor]);
+
+  const handleThemeColorChange = (colorValue: string) => {
+    setActiveColor(colorValue);
+  };
+
+
+  const handleAddUnit = () => {
     const name = newUnitName.trim();
+
     if (name === '') {
         toast({ variant: 'destructive', title: 'نام واحد نمی‌تواند خالی باشد.' });
         return;
@@ -54,49 +77,53 @@ export default function SettingsPage() {
         toast({ variant: 'destructive', title: 'این واحد قبلاً اضافه شده است.' });
         return;
     }
-    await addUnit({ name, defaultQuantity: 1 });
+    
+    setUnits(prev => [...prev, { name, defaultQuantity: 1 }]);
     setNewUnitName('');
     toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
-  const handleDeleteUnit = async (unitId: string) => {
-    await removeUnit(unitId);
+  const handleDeleteUnit = (unitNameToDelete: string) => {
+    setUnits(prev => prev.filter(u => u.name !== unitNameToDelete));
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = async () => {
-    if (!user) return;
-    await deleteAllUserData(user.uid);
+  const handleClearData = () => {
+    setCategories([]);
+    setCustomers([]);
+    setProducts([]);
+    setInvoices([]);
+    setUnits(initialData.units);
+
     toast({
       title: 'اطلاعات پاک شد',
       description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
     });
-    // Consider forcing a reload of collections or the page
-    window.location.reload();
   };
   
-  const handleLoadDefaults = async () => {
-    if (!user) return;
-    await seedInitialData(user.uid);
+  const handleLoadDefaults = () => {
+    setCategories(initialData.categories);
+    setCustomers(initialData.customers);
+    setProducts(initialData.products);
+    setInvoices(initialData.invoices);
+    setUnits(initialData.units);
+
     toast({
       title: 'داده‌های پیش‌فرض بارگذاری شد',
       description: 'تمام اطلاعات برنامه به حالت اولیه بازگردانده شد.',
     });
-    window.location.reload();
   };
 
 
-  const handleBackupData = async () => {
-    if (!user) return;
-
-    const backupData: any = {};
-    const collections: (keyof ReturnType<typeof getDefaultData>)[] = ['stores', 'categories', 'products', 'customers', 'invoices', 'units'];
-    
-    for (const collectionName of collections) {
-      backupData[collectionName] = await getCollection(user.uid, collectionName);
-    }
-    
-    backupData.backupDate = new Date().toISOString();
+  const handleBackupData = () => {
+    const backupData = {
+      categories,
+      customers,
+      products,
+      invoices,
+      units,
+      backupDate: new Date().toISOString(),
+    };
     
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -116,12 +143,13 @@ export default function SettingsPage() {
   };
 
   const handleRestoreChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!user) return;
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
@@ -129,16 +157,26 @@ export default function SettingsPage() {
         }
         const data = JSON.parse(text);
         
-        await restoreDataFromBackup(user.uid, data);
-        
-        toast({
-          title: 'بازیابی موفق',
-          description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد.',
-        });
+        if (data.categories && data.customers && data.products && data.invoices) {
+          setCategories(data.categories);
+          setCustomers(data.customers);
+          setProducts(data.products);
+          setInvoices(data.invoices);
+          if (data.units) {
+            setUnits(data.units);
+          }
+          
+          toast({
+            title: 'بازیابی موفق',
+            description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد.',
+          });
 
-        // Reload to reflect changes everywhere
-        setTimeout(() => window.location.reload(), 1000);
+          // Reload to reflect changes everywhere
+          setTimeout(() => window.location.reload(), 1000);
 
+        } else {
+          throw new Error("فایل پشتیبان معتبر نیست.");
+        }
       } catch (error) {
         toast({
           variant: 'destructive',
@@ -148,7 +186,10 @@ export default function SettingsPage() {
       }
     };
     reader.readAsText(file);
-    if(fileInputRef.current) fileInputRef.current.value = '';
+    // Reset file input
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
 
   const handleRestoreClick = () => {
@@ -205,8 +246,19 @@ export default function SettingsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-               {/* Color theme selection UI removed for simplicity as it requires CSS variable management not suitable for this interaction */}
-               <p className="text-sm text-muted-foreground">قابلیت تغییر تم رنگی در این نسخه غیرفعال است.</p>
+                <div className="grid grid-cols-5 gap-2">
+                    {colorThemes.map(color => (
+                        <Button 
+                            key={color.name}
+                            variant={activeColor === color.value ? 'default' : 'outline'}
+                            size="icon" 
+                            className="h-12 w-12 rounded-lg"
+                            onClick={() => handleThemeColorChange(color.value)}
+                        >
+                            <span className="h-6 w-6 rounded-full" style={{ backgroundColor: `hsl(${color.value})` }}></span>
+                        </Button>
+                    ))}
+                </div>
             </CardContent>
         </Card>
 
@@ -235,9 +287,9 @@ export default function SettingsPage() {
             </div>
             <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
                 {units.length > 0 ? units.map(unit => (
-                    <Badge key={unit.id} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
+                    <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
                         <span>{unit.name}</span>
-                        <button onClick={() => handleDeleteUnit(unit.id!)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                        <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
                             <X className="h-3 w-3" />
                         </button>
                     </Badge>
@@ -344,3 +396,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

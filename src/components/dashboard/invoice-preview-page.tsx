@@ -2,12 +2,15 @@
 'use client';
 
 import {
+  Card,
   CardContent,
 } from '@/components/ui/card';
+import { initialData } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Store, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
@@ -113,36 +116,24 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
             });
     }
   }, [invoice, customer]);
-  
-  const isLoading = invoicesLoading || productsLoading || storesLoading || customersLoading;
-
-  if (isLoading) {
-      return <div>در حال بارگذاری پیش‌نمایش...</div>
-  }
 
   if (!invoice) {
     return (
-        <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground mb-4">فاکتور مورد نظر یافت نشد.</p>
-             <Button onClick={onBack}>
-                <ArrowRight className="ml-2 h-4 w-4" />
-                بازگشت به لیست فاکتورها
-            </Button>
-        </CardContent>
+        <Card>
+            <CardContent className="py-16 text-center">
+                <p className="text-muted-foreground mb-4">فاکتور مورد نظر یافت نشد.</p>
+                 <Button onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست فاکتورها
+                </Button>
+            </CardContent>
+        </Card>
     );
   }
   
   if(!customer || !store) {
       // Data might be inconsistent for a moment
-      return (
-         <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground mb-4">اطلاعات مشتری یا فروشگاه برای این فاکتور کامل نیست.</p>
-             <Button onClick={onBack}>
-                <ArrowRight className="ml-2 h-4 w-4" />
-                بازگشت
-            </Button>
-        </CardContent>
-      );
+      return null;
   }
 
   

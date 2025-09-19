@@ -18,7 +18,6 @@ import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useRouter, usePathname } from 'next/navigation';
-import { seedInitialData, getCollection } from '@/lib/firestore-service';
 
 type AuthContextType = {
   user: User | null;
@@ -41,39 +40,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        // First, check for the result of a Google sign-in redirect
-        getRedirectResult(auth)
-            .then(async (result) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            try {
+                // First, check if a redirect just happened
+                const result = await getRedirectResult(auth);
                 if (result) {
-                    // This is a new sign-in or sign-up via Google redirect
-                    const currentUser = result.user;
-                    const stores = await getCollection(currentUser.uid, 'stores');
-                    if (stores.length === 0) {
-                        await seedInitialData(currentUser.uid);
-                    }
-                    // We set the user and stop loading. onAuthStateChanged will also fire,
-                    // but we've already handled the initial data seeding.
+                    // Google sign-in successful, `onAuthStateChanged` will fire again with the user.
+                    // We can already set loading to false and let the next check handle the redirect.
+                    setUser(result.user);
+                } else {
                     setUser(currentUser);
                 }
-            })
-            .catch((error) => {
-                console.error("Error getting redirect result:", error);
-            })
-            .finally(() => {
-                // Now, set up the regular auth state listener. This will handle
-                // all other cases (e.g., already logged in, email sign-in, etc.)
-                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-                    setUser(currentUser);
-                    setLoading(false); // Auth state is now determined, stop loading
-                });
-        
-                return () => unsubscribe();
-            });
+            } catch (error) {
+                console.error("Auth state change error:", error);
+                setUser(currentUser); // Set user even if getRedirectResult fails
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
     }, []);
     
     useEffect(() => {
         if (loading) {
-            return; 
+            return; // Don't do anything while loading
         }
 
         const isPublicRoute = publicRoutes.includes(pathname);
@@ -83,12 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (!user && !isPublicRoute) {
             router.push('/login');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, loading, pathname, router]);
 
     const signInWithGoogle = async () => {
         setLoading(true);
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
+        // The page will redirect, and the result will be handled by the useEffect above.
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {
@@ -100,10 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
-        // Seed data immediately after user creation
-        await seedInitialData(userCredential.user.uid);
-        setUser(userCredential.user);
-        setLoading(false);
+        // onAuthStateChanged will handle the user state update, and the effect will handle routing
         return userCredential.user;
     };
     
@@ -113,9 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error("Email or password missing.");
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // Don't seed data on sign-in, only sign-up.
-        setUser(userCredential.user);
-        setLoading(false);
+        // onAuthStateChanged will handle the user state update, and the effect will handle routing
         return userCredential.user;
     };
 
@@ -125,8 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         await signOut(auth);
-        setUser(null);
-        router.push('/login');
+        // The effect will handle the redirect to /login
     };
 
     const value: AuthContextType = {
@@ -139,23 +127,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
-    if (loading) {
+    // While loading, or if routing hasn't happened yet, show a full-screen loader.
+    // This prevents flashing the wrong page.
+    if (loading || (user && publicRoutes.includes(pathname)) || (!user && !publicRoutes.includes(pathname))) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
             </div>
         );
     }
-    
-    // This logic prevents flashing content by ensuring routing happens first.
-    const isPublic = publicRoutes.includes(pathname);
-    if (!user && !isPublic) {
-        return null; // or loading spinner
-    }
-    if (user && isPublic) {
-        return null; // or loading spinner
-    }
-
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

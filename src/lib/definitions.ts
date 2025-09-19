@@ -67,7 +67,6 @@ export type Invoice = {
 };
 
 export type UnitOfMeasurement = {
-  id: string;
   name: string;
   defaultQuantity: number;
 };
@@ -93,3 +92,7 @@ export type DailySales = {
   paid: number;
   unpaid: number;
 };
+
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
+
+    

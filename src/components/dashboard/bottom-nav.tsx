@@ -12,8 +12,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
-import { useAudioFeedback } from '@/hooks/use-audio-feedback';
-
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },
@@ -31,12 +29,7 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
-  const { playSound } = useAudioFeedback();
-
   const handleTabClick = (tab: DashboardTab) => {
-    if (activeTab !== tab) {
-      playSound('page-turn');
-    }
     onTabChange(tab);
   };
 

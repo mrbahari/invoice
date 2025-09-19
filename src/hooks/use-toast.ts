@@ -1,3 +1,4 @@
+
 "use client"
 
 // Inspired by react-hot-toast library
@@ -7,7 +8,6 @@ import type {
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
-import { useAudioFeedback } from "./use-audio-feedback"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000
@@ -174,7 +174,6 @@ function toast(props: Toast) {
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
-  const { playSound } = useAudioFeedback()
 
   React.useEffect(() => {
     listeners.push(setState)
@@ -186,18 +185,9 @@ function useToast() {
     }
   }, [state])
 
-  const customToast = (props: Toast) => {
-    if (props.variant === 'destructive') {
-        playSound('error');
-    } else {
-        playSound('success');
-    }
-    return toast(props);
-  }
-
   return {
     ...state,
-    toast: customToast,
+    toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }

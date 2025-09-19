@@ -31,54 +31,52 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const publicRoutes = ['/login', '/signup'];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
-        const processAuth = async () => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             try {
-                // Check for redirect result first
+                // First, check if a redirect just happened
                 const result = await getRedirectResult(auth);
                 if (result) {
-                    // This means a sign-in via redirect just happened.
-                    // onAuthStateChanged will handle setting the user, so we can just redirect.
-                    router.push('/dashboard?tab=dashboard');
-                    // We might not need to setLoading(false) here because onAuthStateChanged will do it.
-                    // But if there's a delay, the loading spinner is good.
-                    return; // Stop further execution in this effect
+                    // Google sign-in successful, `onAuthStateChanged` will fire again with the user.
+                    // We can already set loading to false and let the next check handle the redirect.
+                    setUser(result.user);
+                } else {
+                    setUser(currentUser);
                 }
             } catch (error) {
-                console.error("Google Redirect Result Error:", error);
-                // Fall through to onAuthStateChanged
-            }
-
-            // If no redirect, set up the normal auth state listener
-            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-                setUser(currentUser);
+                console.error("Auth state change error:", error);
+                setUser(currentUser); // Set user even if getRedirectResult fails
+            } finally {
                 setLoading(false);
-            });
-            
-            return unsubscribe;
-        };
-
-        let unsubscribe: (() => void) | undefined;
-        processAuth().then(unsub => {
-            if (unsub) {
-                unsubscribe = unsub;
             }
         });
 
-        // Cleanup function
-        return () => {
-            if (unsubscribe) {
-                unsubscribe();
-            }
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
     }, []);
+    
+    useEffect(() => {
+        if (loading) {
+            return; // Don't do anything while loading
+        }
 
+        const isPublicRoute = publicRoutes.includes(pathname);
+
+        if (user && isPublicRoute) {
+            router.push('/dashboard?tab=dashboard');
+        } else if (!user && !isPublicRoute) {
+            router.push('/login');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, loading, pathname, router]);
 
     const signInWithGoogle = async () => {
         setLoading(true);
@@ -96,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
-        // onAuthStateChanged will handle the user state update, and router is handled by page
+        // onAuthStateChanged will handle the user state update, and the effect will handle routing
         return userCredential.user;
     };
     
@@ -106,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error("Email or password missing.");
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // onAuthStateChanged will handle the user state update, and router is handled by page
+        // onAuthStateChanged will handle the user state update, and the effect will handle routing
         return userCredential.user;
     };
 
@@ -116,8 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         await signOut(auth);
-        // onAuthStateChanged will set user to null, and router is handled by dashboard layout
-        router.push('/login');
+        // The effect will handle the redirect to /login
     };
 
     const value: AuthContextType = {
@@ -130,16 +127,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
-    // The AuthProvider no longer handles redirects, just the loading state.
-    // Page components and layout components will handle redirects.
-    if (loading) {
+    // While loading, or if routing hasn't happened yet, show a full-screen loader.
+    // This prevents flashing the wrong page.
+    if (loading || (user && publicRoutes.includes(pathname)) || (!user && !publicRoutes.includes(pathname))) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
             </div>
         );
     }
-
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

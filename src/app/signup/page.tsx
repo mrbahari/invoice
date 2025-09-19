@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/components/auth/auth-provider';
@@ -8,16 +9,11 @@ import { useEffect } from 'react';
 
 export default function SignupPage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
   
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard?tab=dashboard');
-    }
-  }, [user, loading, router]);
-
+  // AuthProvider now handles the redirection logic.
+  // We just need to handle the display of the loading spinner or the form.
   if (loading || user) {
-    return <main className="flex h-screen items-center justify-center bg-background/80 backdrop-blur-sm"><LoadingSpinner /></main>;
+    return null; // AuthProvider is showing a loading spinner, so we show nothing.
   }
 
   return (

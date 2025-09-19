@@ -50,6 +50,7 @@ export function SignupForm() {
         setIsLoading(true);
         try {
             await signUpWithEmail({ email, password, firstName, lastName });
+            // AuthProvider will handle redirect
         } catch (error) {
             const authError = error as AuthError;
             let description = 'خطایی در هنگام ثبت‌نام رخ داد. لطفا دوباره تلاش کنید.';

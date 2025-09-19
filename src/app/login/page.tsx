@@ -12,12 +12,11 @@ export default function LoginPage() {
   const { user, loading } = useAuth();
   
   if (loading || user) {
-    return <main className="flex h-screen items-center justify-center bg-background"><LoadingSpinner /></main>;
+    return <main className="flex h-screen items-center justify-center bg-background/80 backdrop-blur-sm"><LoadingSpinner /></main>;
   }
   
   return (
-    <main className="relative flex h-screen items-center justify-center overflow-hidden bg-background p-4">
-      <CanvasBackground />
+    <main className="relative flex h-screen items-center justify-center overflow-hidden p-4">
       <div className="z-10 w-full max-w-md">
         <LoginForm />
       </div>

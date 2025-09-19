@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import CanvasBackground from '@/components/canvas-background';
 
 export const metadata: Metadata = {
   title: 'حسابگر',
@@ -28,8 +29,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <CanvasBackground />
           <AuthProvider>
-            {children}
+            <div className="relative z-10">
+              {children}
+            </div>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>

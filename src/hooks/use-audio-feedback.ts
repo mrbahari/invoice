@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback } from 'react';
@@ -58,7 +59,7 @@ export function useAudioFeedback() {
         // Gain for volume envelope
         const gain = context.createGain();
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.02); // Slower attack, lower volume
+        gain.gain.linearRampToValueAtTime(0.3, now + 0.02); // Set gain back to 0.3
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration); // Gentle decay
 
         noise.connect(bandpass).connect(gain).connect(context.destination);
@@ -66,7 +67,6 @@ export function useAudioFeedback() {
         noise.stop(now + duration);
 
     } else {
-        // --- Success/Error Tones ---
         const oscillator = context.createOscillator();
         const gainNode = context.createGain();
 

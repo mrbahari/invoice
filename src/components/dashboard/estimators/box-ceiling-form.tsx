@@ -50,9 +50,9 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     if (isNaN(l) || l <= 0) {
       return [];
     }
-
-    const screws = l * 25; // Corrected calculation
-    const screwPacks = screws > 0 ? Math.ceil(screws / 1000) : 0;
+    
+    const screws = l * (2200 / 45); // For 45m -> 2200 screws
+    const screwPacks = screws > 0 ? Math.round(screws / 1000) : 0; // Round to nearest pack
     const l25Profiles = Math.ceil(l);
     const panels = Math.ceil(l / 4.5);
 

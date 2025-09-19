@@ -20,6 +20,8 @@ import { AuthError } from 'firebase/auth';
 
 export function SignupForm() {
     const { signInWithGoogle, signUpWithEmail } = useAuth();
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { toast } = useToast();
@@ -28,11 +30,11 @@ export function SignupForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email || !password) {
+        if (!email || !password || !firstName) {
             toast({
                 variant: 'destructive',
                 title: 'خطا در ثبت نام',
-                description: 'لطفا تمام فیلدها را پر کنید.',
+                description: 'لطفا تمام فیلدهای لازم را پر کنید.',
             });
             return;
         }
@@ -47,7 +49,7 @@ export function SignupForm() {
 
         setIsLoading(true);
         try {
-            await signUpWithEmail({ email, password });
+            await signUpWithEmail({ email, password, firstName, lastName });
         } catch (error) {
             const authError = error as AuthError;
             let description = 'خطایی در هنگام ثبت‌نام رخ داد. لطفا دوباره تلاش کنید.';
@@ -102,11 +104,24 @@ export function SignupForm() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="first-name">نام</Label>
-                    <Input id="first-name" placeholder="ماکس" required disabled={isLoading || isGoogleLoading} />
+                    <Input 
+                      id="first-name" 
+                      placeholder="ماکس" 
+                      required 
+                      disabled={isLoading || isGoogleLoading}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
                 </div>
                  <div className="grid gap-2">
                     <Label htmlFor="last-name">نام خانوادگی</Label>
-                    <Input id="last-name" placeholder="رابینسون" required disabled={isLoading || isGoogleLoading} />
+                    <Input 
+                      id="last-name" 
+                      placeholder="رابینسون" 
+                      disabled={isLoading || isGoogleLoading}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
                 </div>
             </div>
             <div className="grid gap-2">

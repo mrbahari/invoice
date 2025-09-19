@@ -37,33 +37,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        const handleRedirect = async () => {
+        const processAuth = async () => {
             try {
+                // Check for redirect result first
                 const result = await getRedirectResult(auth);
                 if (result) {
-                    // This will trigger the onAuthStateChanged listener and handle user state
-                    // and subsequent redirection if necessary.
+                    // This means a sign-in via redirect just happened.
+                    // onAuthStateChanged will handle setting the user, so we can just redirect.
                     router.push('/dashboard?tab=dashboard');
+                    // We might not need to setLoading(false) here because onAuthStateChanged will do it.
+                    // But if there's a delay, the loading spinner is good.
+                    return; // Stop further execution in this effect
                 }
             } catch (error) {
                 console.error("Google Redirect Result Error:", error);
-            } finally {
-                // In case there's no redirect result, we might still be loading from onAuthStateChanged
-                // So let's only set loading to false if we don't have a user yet.
-                if (!auth.currentUser) {
-                    setLoading(false);
-                }
+                // Fall through to onAuthStateChanged
+            }
+
+            // If no redirect, set up the normal auth state listener
+            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                setUser(currentUser);
+                setLoading(false);
+            });
+            
+            return unsubscribe;
+        };
+
+        let unsubscribe: (() => void) | undefined;
+        processAuth().then(unsub => {
+            if (unsub) {
+                unsubscribe = unsub;
+            }
+        });
+
+        // Cleanup function
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
             }
         };
-        handleRedirect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -72,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
-        // The page will redirect, and the result will be handled by getRedirectResult in the useEffect
+        // The page will redirect, and the result will be handled by the useEffect above.
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {

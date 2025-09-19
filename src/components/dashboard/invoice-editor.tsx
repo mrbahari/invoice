@@ -173,7 +173,9 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
       if (category.parentId) {
         sub.push(category);
       } else {
-        main.push(category);
+        if (category.name !== 'کناف') { // Filter out the 'کناف' main category
+            main.push(category);
+        }
       }
     });
     return { categoryMap: map, mainCategories: main, subCategories: sub };

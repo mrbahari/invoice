@@ -10,5 +10,5 @@ export const initialData = {
   customers: defaultDb.customers as Customer[],
   invoices: defaultDb.invoices as Invoice[],
   units: defaultDb.units as UnitOfMeasurement[],
-  stores: (defaultDb as any).stores as Store[] || [], // Add stores if it exists in the new file, or fallback to empty array
+  stores: defaultDb.stores as Store[],
 };

@@ -1,21 +1,255 @@
 
 [
   {
-    "id": "inv-z0w7l3lgr",
-    "invoiceNumber": "HIS-1546",
-    "customerId": "cust-1",
-    "customerName": "اصغر حسن زاده | شرکت همراه کوشا کیش",
-    "customerEmail": "a.hassanzadeh@example.com",
-    "date": "2024-08-05T08:21:44.223Z",
+    "id": "inv-xd99ajcuo",
+    "invoiceNumber": "EST-0006",
+    "customerId": "cust-t7qq0wtzl",
+    "customerName": "09197166675",
+    "customerEmail": "ایمیل ثبت نشده",
+    "date": "2025-09-18T10:40:50.351Z",
     "status": "Pending",
     "items": [
-      { "productId": "prod-1", "productName": "لپتاپ پرو", "quantity": 1, "unitPrice": 480310000, "totalPrice": 480310000, "unit": "عدد" }
+      {
+        "productId": "prod-ioz0fpkp5",
+        "productName": "تایل پی وی سی",
+        "quantity": 26,
+        "unit": "عدد",
+        "unitPrice": 642857,
+        "totalPrice": 16714282
+      },
+      {
+        "productId": "prod-1onwme7ao",
+        "productName": "نبشی L24",
+        "quantity": 4,
+        "unit": "شاخه",
+        "unitPrice": 650000,
+        "totalPrice": 2600000
+      },
+      {
+        "productId": "prod-n697qpd6m",
+        "productName": "سپری T360",
+        "quantity": 3,
+        "unit": "شاخه",
+        "unitPrice": 1152000,
+        "totalPrice": 3456000
+      },
+      {
+        "productId": "prod-kpki0s342",
+        "productName": "سپری T120",
+        "quantity": 11,
+        "unit": "شاخه",
+        "unitPrice": 384000,
+        "totalPrice": 4224000
+      },
+      {
+        "productId": "prod-5aw71so6j",
+        "productName": "سپری T60",
+        "quantity": 13,
+        "unit": "شاخه",
+        "unitPrice": 192000,
+        "totalPrice": 2496000
+      }
     ],
-    "subtotal": 480310000,
+    "subtotal": 29490282,
     "discount": 0,
     "additions": 0,
     "tax": 0,
-    "total": 480310000,
+    "total": 29490282,
+    "description": "ایجاد شده از برآورد مصالح سقف مشبک"
+  },
+  {
+    "id": "inv-qfhbiqf7h",
+    "invoiceNumber": "EST-0005",
+    "customerId": "cust-zv7mf3v4i",
+    "customerName": "مشتری بدون نام",
+    "customerEmail": "ایمیل ثبت نشده",
+    "date": "2025-09-18T10:34:26.854Z",
+    "status": "Pending",
+    "items": [
+      {
+        "productId": "prod-ioz0fpkp5",
+        "productName": "تایل پی وی سی",
+        "quantity": 461,
+        "unit": "عدد",
+        "unitPrice": 642857,
+        "totalPrice": 296357077
+      },
+      {
+        "productId": "prod-1onwme7ao",
+        "productName": "نبشی L24",
+        "quantity": 20,
+        "unit": "شاخه",
+        "unitPrice": 650000,
+        "totalPrice": 13000000
+      },
+      {
+        "productId": "prod-n697qpd6m",
+        "productName": "سپری T360",
+        "quantity": 39,
+        "unit": "شاخه",
+        "unitPrice": 1152000,
+        "totalPrice": 44928000
+      },
+      {
+        "productId": "prod-kpki0s342",
+        "productName": "سپری T120",
+        "quantity": 222,
+        "unit": "شاخه",
+        "unitPrice": 384000,
+        "totalPrice": 85248000
+      },
+      {
+        "productId": "prod-5aw71so6j",
+        "productName": "سپری T60",
+        "quantity": 224,
+        "unit": "شاخه",
+        "unitPrice": 192000,
+        "totalPrice": 43008000
+      },
+      {
+        "productId": "prod-8676z49k8",
+        "productName": "پیچ پنل 2.5",
+        "quantity": 1,
+        "unit": "بسته",
+        "unitPrice": 4600000,
+        "totalPrice": 4600000
+      }
+    ],
+    "subtotal": 487141077,
+    "discount": 0,
+    "additions": 0,
+    "tax": 0,
+    "total": 487141077,
+    "description": "ایجاد شده از برآورد مصالح سقف مشبک"
+  },
+  {
+    "id": "inv-kmzrn6y4f",
+    "invoiceNumber": "INV-1547",
+    "customerId": "cust-zv7mf3v4i",
+    "customerName": "مشتری بدون نام",
+    "customerEmail": "ایمیل ثبت نشده",
+    "date": "2025-09-18T07:00:39.843Z",
+    "status": "Paid",
+    "items": [
+      {
+        "productId": "prod-pb3qrc09n",
+        "productName": "پانل گچی RG12.5 والیز",
+        "quantity": 7,
+        "unit": "برگ",
+        "unitPrice": 3500000,
+        "totalPrice": 24500000
+      },
+      {
+        "productId": "prod-8676z49k8",
+        "productName": "پیچ پنل 2.5",
+        "quantity": 1,
+        "unit": "بسته",
+        "unitPrice": 4600000,
+        "totalPrice": 4600000
+      },
+      {
+        "productId": "prod-ok2tikiw6",
+        "productName": "L25 نبشی",
+        "quantity": 32,
+        "unit": "شاخه",
+        "unitPrice": 600000,
+        "totalPrice": 19200000
+      },
+      {
+        "productId": "prod-jzqwsyrlb",
+        "productName": "U36",
+        "quantity": 3,
+        "unit": "شاخه",
+        "unitPrice": 800000,
+        "totalPrice": 2400000
+      }
+    ],
+    "subtotal": 50700000,
+    "discount": 0,
+    "additions": 0,
+    "tax": 0,
+    "total": 50700000,
     "description": "فاکتور ایجاد شده"
+  },
+  {
+    "id": "inv-x64j30f79",
+    "invoiceNumber": "INV-002",
+    "customerId": "cust-uv6dic62a",
+    "customerName": "اصغر حسن زاده | شرکت همراه کوشا کیش",
+    "customerEmail": "ایمیل ثبت نشده",
+    "date": "2025-09-17T11:42:09.392Z",
+    "status": "Pending",
+    "items": [
+      {
+        "productId": "prod-5gpelli6w",
+        "productName": "پانل گچی RG12.5 جی برد",
+        "quantity": 216,
+        "unit": "متر مربع",
+        "unitPrice": 1150000,
+        "totalPrice": 248400000
+      },
+      {
+        "productId": "prod-cc3873duy",
+        "productName": "استاد 3000 - C100",
+        "quantity": 300,
+        "unit": "متر طول",
+        "unitPrice": 460000,
+        "totalPrice": 138000000
+      },
+      {
+        "productId": "prod-mnlj5syxn",
+        "productName": "رانر 4000 - U100",
+        "quantity": 80,
+        "unit": "متر طول",
+        "unitPrice": 407000,
+        "totalPrice": 32560000
+      },
+      {
+        "productId": "prod-8676z49k8",
+        "productName": "پیچ پنل 2.5",
+        "quantity": 8,
+        "unit": "بسته",
+        "unitPrice": 4600000,
+        "totalPrice": 36800000
+      },
+      {
+        "productId": "prod-jdwgrf6x8",
+        "productName": "میخ چاشنی بتن",
+        "quantity": 5,
+        "unit": "بسته",
+        "unitPrice": 3750000,
+        "totalPrice": 18750000
+      },
+      {
+        "productId": "prod-94zedzble",
+        "productName": "بتونه درزگیر 20 کیلو",
+        "quantity": 1,
+        "unit": "بسته",
+        "unitPrice": 2000000,
+        "totalPrice": 2000000
+      },
+      {
+        "productId": "prod-1jc8p8d6k",
+        "productName": "نوار درزگیری",
+        "quantity": 1,
+        "unit": "بسته",
+        "unitPrice": 1800000,
+        "totalPrice": 1800000
+      },
+      {
+        "productId": "prod-xbylhh3vs",
+        "productName": "پیچ پنل 3.5",
+        "quantity": 1,
+        "unit": "بسته",
+        "unitPrice": 5200000,
+        "totalPrice": 5200000
+      }
+    ],
+    "subtotal": 483510000,
+    "discount": 0,
+    "tax": 0,
+    "total": 483510000,
+    "description": "فاکتور ایجاد شده",
+    "additions": 0
   }
 ]

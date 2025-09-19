@@ -84,7 +84,13 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      const product = products.find(p => p.name.includes(item.material));
+      let product: Product | undefined;
+      if (item.material === 'پیچ') {
+        product = products.find(p => p.name.includes('پیچ پنل 2.5'));
+      } else {
+        product = products.find(p => p.name.includes(item.material));
+      }
+
       if (product) {
         invoiceItems.push({
           productId: product.id,

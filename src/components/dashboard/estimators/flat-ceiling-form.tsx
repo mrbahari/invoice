@@ -115,13 +115,13 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      // For screws, we need to find a product that includes the name and is sold by 'بسته'
-      let productQuery = item.material;
-      if(item.material.includes('پیچ')) {
-        productQuery = 'پیچ'; // Generic search for 'پیچ'
-      }
+      let product: Product | undefined;
 
-      const product = products.find(p => p.name.includes(productQuery) && (item.material.includes('پیچ') ? p.unit === 'بسته' : true));
+      if (item.material.includes('پیچ پانل')) {
+        product = products.find(p => p.name.includes('پیچ پنل 2.5'));
+      } else {
+        product = products.find(p => p.name.includes(item.material));
+      }
 
       if (product) {
         invoiceItems.push({

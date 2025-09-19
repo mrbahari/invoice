@@ -1,7 +1,7 @@
 
-import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 import DashboardLayoutClient from './layout-client';
+import { Suspense } from 'react';
 
 // A simple loading component to show while the client component is loading
 function Loading() {
@@ -14,6 +14,7 @@ function Loading() {
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
+    // Suspense is kept in case client components have heavy logic
     <Suspense fallback={<Loading />}>
       <DashboardLayoutClient>{children}</DashboardLayoutClient>
     </Suspense>

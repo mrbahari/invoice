@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomersPage from '@/components/dashboard/customers-page';
 import ProductsPage from '@/components/dashboard/products-page';
 import StoresPage from '@/components/dashboard/stores-page';
@@ -24,15 +24,18 @@ export default function DashboardClientComponent() {
   // A state to hold data for navigation, e.g., an invoice to edit
   const [navigationData, setNavigationData] = useState<any>(null);
 
+  useEffect(() => {
+    // If someone lands on /dashboard without a tab, redirect them to the default tab view
+    if (!searchParams.get('tab')) {
+        router.replace('/dashboard?tab=dashboard', { scroll: false });
+    }
+  }, [searchParams, router]);
+
   const handleNavigation = (tab: DashboardTab, data?: any) => {
     setNavigationData(data);
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
-  // If someone lands on /dashboard without a tab, redirect them to the default tab view
-  if (typeof window !== 'undefined' && !searchParams.get('tab')) {
-      router.replace('/dashboard?tab=dashboard');
-  }
 
   return (
       <>

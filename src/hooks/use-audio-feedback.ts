@@ -35,8 +35,8 @@ export function useAudioFeedback() {
     }
 
     if (type === 'page-turn') {
-        // --- Page Turn Sound ---
-        const duration = 0.2;
+        // A softer page turn sound
+        const duration = 0.3;
         const now = context.currentTime;
         
         // White noise source
@@ -49,17 +49,17 @@ export function useAudioFeedback() {
         const noise = context.createBufferSource();
         noise.buffer = buffer;
 
-        // Filter to shape the noise
+        // Filter to shape the noise into a softer "swoosh"
         const bandpass = context.createBiquadFilter();
         bandpass.type = 'bandpass';
-        bandpass.frequency.setValueAtTime(1500, now);
-        bandpass.Q.setValueAtTime(1, now);
+        bandpass.frequency.setValueAtTime(800, now); // Lower frequency for a softer sound
+        bandpass.Q.setValueAtTime(0.8, now);
 
         // Gain for volume envelope
         const gain = context.createGain();
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.3, now + 0.01); // Quick attack
-        gain.gain.exponentialRampToValueAtTime(0.01, now + duration); // Fast decay
+        gain.gain.linearRampToValueAtTime(0.1, now + 0.02); // Slower attack, lower volume
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration); // Gentle decay
 
         noise.connect(bandpass).connect(gain).connect(context.destination);
         noise.start(now);

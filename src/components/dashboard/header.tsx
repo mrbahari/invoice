@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -23,7 +23,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +68,7 @@ interface HeaderProps {
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
   const { searchTerm, setSearchTerm } = useSearch();
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
 
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
   
@@ -85,6 +85,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   }, [activeTab, showSearch, setSearchTerm]);
 
   return (
+    <>
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
@@ -148,23 +149,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <Dialog>
-                <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>پشتیبانی</DropdownMenuItem>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader className="items-center text-center">
-                        <Sparkles className="h-8 w-8 text-primary" />
-                        <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
-                        <DialogDescription className="text-base !mt-4">
-                            اسماعیل بهاری
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
-                        09125486083
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>پشتیبانی</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
                 <LogOut className="ml-2 h-4 w-4" />
@@ -174,5 +159,21 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
         </DropdownMenu>
       </div>
     </header>
+
+    <Dialog open={isSupportDialogOpen} onOpenChange={setIsSupportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader className="items-center text-center">
+                <Sparkles className="h-8 w-8 text-primary" />
+                <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
+                <DialogDescription className="text-base !mt-4">
+                    اسماعیل بهاری
+                </DialogDescription>
+            </DialogHeader>
+            <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
+                09125486083
+            </div>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }

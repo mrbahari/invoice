@@ -45,7 +45,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const { data, setData, resetData } = useData(); // Use the central data context
-  const { units } = data;
+  const { units = [] } = data; // Use default empty array to prevent error
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
@@ -72,13 +72,13 @@ export default function SettingsPage() {
         return;
     }
     
-    setData({...data, units: [...data.units, { name, defaultQuantity: 1 }]});
+    setData({...data, units: [...units, { name, defaultQuantity: 1 }]});
     setNewUnitName('');
     toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
   const handleDeleteUnit = (unitNameToDelete: string) => {
-    setData({...data, units: data.units.filter(u => u.name !== unitNameToDelete)});
+    setData({...data, units: units.filter(u => u.name !== unitNameToDelete)});
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 

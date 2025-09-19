@@ -31,13 +31,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <CanvasBackground />
-          <AuthProvider>
-            <DataProvider> {/* Add DataProvider here */}
+          <DataProvider>
+            <AuthProvider>
               <div className="relative z-10">
                 {children}
               </div>
-            </DataProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </DataProvider>
           <Toaster />
         </ThemeProvider>
       </body>

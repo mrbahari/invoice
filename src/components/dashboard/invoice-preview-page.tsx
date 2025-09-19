@@ -188,18 +188,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
                   </div>
-                  <div className="flex justify-center sm:justify-end w-full sm:w-1/6 order-3">
-                      {store.logoUrl && (
-                        <Image
-                            src={store.logoUrl}
-                            alt={`لوگوی ${store.name}`}
-                            width={96}
-                            height={96}
-                            className="object-contain"
-                            unoptimized
-                        />
-                      )}
-                  </div>
               </div>
 
 

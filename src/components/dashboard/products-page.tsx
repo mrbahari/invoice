@@ -133,47 +133,81 @@ export default function ProductsPage() {
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <Table>
-            <TableHeader>
-                <TableRow>
-                <TableHead className="hidden w-[100px] sm:table-cell">
-                    <span className="sr-only">تصویر</span>
-                </TableHead>
-                <TableHead>نام</TableHead>
-                <TableHead>زیردسته</TableHead>
-                <TableHead className="hidden md:table-cell">
-                    توضیحات
-                </TableHead>
-                <TableHead className="text-left">قیمت</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
+            {/* Mobile Card View */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
                 {filteredProducts.map((product) => (
-                <TableRow key={product.id} onClick={() => handleEditClick(product)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
-                    <TableCell className="hidden sm:table-cell">
-                    <Image
-                        alt={product.name}
-                        className="aspect-square rounded-md object-cover"
-                        height="64"
-                        src={product.imageUrl}
-                        width="64"
-                        data-ai-hint="product image"
-                    />
-                    </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>
-                    <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell max-w-xs truncate">
-                    {product.description}
-                    </TableCell>
-                    <TableCell className="text-left">
-                    {formatCurrency(product.price)}
-                    </TableCell>
-                </TableRow>
+                    <Card key={product.id} onClick={() => handleEditClick(product)} className="cursor-pointer transition-all hover:shadow-md active:scale-95">
+                        <CardContent className="flex items-start gap-4 p-4">
+                             <Image
+                                alt={product.name}
+                                className="aspect-square rounded-md object-cover"
+                                height="80"
+                                src={product.imageUrl}
+                                width="80"
+                                data-ai-hint="product image"
+                            />
+                            <div className="flex-1 grid gap-1.5">
+                                <p className="font-semibold">{product.name}</p>
+                                <p className="text-sm text-muted-foreground">{product.description}</p>
+                                <div className="flex items-center justify-between mt-2">
+                                     <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
+                                     <p className="font-semibold text-left">{formatCurrency(product.price)}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 ))}
-            </TableBody>
-            </Table>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="hidden w-[100px] sm:table-cell">
+                        <span className="sr-only">تصویر</span>
+                    </TableHead>
+                    <TableHead>نام</TableHead>
+                    <TableHead>زیردسته</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                        توضیحات
+                    </TableHead>
+                    <TableHead className="text-left">قیمت</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredProducts.map((product) => (
+                    <TableRow key={product.id} onClick={() => handleEditClick(product)} className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1">
+                        <TableCell className="hidden sm:table-cell">
+                        <Image
+                            alt={product.name}
+                            className="aspect-square rounded-md object-cover"
+                            height="64"
+                            src={product.imageUrl}
+                            width="64"
+                            data-ai-hint="product image"
+                        />
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>
+                        <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell max-w-xs truncate">
+                        {product.description}
+                        </TableCell>
+                        <TableCell className="text-left">
+                        {formatCurrency(product.price)}
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+             {filteredProducts.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                    هیچ محصولی یافت نشد.
+                </div>
+             )}
         </CardContent>
         <CardFooter>
             <div className="text-xs text-muted-foreground">

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Eye, CheckCircle } from 'lucide-react';
+import { Eye, CheckCircle, CheckCircle2, TriangleAlert, Hourglass } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,16 +22,23 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
+import { cn } from '@/lib/utils';
 
 const statusStyles: Record<InvoiceStatus, string> = {
-  Paid: 'text-green-600 bg-green-500/10',
-  Pending: 'text-orange-600 bg-orange-500/10',
-  Overdue: 'text-red-600 bg-red-500/10',
+  Paid: 'text-green-600',
+  Pending: 'text-orange-600',
+  Overdue: 'text-red-600',
 };
 const statusTranslation: Record<InvoiceStatus, string> = {
     Paid: 'پرداخت شده',
     Pending: 'در انتظار',
     Overdue: 'سررسید گذشته',
+};
+
+const statusIcons: Record<InvoiceStatus, React.ElementType> = {
+  Paid: CheckCircle2,
+  Pending: Hourglass,
+  Overdue: TriangleAlert,
 };
 
 type InvoiceTableProps = {
@@ -70,11 +77,12 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInv
           <TableBody>
             {invoiceList.map((invoice) => {
               const customer = customers.find(c => c.id === invoice.customerId);
+              const StatusIcon = statusIcons[invoice.status];
               return (
               <TableRow 
                 key={invoice.id} 
                 onClick={() => onEditInvoice(invoice)}
-                className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
+                className="cursor-pointer transition-colors hover:bg-muted/60"
               >
                 <TableCell>
                   <div className="font-medium">{invoice.customerName}</div>
@@ -86,9 +94,10 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInv
                   {invoice.invoiceNumber}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                    {statusTranslation[invoice.status]}
-                  </Badge>
+                   <div className={cn("flex items-center gap-2 font-medium", statusStyles[invoice.status])}>
+                      <StatusIcon className="h-4 w-4" />
+                      <span>{statusTranslation[invoice.status]}</span>
+                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {new Date(invoice.date).toLocaleDateString('fa-IR')}

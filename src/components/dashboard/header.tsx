@@ -45,7 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearch } from './search-provider';
 import { cn } from '@/lib/utils';
 import { LiveClock } from './live-clock';
-import type { DashboardTab } from '@/app/dashboard/page';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
     dashboard: 'خانه',

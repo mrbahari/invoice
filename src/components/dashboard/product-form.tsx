@@ -382,7 +382,12 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                             <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
                             <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
                         </div>
-                        <Button type="button" variant="outline" onClick={onCancel}>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={onCancel}
+                          className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                        >
                             <ArrowRight className="ml-2 h-4 w-4" />
                             بازگشت به لیست
                         </Button>

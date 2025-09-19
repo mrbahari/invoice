@@ -159,7 +159,12 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                         اطلاعات مشتری را وارد کنید.
                     </CardDescription>
                 </div>
-                 <Button type="button" variant="outline" onClick={onCancel}>
+                 <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={onCancel}
+                    className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                  >
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست
                 </Button>

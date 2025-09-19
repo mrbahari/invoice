@@ -219,7 +219,12 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                            اطلاعات اصلی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
                         </CardDescription>
                     </div>
-                    <Button type="button" variant="outline" onClick={onCancel}>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={onCancel}
+                      className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                    >
                         <ArrowRight className="ml-2 h-4 w-4" />
                         بازگشت به لیست
                     </Button>

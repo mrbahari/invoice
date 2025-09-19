@@ -43,8 +43,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
-import { useCollection } from '@/hooks/use-collection';
-import { addDoc, deleteDoc, updateDoc } from '@/lib/firestore-service';
+import { useData } from '@/context/data-context';
 
 
 type InvoiceItemState = {
@@ -70,14 +69,10 @@ const useIsClient = () => {
 
 
 export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
+  const { data, setData } = useData();
+  const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isEditMode = !!invoice;
-
-  const { data: customerList, loading: customerLoading, add: addCustomer } = useCollection<Customer>('customers');
-  const { data: products, loading: productsLoading } = useCollection<Product>('products');
-  const { data: categories, loading: categoriesLoading } = useCollection<Category>('categories');
-  const { data: invoices, loading: invoicesLoading, add: addInvoice, update: updateInvoice, remove: removeInvoice } = useCollection<Invoice>('invoices');
-  const { data: unitsOfMeasurement, loading: unitsLoading } = useCollection<UnitOfMeasurement>('units');
   
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
@@ -226,12 +221,15 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         address: 'آدرس ثبت نشده',
         purchaseHistory: 'مشتری جدید',
     };
-    const newCustomer = await addCustomer(newCustomerData);
-    if (newCustomer) {
-      setSelectedCustomer({ id: newCustomer.id, ...newCustomerData });
-      setCustomerSearch('');
-      toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomer.name} به لیست مشتریان شما اضافه شد.`});
-    }
+    
+    const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
+    const newCustomerWithId = { ...newCustomerData, id: newId };
+    
+    setData(prev => ({ ...prev, customers: [newCustomerWithId, ...prev.customers] }));
+    
+    setSelectedCustomer(newCustomerWithId);
+    setCustomerSearch('');
+    toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomerWithId.name} به لیست مشتریان شما اضافه شد.`});
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
@@ -349,7 +347,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
     if (isEditMode && invoice) {
         processedInvoiceId = invoice.id;
-        const updatedInvoice: Omit<Invoice, 'id'> = {
+        const updatedInvoiceData: Omit<Invoice, 'id'> = {
             customerId: selectedCustomer.id,
             customerName: selectedCustomer.name,
             customerEmail: selectedCustomer.email,
@@ -364,7 +362,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             invoiceNumber: invoice.invoiceNumber,
             date: invoice.date
         };
-        await updateInvoice(invoice.id, updatedInvoice);
+        setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === invoice.id ? { ...updatedInvoiceData, id: invoice.id } : inv) }));
         toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
     } else {
         const firstItemCategory = items[0].product.subCategoryId ? getRootParent(items[0].product.subCategoryId) : undefined;
@@ -386,11 +384,12 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             total: finalTotal,
             description: description || 'فاکتور ایجاد شده',
         };
-        const newInvoice = await addInvoice(newInvoiceData);
-        if (newInvoice) {
-            processedInvoiceId = newInvoice.id;
-            toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoiceData.invoiceNumber} ایجاد شد.` });
-        }
+        const newId = `inv-${Math.random().toString(36).substr(2, 9)}`;
+        const newInvoiceWithId = { ...newInvoiceData, id: newId };
+        
+        setData(prev => ({ ...prev, invoices: [newInvoiceWithId, ...prev.invoices] }));
+        processedInvoiceId = newId;
+        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoiceData.invoiceNumber} ایجاد شد.` });
     }
 
     setIsProcessing(false);
@@ -403,12 +402,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   
   const handleDeleteInvoice = async () => {
     if (!invoice) return;
-    await removeInvoice(invoice.id);
+    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== invoice.id) }));
     toast({
         title: 'فاکتور حذف شد',
         description: `فاکتور شماره "${invoice?.invoiceNumber}" با موفقیت حذف شد.`,
     });
-
     onCancel();
   };
 
@@ -427,11 +425,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 </CardDescription>
               </div>
                <div className='flex items-center gap-2'>
-                  <Button type="button" variant="outline" onClick={onCancel} className="dark:bg-white dark:text-black">
+                  <Button type="button" variant="outline" onClick={onCancel} className="dark:bg-white dark:text-black dark:animate-pulse-slow">
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                   </Button>
-                  <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1 dark:bg-white dark:text-black">
+                  <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1 dark:bg-white dark:text-black dark:animate-pulse-slow">
                     <Eye className="ml-2 h-3.5 w-3.5" />
                     <span>ثبت و پیش‌نمایش</span>
                   </Button>

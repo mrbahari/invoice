@@ -20,9 +20,6 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
 
   const handleTabChange = (tab: DashboardTab) => {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
-    if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   };
   
   // AuthProvider shows a spinner until auth state is resolved, so this check is simpler.

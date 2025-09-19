@@ -42,30 +42,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // This effect handles the result of a Google sign-in redirect.
         // It runs only once on component mount.
-        getRedirectResult(auth)
-            .then((result) => {
+        const processRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
                 if (result) {
-                    // User signed in or linked. `onAuthStateChanged` will handle the user state.
+                    // User signed in or linked via redirect.
+                    // onAuthStateChanged will handle the user state update, but we can set it here too.
                     setUser(result.user);
                 }
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.error("Error getting redirect result:", error);
-            })
-            .finally(() => {
-                // This is one part of the loading process.
-                // The onAuthStateChanged listener below will also affect the loading state.
-                setLoading(false);
-            });
-        
-        // This is the primary listener for auth state changes.
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            setLoading(false);
-        });
+            } finally {
+                // Now, set up the primary auth state listener.
+                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                    setUser(currentUser);
+                    setLoading(false);
+                });
+                // Cleanup subscription on unmount
+                return () => unsubscribe();
+            }
+        };
 
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
+        const unsubscribePromise = processRedirectResult();
+
+        return () => {
+            unsubscribePromise.then(unsubscribe => {
+                if (unsubscribe) {
+                    unsubscribe();
+                }
+            });
+        };
     }, []);
     
     useEffect(() => {
@@ -141,6 +147,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
+                <div className="fixed bottom-4 left-4 text-xs text-muted-foreground/50">
+                    <p>v1.0.0</p>
+                    <p>Created by Esmaeil Bahari</p>
+                </div>
             </div>
         );
     }

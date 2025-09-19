@@ -393,8 +393,11 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      
+      <div className="fixed bottom-4 left-4 text-xs text-muted-foreground/50 z-10">
+        <p>v1.0.0</p>
+        <p>Created by Esmaeil Bahari</p>
+      </div>
     </div>
   );
 }
-
-    

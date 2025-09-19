@@ -38,7 +38,7 @@ interface SidebarNavProps {
 
 export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
   return (
-    <aside className="fixed inset-y-0 right-0 z-10 hidden w-14 flex-col border-l bg-background sm:flex no-print">
+    <aside className="fixed inset-y-0 right-0 z-10 hidden w-14 flex-col border-l bg-background md:flex no-print">
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <button
           onClick={() => onTabChange('dashboard')}

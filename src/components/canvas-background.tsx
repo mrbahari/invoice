@@ -49,10 +49,13 @@ const CanvasBackground: React.FC = () => {
       }
 
       draw() {
-        ctx!.beginPath();
-        ctx!.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx!.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx!.fill();
+        if(!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        const style = getComputedStyle(document.documentElement);
+        const fgColor = style.getPropertyValue('--foreground').trim();
+        ctx.fillStyle = `hsl(${fgColor} / 0.5)`;
+        ctx.fill();
       }
     }
 
@@ -63,6 +66,7 @@ const CanvasBackground: React.FC = () => {
     }
 
     function connectParticles() {
+        if(!ctx) return;
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
                 const dx = particles[i].x - particles[j].x;
@@ -71,19 +75,23 @@ const CanvasBackground: React.FC = () => {
 
                 if (distance < connectDistance) {
                     const opacity = 1 - distance / connectDistance;
-                    ctx!.beginPath();
-                    ctx!.moveTo(particles[i].x, particles[i].y);
-                    ctx!.lineTo(particles[j].x, particles[j].y);
-                    ctx!.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.5})`;
-                    ctx!.lineWidth = 1;
-                    ctx!.stroke();
+                    const style = getComputedStyle(document.documentElement);
+                    const fgColor = style.getPropertyValue('--foreground').trim();
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `hsl(${fgColor} / ${opacity * 0.5})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
                 }
             }
         }
     }
     
+    let animationFrameId: number;
     function animate() {
-      ctx!.clearRect(0, 0, width, height);
+      if(!ctx) return;
+      ctx.clearRect(0, 0, width, height);
 
       for (const particle of particles) {
         particle.update();
@@ -91,15 +99,28 @@ const CanvasBackground: React.FC = () => {
       }
       
       connectParticles();
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     }
 
     createParticles();
     animate();
     
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                // Redraw with new theme colors
+                animate();
+            }
+        });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
     // Cleanup function
     return () => {
         window.removeEventListener('resize', () => {});
+        cancelAnimationFrame(animationFrameId);
+        observer.disconnect();
     }
 
   }, []);
@@ -109,7 +130,7 @@ const CanvasBackground: React.FC = () => {
       ref={canvasRef}
       className="absolute top-0 left-0 w-full h-full"
       style={{ 
-          background: 'linear-gradient(to bottom, hsl(var(--background-hsl)), hsl(var(--primary-hsl) / 0.2))',
+          background: 'linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background) / 0.1))',
           filter: 'blur(1px)'
       }}
     />

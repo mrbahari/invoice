@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -40,32 +41,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(currentUser);
             setLoading(false);
         });
+        return () => unsubscribe();
+    }, []);
 
-        // Handle redirect result from Google Sign-In
-        getRedirectResult(auth)
-            .then((result) => {
+    useEffect(() => {
+        const handleRedirect = async () => {
+            try {
+                const result = await getRedirectResult(auth);
                 if (result) {
-                    const user = result.user;
-                    setUser(user);
+                    // This will trigger the onAuthStateChanged listener and handle user state
+                    // and subsequent redirection if necessary.
                     router.push('/dashboard?tab=dashboard');
                 }
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.error("Google Redirect Result Error:", error);
-            }).finally(() => {
-                setLoading(false);
-            });
-
-
-        return () => unsubscribe();
+            } finally {
+                // In case there's no redirect result, we might still be loading from onAuthStateChanged
+                // So let's only set loading to false if we don't have a user yet.
+                if (!auth.currentUser) {
+                    setLoading(false);
+                }
+            }
+        };
+        handleRedirect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
 
     const signInWithGoogle = async () => {
         setLoading(true);
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
-        // The page will redirect, and the result will be handled by getRedirectResult
+        // The page will redirect, and the result will be handled by getRedirectResult in the useEffect
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {

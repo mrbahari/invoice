@@ -7,10 +7,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
 import { SearchProvider } from '@/components/dashboard/search-provider';
-import type { DashboardTab } from '@/app/dashboard/page'; 
 import { BottomNav } from '@/components/dashboard/bottom-nav';
 import { useAuth } from '@/components/auth/auth-provider';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type { DashboardTab } from './dashboard-client';
 
 export default function DashboardLayoutClient({ children }: { children: ReactNode }) {
   const router = useRouter();

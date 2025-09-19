@@ -15,7 +15,7 @@ import {
 import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -33,23 +33,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
             setLoading(false);
+            if (currentUser) {
+                // User is logged in
+                const targetPath = (pathname.includes('/login') || pathname.includes('/signup')) ? '/dashboard?tab=dashboard' : pathname;
+                router.push(targetPath);
+            } else {
+                // User is not logged in
+                if (!pathname.includes('/login') && !pathname.includes('/signup')) {
+                    router.push('/login');
+                }
+            }
         });
 
         return () => unsubscribe();
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [router]);
 
     const signInWithGoogle = async () => {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        router.push('/dashboard');
+        setLoading(true);
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+            // The onAuthStateChanged listener will handle the redirect.
+        } catch (error) {
+            console.error("Google Sign-In Error:", error);
+            setLoading(false); // Ensure loading is stopped on error
+            throw error;
+        }
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {
+        setLoading(true);
         if (!values.email || !values.password || !values.firstName) {
             throw new Error("Missing fields for sign up");
         }
@@ -57,16 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
-        router.push('/dashboard');
+        // onAuthStateChanged will handle redirect
         return userCredential.user;
     };
     
     const signInWithEmail = async (values: AuthFormValues) => {
+        setLoading(true);
         if (!values.email || !values.password) {
             throw new Error("Email or password missing.");
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        router.push('/dashboard');
+        // onAuthStateChanged will handle redirect
         return userCredential.user;
     };
 
@@ -76,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         await signOut(auth);
-        router.push('/login');
+        // onAuthStateChanged will handle redirect to /login
     };
 
     const value: AuthContextType = {
@@ -89,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
-    // While checking user status, show a loader
     if (loading) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -97,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             </div>
         );
     }
+
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,6 +1,7 @@
 
 import { Suspense } from 'react';
 import DashboardClientComponent from './dashboard-client';
+import { redirect } from 'next/navigation';
 
 // A simple loading component to show while the client component is loading
 function Loading() {
@@ -8,6 +9,7 @@ function Loading() {
 }
 
 export default function DashboardPage() {
+  
   return (
     <Suspense fallback={<Loading />}>
       <DashboardClientComponent />

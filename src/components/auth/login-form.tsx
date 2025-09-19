@@ -40,6 +40,7 @@ export function LoginForm() {
         setIsLoading(true);
         try {
             await signInWithEmail({ email, password });
+            // AuthProvider will handle redirect
         } catch (error) {
             const authError = error as AuthError;
             let description = 'خطایی در هنگام ورود رخ داد. لطفا دوباره تلاش کنید.';
@@ -60,12 +61,14 @@ export function LoginForm() {
         setIsGoogleLoading(true);
         try {
             await signInWithGoogle();
+            // AuthProvider will handle redirect
         } catch (error) {
             toast({
                 variant: 'destructive',
                 title: 'خطا در ورود با گوگل',
                 description: 'مشکلی در فرآیند ورود با گوگل پیش آمد. لطفا دوباره تلاش کنید.',
             });
+        } finally {
             setIsGoogleLoading(false);
         }
     }

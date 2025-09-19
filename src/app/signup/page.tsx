@@ -10,13 +10,6 @@ import { useEffect } from 'react';
 
 export default function SignupPage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
 
   if (loading || user) {
     return <main className="flex h-screen items-center justify-center bg-background"><LoadingSpinner /></main>;

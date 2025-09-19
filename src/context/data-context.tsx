@@ -2,9 +2,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { initialData } from '@/lib/data';
+import defaultRawData from '@/database/defaultdb.json';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
+
+// This handles the case where the JSON is nested under a `default` property during import
+const initialData = (defaultRawData as any).default || defaultRawData;
+
 
 // Define the shape of our data
 interface AppData {

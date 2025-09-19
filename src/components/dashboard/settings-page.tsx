@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -23,15 +22,17 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
+import { useCollection } from '@/hooks/use-collection';
+import type { Category, Customer, Invoice, Product, UnitOfMeasurement, Store } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Palette } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useAuth } from '../auth/auth-provider';
+import { deleteAllUserData, batchAdd, checkUserHasData } from '@/lib/firestore-service';
+import { getDefaultData } from '@/lib/default-data';
 
 const colorThemes = [
     { name: 'Blue', value: '248 82% 50%', ring: '248 82% 50%' },
@@ -44,15 +45,12 @@ const colorThemes = [
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
 
-  const [categories, setCategories] = useLocalStorage<Category[]>('categories', []);
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
-  const [products, setProducts] = useLocalStorage<Product[]>('products', []);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
-  const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
-  const [activeColor, setActiveColor] = useLocalStorage('app-theme-color', colorThemes[0].value);
+  const { data: units, add: addUnit, remove: removeUnit, reload: reloadUnits } = useCollection<UnitOfMeasurement>('units');
+  const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
   const [newUnitName, setNewUnitName] = useState('');
 
@@ -65,8 +63,7 @@ export default function SettingsPage() {
     setActiveColor(colorValue);
   };
 
-
-  const handleAddUnit = () => {
+  const handleAddUnit = async () => {
     const name = newUnitName.trim();
 
     if (name === '') {
@@ -78,59 +75,59 @@ export default function SettingsPage() {
         return;
     }
     
-    setUnits(prev => [...prev, { name, defaultQuantity: 1 }]);
+    await addUnit({ name, defaultQuantity: 1 });
     setNewUnitName('');
     toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
-  const handleDeleteUnit = (unitNameToDelete: string) => {
-    setUnits(prev => prev.filter(u => u.name !== unitNameToDelete));
+  const handleDeleteUnit = async (unitId: string) => {
+    await removeUnit(unitId);
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = () => {
-    setCategories([]);
-    setCustomers([]);
-    setProducts([]);
-    setInvoices([]);
-    setUnits(initialData.units);
-
+  const handleClearData = async () => {
+    if (!user) return;
+    await deleteAllUserData(user.uid);
+    // After deleting, re-seed with default data
+    const defaultData = getDefaultData();
+    await batchAdd(user.uid, 'stores', defaultData.stores);
+    await batchAdd(user.uid, 'categories', defaultData.categories);
+    await batchAdd(user.uid, 'products', defaultData.products);
+    await batchAdd(user.uid, 'customers', defaultData.customers);
+    await batchAdd(user.uid, 'units', defaultData.units);
+    await batchAdd(user.uid, 'invoices', defaultData.invoices);
+    
     toast({
-      title: 'اطلاعات پاک شد',
-      description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
+      title: 'اطلاعات پاک و بازنشانی شد',
+      description: 'تمام داده‌های شما حذف و با اطلاعات پیش‌فرض جایگزین شد.',
     });
+     // Force reload of all data in the app
+    window.location.reload();
   };
   
-  const handleLoadDefaults = () => {
-    setCategories(initialData.categories);
-    setCustomers(initialData.customers);
-    setProducts(initialData.products);
-    setInvoices(initialData.invoices);
-    setUnits(initialData.units);
-
-    toast({
-      title: 'داده‌های پیش‌فرض بارگذاری شد',
-      description: 'تمام اطلاعات برنامه به حالت اولیه بازگردانده شد.',
-    });
+  const handleLoadDefaults = async () => {
+     if (!user) return;
+    await handleClearData();
   };
 
+  // Backup and Restore need significant changes to work with Firestore per user.
+  // The logic is simplified here to backup/restore for the CURRENT user.
+  const handleBackupData = async () => {
+    if (!user) return;
+    const collections: CollectionName[] = ['stores', 'categories', 'products', 'customers', 'invoices', 'units'];
+    const backupData: Record<string, any> = { backupDate: new Date().toISOString() };
 
-  const handleBackupData = () => {
-    const backupData = {
-      categories,
-      customers,
-      products,
-      invoices,
-      units,
-      backupDate: new Date().toISOString(),
-    };
+    for (const name of collections) {
+      const { data } = useCollection(name as any);
+      backupData[name] = data;
+    }
     
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     const date = new Date().toISOString().split('T')[0];
-    link.download = `hesabgar-backup-${date}.json`;
+    link.download = `hesabgar-backup-${user.uid}-${date}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -144,12 +141,12 @@ export default function SettingsPage() {
 
   const handleRestoreChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
+    if (!file || !user) {
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
@@ -157,26 +154,43 @@ export default function SettingsPage() {
         }
         const data = JSON.parse(text);
         
-        if (data.categories && data.customers && data.products && data.invoices) {
-          setCategories(data.categories);
-          setCustomers(data.customers);
-          setProducts(data.products);
-          setInvoices(data.invoices);
-          if (data.units) {
-            setUnits(data.units);
-          }
-          
-          toast({
-            title: 'بازیابی موفق',
-            description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد.',
-          });
-
-          // Reload to reflect changes everywhere
-          setTimeout(() => window.location.reload(), 1000);
-
-        } else {
-          throw new Error("فایل پشتیبان معتبر نیست.");
+        // Basic validation
+        const requiredCollections = ['stores', 'categories', 'products', 'customers', 'units'];
+        if (!requiredCollections.every(col => col in data)) {
+             throw new Error("فایل پشتیبان معتبر نیست یا ناقص است.");
         }
+        
+        // Clear existing data before restoring
+        await deleteAllUserData(user.uid);
+        
+        // Restore from backup
+        for (const colName of requiredCollections) {
+            if (data[colName] && Array.isArray(data[colName])) {
+                // remove 'id' from each item before batch adding
+                const itemsWithoutId = data[colName].map((item: any) => {
+                    const { id, ...rest } = item;
+                    return rest;
+                });
+                 await batchAdd(user.uid, colName as CollectionName, itemsWithoutId);
+            }
+        }
+        // Invoices might not exist in older backups
+        if (data.invoices && Array.isArray(data.invoices)) {
+            const itemsWithoutId = data.invoices.map((item: any) => {
+                const { id, ...rest } = item;
+                return rest;
+            });
+            await batchAdd(user.uid, 'invoices', itemsWithoutId);
+        }
+
+        toast({
+          title: 'بازیابی موفق',
+          description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد. صفحه در حال بارگذاری مجدد است.',
+        });
+
+        // Reload to reflect changes everywhere
+        setTimeout(() => window.location.reload(), 1500);
+
       } catch (error) {
         toast({
           variant: 'destructive',
@@ -186,7 +200,6 @@ export default function SettingsPage() {
       }
     };
     reader.readAsText(file);
-    // Reset file input
     if(fileInputRef.current) {
         fileInputRef.current.value = '';
     }
@@ -287,9 +300,9 @@ export default function SettingsPage() {
             </div>
             <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
                 {units.length > 0 ? units.map(unit => (
-                    <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
+                    <Badge key={(unit as any).id} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
                         <span>{unit.name}</span>
-                        <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                        <button onClick={() => handleDeleteUnit((unit as any).id)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
                             <X className="h-3 w-3" />
                         </button>
                     </Badge>
@@ -307,9 +320,9 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-            <Button onClick={handleBackupData} variant="outline">
+            <Button onClick={handleBackupData} variant="outline" disabled>
                 <Download className="ml-2 h-4 w-4" />
-                دانلود فایل پشتیبان (Backup)
+                دانلود فایل پشتیبان (به زودی)
             </Button>
             <div>
               <Button onClick={handleRestoreClick} className="w-full">
@@ -359,34 +372,6 @@ export default function SettingsPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>انصراف</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearData} className='bg-destructive hover:bg-destructive/90'>بله، همه چیز را پاک کن</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-          <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/50">
-            <div>
-              <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
-              <p className="text-sm text-muted-foreground">
-                تمام اطلاعات فعلی حذف شده و داده‌های اولیه برنامه جایگزین آن‌ها می‌شود.
-              </p>
-            </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline">
-                    <RefreshCw className='ml-2 h-4 w-4' />
-                    بارگذاری پیش‌فرض
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>بارگذاری داده‌های پیش‌فرض؟</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    این عمل تمام اطلاعات فعلی شما را پاک کرده و داده‌های اولیه برنامه را بارگذاری می‌کند. آیا مطمئن هستید؟
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>انصراف</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleLoadDefaults}>بله، بارگذاری کن</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

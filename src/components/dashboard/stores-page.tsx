@@ -12,17 +12,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { initialData } from '@/lib/data';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useCollection } from '@/hooks/use-collection';
 import type { Store, Category, Product } from '@/lib/definitions';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { StoreForm } from './store-form';
 
 export default function StoresPage() {
-  const [stores, setStores, reloadStores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const { data: stores, remove: removeStore, reload: reloadStores } = useCollection<Store>('stores');
+  const { data: categories, reload: reloadCategories } = useCollection<Category>('categories');
+  const { data: products, reload: reloadProducts } = useCollection<Product>('products');
   const { searchTerm } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
@@ -30,10 +29,11 @@ export default function StoresPage() {
 
 
   useEffect(() => {
+    // Initial load for all related collections
     reloadStores();
     reloadCategories();
     reloadProducts();
-  }, []);
+  }, [reloadStores, reloadCategories, reloadProducts]);
 
   const handleAddClick = () => {
     setEditingStore(undefined);
@@ -48,7 +48,7 @@ export default function StoresPage() {
   const handleFormSuccess = () => {
     setView('list');
     setEditingStore(undefined);
-    reloadStores();
+    reloadStores(); // Reload stores to reflect changes
   }
   
   const handleFormCancel = () => {
@@ -56,9 +56,10 @@ export default function StoresPage() {
     setEditingStore(undefined);
   }
   
-  const handleDeleteStore = (storeId: string) => {
-    setStores(prev => prev.filter(s => s.id !== storeId));
-    // Also delete associated categories and products if needed
+  const handleDeleteStore = async (storeId: string) => {
+    await removeStore(storeId);
+    // Also delete associated categories and products if needed (cascading delete)
+    // For now, we assume categories/products become orphaned.
     handleFormSuccess();
   }
 

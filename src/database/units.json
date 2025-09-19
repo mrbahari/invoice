@@ -1,7 +1,0 @@
-
-[
-  { "name": "عدد", "defaultQuantity": 1 },
-  { "name": "متر طول", "defaultQuantity": 1 },
-  { "name": "متر مربع", "defaultQuantity": 1 },
-  { "name": "بسته", "defaultQuantity": 1 }
-]

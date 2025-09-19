@@ -5,12 +5,10 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
-import { initialData } from '@/lib/data';
 import { formatCurrency } from '@/lib/utils';
 import { Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Store, Customer, Invoice, Product } from '@/lib/definitions';
 import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
@@ -117,6 +115,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     }
   }, [invoice, customer]);
 
+  if (invoicesLoading || productsLoading || storesLoading || customersLoading) {
+      return <div>Loading preview...</div>
+  }
+
   if (!invoice) {
     return (
         <Card>
@@ -133,7 +135,17 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
   
   if(!customer || !store) {
       // Data might be inconsistent for a moment
-      return null;
+      return (
+        <Card>
+            <CardContent className="py-16 text-center">
+                <p className="text-muted-foreground mb-4">اطلاعات مشتری یا فروشگاه برای این فاکتور یافت نشد.</p>
+                 <Button onClick={onBack}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت
+                </Button>
+            </CardContent>
+        </Card>
+      )
   }
 
   

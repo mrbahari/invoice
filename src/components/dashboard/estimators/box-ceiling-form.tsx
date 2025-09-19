@@ -22,8 +22,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { FilePlus } from 'lucide-react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialData } from '@/lib/data';
+import { useCollection } from '@/hooks/use-collection';
 import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { getStorePrefix } from '@/lib/utils';
@@ -41,8 +40,8 @@ type BoxCeilingFormProps = {
 
 export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
+  const { data: products } = useCollection<Product>('products');
+  const { add: addInvoice, data: invoices } = useCollection<Invoice>('invoices');
   const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
@@ -75,7 +74,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     }
   };
 
-  const handleCreateInvoice = () => {
+  const handleCreateInvoice = async () => {
     if (results.length === 0) {
       toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا طول باکس را وارد کرده و مصالح را محاسبه کنید.'});
       return;
@@ -119,8 +118,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
 
-    const newInvoice: Invoice = {
-      id: `inv-${Math.random().toString(36).substr(2, 9)}`,
+    const newInvoiceData: Omit<Invoice, 'id'> = {
       invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
       customerId: '', // To be selected in editor
       customerName: '',
@@ -136,9 +134,11 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
       description: 'ایجاد شده از برآورد مصالح باکس و نورمخفی',
     };
     
-    setInvoices(prev => [newInvoice, ...prev]);
-    toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice });
+    const newInvoice = await addInvoice(newInvoiceData);
+    if(newInvoice){
+        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
+        onNavigate('invoices', { invoice: newInvoice });
+    }
   };
 
   return (

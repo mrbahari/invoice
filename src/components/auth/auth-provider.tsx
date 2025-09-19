@@ -18,6 +18,8 @@ import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useRouter, usePathname } from 'next/navigation';
+import { checkUserHasData, batchAdd } from '@/lib/firestore-service';
+import { getDefaultData } from '@/lib/default-data';
 
 type AuthContextType = {
   user: User | null;
@@ -33,6 +35,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const publicRoutes = ['/login', '/signup'];
 
+const seedInitialData = async (userId: string) => {
+    const defaultData = getDefaultData();
+    await batchAdd(userId, 'stores', defaultData.stores);
+    await batchAdd(userId, 'categories', defaultData.categories);
+    await batchAdd(userId, 'products', defaultData.products);
+    await batchAdd(userId, 'customers', defaultData.customers);
+    await batchAdd(userId, 'units', defaultData.units);
+    await batchAdd(userId, 'invoices', defaultData.invoices);
+};
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -40,38 +53,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        // This effect handles the result of a Google sign-in redirect.
-        // It runs only once on component mount.
-        const processRedirectResult = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    // User signed in or linked via redirect.
-                    // onAuthStateChanged will handle the user state update, but we can set it here too.
-                    setUser(result.user);
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                const userHasData = await checkUserHasData(currentUser.uid);
+                if (!userHasData) {
+                    await seedInitialData(currentUser.uid);
                 }
-            } catch (error) {
-                console.error("Error getting redirect result:", error);
-            } finally {
-                // Now, set up the primary auth state listener.
-                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-                    setUser(currentUser);
-                    setLoading(false);
-                });
-                // Cleanup subscription on unmount
-                return () => unsubscribe();
             }
-        };
+            setUser(currentUser);
+            setLoading(false);
+        });
 
-        const unsubscribePromise = processRedirectResult();
-
-        return () => {
-            unsubscribePromise.then(unsubscribe => {
-                if (unsubscribe) {
-                    unsubscribe();
+        // Handle redirect result from Google sign-in
+        getRedirectResult(auth)
+            .then(async (result) => {
+                if (result) {
+                    const user = result.user;
+                    const userHasData = await checkUserHasData(user.uid);
+                    if (!userHasData) {
+                       await seedInitialData(user.uid);
+                    }
+                    setUser(user);
                 }
+            })
+            .catch((error) => {
+                console.error("Error getting redirect result:", error);
+            })
+            .finally(() => {
+                setLoading(false);
             });
-        };
+        
+        return () => unsubscribe();
     }, []);
     
     useEffect(() => {
@@ -93,7 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
-        // The page will redirect, and the result will be handled by the useEffect above.
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {
@@ -105,7 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
-        // onAuthStateChanged will handle the user state update, and the effect will handle routing
+        
+        // Seed data for new user
+        await seedInitialData(userCredential.user.uid);
+        
         setUser(userCredential.user);
         return userCredential.user;
     };
@@ -116,7 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error("Email or password missing.");
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // onAuthStateChanged will handle the user state update, and the effect will handle routing
         setUser(userCredential.user);
         return userCredential.user;
     };
@@ -128,7 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         await signOut(auth);
         setUser(null);
-        // The effect will handle the redirect to /login
     };
 
     const value: AuthContextType = {
@@ -141,8 +153,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
-    // While loading, or if routing hasn't happened yet, show a full-screen loader.
-    // This prevents flashing the wrong page.
     if (loading || (user && publicRoutes.includes(pathname)) || (!user && !publicRoutes.includes(pathname))) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">

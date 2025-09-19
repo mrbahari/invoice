@@ -16,7 +16,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
 import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import {
@@ -26,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useCollection } from '@/hooks/use-collection';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
@@ -54,10 +53,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const [products, setProducts] = useLocalStorage<Product[]>('products', initialData.products);
-  const [stores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [unitsOfMeasurement] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
+  const { data: products, add: addProduct, update: updateProduct, remove: removeProduct } = useCollection<Product>('products');
+  const { data: stores } = useCollection<Store>('stores');
+  const { data: categories } = useCollection<Category>('categories');
+  const { data: unitsOfMeasurement } = useCollection<UnitOfMeasurement>('units');
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');
@@ -163,7 +162,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   // Calculate main price from sub-unit price
   useEffect(() => {
     // This effect should only run if the user changes the sub-unit price directly.
-    // It is commented out to prevent loops but can be re-enabled with guards.
     /*
     const subPriceNum = Number(subUnitPrice);
     const subUnitQtyNum = Number(subUnitQuantity);
@@ -293,14 +291,13 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (id: string): Product => {
+  const buildProductData = (): Omit<Product, 'id'> => {
     const numericPrice = Number(price);
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
     return {
-      id,
       name,
       code,
       description,
@@ -315,22 +312,20 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     };
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateForm()) return;
 
     setIsProcessing(true);
     
     if (isEditMode && product) {
-      const updatedProduct = buildProductData(product.id);
-      setProducts(prev => prev.map(p => p.id === product.id ? updatedProduct : p));
+      await updateProduct(product.id, buildProductData());
       toast({
         title: 'محصول با موفقیت ویرایش شد',
         description: `تغییرات برای محصول "${name}" ذخیره شد.`,
       });
     } else {
-      const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-      setProducts(prev => [newProduct, ...prev]);
+      await addProduct(buildProductData());
       toast({
         title: 'محصول جدید ایجاد شد',
         description: `محصول "${name}" با موفقیت ایجاد شد.`,
@@ -341,13 +336,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     onSave();
   };
   
-  const handleSaveAsCopy = () => {
+  const handleSaveAsCopy = async () => {
     if (!validateForm()) return;
     
     setIsProcessing(true);
-
-    const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-    setProducts(prev => [newProduct, ...prev]);
+    await addProduct(buildProductData());
     toast({
       title: 'محصول جدید از روی کپی ایجاد شد',
       description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
@@ -357,11 +350,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     onSave();
   }
   
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!product) return;
     
     setIsProcessing(true);
-    setProducts(prev => prev.filter(p => p.id !== product.id));
+    await removeProduct(product.id);
     toast({
         title: 'محصول حذف شد',
         description: `محصول "${product.name}" با موفقیت حذف شد.`,
@@ -473,7 +466,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
+                                        <SelectItem key={(u as any).id} value={u.name}>{u.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -487,7 +480,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     <SelectContent>
                                         <SelectItem key="none" value="none">هیچکدام</SelectItem>
                                         {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
+                                        <SelectItem key={(u as any).id} value={u.name}>{u.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

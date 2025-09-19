@@ -15,10 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
 import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save } from 'lucide-react';
 import Image from 'next/image';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useCollection } from '@/hooks/use-collection';
 import { Separator } from '../ui/separator';
 import {
   AlertDialog,
@@ -43,9 +42,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const { toast } = useToast();
   const isEditMode = !!store;
 
-  const [stores, setStores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories, setCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [products] = useLocalStorage<Product[]>('products', initialData.products);
+  const { data: stores, add: addStore, update: updateStore } = useCollection<Store>('stores');
+  const { data: allCategories, add: addCategory, update: updateCategory, remove: removeCategory } = useCollection<Category>('categories');
+  const { data: products } = useCollection<Product>('products');
   
   const [name, setName] = useState(store?.name || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -76,9 +75,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
   useEffect(() => {
     if (store) {
-      setStoreCategories(categories.filter(c => c.storeId === store.id));
+      setStoreCategories(allCategories.filter(c => c.storeId === store.id));
     }
-  }, [store, categories]);
+  }, [store, allCategories]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,7 +90,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     }
   };
 
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
@@ -99,87 +98,67 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     
     setIsProcessing(true);
 
-    const storeId = store?.id || `store-${Math.random().toString(36).substr(2, 9)}`;
-
-    const newOrUpdatedStore: Store = {
-      id: storeId,
-      name,
-      address,
-      phone,
-      logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-      bankAccountHolder,
-      bankName,
-      bankAccountNumber,
-      bankIban,
-      bankCardNumber,
-    };
-    
-    // Update store
-    if (isEditMode) {
-      setStores(prev => prev.map(s => s.id === storeId ? newOrUpdatedStore : s));
+    if (isEditMode && store) {
+      const updatedStoreData: Partial<Store> = {
+        name, address, phone, logoUrl,
+        bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber
+      };
+      await updateStore(store.id, updatedStoreData);
+      toast({ title: 'فروشگاه با موفقیت ویرایش شد' });
     } else {
-      setStores(prev => [newOrUpdatedStore, ...prev]);
+      const newStoreData: Omit<Store, 'id'> = {
+        name, address, phone, 
+        logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+        bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber,
+      };
+      await addStore(newStoreData);
+      toast({ title: 'فروشگاه با موفقیت ایجاد شد' });
     }
 
-    // Update categories (delete removed, update existing, add new)
-    const existingStoreCategoryIds = categories.filter(c => c.storeId === storeId).map(c => c.id);
-    const currentCategoryIds = storeCategories.map(c => c.id);
-    const deletedCategoryIds = existingStoreCategoryIds.filter(id => !currentCategoryIds.includes(id));
-    
-    const otherStoresCategories = categories.filter(c => c.storeId !== storeId);
-    const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId}))];
-    
-    setCategories(finalCategories);
-
-    toast({ title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
     setIsProcessing(false);
     onSave();
   };
 
   const handleDelete = () => {
     if (!store) return;
-    // Add checks for related products/invoices if needed
     onDelete(store.id);
     toast({ title: 'فروشگاه حذف شد' });
   };
   
   // Category Handlers
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) return;
-    const newCat: Category = {
-      id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+  const handleAddMainCategory = async () => {
+    if (!newCategoryName.trim() || !store) return;
+    const newCat: Omit<Category, 'id'> = {
       name: newCategoryName.trim(),
-      storeId: store?.id || 'temp', // temp id until store is saved
+      storeId: store.id,
     };
-    setStoreCategories(prev => [...prev, newCat]);
+    await addCategory(newCat);
     setNewCategoryName('');
+    // The useCollection hook will update the state, which triggers a re-render
   };
 
-  const handleAddSubCategory = (parentId: string) => {
+  const handleAddSubCategory = async (parentId: string) => {
     const name = newSubCategoryNames[parentId]?.trim();
-    if (!name) return;
-    const newSubCat: Category = {
-      id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+    if (!name || !store) return;
+    const newSubCat: Omit<Category, 'id'> = {
       name,
-      storeId: store?.id || 'temp',
+      storeId: store.id,
       parentId,
     };
-    setStoreCategories(prev => [...prev, newSubCat]);
+    await addCategory(newSubCat);
     setNewSubCategoryNames(prev => ({ ...prev, [parentId]: '' }));
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-     // Check if category has subcategories
+  const handleDeleteCategory = async (categoryId: string) => {
     if (storeCategories.some(c => c.parentId === categoryId)) {
         toast({ variant: 'destructive', title: 'خطا', description: 'ابتدا زیردسته‌های این دسته را حذف کنید.' });
         return;
     }
-    // Check if category is used by products
     if (products.some(p => p.subCategoryId === categoryId)) {
         toast({ variant: 'destructive', title: 'خطا', description: 'این دسته به یک یا چند محصول اختصاص داده شده است.' });
         return;
     }
-    setStoreCategories(prev => prev.filter(c => c.id !== categoryId && c.parentId !== categoryId));
+    await removeCategory(categoryId);
   };
   
   const handleStartEditCategory = (category: Category) => {
@@ -192,11 +171,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     setEditingCategoryName('');
   };
 
-  const handleSaveCategoryEdit = (categoryId: string) => {
+  const handleSaveCategoryEdit = async (categoryId: string) => {
     if (!editingCategoryName.trim()) return;
-    setStoreCategories(prev => prev.map(c => 
-      c.id === categoryId ? { ...c, name: editingCategoryName.trim() } : c
-    ));
+    await updateCategory(categoryId, { name: editingCategoryName.trim() });
     handleCancelEditCategory();
   };
 
@@ -213,7 +190,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                             {isEditMode ? `ویرایش فروشگاه: ${store?.name}` : 'افزودن فروشگاه جدید'}
                         </CardTitle>
                         <CardDescription>
-                           اطلاعات اصلی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
+                           اطلاعات اصلی فروشگاه را مدیریت کنید.
                         </CardDescription>
                     </div>
                     <Button type="button" variant="outline" onClick={onCancel}>
@@ -299,6 +276,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             </CardContent>
         </Card>
 
+      {isEditMode && store && (
         <Card>
             <CardHeader>
                 <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
@@ -307,7 +285,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <CardContent className="grid gap-6">
                 <div className="flex gap-2">
                     <Input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="نام دسته اصلی جدید..." />
-                    <Button onClick={handleAddCategory}><PlusCircle className="ml-2 h-4 w-4" /> افزودن دسته</Button>
+                    <Button onClick={handleAddMainCategory}><PlusCircle className="ml-2 h-4 w-4" /> افزودن دسته</Button>
                 </div>
                 <Separator />
                 <div className="grid gap-4">
@@ -329,7 +307,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
                                             <AlertDialogContent>
-                                                <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                                                <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟ این عمل محصولات مرتبط را بدون دسته رها خواهد کرد.</AlertDialogDescription></AlertDialogHeader>
                                                 <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteCategory(cat.id)}>حذف</AlertDialogAction></AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
@@ -337,7 +315,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                                 )}
                             </div>
                             <div className="pl-4 mt-4 space-y-2">
-                                {storeCategories.filter(sc => sc.parentId === cat.id).map(subCat => (
+                                {allCategories.filter(sc => sc.parentId === cat.id).map(subCat => (
                                     <div key={subCat.id} className="flex justify-between items-center p-2 rounded-md bg-muted/50">
                                          {editingCategoryId === subCat.id ? (
                                             <div className="flex-grow flex gap-2 items-center">
@@ -373,10 +351,11 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </div>
             </CardContent>
         </Card>
+      )}
 
         <CardFooter className="flex flex-col-reverse sm:flex-row justify-between gap-2">
             <div>
-            {isEditMode && (
+            {isEditMode && store && (
                 <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button type="button" variant="destructive" disabled={isProcessing}>
@@ -400,11 +379,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             )}
             </div>
             <Button type="button" onClick={handleSaveAll} disabled={isProcessing} size="lg" className="w-full sm:w-auto">
-            {isProcessing ? 'در حال ذخیره...' : 'ذخیره کل تغییرات'}
+            {isProcessing ? 'در حال ذخیره...' : 'ذخیره'}
             </Button>
         </CardFooter>
     </div>
   );
 }
-
-    

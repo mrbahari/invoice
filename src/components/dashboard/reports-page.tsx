@@ -20,9 +20,9 @@ import {
   } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Invoice, Customer, Product, DailySales, DashboardTab } from '@/lib/definitions';
-import { initialData } from '@/lib/data';
+import { useCollection } from '@/hooks/use-collection';
+import type { Invoice, Customer, Product, DailySales } from '@/lib/definitions';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +33,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { useCollection } from '@/hooks/use-collection';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 

@@ -24,7 +24,7 @@ import {
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Product, Store, Category } from '@/lib/definitions';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
 import { useCollection } from '@/hooks/use-collection';

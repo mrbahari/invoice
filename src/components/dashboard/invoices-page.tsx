@@ -3,16 +3,14 @@
 
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { initialData } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useCollection } from '@/hooks/use-collection';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 type View = 
     | { type: 'list' }
@@ -24,21 +22,12 @@ type InvoicesPageProps = {
 };
 
 export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
-  const [allInvoices, setAllInvoices, reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const { data: allInvoices, update: updateInvoice, remove: removeInvoice, reload: reloadInvoices } = useCollection<Invoice>('invoices');
+  const { data: customers, reload: reloadCustomers } = useCollection<Customer>('customers');
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const fromEstimator = searchParams.get('fromEstimator');
-
   const [view, setView] = useState<View>({ type: 'list' });
-
-  useEffect(() => {
-    reloadInvoices();
-    reloadCustomers();
-  }, []);
 
   useEffect(() => {
     if (initialInvoice) {
@@ -52,6 +41,8 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
 
   const handleFormCancel = () => {
     setView({ type: 'list' });
+    reloadInvoices(); // Reload to get fresh data
+    reloadCustomers();
   };
   
   const handleFormSaveAndPreview = (invoiceId: string) => {
@@ -60,20 +51,16 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   };
   
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
-    setAllInvoices(prev => 
-      prev.map(inv => 
-        inv.id === invoiceId ? { ...inv, status } : inv
-      )
-    );
+    updateInvoice(invoiceId, { status });
     toast({
       title: 'وضعیت فاکتور به‌روزرسانی شد',
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status === 'Pending' ? 'در انتظار' : 'سررسید گذشته'}" تغییر یافت.`,
     });
   };
   
-  const handleDeleteInvoice = (invoiceId: string) => {
+  const handleDeleteInvoice = async (invoiceId: string) => {
     const invoiceToDelete = allInvoices.find(inv => inv.id === invoiceId);
-    setAllInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+    await removeInvoice(invoiceId);
     toast({
       title: 'فاکتور حذف شد',
       description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
@@ -82,6 +69,7 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   };
   
   const filteredInvoices = useMemo(() => {
+    if (!searchTerm) return allInvoices;
     return allInvoices.filter(invoice => 
         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())

@@ -11,7 +11,9 @@ import {
   Calculator,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { DashboardTab } from '@/app/dashboard/page';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import { useAudioFeedback } from '@/hooks/use-audio-feedback';
+
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },
@@ -29,13 +31,22 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const { playSound } = useAudioFeedback();
+
+  const handleTabClick = (tab: DashboardTab) => {
+    if (activeTab !== tab) {
+      playSound('page-turn');
+    }
+    onTabChange(tab);
+  };
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm md:hidden no-print">
       <div className="grid h-20 grid-cols-7 items-center justify-items-center">
         {navItems.slice(0, 3).map((item) => (
           <button
             key={item.tab}
-            onClick={() => onTabChange(item.tab)}
+            onClick={() => handleTabClick(item.tab)}
             className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
           >
             <div className="relative">
@@ -52,7 +63,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         {/* Central Action Button */}
         <div className="flex h-full w-full items-center justify-center">
             <button 
-              onClick={() => onTabChange('invoices')}
+              onClick={() => handleTabClick('invoices')}
               className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-background/80 text-primary shadow-lg shadow-black/10 backdrop-blur-sm transition-all hover:scale-110 hover:shadow-primary/20 active:scale-95"
             >
               <FileText className="h-8 w-8 transition-transform group-hover:rotate-[-5deg] group-active:rotate-[-10deg]" />
@@ -64,7 +75,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         {navItems.slice(3, 6).map((item) => (
            <button
             key={item.tab}
-            onClick={() => onTabChange(item.tab)}
+            onClick={() => handleTabClick(item.tab)}
             className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
           >
             <div className="relative">

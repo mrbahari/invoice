@@ -19,7 +19,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { DashboardTab } from '@/app/dashboard/page';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import { useAudioFeedback } from '@/hooks/use-audio-feedback';
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },
@@ -37,11 +38,20 @@ interface SidebarNavProps {
 }
 
 export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
+  const { playSound } = useAudioFeedback();
+
+  const handleTabClick = (tab: DashboardTab) => {
+    if (activeTab !== tab) {
+      playSound('page-turn');
+    }
+    onTabChange(tab);
+  };
+
   return (
     <aside className="fixed inset-y-0 right-0 z-10 hidden w-14 flex-col border-l bg-background md:flex no-print">
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <button
-          onClick={() => onTabChange('dashboard')}
+          onClick={() => handleTabClick('dashboard')}
           className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-10 md:w-10 md:text-base"
         >
           <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
@@ -52,7 +62,7 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
             <Tooltip key={item.tab}>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => onTabChange(item.tab)}
+                  onClick={() => handleTabClick(item.tab)}
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-10 md:w-10',
                     activeTab === item.tab && 'bg-accent text-accent-foreground'

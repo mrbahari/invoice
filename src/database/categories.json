@@ -1,8 +1,15 @@
 [
   {
+    "id": "cat-5qso9qlf8",
+    "name": "کناف",
+    "description": "فروش و پخش انواع مصالح سقف کاذب و دیوار کناف",
+    "storeId": "store-dekorband"
+  },
+  {
     "id": "cat-5qmk2cymq",
     "name": "سقف کاذب",
-    "storeId": "store-dekorband"
+    "storeId": "store-dekorband",
+    "parentId": "cat-5qso9qlf8"
   },
   {
     "id": "cat-5barmsbxr",

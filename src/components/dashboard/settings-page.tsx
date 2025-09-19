@@ -24,14 +24,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { Category, Customer, Invoice, Product, UnitOfMeasurement } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Palette } from 'lucide-react';
+import type { UnitOfMeasurement } from '@/lib/definitions';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { initialData } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useData } from '@/context/data-context'; // Import useData
 
 const colorThemes = [
     { name: 'Blue', value: '248 82% 50%', ring: '248 82% 50%' },
@@ -41,16 +42,12 @@ const colorThemes = [
     { name: 'Purple', value: '262 84% 58%', ring: '262 84% 58%' },
 ];
 
-
 export default function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
+  const { data, setData, resetData } = useData(); // Use the central data context
 
-  const [categories, setCategories] = useLocalStorage<Category[]>('categories', []);
-  const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
-  const [products, setProducts] = useLocalStorage<Product[]>('products', []);
-  const [invoices, setInvoices] = useLocalStorage<Invoice[]>('invoices', []);
   const [units, setUnits] = useLocalStorage<UnitOfMeasurement[]>('units', initialData.units);
   const [activeColor, setActiveColor] = useLocalStorage('app-theme-color', colorThemes[0].value);
   
@@ -64,7 +61,6 @@ export default function SettingsPage() {
   const handleThemeColorChange = (colorValue: string) => {
     setActiveColor(colorValue);
   };
-
 
   const handleAddUnit = () => {
     const name = newUnitName.trim();
@@ -89,11 +85,14 @@ export default function SettingsPage() {
   };
 
   const handleClearData = () => {
-    setCategories([]);
-    setCustomers([]);
-    setProducts([]);
-    setInvoices([]);
-    setUnits(initialData.units);
+    setData({
+        customers: [],
+        products: [],
+        invoices: [],
+        stores: [],
+        categories: [],
+    });
+    setUnits(initialData.units); // Also clear units
 
     toast({
       title: 'اطلاعات پاک شد',
@@ -102,25 +101,12 @@ export default function SettingsPage() {
   };
   
   const handleLoadDefaults = () => {
-    setCategories(initialData.categories);
-    setCustomers(initialData.customers);
-    setProducts(initialData.products);
-    setInvoices(initialData.invoices);
-    setUnits(initialData.units);
-
-    toast({
-      title: 'داده‌های پیش‌فرض بارگذاری شد',
-      description: 'تمام اطلاعات برنامه به حالت اولیه بازگردانده شد.',
-    });
+    resetData(); // This will show the confirmation toast
   };
-
 
   const handleBackupData = () => {
     const backupData = {
-      categories,
-      customers,
-      products,
-      invoices,
+      ...data, // get all data from the context
       units,
       backupDate: new Date().toISOString(),
     };
@@ -155,24 +141,25 @@ export default function SettingsPage() {
         if (typeof text !== 'string') {
           throw new Error("File is not valid text.");
         }
-        const data = JSON.parse(text);
+        const restoredData = JSON.parse(text);
         
-        if (data.categories && data.customers && data.products && data.invoices) {
-          setCategories(data.categories);
-          setCustomers(data.customers);
-          setProducts(data.products);
-          setInvoices(data.invoices);
-          if (data.units) {
-            setUnits(data.units);
+        // Type guard to check for essential data
+        if (restoredData.categories && restoredData.customers && restoredData.products && restoredData.invoices) {
+          setData({
+              customers: restoredData.customers,
+              products: restoredData.products,
+              invoices: restoredData.invoices,
+              stores: restoredData.stores || [],
+              categories: restoredData.categories || [],
+          });
+          if (restoredData.units) {
+            setUnits(restoredData.units);
           }
           
           toast({
             title: 'بازیابی موفق',
             description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد.',
           });
-
-          // Reload to reflect changes everywhere
-          setTimeout(() => window.location.reload(), 1000);
 
         } else {
           throw new Error("فایل پشتیبان معتبر نیست.");
@@ -186,7 +173,6 @@ export default function SettingsPage() {
       }
     };
     reader.readAsText(file);
-    // Reset file input
     if(fileInputRef.current) {
         fileInputRef.current.value = '';
     }
@@ -396,5 +382,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

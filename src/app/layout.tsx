@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { DataProvider } from '@/context/data-context'; // Import DataProvider
 import { ThemeProvider } from '@/components/theme-provider';
 import CanvasBackground from '@/components/canvas-background';
 
@@ -31,9 +32,11 @@ export default function RootLayout({
         >
           <CanvasBackground />
           <AuthProvider>
-            <div className="relative z-10">
-              {children}
-            </div>
+            <DataProvider> {/* Add DataProvider here */}
+              <div className="relative z-10">
+                {children}
+              </div>
+            </DataProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>

@@ -21,12 +21,12 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Customer, Invoice } from '@/lib/definitions';
-import { useState, useMemo, useEffect } from 'react';
+import type { Customer } from '@/lib/definitions';
+import { useState, useMemo } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from './customer-form';
 import CustomerDetailPage from './customer-detail-page';
-import { useCollection } from '@/hooks/use-collection';
+import { useData } from '@/context/data-context'; // Import useData
 
 type View = 
     | { type: 'list' }
@@ -34,8 +34,8 @@ type View =
     | { type: 'detail'; customerId: string };
 
 export default function CustomersPage() {
-  const { data: customerList, loading: customersLoading } = useCollection<Customer>('customers');
-  const { data: invoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
+  const { data } = useData(); // Use the central data context
+  const { customers: customerList, invoices } = data;
   const { searchTerm } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
   
@@ -49,12 +49,14 @@ export default function CustomersPage() {
   const handleFormCancel = () => setView({ type: 'list' });
 
   const filteredCustomers = useMemo(() => {
+    if (!customerList) return [];
     return customerList.filter(customer =>
       customer.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [customerList, searchTerm]);
 
   const getCustomerStats = (customerId: string) => {
+    if (!invoices) return { totalSpent: 0, orderCount: 0 };
     const customerInvoices = invoices.filter(inv => inv.customerId === customerId);
     const totalSpent = customerInvoices.reduce((acc, inv) => acc + inv.total, 0);
     const orderCount = customerInvoices.length;
@@ -158,7 +160,7 @@ export default function CustomersPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>{filteredCustomers.length}</strong> از <strong>{customerList.length}</strong> مشتریان
+          نمایش <strong>{filteredCustomers.length}</strong> از <strong>{customerList?.length || 0}</strong> مشتریان
         </div>
       </CardFooter>
     </Card>

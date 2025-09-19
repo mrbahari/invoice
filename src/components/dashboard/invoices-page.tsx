@@ -3,16 +3,14 @@
 
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { initialData } from '@/lib/data';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useData } from '@/context/data-context'; // Import useData
 
 type View = 
     | { type: 'list' }
@@ -24,21 +22,12 @@ type InvoicesPageProps = {
 };
 
 export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
-  const [allInvoices, setAllInvoices, reloadInvoices] = useLocalStorage<Invoice[]>('invoices', initialData.invoices);
-  const [customers, , reloadCustomers] = useLocalStorage<Customer[]>('customers', initialData.customers);
+  const { data, setData } = useData(); // Use the central data context
+  const { invoices: allInvoices, customers } = data;
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const fromEstimator = searchParams.get('fromEstimator');
-
   const [view, setView] = useState<View>({ type: 'list' });
-
-  useEffect(() => {
-    reloadInvoices();
-    reloadCustomers();
-  }, []);
 
   useEffect(() => {
     if (initialInvoice) {
@@ -55,16 +44,17 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   };
   
   const handleFormSaveAndPreview = (invoiceId: string) => {
-      reloadInvoices();
+      // Data is already updated in the context by the form, just switch view
       setView({ type: 'preview', invoiceId });
   };
   
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
-    setAllInvoices(prev => 
-      prev.map(inv => 
-        inv.id === invoiceId ? { ...inv, status } : inv
-      )
-    );
+    setData({
+        ...data,
+        invoices: data.invoices.map(inv => 
+            inv.id === invoiceId ? { ...inv, status } : inv
+        )
+    });
     toast({
       title: 'وضعیت فاکتور به‌روزرسانی شد',
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status === 'Pending' ? 'در انتظار' : 'سررسید گذشته'}" تغییر یافت.`,
@@ -73,7 +63,10 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   
   const handleDeleteInvoice = (invoiceId: string) => {
     const invoiceToDelete = allInvoices.find(inv => inv.id === invoiceId);
-    setAllInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+    setData({
+        ...data,
+        invoices: data.invoices.filter(inv => inv.id !== invoiceId)
+    });
     toast({
       title: 'فاکتور حذف شد',
       description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
@@ -82,6 +75,7 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   };
   
   const filteredInvoices = useMemo(() => {
+    if (!allInvoices) return [];
     return allInvoices.filter(invoice => 
         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
@@ -111,7 +105,7 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   return (
     <InvoiceTabs
         tabs={tabsData}
-        customers={customers}
+        customers={customers || []}
         defaultTab="all"
         onStatusChange={handleUpdateStatus}
         onDeleteInvoice={handleDeleteInvoice}

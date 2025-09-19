@@ -12,28 +12,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { initialData } from '@/lib/data';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { StoreForm } from './store-form';
+import { useData } from '@/context/data-context'; // Import useData
 
 export default function StoresPage() {
-  const [stores, setStores, reloadStores] = useLocalStorage<Store[]>('stores', initialData.stores);
-  const [categories, , reloadCategories] = useLocalStorage<Category[]>('categories', initialData.categories);
-  const [products, , reloadProducts] = useLocalStorage<Product[]>('products', initialData.products);
+  const { data, setData } = useData(); // Use the central data context
+  const { stores, categories, products } = data;
   const { searchTerm } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingStore, setEditingStore] = useState<Store | undefined>(undefined);
-
-
-  useEffect(() => {
-    reloadStores();
-    reloadCategories();
-    reloadProducts();
-  }, []);
 
   const handleAddClick = () => {
     setEditingStore(undefined);
@@ -48,7 +39,7 @@ export default function StoresPage() {
   const handleFormSuccess = () => {
     setView('list');
     setEditingStore(undefined);
-    reloadStores();
+    // Data is already updated in the context by the form
   }
   
   const handleFormCancel = () => {
@@ -57,12 +48,18 @@ export default function StoresPage() {
   }
   
   const handleDeleteStore = (storeId: string) => {
-    setStores(prev => prev.filter(s => s.id !== storeId));
-    // Also delete associated categories and products if needed
+    setData(prev => ({
+      ...prev,
+      stores: prev.stores.filter(s => s.id !== storeId),
+      // Optional: also delete associated categories and products
+      categories: prev.categories.filter(c => c.storeId !== storeId),
+      products: prev.products.filter(p => p.storeId !== storeId),
+    }));
     handleFormSuccess();
   }
 
   const sortedAndFilteredStores = useMemo(() => {
+    if (!stores) return [];
     return stores
       .filter(store =>
         store.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -71,10 +68,12 @@ export default function StoresPage() {
   }, [stores, searchTerm]);
   
   const getCategoryCount = useCallback((storeId: string) => {
+    if (!categories) return 0;
     return categories.filter(c => c.storeId === storeId && !c.parentId).length;
   }, [categories]);
   
   const getProductCount = useCallback((storeId: string) => {
+    if (!products) return 0;
     return products.filter(p => p.storeId === storeId).length;
   }, [products]);
 

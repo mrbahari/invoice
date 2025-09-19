@@ -24,15 +24,14 @@ import {
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Product, Store, Category } from '@/lib/definitions';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
-import { useCollection } from '@/hooks/use-collection';
+import { useData } from '@/context/data-context'; // Import useData
 
 export default function ProductsPage() {
-  const { data: products, loading: productsLoading } = useCollection<Product>('products');
-  const { data: stores, loading: storesLoading } = useCollection<Store>('stores');
-  const { data: categories, loading: categoriesLoading } = useCollection<Category>('categories');
+  const { data } = useData(); // Use the central data context
+  const { products, stores, categories } = data;
   const [activeTab, setActiveTab] = useState('all');
   const { searchTerm } = useSearch();
 
@@ -60,6 +59,7 @@ export default function ProductsPage() {
   }
 
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
     const productFilter = (product: Product) => product.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (activeTab === 'all') {
@@ -74,6 +74,7 @@ export default function ProductsPage() {
 
 
   const getCategoryName = (categoryId: string) => {
+    if (!categories) return 'بدون زیردسته';
     return categories.find(c => c.id === categoryId)?.name || 'بدون زیردسته';
   };
 
@@ -81,7 +82,7 @@ export default function ProductsPage() {
     const dataToExport = filteredProducts.map(p => ({
         ...p,
         categoryName: getCategoryName(p.subCategoryId),
-        storeName: stores.find(s => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
+        storeName: stores?.find(s => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
     }));
 
     const headers = {
@@ -104,7 +105,7 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <TabsList className="overflow-x-auto">
           <TabsTrigger value="all">همه</TabsTrigger>
-          {stores.map(store => (
+          {stores?.map(store => (
             <TabsTrigger key={store.id} value={store.id} className="whitespace-nowrap">
               {store.name}
             </TabsTrigger>
@@ -177,7 +178,7 @@ export default function ProductsPage() {
         </CardContent>
         <CardFooter>
             <div className="text-xs text-muted-foreground">
-            نمایش <strong>{filteredProducts.length}</strong> از <strong>{products.length}</strong> محصول
+            نمایش <strong>{filteredProducts.length}</strong> از <strong>{products?.length || 0}</strong> محصول
             </div>
         </CardFooter>
         </Card>

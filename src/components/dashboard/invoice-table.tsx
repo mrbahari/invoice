@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Eye, CheckCircle, CheckCircle2, TriangleAlert, Hourglass } from 'lucide-react';
+import { Eye, CheckCircle, TriangleAlert, Hourglass, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,7 +37,7 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 
 const statusIcons: Record<InvoiceStatus, React.ElementType> = {
   Paid: CheckCircle2,
-  Pending: TriangleAlert,
+  Pending: Hourglass,
   Overdue: TriangleAlert,
 };
 
@@ -111,7 +111,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInv
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">مشاهده</span>
                       </Button>
-                      {invoice.status !== 'Paid' && (
+                      {invoice.status === 'Pending' && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-600" onClick={() => onStatusChange(invoice.id, 'Paid')}>
                           <CheckCircle className="h-4 w-4" />
                           <span className="sr-only">پرداخت</span>

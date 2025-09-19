@@ -89,7 +89,7 @@ export function SignupForm() {
 
 
   return (
-    <Card className="mx-auto max-w-sm w-full bg-card/80 backdrop-blur-sm">
+    <Card className="mx-auto max-w-sm w-full">
        <CardHeader className="items-center text-center">
         <Link href="/" className="mb-4">
             <Package2 className="h-8 w-8 text-primary" />
@@ -158,7 +158,7 @@ export function SignupForm() {
                 <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
+                <span className="bg-background px-2 text-muted-foreground">
                     یا ادامه با
                 </span>
                 </div>

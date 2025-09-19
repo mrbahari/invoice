@@ -29,8 +29,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <CanvasBackground />
           <AuthProvider>
-            <CanvasBackground />
             <div className="relative z-10">
               {children}
             </div>

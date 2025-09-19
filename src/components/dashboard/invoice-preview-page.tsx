@@ -2,7 +2,6 @@
 'use client';
 
 import {
-  Card,
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
@@ -114,38 +113,36 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
             });
     }
   }, [invoice, customer]);
+  
+  const isLoading = invoicesLoading || productsLoading || storesLoading || customersLoading;
 
-  if (invoicesLoading || productsLoading || storesLoading || customersLoading) {
-      return <div>Loading preview...</div>
+  if (isLoading) {
+      return <div>در حال بارگذاری پیش‌نمایش...</div>
   }
 
   if (!invoice) {
     return (
-        <Card>
-            <CardContent className="py-16 text-center">
-                <p className="text-muted-foreground mb-4">فاکتور مورد نظر یافت نشد.</p>
-                 <Button onClick={onBack}>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت به لیست فاکتورها
-                </Button>
-            </CardContent>
-        </Card>
+        <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground mb-4">فاکتور مورد نظر یافت نشد.</p>
+             <Button onClick={onBack}>
+                <ArrowRight className="ml-2 h-4 w-4" />
+                بازگشت به لیست فاکتورها
+            </Button>
+        </CardContent>
     );
   }
   
   if(!customer || !store) {
       // Data might be inconsistent for a moment
       return (
-        <Card>
-            <CardContent className="py-16 text-center">
-                <p className="text-muted-foreground mb-4">اطلاعات مشتری یا فروشگاه برای این فاکتور یافت نشد.</p>
-                 <Button onClick={onBack}>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت
-                </Button>
-            </CardContent>
-        </Card>
-      )
+         <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground mb-4">اطلاعات مشتری یا فروشگاه برای این فاکتور کامل نیست.</p>
+             <Button onClick={onBack}>
+                <ArrowRight className="ml-2 h-4 w-4" />
+                بازگشت
+            </Button>
+        </CardContent>
+      );
   }
 
   

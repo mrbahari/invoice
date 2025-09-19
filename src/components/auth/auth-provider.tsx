@@ -18,8 +18,7 @@ import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useRouter, usePathname } from 'next/navigation';
-import { checkUserHasData, batchAdd } from '@/lib/firestore-service';
-import { getDefaultData } from '@/lib/default-data';
+import { seedInitialData, getCollection } from '@/lib/firestore-service';
 
 type AuthContextType = {
   user: User | null;
@@ -35,20 +34,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const publicRoutes = ['/login', '/signup'];
 
-const seedInitialData = async (userId: string) => {
-    const defaultData = getDefaultData();
-    if (!defaultData) return;
-    const collectionOrder: (keyof typeof defaultData)[] = ['stores', 'categories', 'units', 'products', 'customers', 'invoices'];
-    
-    for (const collectionName of collectionOrder) {
-        const dataToSeed = defaultData[collectionName];
-        if (dataToSeed && dataToSeed.length > 0) {
-            await batchAdd(userId, collectionName, dataToSeed);
-        }
-    }
-};
-
-
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -57,26 +42,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            setUser(currentUser);
+
+            // If a user is newly created (e.g., first sign-in), seed their data.
             if (currentUser) {
-                const userHasData = await checkUserHasData(currentUser.uid);
-                if (!userHasData) {
-                    await seedInitialData(currentUser.uid);
+                const stores = await getCollection(currentUser.uid, 'stores');
+                if (stores.length === 0) {
+                   await seedInitialData(currentUser.uid);
                 }
             }
-            setUser(currentUser);
             setLoading(false);
         });
 
-        // Handle redirect result from Google sign-in
+        // Handle Google sign-in redirect result
         getRedirectResult(auth)
             .then(async (result) => {
                 if (result) {
-                    const user = result.user;
-                    const userHasData = await checkUserHasData(user.uid);
-                    if (!userHasData) {
-                       await seedInitialData(user.uid);
+                    const currentUser = result.user;
+                    setUser(currentUser);
+                     // Check if it's a new user
+                    const stores = await getCollection(currentUser.uid, 'stores');
+                    if (stores.length === 0) {
+                        await seedInitialData(currentUser.uid);
                     }
-                    setUser(user);
                 }
             })
             .catch((error) => {
@@ -91,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     useEffect(() => {
         if (loading) {
-            return; // Don't do anything while loading
+            return; 
         }
 
         const isPublicRoute = publicRoutes.includes(pathname);
@@ -101,8 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (!user && !isPublicRoute) {
             router.push('/login');
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, loading, pathname]);
+    }, [user, loading, pathname, router]);
 
     const signInWithGoogle = async () => {
         setLoading(true);
@@ -119,11 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
-        
-        // Seed data for new user
         await seedInitialData(userCredential.user.uid);
-        
         setUser(userCredential.user);
+        setLoading(false);
         return userCredential.user;
     };
     
@@ -134,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
         setUser(userCredential.user);
+        setLoading(false);
         return userCredential.user;
     };
 
@@ -144,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         await signOut(auth);
         setUser(null);
+        router.push('/login');
     };
 
     const value: AuthContextType = {
@@ -156,17 +143,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
-    if (loading || (user && publicRoutes.includes(pathname)) || (!user && !publicRoutes.includes(pathname))) {
+    if (loading) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
-                <div className="fixed bottom-4 left-4 text-xs text-muted-foreground/50">
-                    <p>v1.0.0</p>
-                    <p>Created by Esmaeil Bahari</p>
-                </div>
             </div>
         );
     }
+    
+    // This logic prevents flashing content by ensuring routing happens first.
+    const isPublic = publicRoutes.includes(pathname);
+    if (!user && !isPublic) {
+        return null; // or loading spinner
+    }
+    if (user && isPublic) {
+        return null; // or loading spinner
+    }
+
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

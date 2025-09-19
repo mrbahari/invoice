@@ -1,11 +1,18 @@
 
-'use client';
-
+import { Suspense } from 'react';
 import DashboardClientComponent from './dashboard-client';
+import { redirect } from 'next/navigation';
 
-// The Suspense boundary has been removed as it's not the recommended pattern
-// for this use case in recent Next.js versions. The client component
-// will handle its own loading states internally.
+// A simple loading component to show while the client component is loading
+function Loading() {
+  return <h1 className="text-xl text-gray-800">Loading...</h1>;
+}
+
 export default function DashboardPage() {
-  return <DashboardClientComponent />;
+  
+  return (
+    <Suspense fallback={<Loading />}>
+      <DashboardClientComponent />
+    </Suspense>
+  );
 }

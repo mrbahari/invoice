@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCollection } from '@/hooks/use-collection';
 import { generateProductDetails } from '@/ai/flows/generate-product-details';
 import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
@@ -39,7 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-
+import { useCollection } from '@/hooks/use-collection';
 
 type ProductFormProps = {
   product?: Product;
@@ -53,7 +52,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const { toast } = useToast();
   const isEditMode = !!product;
 
-  const { data: products, add: addProduct, update: updateProduct, remove: removeProduct } = useCollection<Product>('products');
+  const { add: addProduct, update: updateProduct, remove: removeProduct } = useCollection<Product>('products');
   const { data: stores } = useCollection<Store>('stores');
   const { data: categories } = useCollection<Category>('categories');
   const { data: unitsOfMeasurement } = useCollection<UnitOfMeasurement>('units');
@@ -158,23 +157,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
        setDisplaySubUnitPrice('');
     }
   }, [price, subUnitQuantity, subUnit]);
-
-  // Calculate main price from sub-unit price
-  useEffect(() => {
-    // This effect should only run if the user changes the sub-unit price directly.
-    /*
-    const subPriceNum = Number(subUnitPrice);
-    const subUnitQtyNum = Number(subUnitQuantity);
-
-    if (subPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
-        const calculatedMainPrice = Math.round(subPriceNum * subUnitQtyNum);
-        if (calculatedMainPrice !== price) {
-            setPrice(calculatedMainPrice);
-            setDisplayPrice(formatNumber(calculatedMainPrice));
-        }
-    }
-    */
-  }, [subUnitPrice, subUnitQuantity, subUnit]);
 
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -319,13 +301,15 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     setIsProcessing(true);
     
     if (isEditMode && product) {
-      await updateProduct(product.id, buildProductData());
+      const updatedData = buildProductData();
+      await updateProduct(product.id, updatedData);
       toast({
         title: 'محصول با موفقیت ویرایش شد',
         description: `تغییرات برای محصول "${name}" ذخیره شد.`,
       });
     } else {
-      await addProduct(buildProductData());
+      const newData = buildProductData();
+      await addProduct(newData);
       toast({
         title: 'محصول جدید ایجاد شد',
         description: `محصول "${name}" با موفقیت ایجاد شد.`,
@@ -340,7 +324,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     if (!validateForm()) return;
     
     setIsProcessing(true);
-    await addProduct(buildProductData());
+
+    const newData = buildProductData();
+    await addProduct(newData);
     toast({
       title: 'محصول جدید از روی کپی ایجاد شد',
       description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
@@ -466,7 +452,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={(u as any).id} value={u.name}>{u.name}</SelectItem>
+                                        <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -480,7 +466,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     <SelectContent>
                                         <SelectItem key="none" value="none">هیچکدام</SelectItem>
                                         {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={(u as any).id} value={u.name}>{u.name}</SelectItem>
+                                        <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -565,7 +551,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </Card>
             </div>
             
-            {isDirty && (
+            {(isDirty || !isEditMode) && (
                 <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t lg:col-span-3">
                     <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
                         <div>

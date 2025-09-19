@@ -2,7 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCollection } from '@/hooks/use-collection';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { initialData } from '@/lib/data';
 import type { Customer, Invoice } from '@/lib/definitions';
 import {
   Card,
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useMemo } from 'react';
+import { useCollection } from '@/hooks/use-collection';
 
 const statusStyles: Record<Invoice['status'], string> = {
   Paid: 'text-green-600 bg-green-500/10',
@@ -68,10 +70,6 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
     const spent = paid.reduce((acc, inv) => acc + inv.total, 0);
     return { paidInvoices: paid, totalSpent: spent, orderCount: paid.length };
   }, [customerInvoices]);
-
-  if (customersLoading || invoicesLoading) {
-      return <div>Loading...</div>
-  }
 
   if (!customer) {
     return (

@@ -1,90 +1,137 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  writeBatch,
-  query,
-} from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '@/lib/firebase';
+import { collection, doc, getDocs, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
+import type { Category, Customer, Invoice, Product, UnitOfMeasurement, Store } from '@/lib/definitions';
+import { getDefaultData } from '@/lib/default-data';
 
-type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
+type CollectionName = 'stores' | 'categories' | 'products' | 'customers' | 'invoices' | 'units';
 
-// Generic function to get a collection for a user
-export const getCollection = async <T>(userId: string, collectionName: CollectionName): Promise<T[]> => {
-  const q = query(collection(db, `users/${userId}/${collectionName}`));
-  const querySnapshot = await getDocs(q);
+// Generic function to fetch a collection
+export async function getCollection<T>(userId: string, collectionName: CollectionName): Promise<T[]> {
+  const querySnapshot = await getDocs(collection(db, 'users', userId, collectionName));
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
-};
+}
 
-// Generic function to get a single document
-export const getDocument = async <T>(userId: string, collectionName: CollectionName, docId: string): Promise<T | null> => {
-    const docRef = doc(db, `users/${userId}/${collectionName}`, docId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as T;
-    }
-    return null;
-};
-
-
-// Generic function to add a document to a user's collection
-export const addDocument = async <T>(userId: string, collectionName: CollectionName, data: Omit<T, 'id'>): Promise<T & { id: string }> => {
-  const collectionRef = collection(db, `users/${userId}/${collectionName}`);
-  const docRef = await addDoc(collectionRef, data);
-  return { id: docRef.id, ...data } as T & { id: string };
-};
-
-// Generic function to update a document in a user's collection
-export const updateDocument = async <T>(userId: string, collectionName: CollectionName, docId: string, data: Partial<T>): Promise<void> => {
-  const docRef = doc(db, `users/${userId}/${collectionName}`, docId);
-  await updateDoc(docRef, data);
-};
-
-// Generic function to delete a document from a user's collection
-export const deleteDocument = async (userId: string, collectionName: CollectionName, docId: string): Promise<void> => {
-  const docRef = doc(db, `users/${userId}/${collectionName}`, docId);
-  await deleteDoc(docRef);
-};
-
-// Batch write function to add multiple documents at once (e.g., initial data)
-export const batchAdd = async <T>(userId: string, collectionName: CollectionName, data: Omit<T, 'id'>[]): Promise<void> => {
+// Function to seed initial data for a new user
+export async function seedInitialData(userId: string) {
+  const defaultData = getDefaultData();
   const batch = writeBatch(db);
-  const collectionRef = collection(db, `users/${userId}/${collectionName}`);
-  
-  data.forEach(item => {
-    const docRef = doc(collectionRef); // Automatically generate new ID
-    batch.set(docRef, item);
-  });
-  
+
+  for (const [collectionName, data] of Object.entries(defaultData)) {
+    data.forEach((item: any) => {
+      const docRef = doc(db, 'users', userId, collectionName, item.id);
+      batch.set(docRef, item);
+    });
+  }
+
   await batch.commit();
-};
+}
 
-// Function to delete all documents in all collections for a user
-export const deleteAllUserData = async (userId: string): Promise<void> => {
-    const collections: CollectionName[] = ['stores', 'categories', 'products', 'customers', 'invoices', 'units'];
-    const batch = writeBatch(db);
 
-    for (const collectionName of collections) {
-        const collectionRef = collection(db, `users/${userId}/${collectionName}`);
-        const q = query(collectionRef);
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(doc => {
+export async function deleteAllUserData(userId: string) {
+    const collectionNames: CollectionName[] = ['invoices', 'products', 'customers', 'categories', 'stores', 'units'];
+    for (const collectionName of collectionNames) {
+        const querySnapshot = await getDocs(collection(db, 'users', userId, collectionName));
+        const batch = writeBatch(db);
+        querySnapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
         });
+        await batch.commit();
     }
+}
 
-    await batch.commit();
-};
+// Generic function to add a document with a generated ID
+export async function addDocToCollection<T extends { id?: string }>(userId: string, collectionName: CollectionName, data: T) {
+    const newDocRef = doc(collection(db, 'users', userId, collectionName));
+    const docWithId = { ...data, id: newDocRef.id };
+    await setDoc(newDocRef, data);
+    return docWithId;
+}
 
-// Check if a user has any data
-export const checkUserHasData = async (userId: string): Promise<boolean> => {
-    const storesRef = collection(db, `users/${userId}/stores`);
-    const q = query(storesRef);
-    const snapshot = await getDocs(q);
-    return !snapshot.empty;
-};
+// Generic function to update a document
+export async function updateDocInCollection<T>(userId: string, collectionName: CollectionName, docId: string, data: Partial<T>) {
+    const docRef = doc(db, 'users', userId, collectionName, docId);
+    await setDoc(docRef, data, { merge: true });
+}
+
+// Generic function to delete a document
+export async function deleteDocFromCollection(userId: string, collectionName: CollectionName, docId: string) {
+    const docRef = doc(db, 'users', userId, collectionName, docId);
+    await deleteDoc(docRef);
+}
+
+
+// Function to restore data from a backup
+export async function restoreDataFromBackup(userId: string, backupData: any) {
+  await deleteAllUserData(userId);
+  const batch = writeBatch(db);
+  
+  const { stores, categories, products, customers, invoices, units } = migrateAndPrepareData(backupData);
+
+  const seed = async (collectionName: CollectionName, data: any[]) => {
+      if (data && data.length > 0) {
+          for (const item of data) {
+              if (item.id) {
+                  const docRef = doc(db, 'users', userId, collectionName, item.id);
+                  batch.set(docRef, item);
+              }
+          }
+      }
+  };
+
+  await seed('stores', stores);
+  await seed('categories', categories);
+  await seed('products', products);
+  await seed('customers', customers);
+  await seed('invoices', invoices);
+  await seed('units', units);
+
+  await batch.commit();
+}
+
+
+// This function checks for the old data structure and migrates it to the new one.
+function migrateAndPrepareData(data: any): { stores: Store[], categories: Category[], products: Product[], customers: Customer[], invoices: Invoice[], units: UnitOfMeasurement[] } {
+    let stores: Store[] = data.stores || [];
+    let categories: Category[] = data.categories || [];
+    const products: Product[] = data.products || [];
+    const customers: Customer[] = data.customers || [];
+    const invoices: Invoice[] = data.invoices || [];
+    const units: UnitOfMeasurement[] = data.units || [];
+
+    // Migration logic for old backup format
+    const oldStoresCategories = categories.filter((cat: any) => cat.storeName);
+    if (oldStoresCategories.length > 0) {
+        const newStores: Store[] = oldStoresCategories.map((cat: any) => ({
+            id: `store-${cat.id.split('-')[1]}`,
+            name: cat.storeName,
+            address: cat.storeAddress,
+            phone: cat.storePhone,
+            logoUrl: cat.logoUrl,
+        }));
+        
+        const storeIdMap: { [key: string]: string } = {};
+        oldStoresCategories.forEach((cat: any) => {
+             storeIdMap[cat.storeName] = `store-${cat.id.split('-')[1]}`;
+        });
+
+        // Update storeId in categories
+        categories.forEach((cat: any) => {
+            if (cat.storeId && storeIdMap[cat.storeId]) {
+                 cat.storeId = storeIdMap[cat.storeId];
+            }
+        });
+        
+        // Update storeId in products
+        products.forEach((prod: any) => {
+            if (prod.storeId && storeIdMap[prod.storeId]) {
+                prod.storeId = storeIdMap[prod.storeId];
+            }
+        });
+
+
+        stores = newStores;
+        categories = categories.filter((cat: any) => !cat.storeName);
+    }
+    
+    return { stores, categories, products, customers, invoices, units };
+}

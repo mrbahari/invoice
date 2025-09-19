@@ -22,10 +22,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { FilePlus } from 'lucide-react';
-import { useCollection } from '@/hooks/use-collection';
 import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { getStorePrefix } from '@/lib/utils';
+import { useCollection } from '@/hooks/use-collection';
 
 interface MaterialResult {
   material: string;

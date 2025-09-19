@@ -22,10 +22,10 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { FilePlus } from 'lucide-react';
-import { useCollection } from '@/hooks/use-collection';
 import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { getStorePrefix } from '@/lib/utils';
+import { useCollection } from '@/hooks/use-collection';
 
 interface MaterialResult {
   material: string;
@@ -41,7 +41,7 @@ type BoxCeilingFormProps = {
 export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const { data: products } = useCollection<Product>('products');
-  const { add: addInvoice, data: invoices } = useCollection<Invoice>('invoices');
+  const { data: invoices, add: addInvoice } = useCollection<Invoice>('invoices');
   const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {

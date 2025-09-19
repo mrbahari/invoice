@@ -18,20 +18,13 @@ import {
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
-import { DollarSign, CreditCard, Users, ArrowUp } from 'lucide-react';
+import { DollarSign, CreditCard, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
-import Link from 'next/link';
 import { subDays, format, parseISO } from 'date-fns-jalali';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 
-const statusStyles: Record<InvoiceStatus, string> = {
-    Paid: 'text-green-600 bg-green-500/10',
-    Pending: 'text-orange-600 bg-orange-500/10',
-    Overdue: 'text-red-600 bg-red-500/10',
-};
 const statusTranslation: Record<InvoiceStatus, string> = {
       Paid: 'پرداخت شده',
       Pending: 'در انتظار',
@@ -44,8 +37,8 @@ type DashboardHomePageProps = {
 
 
 export default function DashboardHomePageContent({ onNavigate }: DashboardHomePageProps) {
-  const { data: allInvoices } = useCollection<Invoice>('invoices');
-  const { data: allCustomers } = useCollection<Customer>('customers');
+  const { data: allInvoices, loading: invoicesLoading } = useCollection<Invoice>('invoices');
+  const { data: allCustomers, loading: customersLoading } = useCollection<Customer>('customers');
 
   const { totalRevenue, totalPaidInvoices, newCustomers, paidInvoices, chartData } = useMemo(() => {
     const paid = allInvoices.filter(inv => inv.status === 'Paid');
@@ -94,6 +87,10 @@ export default function DashboardHomePageContent({ onNavigate }: DashboardHomePa
   const recentPaidInvoices = useMemo(() => {
     return paidInvoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
   }, [paidInvoices]);
+
+  if (invoicesLoading || customersLoading) {
+      return <div>در حال بارگذاری داشبورد...</div>
+  }
 
 
   return (

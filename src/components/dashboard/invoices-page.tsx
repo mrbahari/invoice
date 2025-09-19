@@ -5,12 +5,12 @@ import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect } from 'react';
-import { useCollection } from '@/hooks/use-collection';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
+import { useCollection } from '@/hooks/use-collection';
 
 type View = 
     | { type: 'list' }
@@ -22,8 +22,8 @@ type InvoicesPageProps = {
 };
 
 export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
-  const { data: allInvoices, update: updateInvoice, remove: removeInvoice, reload: reloadInvoices } = useCollection<Invoice>('invoices');
-  const { data: customers, reload: reloadCustomers } = useCollection<Customer>('customers');
+  const { data: allInvoices, update: updateInvoice, remove: removeInvoice, loading: invoicesLoading } = useCollection<Invoice>('invoices');
+  const { data: customers, loading: customersLoading } = useCollection<Customer>('customers');
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
@@ -41,17 +41,14 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
 
   const handleFormCancel = () => {
     setView({ type: 'list' });
-    reloadInvoices(); // Reload to get fresh data
-    reloadCustomers();
   };
   
   const handleFormSaveAndPreview = (invoiceId: string) => {
-      reloadInvoices();
       setView({ type: 'preview', invoiceId });
   };
   
-  const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
-    updateInvoice(invoiceId, { status });
+  const handleUpdateStatus = async (invoiceId: string, status: InvoiceStatus) => {
+    await updateInvoice(invoiceId, { status });
     toast({
       title: 'وضعیت فاکتور به‌روزرسانی شد',
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status === 'Pending' ? 'در انتظار' : 'سررسید گذشته'}" تغییر یافت.`,
@@ -69,7 +66,6 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   };
   
   const filteredInvoices = useMemo(() => {
-    if (!searchTerm) return allInvoices;
     return allInvoices.filter(invoice => 
         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
@@ -94,6 +90,10 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
 
   if (view.type === 'preview') {
       return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={handleFormCancel} />;
+  }
+  
+  if (invoicesLoading || customersLoading) {
+      return <div>در حال بارگذاری فاکتورها...</div>
   }
 
   return (

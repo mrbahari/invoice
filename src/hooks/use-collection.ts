@@ -4,15 +4,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { Category, Customer, Invoice, Product, Store, UnitOfMeasurement } from '@/lib/definitions';
-import {
-  getCollection,
-  addDocument,
-  updateDocument,
-  deleteDocument,
+import { 
+    getCollection, 
+    addDocToCollection, 
+    updateDocInCollection,
+    deleteDocFromCollection 
 } from '@/lib/firestore-service';
 
 type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
+
 type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
+
 
 export function useCollection<T extends Document>(collectionName: CollectionName) {
   const { user } = useAuth();
@@ -20,74 +22,77 @@ export function useCollection<T extends Document>(collectionName: CollectionName
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const loadData = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!user) {
-        setData([]);
-        setLoading(false);
-        return;
-    };
+      setData([]);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
       const collectionData = await getCollection<T>(user.uid, collectionName);
       setData(collectionData);
+      setError(null);
     } catch (e) {
+      console.error(`Failed to fetch ${collectionName}`, e);
       setError(e instanceof Error ? e : new Error(`Failed to load ${collectionName}`));
-      console.error(`Failed to load ${collectionName}`, e);
     } finally {
       setLoading(false);
     }
   }, [user, collectionName]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
-
+    fetchData();
+  }, [fetchData]);
+  
   const add = useCallback(async (newItem: Omit<T, 'id'>): Promise<(T & { id: string }) | null> => {
     if (!user) {
-        setError(new Error('User not authenticated for add operation.'));
-        return null;
-    }
-    try {
-      const newDoc = await addDocument(user.uid, collectionName, newItem);
-      setData(prevData => [newDoc as T, ...prevData]);
-      return newDoc as (T & { id: string });
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error(`Failed to add document to ${collectionName}`));
-      console.error(`Failed to add document to ${collectionName}`, e);
+      setError(new Error('User not authenticated.'));
       return null;
     }
-  }, [user, collectionName]);
+    try {
+      const addedDoc = await addDocToCollection(user.uid, collectionName, newItem);
+      setData(prevData => [addedDoc as T, ...prevData]);
+      return addedDoc as (T & { id: string });
+    } catch(e) {
+      console.error("Failed to add document", e);
+      setError(e instanceof Error ? e : new Error('Failed to add document'));
+      return null;
+    }
+  }, [user, collectionName, setData]);
 
-  const update = useCallback(async (id: string, updatedData: Partial<T>): Promise<void> => {
+  const update = useCallback(async (id: string, updatedItem: Partial<T>): Promise<void> => {
     if (!user) {
-        setError(new Error('User not authenticated for update operation.'));
+        setError(new Error('User not authenticated.'));
         return;
     }
     try {
-      await updateDocument(user.uid, collectionName, id, updatedData);
-      setData(prevData =>
-        prevData.map(item => ((item as any).id === id ? { ...item, ...updatedData } : item))
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error(`Failed to update document in ${collectionName}`));
-      console.error(`Failed to update document in ${collectionName}`, e);
+        await updateDocInCollection(user.uid, collectionName, id, updatedItem);
+        setData(prevData =>
+            prevData.map(item =>
+                (item as any).id === id ? { ...item, ...updatedItem } : item
+            )
+        );
+    } catch(e) {
+      console.error("Failed to update document", e);
+      setError(e instanceof Error ? e : new Error('Failed to update document'));
     }
-  }, [user, collectionName]);
+  }, [user, collectionName, setData]);
 
   const remove = useCallback(async (id: string): Promise<void> => {
     if (!user) {
-        setError(new Error('User not authenticated for remove operation.'));
+        setError(new Error('User not authenticated.'));
         return;
     }
     try {
-      await deleteDocument(user.uid, collectionName, id);
-      setData(prevData => prevData.filter(item => (item as any).id !== id));
+        await deleteDocFromCollection(user.uid, collectionName, id);
+        setData(prevData => prevData.filter(item => (item as any).id !== id));
     } catch (e) {
-      setError(e instanceof Error ? e : new Error(`Failed to remove document from ${collectionName}`));
-      console.error(`Failed to remove document from ${collectionName}`, e);
+      console.error("Failed to remove document", e);
+      setError(e instanceof Error ? e : new Error('Failed to remove document'));
     }
-  }, [user, collectionName]);
+  }, [user, collectionName, setData]);
 
-  return { data, loading, error, add, update, remove, reload: loadData };
+  return { data, loading, error, add, update, remove, reload: fetchData };
 }

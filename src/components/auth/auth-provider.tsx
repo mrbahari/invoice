@@ -41,40 +41,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-
-            // If a user is newly created (e.g., first sign-in), seed their data.
-            if (currentUser) {
-                const stores = await getCollection(currentUser.uid, 'stores');
-                if (stores.length === 0) {
-                   await seedInitialData(currentUser.uid);
-                }
-            }
-            setLoading(false);
-        });
-
-        // Handle Google sign-in redirect result
+        // First, check for the result of a Google sign-in redirect
         getRedirectResult(auth)
             .then(async (result) => {
                 if (result) {
+                    // This is a new sign-in or sign-up via Google redirect
                     const currentUser = result.user;
-                    setUser(currentUser);
-                     // Check if it's a new user
                     const stores = await getCollection(currentUser.uid, 'stores');
                     if (stores.length === 0) {
                         await seedInitialData(currentUser.uid);
                     }
+                    // We set the user and stop loading. onAuthStateChanged will also fire,
+                    // but we've already handled the initial data seeding.
+                    setUser(currentUser);
                 }
             })
             .catch((error) => {
                 console.error("Error getting redirect result:", error);
             })
             .finally(() => {
-                setLoading(false);
-            });
+                // Now, set up the regular auth state listener. This will handle
+                // all other cases (e.g., already logged in, email sign-in, etc.)
+                const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                    setUser(currentUser);
+                    setLoading(false); // Auth state is now determined, stop loading
+                });
         
-        return () => unsubscribe();
+                return () => unsubscribe();
+            });
     }, []);
     
     useEffect(() => {
@@ -106,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
+        // Seed data immediately after user creation
         await seedInitialData(userCredential.user.uid);
         setUser(userCredential.user);
         setLoading(false);
@@ -118,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error("Email or password missing.");
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        // Don't seed data on sign-in, only sign-up.
         setUser(userCredential.user);
         setLoading(false);
         return userCredential.user;

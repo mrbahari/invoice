@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -34,7 +33,7 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
   
   if (loading || !user) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
+      <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
         <LoadingSpinner />
       </div>
     );
@@ -42,7 +41,7 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
 
   return (
     <SearchProvider>
-      <div className="flex min-h-screen w-full flex-col bg-muted/40 pb-24 md:pb-0">
+      <div className="flex min-h-screen w-full flex-col pb-24 md:pb-0">
         <SidebarNav activeTab={activeTab} onTabChange={handleTabChange} />
         <div className="flex flex-col sm:gap-4 sm:py-4 md:pr-14">
           <Header activeTab={activeTab} onTabChange={handleTabChange} />

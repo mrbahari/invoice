@@ -34,29 +34,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const pathname = usePathname();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-            if (loading) { // Only run redirect logic after initial load state is handled
-                if (currentUser) {
-                    const targetPath = (pathname.includes('/login') || pathname.includes('/signup')) ? '/dashboard?tab=dashboard' : pathname;
-                    router.push(targetPath);
-                } else {
-                    if (!pathname.includes('/login') && !pathname.includes('/signup')) {
-                        router.push('/login');
-                    }
-                }
-            }
             setLoading(false);
         });
 
-        // Handle redirect result
+        // Handle redirect result from Google Sign-In
         getRedirectResult(auth)
             .then((result) => {
                 if (result) {
-                    // This is the signed-in user
                     const user = result.user;
                     setUser(user);
                     router.push('/dashboard?tab=dashboard');
@@ -71,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [router]);
+    }, []);
 
     const signInWithGoogle = async () => {
         setLoading(true);
@@ -89,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateProfile(userCredential.user, {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
-        // onAuthStateChanged will handle redirect
+        // onAuthStateChanged will handle the user state update, and router is handled by page
         return userCredential.user;
     };
     
@@ -99,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error("Email or password missing.");
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // onAuthStateChanged will handle redirect
+        // onAuthStateChanged will handle the user state update, and router is handled by page
         return userCredential.user;
     };
 
@@ -109,7 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         await signOut(auth);
-        // onAuthStateChanged will handle redirect to /login
+        // onAuthStateChanged will set user to null, and router is handled by dashboard layout
+        router.push('/login');
     };
 
     const value: AuthContextType = {
@@ -122,6 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
+    // The AuthProvider no longer handles redirects, just the loading state.
+    // Page components and layout components will handle redirects.
     if (loading) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">

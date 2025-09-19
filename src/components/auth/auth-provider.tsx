@@ -5,7 +5,8 @@ import {
     onAuthStateChanged, 
     signOut, 
     GoogleAuthProvider, 
-    signInWithPopup, 
+    signInWithRedirect,
+    getRedirectResult,
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
@@ -38,18 +39,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-            setLoading(false);
-            if (currentUser) {
-                // User is logged in
-                const targetPath = (pathname.includes('/login') || pathname.includes('/signup')) ? '/dashboard?tab=dashboard' : pathname;
-                router.push(targetPath);
-            } else {
-                // User is not logged in
-                if (!pathname.includes('/login') && !pathname.includes('/signup')) {
-                    router.push('/login');
+            if (loading) { // Only run redirect logic after initial load state is handled
+                if (currentUser) {
+                    const targetPath = (pathname.includes('/login') || pathname.includes('/signup')) ? '/dashboard?tab=dashboard' : pathname;
+                    router.push(targetPath);
+                } else {
+                    if (!pathname.includes('/login') && !pathname.includes('/signup')) {
+                        router.push('/login');
+                    }
                 }
             }
+            setLoading(false);
         });
+
+        // Handle redirect result
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result) {
+                    // This is the signed-in user
+                    const user = result.user;
+                    setUser(user);
+                    router.push('/dashboard?tab=dashboard');
+                }
+            })
+            .catch((error) => {
+                console.error("Google Redirect Result Error:", error);
+            }).finally(() => {
+                setLoading(false);
+            });
+
 
         return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,15 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signInWithGoogle = async () => {
         setLoading(true);
-        try {
-            const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
-            // The onAuthStateChanged listener will handle the redirect.
-        } catch (error) {
-            console.error("Google Sign-In Error:", error);
-            setLoading(false); // Ensure loading is stopped on error
-            throw error;
-        }
+        const provider = new GoogleAuthProvider();
+        await signInWithRedirect(auth, provider);
+        // The page will redirect, and the result will be handled by getRedirectResult
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {
@@ -112,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (loading) {
         return (
-            <div className="flex h-screen w-screen items-center justify-center bg-background">
+            <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
             </div>
         );

@@ -37,7 +37,7 @@ const statusTranslation: Record<InvoiceStatus, string> = {
 
 const statusIcons: Record<InvoiceStatus, React.ElementType> = {
   Paid: CheckCircle2,
-  Pending: Hourglass,
+  Pending: TriangleAlert,
   Overdue: TriangleAlert,
 };
 

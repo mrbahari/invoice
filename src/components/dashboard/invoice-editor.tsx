@@ -440,10 +440,10 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             
             <div className="border rounded-lg overflow-hidden">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="hidden md:table-header-group">
                         <TableRow>
                             <TableHead className="w-[50px]"></TableHead>
-                            <TableHead className="w-[80px] hidden md:table-cell">تصویر</TableHead>
+                            <TableHead className="w-[80px]">تصویر</TableHead>
                             <TableHead>نام کالا</TableHead>
                             <TableHead className="w-[110px]">واحد</TableHead>
                             <TableHead className="w-[100px] text-center">مقدار</TableHead>
@@ -466,56 +466,128 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                                     return (
                                         <Draggable key={item.product.id} draggableId={item.product.id} index={index}>
                                         {(provided, snapshot) => (
-                                        <TableRow 
-                                          ref={provided.innerRef} 
-                                          {...provided.draggableProps} 
-                                          className={`${snapshot.isDragging ? 'bg-accent shadow-lg' : ''}`}
-                                        >
-                                          <TableCell {...provided.dragHandleProps} className="cursor-grab">
-                                                <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                          </TableCell>
-                                          <TableCell className="hidden md:table-cell">
-                                              <Image
-                                                  src={item.product.imageUrl}
-                                                  alt={item.product.name}
-                                                  width={64}
-                                                  height={64}
-                                                  className="rounded-md object-cover"
-                                              />
-                                          </TableCell>
-                                          <TableCell className="font-medium">{item.product.name}</TableCell>
-                                          <TableCell>
-                                              <Select
-                                                  value={item.unit}
-                                                  onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
-                                              >
-                                                  <SelectTrigger className="w-full">
-                                                  <SelectValue placeholder="واحد" />
-                                                  </SelectTrigger>
-                                                  <SelectContent>
-                                                  {availableUnits.map(unit => (
-                                                      <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                                  ))}
-                                                  </SelectContent>
-                                              </Select>
-                                          </TableCell>
-                                          <TableCell>
-                                              <Input
-                                              type="number"
-                                              value={item.quantity}
-                                              onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
-                                              step="0.01"
-                                              className="w-full text-center"
-                                              />
-                                          </TableCell>
-                                          <TableCell className="text-left">{formatCurrency(getUnitPrice(item))}</TableCell>
-                                          <TableCell className="text-left">{formatCurrency(calculateItemTotal(item))}</TableCell>
-                                          <TableCell>
-                                              <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
-                                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                              </Button>
-                                          </TableCell>
-                                        </TableRow>
+                                          <>
+                                          {/* Desktop View */}
+                                          <TableRow 
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            className={`${snapshot.isDragging ? 'bg-accent shadow-lg' : ''} hidden md:table-row`}
+                                          >
+                                            <TableCell {...provided.dragHandleProps} className="cursor-grab">
+                                                  <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Image
+                                                    src={item.product.imageUrl}
+                                                    alt={item.product.name}
+                                                    width={64}
+                                                    height={64}
+                                                    className="rounded-md object-cover"
+                                                />
+                                            </TableCell>
+                                            <TableCell className="font-medium">{item.product.name}</TableCell>
+                                            <TableCell>
+                                                <Select
+                                                    value={item.unit}
+                                                    onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="واحد" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                    {availableUnits.map(unit => (
+                                                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                                    ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                type="number"
+                                                value={item.quantity}
+                                                onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
+                                                step="0.01"
+                                                className="w-full text-center"
+                                                />
+                                            </TableCell>
+                                            <TableCell className="text-left">{formatCurrency(getUnitPrice(item))}</TableCell>
+                                            <TableCell className="text-left">{formatCurrency(calculateItemTotal(item))}</TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
+                                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            </TableCell>
+                                          </TableRow>
+
+                                          {/* Mobile View */}
+                                          <TableRow
+                                            ref={snapshot.isDragging ? null : provided.innerRef}
+                                            {...provided.draggableProps}
+                                            className={`${snapshot.isDragging ? 'bg-accent shadow-lg' : ''} block md:hidden border-b`}
+                                          >
+                                            <TableCell className="p-2 w-full">
+                                                <div className="flex items-start gap-3">
+                                                    <div {...provided.dragHandleProps} className="cursor-grab pt-1">
+                                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                    </div>
+                                                    <Image
+                                                        src={item.product.imageUrl}
+                                                        alt={item.product.name}
+                                                        width={48}
+                                                        height={48}
+                                                        className="rounded-md object-cover"
+                                                    />
+                                                    <div className="flex-1 space-y-3">
+                                                      <div className="flex justify-between items-start">
+                                                        <p className="font-medium text-base">{item.product.name}</p>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2" onClick={() => handleRemoveItem(item.product.id)}>
+                                                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                                        </Button>
+                                                      </div>
+                                                      <div className="grid grid-cols-2 gap-4">
+                                                        <div className="grid gap-1.5">
+                                                          <Label htmlFor={`quantity-mob-${item.product.id}`}>مقدار</Label>
+                                                          <Input
+                                                            id={`quantity-mob-${item.product.id}`}
+                                                            type="number"
+                                                            value={item.quantity}
+                                                            onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
+                                                            step="0.01"
+                                                            className="text-center"
+                                                          />
+                                                        </div>
+                                                        <div className="grid gap-1.5">
+                                                          <Label htmlFor={`unit-mob-${item.product.id}`}>واحد</Label>
+                                                           <Select
+                                                              value={item.unit}
+                                                              onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
+                                                            >
+                                                              <SelectTrigger id={`unit-mob-${item.product.id}`}>
+                                                                <SelectValue placeholder="واحد" />
+                                                              </SelectTrigger>
+                                                              <SelectContent>
+                                                                {availableUnits.map(unit => (
+                                                                    <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                                                                ))}
+                                                              </SelectContent>
+                                                          </Select>
+                                                        </div>
+                                                      </div>
+                                                      <div className="text-xs text-muted-foreground pt-1">
+                                                          <p className="flex justify-between">
+                                                              <span>قیمت واحد:</span>
+                                                              <span>{formatCurrency(getUnitPrice(item))}</span>
+                                                          </p>
+                                                          <p className="flex justify-between font-semibold text-foreground text-sm">
+                                                              <span>جمع کل:</span>
+                                                              <span>{formatCurrency(calculateItemTotal(item))}</span>
+                                                          </p>
+                                                      </div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                          </TableRow>
+                                          </>
                                         )}
                                         </Draggable>
                                     )

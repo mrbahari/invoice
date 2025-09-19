@@ -3,19 +3,23 @@
 
 import { useAuth } from '@/components/auth/auth-provider';
 import { SignupForm } from '@/components/auth/signup-form';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import CanvasBackground from '@/components/canvas-background';
+import { useEffect } from 'react';
 
 export default function SignupPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+  if (loading || user) {
     return <main className="flex h-screen items-center justify-center bg-background"><LoadingSpinner /></main>;
-  }
-
-  if (user) {
-    redirect('/dashboard');
   }
 
   return (

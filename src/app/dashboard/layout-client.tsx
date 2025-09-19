@@ -2,18 +2,28 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
 import { SearchProvider } from '@/components/dashboard/search-provider';
-import type { DashboardTab } from './page'; // Assuming this type is still relevant and accessible
+import type { DashboardTab } from '@/app/dashboard/page'; 
 import { BottomNav } from '@/components/dashboard/bottom-nav';
+import { useAuth } from '@/components/auth/auth-provider';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function DashboardLayoutClient({ children }: { children: ReactNode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const handleTabChange = (tab: DashboardTab) => {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
@@ -21,6 +31,14 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+  
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <SearchProvider>

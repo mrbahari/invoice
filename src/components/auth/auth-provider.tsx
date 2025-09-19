@@ -13,9 +13,9 @@ import {
     type User
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { usePathname, useRouter } from 'next/navigation';
 import type { AuthFormValues } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useRouter } from 'next/navigation';
 
 type AuthContextType = {
   user: User | null;
@@ -23,7 +23,7 @@ type AuthContextType = {
   signUpWithEmail: (values: AuthFormValues) => Promise<User | null>;
   signInWithEmail: (values: AuthFormValues) => Promise<User | null>;
   resetPassword: (email: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 };
 
@@ -33,7 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const pathname = usePathname();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -43,18 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => unsubscribe();
     }, []);
-
-    useEffect(() => {
-        if (loading) return;
-
-        const isAuthPage = pathname === '/login' || pathname === '/signup';
-
-        if (!user && !isAuthPage) {
-            router.push('/login');
-        } else if (user && isAuthPage) {
-            router.push('/dashboard');
-        }
-    }, [user, loading, pathname, router]);
 
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
@@ -102,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
+    // While checking user status, show a loader
     if (loading) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background">

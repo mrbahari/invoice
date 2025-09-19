@@ -1,19 +1,14 @@
 
 import type { Category, Customer, Invoice, Product, UnitOfMeasurement, Store } from '@/lib/definitions';
-import products from '@/database/products.json';
-import categories from '@/database/categories.json';
-import customers from '@/database/customers.json';
-import invoices from '@/database/invoices.json';
-import units from '@/database/units.json';
-import stores from '@/database/stores.json';
+import defaultDb from '@/database/defaultdb.json';
 
 // This acts as the single source of truth for the application's initial state.
-// All components now read from these structured JSON files via this module.
+// All components now read from the structured defaultdb.json file via this module.
 export const initialData = {
-  products: products as Product[],
-  categories: categories as Category[],
-  customers: customers as Customer[],
-  invoices: invoices as Invoice[],
-  units: units as UnitOfMeasurement[],
-  stores: stores as Store[],
+  products: defaultDb.products as Product[],
+  categories: defaultDb.categories as Category[],
+  customers: defaultDb.customers as Customer[],
+  invoices: defaultDb.invoices as Invoice[],
+  units: defaultDb.units as UnitOfMeasurement[],
+  stores: (defaultDb as any).stores as Store[] || [], // Add stores if it exists in the new file, or fallback to empty array
 };

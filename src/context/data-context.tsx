@@ -21,7 +21,7 @@ interface DataContextType {
   data: AppData;
   setData: (data: AppData) => void;
   resetData: () => void;
-  // We can add functions to modify data later, e.g., addInvoice, updateProduct etc.
+  isInitialized: boolean;
 }
 
 // Create the context
@@ -74,6 +74,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     data,
     setData,
     resetData,
+    isInitialized,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

@@ -18,6 +18,7 @@ import { auth } from '@/lib/firebase';
 import type { AuthFormValues } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useRouter, usePathname } from 'next/navigation';
+import { useData } from '@/context/data-context'; // Import useData
 
 type AuthContextType = {
   user: User | null;
@@ -35,7 +36,8 @@ const publicRoutes = ['/login', '/signup'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [authLoading, setAuthLoading] = useState(true);
+    const { isInitialized: dataInitialized } = useData(); // Get data loading status
     const router = useRouter();
     const pathname = usePathname();
 
@@ -55,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 console.error("Auth state change error:", error);
                 setUser(currentUser); // Set user even if getRedirectResult fails
             } finally {
-                setLoading(false);
+                setAuthLoading(false);
             }
         });
 
@@ -63,6 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
     
+    // Combine auth loading and data loading status
+    const loading = authLoading || !dataInitialized;
+
     useEffect(() => {
         if (loading) {
             return; // Don't do anything while loading
@@ -79,14 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user, loading, pathname, router]);
 
     const signInWithGoogle = async () => {
-        setLoading(true);
+        setAuthLoading(true);
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
         // The page will redirect, and the result will be handled by the useEffect above.
     };
 
     const signUpWithEmail = async (values: AuthFormValues) => {
-        setLoading(true);
+        setAuthLoading(true);
         if (!values.email || !values.password || !values.firstName) {
             throw new Error("Missing fields for sign up");
         }
@@ -99,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     
     const signInWithEmail = async (values: AuthFormValues) => {
-        setLoading(true);
+        setAuthLoading(true);
         if (!values.email || !values.password) {
             throw new Error("Email or password missing.");
         }
@@ -127,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
     };
     
-    // While loading, or if routing hasn't happened yet, show a full-screen loader.
+    // While loading (auth or data), or if routing hasn't happened yet, show a full-screen loader.
     // This prevents flashing the wrong page.
     if (loading || (user && publicRoutes.includes(pathname)) || (!user && !publicRoutes.includes(pathname))) {
         return (

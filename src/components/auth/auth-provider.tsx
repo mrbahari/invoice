@@ -40,23 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            try {
-                // First, check if a redirect just happened
-                const result = await getRedirectResult(auth);
+        // This effect handles the result of a Google sign-in redirect.
+        // It runs only once on component mount.
+        getRedirectResult(auth)
+            .then((result) => {
                 if (result) {
-                    // Google sign-in successful, `onAuthStateChanged` will fire again with the user.
-                    // We can already set loading to false and let the next check handle the redirect.
+                    // User signed in or linked. `onAuthStateChanged` will handle the user state.
                     setUser(result.user);
-                } else {
-                    setUser(currentUser);
                 }
-            } catch (error) {
-                console.error("Auth state change error:", error);
-                setUser(currentUser); // Set user even if getRedirectResult fails
-            } finally {
+            })
+            .catch((error) => {
+                console.error("Error getting redirect result:", error);
+            })
+            .finally(() => {
+                // This is one part of the loading process.
+                // The onAuthStateChanged listener below will also affect the loading state.
                 setLoading(false);
-            }
+            });
+        
+        // This is the primary listener for auth state changes.
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            setLoading(false);
         });
 
         // Cleanup subscription on unmount
@@ -76,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             router.push('/login');
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, loading, pathname, router]);
+    }, [user, loading, pathname]);
 
     const signInWithGoogle = async () => {
         setLoading(true);
@@ -95,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: `${values.firstName} ${values.lastName || ''}`.trim()
         });
         // onAuthStateChanged will handle the user state update, and the effect will handle routing
+        setUser(userCredential.user);
         return userCredential.user;
     };
     
@@ -105,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
         // onAuthStateChanged will handle the user state update, and the effect will handle routing
+        setUser(userCredential.user);
         return userCredential.user;
     };
 
@@ -114,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         await signOut(auth);
+        setUser(null);
         // The effect will handle the redirect to /login
     };
 

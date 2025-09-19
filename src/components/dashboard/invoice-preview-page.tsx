@@ -181,9 +181,9 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                       {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
                   </div>
                   <div className="text-center w-full sm:w-2/3 order-1 sm:order-2">
-                      <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
-                      <h2 className="text-lg font-semibold">{store?.name}</h2>
-                      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-8 mt-2 text-sm">
+                      <h1 className="text-xl font-bold text-black">پیش فاکتور فروش</h1>
+                      <h2 className="text-lg font-semibold text-black">{store?.name}</h2>
+                      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-8 mt-2 text-sm text-black">
                         <span>شماره پیش فاکتور: <span className="font-mono">{invoice.invoiceNumber}</span></span>
                         <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                       </div>
@@ -193,24 +193,24 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
 
               {/* Seller and Buyer Info */}
               <div className="border border-black">
-                <div className="bg-gray-200 p-1 font-bold text-center text-sm">اطلاعات کارشناس فروش</div>
+                <div className="bg-gray-200 p-1 font-bold text-center text-sm text-black">اطلاعات کارشناس فروش</div>
                 <table className="w-full text-sm">
                   <tbody>
                     <tr>
-                      <td className="p-1 border-l border-black w-1/4 align-middle">نام فروشگاه: {store?.name}</td>
-                      <td className="p-1 w-3/4 align-middle">شماره تماس: {store?.phone}<span className='mx-4'>|</span>آدرس: {store?.address}</td>
+                      <td className="p-1 border-l border-black w-1/4 align-middle text-black">نام فروشگاه: {store?.name}</td>
+                      <td className="p-1 w-3/4 align-middle text-black">شماره تماس: {store?.phone}<span className='mx-4'>|</span>آدرس: {store?.address}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
               <div className="border border-t-0 border-black mt-2">
-                <div className="bg-gray-200 p-1 font-bold text-center text-sm">اطلاعات خریدار</div>
+                <div className="bg-gray-200 p-1 font-bold text-center text-sm text-black">اطلاعات خریدار</div>
                 <table className="w-full text-sm">
                   <tbody>
                     <tr>
-                      <td className="p-1 border-r border-black w-1/2 align-middle">نام: {customer?.name}</td>
-                      <td className="p-1 w-1/2 align-middle">شماره تماس: {customer?.phone}<span className='mx-4'>|</span>آدرس: {customer?.address}</td>
+                      <td className="p-1 border-r border-black w-1/2 align-middle text-black">نام: {customer?.name}</td>
+                      <td className="p-1 w-1/2 align-middle text-black">شماره تماس: {customer?.phone}<span className='mx-4'>|</span>آدرس: {customer?.address}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -221,12 +221,12 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                 <table className="w-full text-sm border-collapse border border-black">
                   <thead className="bg-gray-200">
                     <tr>
-                      <th className="border border-black p-1 font-semibold align-middle">ردیف</th>
-                      <th className="border border-black p-1 font-semibold w-2/5 align-middle">شرح کالا / خدمات</th>
-                      <th className="border border-black p-1 font-semibold align-middle">مقدار</th>
-                      <th className="border border-black p-1 font-semibold align-middle">واحد</th>
-                      <th className="border border-black p-1 font-semibold align-middle">مبلغ واحد (ریال)</th>
-                      <th className="border border-black p-1 font-semibold align-middle">مبلغ کل</th>
+                      <th className="border border-black p-1 font-semibold align-middle text-black">ردیف</th>
+                      <th className="border border-black p-1 font-semibold w-2/5 align-middle text-black">شرح کالا / خدمات</th>
+                      <th className="border border-black p-1 font-semibold align-middle text-black">مقدار</th>
+                      <th className="border border-black p-1 font-semibold align-middle text-black">واحد</th>
+                      <th className="border border-black p-1 font-semibold align-middle text-black">مبلغ واحد (ریال)</th>
+                      <th className="border border-black p-1 font-semibold align-middle text-black">مبلغ کل</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -234,28 +234,28 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                       const itemTotal = item.quantity * item.unitPrice;
                       return (
                       <tr key={index}>
-                        <td className="border border-black p-1 text-center align-middle">{index + 1}</td>
-                        <td className="border border-black p-1 align-middle">{item.productName}</td>
-                        <td className="border border-black p-1 text-center font-mono align-middle">{item.quantity.toLocaleString('fa-IR')}</td>
-                        <td className="border border-black p-1 text-center align-middle">{item.unit}</td>
-                        <td className="border border-black p-1 text-center font-mono align-middle">{formatCurrency(item.unitPrice)}</td>
-                        <td className="border border-black p-1 text-center font-mono align-middle">{formatCurrency(itemTotal)}</td>
+                        <td className="border border-black p-1 text-center align-middle text-black">{index + 1}</td>
+                        <td className="border border-black p-1 align-middle text-black">{item.productName}</td>
+                        <td className="border border-black p-1 text-center font-mono align-middle text-black">{item.quantity.toLocaleString('fa-IR')}</td>
+                        <td className="border border-black p-1 text-center align-middle text-black">{item.unit}</td>
+                        <td className="border border-black p-1 text-center font-mono align-middle text-black">{formatCurrency(item.unitPrice)}</td>
+                        <td className="border border-black p-1 text-center font-mono align-middle text-black">{formatCurrency(itemTotal)}</td>
                       </tr>
                       )
                     })}
                   </tbody>
                   <tfoot>
                     <tr className="font-bold">
-                        <td colSpan={4} className="border border-black p-1 text-center align-middle font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</td>
-                        <td className="border border-black p-1 text-center align-middle">جمع کل</td>
-                        <td className="border border-black p-1 text-center font-mono align-middle">{formatCurrency(invoice.total)}</td>
+                        <td colSpan={4} className="border border-black p-1 text-center align-middle font-bold text-black">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</td>
+                        <td className="border border-black p-1 text-center align-middle text-black">جمع کل</td>
+                        <td className="border border-black p-1 text-center font-mono align-middle text-black">{formatCurrency(invoice.total)}</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
 
               
-              <div className="border border-black mt-2 p-2 text-sm">
+              <div className="border border-black mt-2 p-2 text-sm text-black">
                   <p>۱. اعتبار پیش فاکتور: ۲۴ ساعت می باشد.</p>
                   <p>۲. برای استعلام اصالت فاکتور میتوانید بارکد بالای صفحه را اسکن کنید</p>
                   {store.bankAccountHolder && <p>صاحب حساب: {store.bankAccountHolder}</p>}
@@ -265,7 +265,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
 
 
               {/* Footer */}
-              <div className="mt-8 flex justify-between text-xs text-gray-500">
+              <div className="mt-8 flex justify-between text-xs text-black">
                 <span>صفحه ۱ از ۱</span>
                 <span>تاریخ گزارش: {new Date().toLocaleDateString('fa-IR')} ساعت {new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>

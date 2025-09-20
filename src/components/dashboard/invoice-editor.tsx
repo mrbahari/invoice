@@ -32,13 +32,12 @@ import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -119,7 +118,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, invoices.length]);
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCustomerSheetOpen, setIsCustomerSheetOpen] = useState(false);
+  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
 
@@ -325,70 +324,73 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 </CardContent>
             </Card>
 
-            <Sheet open={isCustomerSheetOpen} onOpenChange={setIsCustomerSheetOpen}>
+        </div>
+
+        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
+             <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
                 <Card className="animate-fade-in-up">
                     <CardHeader>
-                        <CardTitle>مشتری</CardTitle>
+                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {selectedCustomer ? (
-                            <div className="flex items-center justify-between gap-4">
+                       {selectedCustomer ? (
+                            <div className="flex items-center justify-between gap-4 p-4 border rounded-lg">
                                 <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10 border">
+                                    <Avatar className="h-12 w-12 border">
                                         <AvatarImage src={selectedCustomer.avatarUrl} />
                                         <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                     </Avatar>
-                                    <div className="flex items-baseline gap-2">
-                                        <p className="font-medium">{selectedCustomer.name}</p>
+                                    <div>
+                                        <p className="font-semibold text-lg">{selectedCustomer.name}</p>
                                         <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
                                     </div>
                                 </div>
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm">
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
                                         <Pencil className="ml-1 h-3 w-3" />
                                         تغییر
                                     </Button>
-                                </SheetTrigger>
+                                </DialogTrigger>
                             </div>
                         ) : (
-                            <SheetTrigger asChild>
-                                <Button variant="outline" className="w-full">
-                                    <UserPlus className="ml-2 h-4 w-4" />
-                                    افزودن مشتری به فاکتور
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="w-full h-20">
+                                    <UserPlus className="ml-2 h-5 w-5" />
+                                    انتخاب مشتری از لیست
                                 </Button>
-                            </SheetTrigger>
+                            </DialogTrigger>
                         )}
                     </CardContent>
                 </Card>
 
-                <SheetContent className="w-[350px] sm:w-[450px]">
-                    <SheetHeader>
-                        <SheetTitle>انتخاب مشتری</SheetTitle>
-                    </SheetHeader>
+                <DialogContent className="w-[350px] sm:w-[450px]">
+                    <DialogHeader>
+                        <DialogTitle>انتخاب مشتری</DialogTitle>
+                    </DialogHeader>
                     <div className="py-4 grid gap-4">
                         <div className="relative">
                             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                         </div>
-                        <ScrollArea className="h-[calc(100vh-12rem)]">
+                        <ScrollArea className="h-[60vh]">
                             <div className="grid gap-2 pr-4">
                                 {(filteredCustomers || []).map(customer => (
                                     <Button
                                         key={customer.id}
                                         variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                        className="justify-start h-14"
+                                        className="justify-start h-16"
                                         onClick={() => {
                                             setSelectedCustomer(customer);
-                                            setIsCustomerSheetOpen(false);
+                                            setIsCustomerDialogOpen(false);
                                         }}
                                     >
-                                        <div className="flex items-center gap-3 text-right">
-                                            <Avatar className="h-9 w-9 border">
+                                        <div className="flex items-center gap-4 text-right">
+                                            <Avatar className="h-10 w-10 border">
                                                 <AvatarImage src={customer.avatarUrl} />
                                                 <AvatarFallback>{customer.name?.[0]}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p>{customer.name}</p>
+                                                <p className='text-base'>{customer.name}</p>
                                                 <p className="text-xs text-muted-foreground">{customer.phone}</p>
                                             </div>
                                         </div>
@@ -397,18 +399,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                             </div>
                         </ScrollArea>
                     </div>
-                </SheetContent>
-            </Sheet>
-        </div>
+                </DialogContent>
+            </Dialog>
 
-        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
             <Card className="animate-fade-in-up">
             <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
-                    </div>
-                </div>
+                <CardTitle>آیتم‌های فاکتور</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="grid gap-4">
@@ -518,3 +514,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
+
+    

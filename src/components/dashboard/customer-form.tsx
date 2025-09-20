@@ -252,7 +252,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                       ذخیره با عنوان جدید
                   </Button>
               )}
-              <Button type="submit" disabled={isProcessing} className="w-full">
+              <Button type="submit" disabled={isProcessing} className="w-full bg-green-600 hover:bg-green-700">
                 {isProcessing
                   ? isEditMode
                     ? 'در حال ذخیره...'

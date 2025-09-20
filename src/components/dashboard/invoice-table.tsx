@@ -111,8 +111,10 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInv
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">مشاهده</span>
                       </Button>
-                      {invoice.status === 'Paid' && (
+                      {invoice.status === 'Paid' ? (
                         <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <TriangleAlert className={`h-5 w-5 ${invoice.status === 'Pending' ? 'text-orange-500' : 'text-red-600'}`} />
                       )}
                     </div>
                 </TableCell>

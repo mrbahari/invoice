@@ -75,52 +75,12 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  const [aiLoading, setAiLoading] = useState<Record<AIFeature, boolean>>({
-    description: false,
-    price: false,
-    image: false,
-  });
-  
   
     useEffect(() => {
         if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }, []);
-
-    // Effect to track form changes
-  useEffect(() => {
-    if (!isEditMode) {
-        // For new products, any input makes it dirty
-        if (name || code || description || price || storeId || subCategoryId || imageUrl) {
-            setIsDirty(true);
-        }
-        return;
-    }
-    if (!product) return;
-
-    const priceNum = Number(price);
-    const subUnitPriceNum = Number(subUnitPrice);
-    const subUnitQuantityNum = Number(subUnitQuantity);
-    
-    // Compare current state with initial product state
-    const fieldsChanged =
-      name !== product.name ||
-      code !== product.code ||
-      description !== product.description ||
-      priceNum !== product.price ||
-      storeId !== product.storeId ||
-      subCategoryId !== product.subCategoryId ||
-      unit !== product.unit ||
-      subUnit !== (product.subUnit || undefined) ||
-      subUnitQuantityNum !== (product.subUnitQuantity || '') ||
-      subUnitPriceNum !== (product.subUnitPrice || '') ||
-      imageUrl !== product.imageUrl;
-
-    setIsDirty(fieldsChanged);
-  }, [name, code, description, price, storeId, subCategoryId, unit, subUnit, subUnitQuantity, subUnitPrice, imageUrl, product, isEditMode]);
-
 
   const availableSubCategories = categories.filter(c => c.storeId === storeId && c.parentId);
   
@@ -579,49 +539,48 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </Card>
             </div>
         </div>
-        {isDirty && (
-            <div className="sticky bottom-[90px] md:bottom-0 z-10 p-4 bg-card/80 backdrop-blur-sm border-t mt-4">
-                <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
-                    <div>
-                         {isEditMode && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" disabled={isProcessing}>
-                                        <Trash2 className="ml-2 h-4 w-4" />
-                                        حذف محصول
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        )}
-                    </div>
-                    <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
-                        {isEditMode && (
-                            <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                               <Copy className="ml-2 h-4 w-4" />
-                                ذخیره با عنوان محصول جدید
-                            </Button>
-                        )}
-                        <Button type="submit" disabled={isProcessing} size="lg" className="w-full">
-                            {isProcessing
-                            ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
-                            : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
+        
+        <div className="sticky bottom-[90px] md:bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t mt-4">
+            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
+                <div>
+                     {isEditMode && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" disabled={isProcessing}>
+                                    <Trash2 className="ml-2 h-4 w-4" />
+                                    حذف محصول
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
+                <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
+                    {isEditMode && (
+                        <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                           <Copy className="ml-2 h-4 w-4" />
+                            ذخیره با عنوان محصول جدید
                         </Button>
-                    </div>
+                    )}
+                    <Button type="submit" disabled={isProcessing} size="lg" className="w-full">
+                        {isProcessing
+                        ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
+                        : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
+                    </Button>
                 </div>
             </div>
-        )}
+        </div>
       </form>
     </>
   );

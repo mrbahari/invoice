@@ -24,7 +24,7 @@ interface AppData {
 interface DataContextType {
   data: AppData;
   setData: React.Dispatch<React.SetStateAction<AppData>>;
-  resetData: (skipConfirm?: boolean) => void;
+  resetData: () => void;
   isInitialized: boolean;
 }
 
@@ -65,22 +65,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [data]);
 
   // Function to reset data to the initial state from JSON files
-  const resetData = (skipConfirm = false) => {
-    const performReset = () => {
-        setData(initialData);
-        toast({
-            title: 'موفقیت‌آمیز',
-            description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
-        });
-    };
-
-    if (skipConfirm) {
-        performReset();
-    } else {
-        if (window.confirm('آیا مطمئن هستید؟ تمام تغییرات فعلی از بین خواهند رفت و اطلاعات به حالت پیش‌فرض کارخانه بازنشانی می‌شود.')) {
-            performReset();
-        }
-    }
+  const resetData = () => {
+    setData(initialData);
   };
   
   // The context is initialized once data is not null.

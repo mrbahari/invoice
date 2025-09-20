@@ -99,15 +99,21 @@ export default function SettingsPage() {
   };
 
   const handleClearData = () => {
-    resetData(true); // pass true to skip confirmation here
+    resetData();
     toast({
+      variant: 'success',
       title: 'اطلاعات پاک شد',
       description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
     });
   };
   
   const handleLoadDefaults = () => {
-    resetData(); // This will show the confirmation toast
+    resetData();
+    toast({
+        variant: 'success',
+        title: 'موفقیت‌آمیز',
+        description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
+    });
   };
 
   const handleBackupData = () => {

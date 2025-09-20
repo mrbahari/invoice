@@ -338,7 +338,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         <AvatarImage src={selectedCustomer.avatarUrl} />
                                         <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                     </Avatar>
-                                    <div>
+                                    <div className="flex items-baseline gap-2">
                                         <p className="font-medium">{selectedCustomer.name}</p>
                                         <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
                                     </div>

@@ -44,13 +44,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
+import { InvoiceActions } from './invoice-actions';
 
 type InvoiceEditorProps = {
-    invoiceId?: string;
-    initialData?: Omit<Invoice, 'id'>;
-    onSave: (invoiceId: string) => void;
+    invoice?: Invoice;
+    onSave: (invoice: Invoice) => void;
     onCancel: () => void;
-    onSaveAndPreview: (invoiceId: string) => void;
 }
 
 const useIsClient = () => {
@@ -59,55 +58,69 @@ const useIsClient = () => {
   return isClient;
 };
 
-export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
 
-  const isEditMode = !!invoiceId;
-  const originalInvoice = useMemo(() => invoices.find(inv => inv.id === invoiceId), [invoices, invoiceId]);
-
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
-  const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [description, setDescription] = useState('');
-  const [overallDiscount, setOverallDiscount] = useState(0);
-  const [additions, setAdditions] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [status, setStatus] = useState<InvoiceStatus>('Pending');
-
+  const isEditMode = !!initialInvoice?.id;
+  
+  const [invoice, setInvoice] = useState<Partial<Invoice>>(initialInvoice || {
+    date: new Date().toISOString(),
+    status: 'Pending',
+    items: [],
+    subtotal: 0,
+    discount: 0,
+    additions: 0,
+    tax: 0,
+    total: 0,
+    description: '',
+    invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+  });
+  
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(() => 
+    initialInvoice ? customerList.find(c => c.id === initialInvoice.customerId) : undefined
+  );
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
-    const dataToLoad = isEditMode ? originalInvoice : initialData;
-    if (dataToLoad) {
-      if ('customerId' in dataToLoad && dataToLoad.customerId) {
-        setSelectedCustomer(customerList.find(c => c.id === dataToLoad.customerId));
-      }
-      setItems(dataToLoad.items || []);
-      setDescription(dataToLoad.description || '');
-      setOverallDiscount(dataToLoad.discount || 0);
-      setAdditions(dataToLoad.additions || 0);
-      const sub = dataToLoad.subtotal || 0;
-      const disc = dataToLoad.discount || 0;
-      setTax(sub - disc > 0 ? (dataToLoad.tax / (sub - disc)) * 100 : 0);
-      setStatus(dataToLoad.status || 'Pending');
+    // This effect runs once on mount to scroll to top
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [originalInvoice, initialData, customerList, isEditMode]);
+  }, []);
+  
+  useEffect(() => {
+    // When customer changes, update invoice details
+    if (selectedCustomer) {
+      setInvoice(prev => ({
+        ...prev,
+        customerId: selectedCustomer.id,
+        customerName: selectedCustomer.name,
+        customerEmail: selectedCustomer.email
+      }));
+    }
+  }, [selectedCustomer]);
 
-  const { subtotal, taxAmount, total } = useMemo(() => {
-    const sub = items.reduce((acc, item) => acc + item.totalPrice, 0);
-    const disc = overallDiscount;
-    const totalBeforeTax = sub - disc;
-    const taxAmt = totalBeforeTax * (tax / 100);
-    const total = totalBeforeTax + taxAmt + additions;
-    return { subtotal: sub, taxAmount: taxAmt, total };
-  }, [items, overallDiscount, tax, additions]);
+  // Recalculate totals whenever items or financial fields change
+  useEffect(() => {
+    const subtotal = invoice.items?.reduce((acc, item) => acc + item.totalPrice, 0) || 0;
+    const discount = invoice.discount || 0;
+    const additions = invoice.additions || 0;
+    const taxRate = (invoice.tax || 0) / (subtotal - discount || 1); // Avoid division by zero
+    const totalBeforeTax = subtotal - discount + additions;
+    const taxAmount = totalBeforeTax * taxRate;
+    const total = totalBeforeTax + taxAmount;
+
+    setInvoice(prev => ({ ...prev, subtotal, tax: taxAmount, total }));
+  }, [invoice.items, invoice.discount, invoice.additions]);
+
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
@@ -118,127 +131,109 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
   }, [customerList, customerSearch]);
 
   const handleAddProduct = (product: Product) => {
-    setItems(prev => {
-      const existingItem = prev.find(item => item.productId === product.id && item.unit === product.unit);
-      if (existingItem) {
-        return prev.map(item =>
-          item.productId === product.id && item.unit === product.unit
-            ? { ...item, quantity: item.quantity + 1, totalPrice: (item.quantity + 1) * item.unitPrice }
-            : item
-        );
+    setIsDirty(true);
+    setInvoice(prev => {
+      const items = prev.items ? [...prev.items] : [];
+      const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
+      
+      if (existingItemIndex > -1) {
+        items[existingItemIndex].quantity += 1;
+        items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
+      } else {
+        items.push({
+          productId: product.id,
+          productName: product.name,
+          quantity: 1,
+          unit: product.unit,
+          unitPrice: product.price,
+          totalPrice: product.price,
+        });
       }
-      const newItem: InvoiceItem = {
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        unit: product.unit,
-        unitPrice: product.price,
-        totalPrice: product.price,
-      };
-      return [...prev, newItem];
+      return {...prev, items};
     });
   };
 
-  const handleItemChange = (productId: string, unit: string, field: 'quantity' | 'unitPrice', value: number) => {
-    setItems(prev => prev.map(item => {
-      if (item.productId === productId && item.unit === unit) {
-        const newItem = { ...item, [field]: value };
-        newItem.totalPrice = newItem.quantity * newItem.unitPrice;
-        return newItem;
+  const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
+    setIsDirty(true);
+    setInvoice(prev => {
+        const items = prev.items ? [...prev.items] : [];
+        if (items[index]) {
+            (items[index] as any)[field] = value;
+            if (field === 'quantity' || field === 'unitPrice') {
+                items[index].totalPrice = (items[index].quantity || 0) * (items[index].unitPrice || 0);
+            }
+        }
+        return { ...prev, items };
+    });
+  };
+  
+  const handleUnitChange = (index: number, newUnit: string) => {
+    setIsDirty(true);
+    setInvoice(prev => {
+      const items = prev.items ? [...prev.items] : [];
+      const item = items[index];
+      if (item) {
+        const product = products.find(p => p.id === item.productId);
+        if (product) {
+          const unitPrice = newUnit === product.subUnit ? (product.subUnitPrice || 0) : product.price;
+          item.unit = newUnit;
+          item.unitPrice = unitPrice;
+          item.totalPrice = (item.quantity || 0) * unitPrice;
+        }
       }
-      return item;
+      return {...prev, items};
+    });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setIsDirty(true);
+    setInvoice(prev => ({
+        ...prev,
+        items: prev.items?.filter((_, i) => i !== index)
     }));
   };
 
-  const handleUnitChange = (productId: string, oldUnit: string, newUnit: string) => {
-    setItems(prev => {
-      const product = products.find(p => p.id === productId);
-      if (!product) return prev;
-
-      const unitPrice = newUnit === product.subUnit ? (product.subUnitPrice || 0) : product.price;
-
-      return prev.map(item => {
-        if (item.productId === productId && item.unit === oldUnit) {
-          const newItem = { ...item, unit: newUnit, unitPrice };
-          newItem.totalPrice = newItem.quantity * newItem.unitPrice;
-          return newItem;
-        }
-        return item;
-      });
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    setIsDirty(true);
+    setInvoice(prev => {
+      const items = Array.from(prev.items || []);
+      const [removed] = items.splice(result.source.index, 1);
+      items.splice(result.destination!.index, 0, removed);
+      return {...prev, items};
     });
   };
 
-  const handleRemoveItem = (productId: string, unit: string) => {
-    setItems(prev => prev.filter(item => !(item.productId === productId && item.unit === unit)));
-  };
-
-  const handleProcessInvoice = async (andPreview: boolean = false) => {
-    if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است' });
-      return;
-    }
-    if (items.length === 0) {
-      toast({ variant: 'destructive', title: 'فاکتور خالی است' });
+  const handleProcessInvoice = () => {
+    if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
+      toast({ variant: 'destructive', title: 'مشتری یا آیتم‌های فاکتور انتخاب نشده است.' });
       return;
     }
     
     setIsProcessing(true);
 
-    const invoiceData = {
-      customerId: selectedCustomer.id,
-      customerName: selectedCustomer.name,
-      customerEmail: selectedCustomer.email,
-      date: originalInvoice?.date || new Date().toISOString(),
-      status,
-      items,
-      subtotal,
-      discount: overallDiscount,
-      additions,
-      tax: taxAmount,
-      total,
-      description,
-      invoiceNumber: originalInvoice?.invoiceNumber || `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
-    };
+    const finalInvoice: Invoice = {
+      id: isEditMode ? initialInvoice!.id : `inv-${Math.random().toString(36).substr(2, 9)}`,
+      ...invoice,
+    } as Invoice;
+    
+    setData(prev => {
+      const newInvoices = isEditMode
+        ? prev.invoices.map(inv => inv.id === finalInvoice.id ? finalInvoice : inv)
+        : [finalInvoice, ...prev.invoices];
+      return { ...prev, invoices: newInvoices };
+    });
 
-    let processedId: string;
-
-    if (isEditMode && originalInvoice) {
-      processedId = originalInvoice.id;
-      setData(prev => ({
-        ...prev,
-        invoices: prev.invoices.map(inv => inv.id === processedId ? { ...invoiceData, id: processedId } : inv)
-      }));
-      toast({ variant: 'success', title: 'فاکتور ویرایش شد' });
-    } else {
-      processedId = `inv-${Math.random().toString(36).substr(2, 9)}`;
-      setData(prev => ({
-        ...prev,
-        invoices: [{ ...invoiceData, id: processedId }, ...prev.invoices]
-      }));
-      toast({ variant: 'success', title: 'فاکتور ایجاد شد' });
-    }
-
+    toast({ variant: 'success', title: isEditMode ? 'فاکتور ویرایش شد' : 'فاکتور ایجاد شد' });
     setIsProcessing(false);
-    if (andPreview) {
-      onSaveAndPreview(processedId);
-    } else {
-      onSave(processedId);
-    }
+    onSave(finalInvoice);
   };
   
-   const handleDeleteInvoice = () => {
-    if (!originalInvoice) return;
-    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== originalInvoice.id) }));
+  const handleDeleteInvoice = () => {
+    if (!initialInvoice) return;
+    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== initialInvoice.id) }));
     toast({ title: 'فاکتور حذف شد' });
     onCancel();
-  };
-
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    const reorderedItems = Array.from(items);
-    const [removed] = reorderedItems.splice(result.source.index, 1);
-    reorderedItems.splice(result.destination.index, 0, removed);
-    setItems(reorderedItems);
   };
   
    return (
@@ -314,7 +309,7 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${originalInvoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
+                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${initialInvoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                     </div>
                     <Button type="button" variant="ghost" onClick={onCancel}><ArrowRight className="ml-2 h-4 w-4" />انصراف</Button>
                 </div>
@@ -338,19 +333,19 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
                             <Droppable droppableId="invoice-items">
                             {(provided) => (
                                 <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                                {items.length > 0 ? items.map((item, index) => {
+                                {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
                                     const product = products.find(p => p.id === item.productId);
                                     const availableUnits = [product?.unit];
                                     if (product?.subUnit) availableUnits.push(product.subUnit);
 
                                     return (
-                                    <Draggable key={`${item.productId}-${item.unit}`} draggableId={`${item.productId}-${item.unit}`} index={index}>
+                                    <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                         {(provided) => (
                                         <TableRow ref={provided.innerRef} {...provided.draggableProps}>
                                             <TableCell {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="h-5 w-5 text-muted-foreground" /></TableCell>
                                             <TableCell className="font-medium">{item.productName}</TableCell>
                                             <TableCell>
-                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(item.productId, item.unit, newUnit)}>
+                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
                                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                                 <SelectContent>
                                                 {availableUnits.filter(u => u).map(u => <SelectItem key={u} value={u!}>{u}</SelectItem>)}
@@ -358,12 +353,12 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
                                             </Select>
                                             </TableCell>
                                             <TableCell>
-                                                <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.productId, item.unit, 'quantity', parseFloat(e.target.value))} className="w-full text-center" />
+                                                <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} className="w-full text-center" />
                                             </TableCell>
                                             <TableCell className="text-left">{formatCurrency(item.unitPrice)}</TableCell>
                                             <TableCell className="text-left">{formatCurrency(item.totalPrice)}</TableCell>
                                             <TableCell>
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.productId, item.unit)}><Trash2 className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </TableCell>
                                         </TableRow>
                                         )}
@@ -384,7 +379,7 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
                 </div>
                 <div className="grid gap-2 mt-6">
                     <Label htmlFor="description">توضیحات</Label>
-                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                    <Textarea id="description" value={invoice.description} onChange={(e) => setInvoice(prev => ({...prev, description: e.target.value}))} />
                 </div>
             </CardContent>
             </Card>
@@ -392,17 +387,17 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
                 <CardHeader><CardTitle>پرداخت</CardTitle></CardHeader>
                 <CardContent className="grid gap-4">
                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={additions} onChange={(e) => setAdditions(parseFloat(e.target.value) || 0)} /></div>
-                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={overallDiscount} onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)} /></div>
-                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (%)</Label><Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value) || 0)} /></div>
+                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={invoice.additions || ''} onChange={(e) => setInvoice(prev => ({ ...prev, additions: parseFloat(e.target.value) || 0 }))} /></div>
+                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={invoice.discount || ''} onChange={(e) => setInvoice(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))} /></div>
+                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (مبلغ ثابت)</Label><Input id="tax" type="number" value={invoice.tax || ''} onChange={(e) => setInvoice(prev => ({...prev, tax: parseFloat(e.target.value) || 0}))} /></div>
                     </div>
                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span>جمع جزء</span><span>{formatCurrency(subtotal)}</span></div>
-                        {overallDiscount > 0 && <div className="flex justify-between"><span>تخفیف</span><span className="text-destructive">-{formatCurrency(overallDiscount)}</span></div>}
-                        {additions > 0 && <div className="flex justify-between"><span>اضافات</span><span>{formatCurrency(additions)}</span></div>}
-                        {tax > 0 && <div className="flex justify-between"><span>مالیات ({tax}%)</span><span>{formatCurrency(taxAmount)}</span></div>}
+                        <div className="flex justify-between"><span>جمع جزء</span><span>{formatCurrency(invoice.subtotal || 0)}</span></div>
+                        {invoice.discount && invoice.discount > 0 && <div className="flex justify-between"><span>تخفیف</span><span className="text-destructive">-{formatCurrency(invoice.discount)}</span></div>}
+                        {invoice.additions && invoice.additions > 0 && <div className="flex justify-between"><span>اضافات</span><span>{formatCurrency(invoice.additions)}</span></div>}
+                        {invoice.tax && invoice.tax > 0 && <div className="flex justify-between"><span>مالیات</span><span>{formatCurrency(invoice.tax)}</span></div>}
                         <Separator className="my-2" />
-                        <div className="flex justify-between font-semibold text-base pt-2"><span>جمع کل</span><span>{formatCurrency(total)}</span></div>
+                        <div className="flex justify-between font-semibold text-base pt-2"><span>جمع کل</span><span>{formatCurrency(invoice.total || 0)}</span></div>
                     </div>
                 </CardContent>
             </Card>
@@ -424,17 +419,20 @@ export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSave
             )}
             </div>
             <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="flex-1">
+                    <InvoiceActions />
+                </div>
                 {isEditMode && (
                     <div className="grid gap-2">
                         <Label htmlFor="status" className="sr-only">وضعیت</Label>
-                        <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
+                        <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => setInvoice(prev => ({...prev, status: value}))}>
                             <SelectTrigger id="status" className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Pending">در انتظار</SelectItem><SelectItem value="Paid">پرداخت شده</SelectItem><SelectItem value="Overdue">سررسید گذشته</SelectItem></SelectContent>
                         </Select>
                     </div>
                 )}
-                <Button onClick={() => handleProcessInvoice(true)} variant="outline" size="lg" className="flex-1"><Eye className="ml-2 h-4 w-4" />پیش‌نمایش</Button>
-                <Button onClick={() => handleProcessInvoice(false)} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
+                
+                <Button onClick={handleProcessInvoice} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
             </div>
         </div>
     </div>

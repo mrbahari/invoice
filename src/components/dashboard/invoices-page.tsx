@@ -5,18 +5,23 @@ import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect } from 'react';
-import type { Invoice, InvoiceStatus } from '@/lib/definitions';
+import type { Invoice } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
 import { useData } from '@/context/data-context';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
-type View = 
-    | { type: 'list' }
-    | { type: 'editor'; invoiceId?: string }
-    | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
-    
+type ViewType = 'list' | 'editor' | 'preview';
+
 type InvoicesPageProps = {
   initialInvoice?: Omit<Invoice, 'id'>;
 };
@@ -24,105 +29,118 @@ type InvoicesPageProps = {
 
 export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: InvoicesPageProps) {
   const { data, setData } = useData();
-  const { invoices: allInvoices, customers } = data;
+  const { invoices: allInvoices } = data;
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  const [view, setView] = useState<View>({ type: 'list' });
-  const [initialInvoice, setInitialInvoice] = useState(initialInvoiceProp);
-
+  const [view, setView] = useState<ViewType>('list');
+  const [currentInvoice, setCurrentInvoice] = useState<Invoice | undefined>(undefined);
+  
   useEffect(() => {
-    if (initialInvoice) {
-      setView({ type: 'editor', invoiceId: undefined });
+    // If an initial invoice is passed (e.g., from estimators), switch to editor view
+    if (initialInvoiceProp) {
+        // Here we can't be sure if it's a full invoice object or just partial data.
+        // We'll treat it as partial and let the editor handle it.
+        setCurrentInvoice(initialInvoiceProp as Invoice);
+        setView('editor');
     }
-  }, [initialInvoice]);
-
-  
-  const handleBackToList = () => {
-    setView({ type: 'list' });
-    setInitialInvoice(undefined); // Clear initial invoice when going back to list
-  };
-
-  const handleSaveAndPreview = (invoiceId: string) => {
-    setView({ type: 'preview', invoiceId, from: 'editor' });
-  };
-  
-  const handlePreviewFromList = (invoiceId: string) => {
-    setView({ type: 'preview', invoiceId, from: 'list' });
-  };
+  }, [initialInvoiceProp]);
   
   const handleEdit = (invoiceId: string) => {
-    setView({ type: 'editor', invoiceId });
+    const invoiceToEdit = allInvoices.find(inv => inv.id === invoiceId);
+    if (invoiceToEdit) {
+      setCurrentInvoice(invoiceToEdit);
+      setView('editor');
+    }
   };
 
-  const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
-    setData({
-      ...data,
-      invoices: data.invoices.map(inv =>
-        inv.id === invoiceId ? { ...inv, status } : inv
-      ),
-    });
-    toast({
-      variant: 'success',
-      title: 'وضعیت فاکتور به‌روزرسانی شد',
-    });
+  const handlePreview = (invoiceId: string) => {
+    const invoiceToPreview = allInvoices.find(inv => inv.id === invoiceId);
+    if (invoiceToPreview) {
+      setCurrentInvoice(invoiceToPreview);
+      setView('preview');
+    }
   };
   
+  const handleDelete = (invoiceId: string) => {
+    setData(prev => ({
+        ...prev,
+        invoices: prev.invoices.filter(inv => inv.id !== invoiceId)
+    }));
+    toast({ variant: 'success', title: 'فاکتور حذف شد' });
+  };
+  
+  const handleSave = (savedInvoice: Invoice) => {
+    // After saving (new or update), go to preview that invoice
+    setCurrentInvoice(savedInvoice);
+    setView('preview');
+  }
+  
+  const handleCancel = () => {
+    setCurrentInvoice(undefined);
+    setView('list');
+  };
+
   const filteredInvoices = useMemo(() => {
-    if (!allInvoices) return [];
     return allInvoices.filter(invoice =>
       invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [allInvoices, searchTerm]);
-
-  const paidInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Paid'), [filteredInvoices]);
-  const pendingInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Pending'), [filteredInvoices]);
-  const overdueInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Overdue'), [filteredInvoices]);
-
-  const tabsData = useMemo(() => [
-    { value: 'all', label: `همه (${filteredInvoices.length})`, invoices: filteredInvoices },
-    { value: 'paid', label: `پرداخت شده (${paidInvoices.length})`, invoices: paidInvoices },
-    { value: 'pending', label: `در انتظار (${pendingInvoices.length})`, invoices: pendingInvoices },
-    { value: 'overdue', label: `سررسید گذشته (${overdueInvoices.length})`, invoices: overdueInvoices, className: 'hidden sm:flex' },
-  ], [filteredInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
-
+  
   const renderContent = () => {
-    switch (view.type) {
+    switch (view) {
       case 'editor':
         return (
           <InvoiceEditor
-            invoiceId={view.invoiceId}
-            initialData={view.invoiceId ? undefined : initialInvoice}
-            onSave={handleBackToList}
-            onCancel={handleBackToList}
-            onSaveAndPreview={handleSaveAndPreview}
+            invoice={currentInvoice}
+            onSave={handleSave}
+            onCancel={handleCancel}
           />
         );
       case 'preview':
-        const onBack = view.from === 'editor' && view.invoiceId 
-            ? () => setView({ type: 'editor', invoiceId: view.invoiceId })
-            : handleBackToList;
-        return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={onBack} />;
+        return currentInvoice ? (
+          <InvoicePreviewPage invoiceId={currentInvoice.id} onBack={() => setView('editor')} />
+        ) : null;
       case 'list':
       default:
+        const tabsData = [
+          { value: 'all', label: `همه (${filteredInvoices.length})`, invoices: filteredInvoices },
+          { value: 'paid', label: `پرداخت شده`, invoices: filteredInvoices.filter(i => i.status === 'Paid')},
+          { value: 'pending', label: `در انتظار`, invoices: filteredInvoices.filter(i => i.status === 'Pending')},
+          { value: 'overdue', label: `سررسید گذشته`, invoices: filteredInvoices.filter(i => i.status === 'Overdue'), className: 'hidden sm:flex' },
+        ];
         return (
-          <InvoiceTabs
-            tabs={tabsData}
-            customers={customers || []}
-            defaultTab="all"
-            onStatusChange={handleUpdateStatus}
-            onEditInvoice={handleEdit}
-            onPreviewInvoice={handlePreviewFromList}
-            pageActions={
-              <Button size="sm" className="h-8 gap-1" onClick={() => setView({ type: 'editor' })}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  ایجاد فاکتور
-                </span>
-              </Button>
-            }
-          />
+           <Card className="animate-fade-in-up">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>فاکتورها</CardTitle>
+                        <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
+                    </div>
+                     <Button size="sm" className="h-8 gap-1" onClick={() => { setCurrentInvoice(undefined); setView('editor'); }}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        ایجاد فاکتور
+                        </span>
+                    </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <InvoiceTabs
+                    tabs={tabsData}
+                    defaultTab="all"
+                    onEdit={handleEdit}
+                    onPreview={handlePreview}
+                    onDelete={handleDelete}
+                />
+              </CardContent>
+              <CardFooter>
+                 <div className="text-xs text-muted-foreground">
+                    نمایش <strong>{filteredInvoices.length}</strong> از <strong>{allInvoices.length}</strong> فاکتور
+                </div>
+              </CardFooter>
+            </Card>
         );
     }
   };

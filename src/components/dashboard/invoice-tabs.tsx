@@ -8,7 +8,6 @@ import { downloadCSV } from '@/lib/utils';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useState } from 'react';
 import { InvoiceTable } from '@/components/dashboard/invoice-table';
-import { InvoiceActions } from './invoice-actions';
 
 type TabData = {
   value: string;
@@ -19,15 +18,13 @@ type TabData = {
 
 type InvoiceTabsProps = {
   tabs: TabData[];
-  customers: Customer[];
   defaultTab: string;
-  pageActions: React.ReactNode;
-  onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
-  onEditInvoice: (invoiceId: string) => void;
-  onPreviewInvoice: (invoiceId: string) => void;
+  onEdit: (invoiceId: string) => void;
+  onPreview: (invoiceId: string) => void;
+  onDelete: (invoiceId: string) => void;
 };
 
-export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onEditInvoice, onPreviewInvoice }: InvoiceTabsProps) {
+export function InvoiceTabs({ tabs, defaultTab, onEdit, onPreview, onDelete }: InvoiceTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   const handleExport = () => {
@@ -50,7 +47,7 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
         <TabsList>
           {tabs.map(tab => (
             <TabsTrigger key={tab.value} value={tab.value} className={tab.className}>
-              {tab.label}
+              {tab.label.replace(/\(\d+\)/, '')}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -61,17 +58,15 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
               خروجی
             </span>
           </Button>
-          {pageActions}
         </div>
       </div>
       {tabs.map(tab => (
         <TabsContent key={tab.value} value={tab.value}>
           <InvoiceTable 
             invoiceList={tab.invoices}
-            customers={customers} 
-            onStatusChange={onStatusChange}
-            onEditInvoice={onEditInvoice}
-            onPreviewInvoice={onPreviewInvoice}
+            onEdit={onEdit}
+            onPreview={onPreview}
+            onDelete={onDelete}
           />
         </TabsContent>
       ))}

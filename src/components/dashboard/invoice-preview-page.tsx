@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -14,7 +14,9 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 import { InvoiceActions } from './invoice-actions';
+
 
 function toWords(num: number): string {
   if (num === 0) return "صفر";

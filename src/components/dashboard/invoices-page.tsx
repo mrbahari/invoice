@@ -21,31 +21,36 @@ type InvoicesPageProps = {
   initialInvoice?: Invoice;
 };
 
-export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
+export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: InvoicesPageProps) {
   const { data, setData } = useData(); // Use the central data context
   const { invoices: allInvoices, customers } = data;
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
+  const [initialInvoice, setInitialInvoice] = useState(initialInvoiceProp);
   const [view, setView] = useState<View>({ type: 'list' });
 
   useEffect(() => {
     if (initialInvoice) {
       setView({ type: 'form', invoice: initialInvoice });
+    } else {
+      setView({ type: 'list' });
     }
   }, [initialInvoice]);
 
   const handleAddClick = () => setView({ type: 'form' });
   const handleEditClick = (invoice: Invoice) => setView({ type: 'form', invoice });
   const handlePreviewClick = (invoiceId: string) => setView({ type: 'preview', invoiceId });
-
-  const handleFormCancel = () => {
-    setView({ type: 'list' });
-  };
   
+  const handleCancelAndClear = () => {
+    setView({ type: 'list' });
+    setInitialInvoice(undefined); // Clear the initial invoice to prevent re-opening
+  };
+
   const handleFormSaveAndPreview = (invoiceId: string) => {
       // Data is already updated in the context by the form, just switch view
       setView({ type: 'preview', invoiceId });
+      setInitialInvoice(undefined); // Clear after saving
   };
   
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
@@ -96,11 +101,11 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
   ], [filteredInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
   
   if (view.type === 'form') {
-      return <InvoiceEditor invoice={view.invoice} onCancel={handleFormCancel} onSaveAndPreview={handleFormSaveAndPreview} />;
+      return <InvoiceEditor invoice={view.invoice} onCancel={handleCancelAndClear} onSaveAndPreview={handleFormSaveAndPreview} />;
   }
 
   if (view.type === 'preview') {
-      return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={handleFormCancel} />;
+      return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={handleCancelAndClear} />;
   }
 
   return (

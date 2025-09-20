@@ -385,7 +385,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
                                             <SelectTrigger id="store"><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
                                             <SelectContent>
-                                                {stores.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                                                {stores?.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                      </div>
@@ -539,5 +539,3 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </form>
   );
 }
-
-    

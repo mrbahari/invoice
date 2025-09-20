@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -71,7 +70,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
 
   if (!customer) {
     return (
-        <Card>
+        <Card className="animate-fade-in-up">
             <CardContent className="py-16 text-center">
                 <p className="text-muted-foreground mb-4">مشتری مورد نظر یافت نشد.</p>
                  <Button onClick={onBack}>
@@ -86,8 +85,8 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
   const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
 
   return (
-    <div className="grid flex-1 items-start gap-4 md:gap-8 animate-fade-in-up">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="grid flex-1 items-start gap-4 md:gap-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in-up">
             <div className="flex items-center gap-4">
                  <Button onClick={onBack} variant="outline" size="icon" className="h-8 w-8">
                     <ArrowRight className="h-4 w-4" />
@@ -108,7 +107,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مجموع خرید</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -117,7 +116,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
             <div className="text-2xl font-bold">{formatCurrency(totalSpent)}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">تعداد سفارشات پرداخت شده</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
@@ -128,64 +127,66 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
         </Card>
       </div>
       
-      <Card>
-        <CardHeader>
-            <CardTitle>تاریخچه خرید</CardTitle>
-            <CardDescription>نمودار میزان خرید مشتری (فقط پرداخت شده‌ها).</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <OverviewChart data={[]} />
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-            <CardTitle>فاکتورها</CardTitle>
-            <CardDescription>لیست تمام فاکتورهای صادر شده برای این مشتری.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>شماره فاکتور</TableHead>
-                        <TableHead>تاریخ</TableHead>
-                        <TableHead>وضعیت</TableHead>
-                        <TableHead className="text-right">مبلغ کل</TableHead>
-                         <TableHead>
-                            <span className="sr-only">اقدامات</span>
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {customerInvoices.length > 0 ? (
-                        customerInvoices.map(invoice => (
-                            <TableRow key={invoice.id} onClick={() => onInvoiceClick(invoice.id)} className="cursor-pointer">
-                                <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                                <TableCell>{new Date(invoice.date).toLocaleDateString('fa-IR')}</TableCell>
-                                <TableCell>
-                                     <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
-                                        {statusTranslation[invoice.status]}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
-                                 <TableCell className="text-right">
-                                    <Button asChild variant="ghost" size="sm">
-                                        <button>مشاهده</button>
-                                    </Button>
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <CardHeader>
+                <CardTitle>تاریخچه خرید</CardTitle>
+                <CardDescription>نمودار میزان خرید مشتری در ۷ روز گذشته.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <OverviewChart data={[]} />
+            </CardContent>
+        </Card>
+        
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <CardHeader>
+                <CardTitle>فاکتورها</CardTitle>
+                <CardDescription>لیست تمام فاکتورهای صادر شده برای این مشتری.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>شماره فاکتور</TableHead>
+                            <TableHead>تاریخ</TableHead>
+                            <TableHead>وضعیت</TableHead>
+                            <TableHead className="text-left">مبلغ کل</TableHead>
+                             <TableHead>
+                                <span className="sr-only">اقدامات</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {customerInvoices.length > 0 ? (
+                            customerInvoices.map(invoice => (
+                                <TableRow key={invoice.id} onClick={() => onInvoiceClick(invoice.id)} className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                                    <TableCell>{new Date(invoice.date).toLocaleDateString('fa-IR')}</TableCell>
+                                    <TableCell>
+                                         <Badge className={`capitalize ${statusStyles[invoice.status]}`} variant="outline">
+                                            {statusTranslation[invoice.status]}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-left">{formatCurrency(invoice.total)}</TableCell>
+                                     <TableCell className="text-left">
+                                        <Button asChild variant="ghost" size="sm">
+                                            <button>مشاهده</button>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                                    هیچ فاکتوری برای این مشتری یافت نشد.
                                 </TableCell>
                             </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                                هیچ فاکتوری برای این مشتری یافت نشد.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </CardContent>
-      </Card>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+      </div>
 
     </div>
   );

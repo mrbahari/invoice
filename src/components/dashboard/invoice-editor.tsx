@@ -416,7 +416,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <DragDropContext onDragEnd={handleDragEnd}>
                             <Droppable droppableId="invoice-items">
                             {(provided) => (
-                                <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-4">
+                                <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
                                 {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
                                     const product = products.find(p => p.id === item.productId);
                                     const availableUnits = [product?.unit];
@@ -425,36 +425,28 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                     return (
                                     <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                         {(provided) => (
-                                            <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden">
-                                                <CardContent className="p-4 flex flex-col sm:flex-row gap-4">
-                                                    <div {...provided.dragHandleProps} className="cursor-grab p-2 -m-2 sm:p-4 sm:-m-4 flex items-center justify-center sm:border-l">
-                                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                    </div>
-                                                    <div className="flex-grow grid gap-3">
-                                                        <p className="font-semibold">{item.productName}</p>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                             <div className="grid gap-1.5">
-                                                                <Label htmlFor={`quantity-${index}`}>مقدار</Label>
-                                                                <Input id={`quantity-${index}`} type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} className="w-full" />
-                                                            </div>
-                                                             <div className="grid gap-1.5">
-                                                                <Label htmlFor={`unit-${index}`}>واحد</Label>
-                                                                <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
-                                                                    <SelectTrigger id={`unit-${index}`}><SelectValue /></SelectTrigger>
-                                                                    <SelectContent>
+                                            <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden bg-muted/30">
+                                                <CardContent className="p-2">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-5 items-center gap-2">
+                                                        <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center sm:border-l">
+                                                            <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                        <div className="sm:col-span-2">
+                                                            <p className="font-semibold truncate">{item.productName}</p>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2 sm:col-span-2">
+                                                            <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} placeholder="مقدار" />
+                                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
+                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                <SelectContent>
                                                                     {(availableUnits || []).filter(u => u).map(u => <SelectItem key={u} value={u!}>{u}</SelectItem>)}
-                                                                    </SelectContent>
-                                                                </Select>
-                                                             </div>
+                                                                </SelectContent>
+                                                            </Select>
                                                         </div>
-                                                        <div className="grid gap-1.5">
-                                                            <Label htmlFor={`price-${index}`}>قیمت واحد</Label>
-                                                            <Input id={`price-${index}`} type="text" value={formatCurrency(item.unitPrice)} disabled className="w-full bg-muted/50" />
+                                                        <div className="flex items-center justify-between sm:justify-end gap-2">
+                                                             <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                         </div>
-                                                    </div>
-                                                    <div className="flex flex-col justify-between items-end gap-2 pt-4 sm:pt-0 sm:pl-2">
-                                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                        <p className="font-semibold text-lg">{formatCurrency(item.totalPrice)}</p>
                                                     </div>
                                                 </CardContent>
                                             </Card>

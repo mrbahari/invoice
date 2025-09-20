@@ -33,11 +33,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useData } from '@/context/data-context'; // Import useData
 
 const colorThemes = [
-    { name: 'Blue', value: '248 82% 50%', ring: '248 82% 50%' },
-    { name: 'Rose', value: '340 82% 50%', ring: '340 82% 50%' },
-    { name: 'Green', value: '142 64% 42%', ring: '142 64% 42%' },
-    { name: 'Orange', value: '25 95% 53%', ring: '25 95% 53%' },
-    { name: 'Purple', value: '262 84% 58%', ring: '262 84% 58%' },
+    { name: 'Blue', value: '248 82% 50%'},
+    { name: 'Rose', value: '340 82% 50%'},
+    { name: 'Green', value: '142 64% 42%'},
+    { name: 'Orange', value: '25 95% 53%'},
+    { name: 'Purple', value: '262 84% 58%'},
 ];
 
 export default function SettingsPage() {
@@ -50,15 +50,31 @@ export default function SettingsPage() {
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
   const [newUnitName, setNewUnitName] = useState('');
-
-  useEffect(() => {
-    document.documentElement.style.setProperty('--primary-hsl', activeColor);
-    document.documentElement.style.setProperty('--ring-hsl', activeColor);
-  }, [activeColor]);
-
+  
   const handleThemeColorChange = (colorValue: string) => {
     setActiveColor(colorValue);
+    const [h, s, l] = colorValue.split(' ').map(val => parseFloat(val.replace('%', '')));
+    
+    // Set Primary and Ring color
+    document.documentElement.style.setProperty('--primary-hsl', colorValue);
+    document.documentElement.style.setProperty('--ring-hsl', colorValue);
+    
+    // Set Background color (a very light version of the primary color)
+    const backgroundLightness = theme === 'dark' ? 8 : 97;
+    document.documentElement.style.setProperty('--background-hsl', `${h} ${s}% ${backgroundLightness}%`);
+
+    // Set Foreground color for readability
+    const foregroundLightness = theme === 'dark' ? 98 : 8;
+     document.documentElement.style.setProperty('--foreground-hsl', `${h} 10% ${foregroundLightness}%`);
+
   };
+  
+  // Apply theme when component mounts or theme/activeColor changes
+  useEffect(() => {
+    handleThemeColorChange(activeColor);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, activeColor]);
+
 
   const handleAddUnit = () => {
     const name = newUnitName.trim();

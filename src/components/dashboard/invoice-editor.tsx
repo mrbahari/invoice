@@ -536,14 +536,11 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 </CardDescription>
               </div>
                <div className='flex items-center gap-2'>
-                  <Button type="button" variant="outline" onClick={onCancel} className="dark:bg-white dark:text-black dark:animate-pulse-slow">
+                  <Button type="button" variant="ghost" onClick={onCancel} >
                     <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت
+                    انصراف
                   </Button>
-                  <Button onClick={handlePreviewClick} variant="outline" size="sm" className="h-10 gap-1 dark:bg-white dark:text-black dark:animate-pulse-slow">
-                    <Eye className="ml-2 h-3.5 w-3.5" />
-                    <span>ثبت و پیش‌نمایش</span>
-                  </Button>
+                  
                </div>
             </div>
           </CardHeader>
@@ -790,13 +787,13 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     </div>
     
     {isDirty && (
-        <div className="sticky bottom-20 sm:bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t mt-4 lg:col-span-3">
-            <div className="max-w-5xl mx-auto flex justify-between items-center">
-                 <div>
+        <div className="sticky bottom-20 sm:bottom-0 z-50 p-4 bg-card border-t mt-4 lg:col-span-3">
+            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+                 <div className="w-full sm:w-auto">
                   {isEditMode && (
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
-                              <Button type="button" variant="destructive" disabled={isProcessing}>
+                              <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}>
                                   <Trash2 className="ml-2 h-4 w-4" />
                                   حذف فاکتور
                               </Button>
@@ -817,12 +814,12 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                   )}
                 </div>
                 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 w-full sm:w-auto">
                     {isEditMode && (
                         <div className="grid gap-2">
                             <Label htmlFor="status" className="sr-only">وضعیت</Label>
                             <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
-                                <SelectTrigger id="status" className="w-[180px]">
+                                <SelectTrigger id="status" className="w-full sm:w-[180px]">
                                     <SelectValue placeholder="تغییر وضعیت" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -834,8 +831,16 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                         </div>
                     )}
 
-                    <Button className="min-w-[120px]" size="lg" onClick={() => handleProcessInvoice(false)} disabled={isProcessing || !isDirty}>
-                        {isProcessing ? (isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...') : (isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور')}
+                    <Button onClick={handlePreviewClick} variant="outline" size="lg" className="flex-1">
+                        <Eye className="ml-2 h-4 w-4" />
+                        <span>پیش‌نمایش</span>
+                    </Button>
+                    
+                    <Button className="min-w-[120px] flex-1" size="lg" onClick={() => handleProcessInvoice(false)} disabled={isProcessing || !isDirty}>
+                        <Save className="ml-2 h-4 w-4" />
+                        {isProcessing
+                        ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
+                        : isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
                     </Button>
                 </div>
             </div>

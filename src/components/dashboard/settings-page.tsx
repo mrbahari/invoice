@@ -98,9 +98,13 @@ export default function SettingsPage() {
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = async () => {
-    await resetData();
-    // The toast is now shown inside resetData, so we don't need one here.
+  const handleClearData = () => {
+    // This function will now ONLY clear the localStorage and reload.
+    // The DataProvider will then fall back to the initial data from the JSON file upon reload.
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    window.location.reload();
+    // No toast here, as the page reloads. A success message might be misleading
+    // as the user sees the initial default data, not an empty state.
   };
   
   const handleLoadDefaults = async () => {

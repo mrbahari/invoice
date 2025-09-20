@@ -111,11 +111,8 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInv
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">مشاهده</span>
                       </Button>
-                      {invoice.status === 'Pending' && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:text-green-600" onClick={() => onStatusChange(invoice.id, 'Paid')}>
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="sr-only">پرداخت</span>
-                        </Button>
+                      {invoice.status === 'Paid' && (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
                       )}
                     </div>
                 </TableCell>

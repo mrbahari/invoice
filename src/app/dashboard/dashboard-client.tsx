@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -22,7 +21,7 @@ export default function DashboardClientComponent() {
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
   
   // A state to hold data for navigation, e.g., an invoice to edit
-  const [navigationData, setNavigationData] = useState<any>(null);
+  const [initialInvoice, setInitialInvoice] = useState<Omit<Invoice, 'id'> | null>(null);
 
   useEffect(() => {
     // If someone lands on /dashboard without a tab, redirect them to the default tab view
@@ -31,8 +30,12 @@ export default function DashboardClientComponent() {
     }
   }, [searchParams, router]);
 
-  const handleNavigation = (tab: DashboardTab, data?: any) => {
-    setNavigationData(data); // Set data BEFORE pushing route
+  const handleNavigation = (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'>}) => {
+    if (tab === 'invoices' && data?.invoice) {
+        setInitialInvoice(data.invoice);
+    } else {
+        setInitialInvoice(null);
+    }
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
@@ -43,7 +46,7 @@ export default function DashboardClientComponent() {
           <DashboardHomePageContent onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'invoices' ? '' : 'hidden'}>
-          <InvoicesPage initialInvoice={navigationData?.invoice} setInitialInvoice={(inv) => setNavigationData(inv ? { invoice: inv } : null)} />
+          <InvoicesPage initialInvoice={initialInvoice} setInitialInvoice={setInitialInvoice} />
         </div>
         <div className={activeTab === 'products' ? '' : 'hidden'}>
           <ProductsPage />

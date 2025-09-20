@@ -45,8 +45,8 @@ const statusIcons: Record<InvoiceStatus, React.ElementType> = {
 
 type InvoiceTableProps = {
   invoiceList: Invoice[];
-  onEdit: (invoiceId: string) => void;
-  onPreview: (invoiceId: string) => void;
+  onEdit: (invoice: Invoice) => void;
+  onPreview: (invoice: Invoice) => void;
   onDelete: (invoiceId: string) => void;
 };
 
@@ -85,11 +85,11 @@ export function InvoiceTable({ invoiceList, onEdit, onPreview, onDelete }: Invoi
                 <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
                 <TableCell className="text-left">
                     <div className="flex items-center gap-1 justify-end">
-                      <Button onClick={() => onEdit(invoice.id)} size="icon" variant="ghost" className="h-8 w-8">
+                      <Button onClick={() => onEdit(invoice)} size="icon" variant="ghost" className="h-8 w-8">
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">ویرایش</span>
                       </Button>
-                      <Button onClick={() => onPreview(invoice.id)} size="icon" variant="ghost" className="h-8 w-8">
+                      <Button onClick={() => onPreview(invoice)} size="icon" variant="ghost" className="h-8 w-8">
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">مشاهده</span>
                       </Button>

@@ -47,8 +47,9 @@ import { useData } from '@/context/data-context';
 import { InvoiceActions } from './invoice-actions';
 
 type InvoiceEditorProps = {
-    invoiceId?: string; // Can be undefined for a new invoice
-    onSaveAndPreview: (invoiceId: string) => void;
+    invoiceToEdit?: Omit<Invoice, 'id'> | Invoice;
+    onSaveSuccess: (invoiceId: string) => void;
+    onPreview: (invoiceId: string) => void;
     onCancel: () => void;
 };
 
@@ -59,18 +60,16 @@ const useIsClient = () => {
   return isClient;
 };
 
-export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
-  const isEditMode = !!invoiceId;
-
-  // Find the initial invoice from the context if in edit mode
-  const initialInvoice = useMemo(() => isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined, [invoices, invoiceId, isEditMode]);
   
+  const isEditMode = invoiceToEdit && 'id' in invoiceToEdit;
+
   const [invoice, setInvoice] = useState<Partial<Invoice>>(
-    initialInvoice || {
+    invoiceToEdit || {
         date: new Date().toISOString(),
         status: 'Pending',
         items: [],
@@ -85,21 +84,12 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
   );
   
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(() => 
-    initialInvoice ? customerList.find(c => c.id === initialInvoice.customerId) : undefined
+    isEditMode ? customerList.find(c => c.id === invoiceToEdit.customerId) : undefined
   );
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-
-  // This effect synchronizes the state if the initialInvoice prop changes (e.g., switching from new to edit)
-  useEffect(() => {
-    if (initialInvoice) {
-      setInvoice(initialInvoice);
-      setSelectedCustomer(customerList.find(c => c.id === initialInvoice.customerId));
-    }
-  }, [initialInvoice, customerList]);
 
   // When customer changes, update invoice details
   useEffect(() => {
@@ -110,7 +100,6 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
         customerName: selectedCustomer.name,
         customerEmail: selectedCustomer.email
       }));
-       setIsDirty(true);
     }
   }, [selectedCustomer]);
 
@@ -134,7 +123,6 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
   }, [customerList, customerSearch]);
 
   const handleAddProduct = (product: Product) => {
-    setIsDirty(true);
     setInvoice(prev => {
       const items = prev.items ? [...prev.items] : [];
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
@@ -157,7 +145,6 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
   };
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
-    setIsDirty(true);
     setInvoice(prev => {
         const items = prev.items ? [...prev.items] : [];
         if (items[index]) {
@@ -171,7 +158,6 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
   };
   
   const handleUnitChange = (index: number, newUnit: string) => {
-    setIsDirty(true);
     setInvoice(prev => {
       const items = prev.items ? [...prev.items] : [];
       const item = items[index];
@@ -189,7 +175,6 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
   };
 
   const handleRemoveItem = (index: number) => {
-    setIsDirty(true);
     setInvoice(prev => ({
         ...prev,
         items: prev.items?.filter((_, i) => i !== index)
@@ -198,7 +183,6 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    setIsDirty(true);
     setInvoice(prev => {
       const items = Array.from(prev.items || []);
       const [removed] = items.splice(result.source.index, 1);
@@ -206,8 +190,7 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
       return {...prev, items};
     });
   };
-
-  // This function now returns the ID of the processed invoice
+  
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
       toast({ variant: 'destructive', title: 'مشتری یا آیتم‌های فاکتور انتخاب نشده است.' });
@@ -217,9 +200,9 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
     setIsProcessing(true);
     let processedInvoiceId: string;
 
-    if (isEditMode && invoice.id) {
-        processedInvoiceId = invoice.id;
-        const finalInvoice = { ...invoice } as Invoice;
+    if (isEditMode) {
+        processedInvoiceId = invoiceToEdit.id;
+        const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
         setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === processedInvoiceId ? finalInvoice : inv) }));
         toast({ variant: 'success', title: 'فاکتور ویرایش شد' });
     } else {
@@ -230,28 +213,34 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
     }
 
     setIsProcessing(false);
-    setIsDirty(false); // Reset dirty state after saving
     return processedInvoiceId;
   };
   
   const handleDeleteInvoice = () => {
-    if (!invoiceId) return;
-    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== invoiceId) }));
+    if (!isEditMode) return;
+    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== (invoiceToEdit as Invoice).id) }));
     toast({ title: 'فاکتور حذف شد' });
     onCancel();
   };
 
+  const handleSaveAndExit = () => {
+      const processedId = handleProcessInvoice();
+      if (processedId) {
+          onSaveSuccess(processedId);
+      }
+  };
+  
   const handlePreviewClick = () => {
-      if (isDirty) {
+    // If it's an existing invoice, we can preview it directly.
+    // If it's new, it must be saved first.
+    if (isEditMode) {
+        onPreview((invoiceToEdit as Invoice).id);
+    } else {
         const processedId = handleProcessInvoice();
         if (processedId) {
-            onSaveAndPreview(processedId);
+            onPreview(processedId);
         }
-      } else if (invoiceId) {
-        onSaveAndPreview(invoiceId);
-      } else {
-        toast({ variant: 'destructive', title: 'ابتدا فاکتور را ذخیره کنید.' });
-      }
+    }
   };
   
    return (
@@ -327,7 +316,7 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${initialInvoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
+                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                     </div>
                     <Button type="button" variant="ghost" onClick={onCancel}><ArrowRight className="ml-2 h-4 w-4" />انصراف</Button>
                 </div>
@@ -397,7 +386,7 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
                 </div>
                 <div className="grid gap-2 mt-6">
                     <Label htmlFor="description">توضیحات</Label>
-                    <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value})); setIsDirty(true);}} />
+                    <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} />
                 </div>
             </CardContent>
             </Card>
@@ -405,9 +394,9 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
                 <CardHeader><CardTitle>پرداخت</CardTitle></CardHeader>
                 <CardContent className="grid gap-4">
                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={invoice.additions || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, additions: parseFloat(e.target.value) || 0 })); setIsDirty(true);}} /></div>
-                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={invoice.discount || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 })); setIsDirty(true);}} /></div>
-                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (مبلغ ثابت)</Label><Input id="tax" type="number" value={invoice.tax || ''} onChange={(e) => {setInvoice(prev => ({...prev, tax: parseFloat(e.target.value) || 0})); setIsDirty(true);}} /></div>
+                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={invoice.additions || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, additions: parseFloat(e.target.value) || 0 }));}} /></div>
+                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={invoice.discount || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }));}} /></div>
+                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (مبلغ ثابت)</Label><Input id="tax" type="number" value={invoice.tax || ''} onChange={(e) => {setInvoice(prev => ({...prev, tax: parseFloat(e.target.value) || 0}));}} /></div>
                     </div>
                      <div className="space-y-2 text-sm">
                         <div className="flex justify-between"><span>جمع جزء</span><span>{formatCurrency(invoice.subtotal || 0)}</span></div>
@@ -444,14 +433,14 @@ export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: Invoice
                 {isEditMode && (
                     <div className="grid gap-2">
                         <Label htmlFor="status" className="sr-only">وضعیت</Label>
-                        <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => {setInvoice(prev => ({...prev, status: value})); setIsDirty(true);}}>
+                        <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => {setInvoice(prev => ({...prev, status: value}));}}>
                             <SelectTrigger id="status" className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Pending">در انتظار</SelectItem><SelectItem value="Paid">پرداخت شده</SelectItem><SelectItem value="Overdue">سررسید گذشته</SelectItem></SelectContent>
                         </Select>
                     </div>
                 )}
                 
-                <Button onClick={() => { handleProcessInvoice(); onCancel(); }} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700" disabled={!isDirty}><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
+                <Button onClick={handleSaveAndExit} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
             </div>
         </div>
     </div>

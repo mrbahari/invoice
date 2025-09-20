@@ -81,8 +81,9 @@ function toWords(num: number): string {
 type InvoicePreviewPageProps = {
     invoiceId: string;
     onBack: () => void;
+    onEdit: (invoiceId: string) => void;
 }
-export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewPageProps) {
+export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
   
   const { data } = useData();
   const { toast } = useToast();
@@ -102,9 +103,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
   }, [invoice, products, stores]);
 
   const handlePrint = () => {
-    // This is a simple way to trigger the browser's print dialog.
-    // CSS with @media print will handle the styling for printing.
-    setTimeout(() => window.print(), 500); // Timeout to ensure all styles are applied
+    // A small timeout helps ensure all styles are applied, especially custom fonts.
+    setTimeout(() => {
+      window.print();
+    }, 500); 
   };
 
 
@@ -136,13 +138,13 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
         <div className="mb-6 flex justify-between items-center gap-2 no-print">
             <Button type="button" variant="outline" onClick={onBack}>
                 <ArrowRight className="ml-2 h-4 w-4" />
-                بازگشت
+                بازگشت به لیست
             </Button>
             <div className="flex items-center gap-2">
-               <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handlePrint}>
+               <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => onEdit(invoiceId)}>
                   <Printer className="ml-2 h-3.5 w-3.5" />
                   <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    چاپ / PDF
+                    ویرایش
                   </span>
                 </Button>
               <InvoiceActions />

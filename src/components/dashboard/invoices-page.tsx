@@ -20,7 +20,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-type View = 'list' | 'editor' | 'preview';
+type View = 
+  | { type: 'list' }
+  | { type: 'editor'; invoice?: Omit<Invoice, 'id'> | Invoice }
+  | { type: 'preview'; invoiceId: string };
 
 type InvoicesPageProps = {
   initialInvoice?: Omit<Invoice, 'id'> | null;
@@ -33,32 +36,27 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  const [view, setView] = useState<View>('list');
-  const [currentInvoiceId, setCurrentInvoiceId] = useState<string | undefined>(undefined);
+  const [view, setView] = useState<View>({ type: 'list' });
 
   // Effect to handle the initial invoice prop from estimators
   useEffect(() => {
     if (initialInvoice) {
-      // It's a new invoice, go directly to editor. We don't set an ID yet.
-      setView('editor');
-      setCurrentInvoiceId(undefined); 
+      setView({ type: 'editor', invoice: initialInvoice });
+      // Clear it after use so it doesn't trigger again on re-renders
+      setInitialInvoice(null);
     }
-  }, [initialInvoice]);
+  }, [initialInvoice, setInitialInvoice]);
 
   const handleCreate = () => {
-    setInitialInvoice(null); // Clear any estimator-passed invoice
-    setCurrentInvoiceId(undefined); // No ID for a new invoice
-    setView('editor');
+    setView({ type: 'editor' });
   };
 
-  const handleEdit = (invoiceId: string) => {
-    setCurrentInvoiceId(invoiceId);
-    setView('editor');
+  const handleEdit = (invoice: Invoice) => {
+    setView({ type: 'editor', invoice });
   };
 
-  const handlePreview = (invoiceId: string) => {
-    setCurrentInvoiceId(invoiceId);
-    setView('preview');
+  const handlePreview = (invoice: Invoice) => {
+    setView({ type: 'preview', invoiceId: invoice.id });
   };
 
   const handleDelete = (invoiceId: string) => {
@@ -67,22 +65,31 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
       invoices: prev.invoices.filter(inv => inv.id !== invoiceId)
     }));
     toast({ variant: 'success', title: 'فاکتور حذف شد' });
-    // Stay on the list view
-    setView('list');
+    setView({ type: 'list' });
   };
 
-  // Called from editor when saved, then moves to preview
-  const handleSaveAndPreview = (savedInvoiceId: string) => {
-    setCurrentInvoiceId(savedInvoiceId);
-    setView('preview');
+  const handleSaveSuccess = (savedInvoiceId: string) => {
+    setView({ type: 'list' });
   };
   
-  // Called when canceling editor or going back from preview/editor
-  const handleCancel = () => {
-    setInitialInvoice(null); // Always clear the initial invoice on cancel
-    setCurrentInvoiceId(undefined);
-    setView('list');
+  const handleEditorPreview = (invoiceId: string) => {
+    setView({ type: 'preview', invoiceId });
   };
+  
+  const handleCancel = () => {
+    setView({ type: 'list' });
+  };
+  
+  const handlePreviewBack = () => {
+    // If the invoice being previewed is the same as the one being edited, go back to editor.
+    // Otherwise, go back to list.
+    if (view.type === 'preview' && 'invoice' in view && (view.invoice as Invoice)?.id === view.invoiceId) {
+        setView({type: 'editor', invoice: view.invoice})
+    } else {
+        setView({ type: 'list' });
+    }
+  };
+
 
   const filteredInvoices = useMemo(() => {
     return allInvoices.filter(invoice =>
@@ -91,30 +98,26 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
     );
   }, [allInvoices, searchTerm]);
 
-  // Determine which invoice to pass to the editor
-  // If it's from an estimator, pass it. Otherwise, pass the one being edited.
-  const editorInvoice = useMemo(() => {
-      if (view === 'editor' && !currentInvoiceId && initialInvoice) {
-          return { ...initialInvoice, id: undefined };
-      }
-      return currentInvoiceId ? allInvoices.find(inv => inv.id === currentInvoiceId) : undefined;
-  }, [view, currentInvoiceId, initialInvoice, allInvoices]);
-
 
   const renderContent = () => {
-    switch (view) {
+    switch (view.type) {
       case 'editor':
         return (
           <InvoiceEditor
-            invoiceId={currentInvoiceId}
-            onSaveAndPreview={handleSaveAndPreview}
+            invoiceToEdit={view.invoice}
+            onSaveSuccess={handleSaveSuccess}
+            onPreview={handleEditorPreview}
             onCancel={handleCancel}
           />
         );
       case 'preview':
-        return currentInvoiceId ? (
-          <InvoicePreviewPage invoiceId={currentInvoiceId} onBack={() => setView(currentInvoiceId ? 'editor' : 'list')} />
-        ) : null;
+        return (
+          <InvoicePreviewPage 
+            invoiceId={view.invoiceId} 
+            onBack={handleCancel} // Always go back to list from preview for simplicity
+            onEdit={(id) => setView({type: 'editor', invoice: allInvoices.find(i => i.id === id)})}
+          />
+        );
       case 'list':
       default:
         const tabsData = [

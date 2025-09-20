@@ -1,8 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import React from 'react';
 import {
   Search,
   LogOut,
@@ -27,13 +26,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -44,9 +36,8 @@ import {
 import { useAuth } from '@/components/auth/auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearch } from './search-provider';
-import { cn } from '@/lib/utils';
-import { LiveClock } from './live-clock';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import { LiveClock } from './live-clock';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
     dashboard: 'خانه',
@@ -69,7 +60,7 @@ interface HeaderProps {
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
   const { searchTerm, setSearchTerm } = useSearch();
-  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = React.useState(false);
 
   const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('') : '';
   
@@ -87,103 +78,71 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6 no-print">
-        {/* Left side: Breadcrumb & Desktop Search */}
+      <header className="sticky top-0 z-30 flex h-auto flex-col gap-4 border-b bg-background/95 p-4 backdrop-blur-sm sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:px-6 no-print">
         <div className="flex items-center gap-4">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <button onClick={() => onTabChange('dashboard')}>خانه</button>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                 <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          
-          {/* Desktop Search */}
-          {showSearch && (
-            <div className="relative hidden md:block">
-              <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="جستجو..."
-                className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          )}
+            <Breadcrumb>
+                <BreadcrumbList>
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                    <button onClick={() => onTabChange('dashboard')}>خانه</button>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                    <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
+                </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
         </div>
 
-        {/* Right side: Actions, Clock, Profile */}
-        <div className="flex items-center gap-2">
-            {/* Mobile Search */}
-            {showSearch && (
-              <div className="md:hidden">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9">
-                      <Search className="h-4 w-4" />
-                      <span className="sr-only">جستجو</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="top" className="p-4">
-                    <SheetHeader className="mb-4">
-                      <SheetTitle>جستجو در {tabToNameMapping[activeTab]}</SheetTitle>
-                    </SheetHeader>
-                    <div className="relative">
-                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                          type="search"
-                          placeholder="جستجو..."
-                          className="w-full rounded-lg bg-muted pr-10 h-12 text-base"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          autoFocus
-                      />
-                    </div>
-                  </SheetContent>
-                </Sheet>
+        <div className="flex items-center gap-2 md:gap-4">
+          {showSearch && (
+              <div className="relative flex-1">
+                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="جستجو..."
+                  className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            )}
-            
-            <div className="hidden sm:flex items-center gap-4">
-              <LiveClock />
-            </div>
+          )}
+          <div className="hidden sm:flex items-center gap-2">
+            <LiveClock />
+          </div>
 
+          <div className="flex items-center gap-1 ml-auto">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSettingsClick}>
-              <Settings className="h-4 w-4" />
-              <span className="sr-only">تنظیمات</span>
+                <Settings className="h-4 w-4" />
+                <span className="sr-only">تنظیمات</span>
             </Button>
 
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
-                  size="icon"
-                  className="overflow-hidden rounded-full h-9 w-9"
+                    variant="outline"
+                    size="icon"
+                    className="overflow-hidden rounded-full h-9 w-9"
                 >
-                  <Avatar className="h-9 w-9">
+                    <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
                     <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                  </Avatar>
+                    </Avatar>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>پشتیبانی</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
-                  <LogOut className="ml-2 h-4 w-4" />
-                  خروج
+                    <LogOut className="ml-2 h-4 w-4" />
+                    خروج
                 </DropdownMenuItem>
-              </DropdownMenuContent>
+                </DropdownMenuContent>
             </DropdownMenu>
+           </div>
         </div>
       </header>
 

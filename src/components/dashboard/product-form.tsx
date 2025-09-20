@@ -376,7 +376,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
   return (
-    <form onSubmit={handleSubmit} className='pb-24'>
+    <>
+      <form onSubmit={handleSubmit}>
         <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
             
             <div className="grid gap-6 lg:col-span-2 auto-rows-min">
@@ -579,7 +580,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             </div>
         </div>
         {isDirty && (
-            <div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t md:left-auto md:right-14">
+            <div className="sticky bottom-[90px] md:bottom-0 z-10 p-4 bg-card/80 backdrop-blur-sm border-t mt-4">
                 <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
                     <div>
                          {isEditMode && (
@@ -621,6 +622,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </div>
             </div>
         )}
-    </form>
+      </form>
+    </>
   );
 }

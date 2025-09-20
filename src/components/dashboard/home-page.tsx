@@ -176,15 +176,15 @@ export default function DashboardHomePageContent({ onNavigate }: DashboardHomePa
                         {recentPaidInvoices.map(invoice => {
                              const customer = allCustomers.find(c => c.id === invoice.customerId);
                              const hasValidName = invoice.customerName && invoice.customerName !== 'مشتری بدون نام';
-                             const displayName = hasValidName ? invoice.customerName : (customer?.phone || invoice.customerEmail);
+                             const displayPhone = customer?.phone || invoice.customerEmail || 'بدون تماس';
 
                              return (
                                <TableRow key={invoice.id}>
                                   <TableCell>
-                                      <div className="font-medium">{displayName}</div>
-                                      {hasValidName && customer?.phone && (
+                                      <div className="font-medium">{displayPhone}</div>
+                                      {hasValidName && (
                                         <div className="text-sm text-muted-foreground">
-                                          {customer.phone}
+                                          {invoice.customerName}
                                         </div>
                                       )}
                                   </TableCell>

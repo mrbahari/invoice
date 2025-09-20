@@ -44,22 +44,27 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // Helper function to load data from localStorage or fall back to initial data
 const loadData = (): AppData => {
   if (typeof window === 'undefined') {
-    // Check if initialData has content, otherwise return empty structure
     return initialData.customers?.length ? initialData : emptyData;
   }
   try {
     const storedData = localStorage.getItem('appData');
     if (storedData) {
       const parsedData = JSON.parse(storedData);
-      // Ensure the loaded data has the correct structure
-      if (parsedData.customers && parsedData.products) {
+      // More robust check for corrupted data
+      if (
+        Array.isArray(parsedData.customers) &&
+        Array.isArray(parsedData.products) &&
+        Array.isArray(parsedData.invoices) &&
+        Array.isArray(parsedData.stores) &&
+        Array.isArray(parsedData.categories) &&
+        Array.isArray(parsedData.units)
+      ) {
         return parsedData;
       }
     }
     // If no data in local storage, or data is invalid, save the initial data there first.
-    const dataToStore = initialData.customers?.length ? initialData : emptyData;
-    localStorage.setItem('appData', JSON.stringify(dataToStore));
-    return dataToStore;
+    localStorage.setItem('appData', JSON.stringify(initialData));
+    return initialData;
   } catch (error) {
     console.error("Failed to load or parse data from localStorage, falling back to initial data.", error);
     // On error, also try to use initial data
@@ -100,30 +105,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [data, isInitialized, toast]);
 
-  // Function to completely reset data to defaults
+  // Function to completely reset data to defaults by clearing storage and reloading
   const resetData = async (): Promise<void> => {
     return new Promise((resolve) => {
-        if (typeof window !== 'undefined') {
-            setIsResetting(true);
-            setTimeout(() => { // Simulate a short delay for user feedback
-                try {
-                    localStorage.setItem('appData', JSON.stringify(initialData));
-                    setData(initialData);
-                } catch (error) {
-                    console.error("Failed to reset data", error);
-                    toast({
-                        variant: 'destructive',
-                        title: 'خطا در بازنشانی',
-                        description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
-                    });
-                } finally {
-                    setIsResetting(false);
-                    resolve();
-                }
-            }, 1000); // 1-second delay
-        } else {
-            resolve();
+      if (typeof window !== 'undefined') {
+        setIsResetting(true);
+        // This approach is more robust for corrupted data issues.
+        // It clears storage and forces a fresh load from the default source.
+        try {
+          localStorage.removeItem('appData');
+          // Reload the page to force a fresh data load from scratch
+          window.location.reload();
+        } catch (error) {
+          console.error("Failed to reset data", error);
+          toast({
+            variant: 'destructive',
+            title: 'خطا در بازنشانی',
+            description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
+          });
+          setIsResetting(false);
+          resolve();
         }
+        // Note: The promise might not resolve if the page reloads successfully.
+        // The setIsResetting(false) is mainly for the error path.
+      } else {
+        resolve();
+      }
     });
   };
   

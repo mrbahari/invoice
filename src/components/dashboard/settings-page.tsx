@@ -309,7 +309,7 @@ export default function SettingsPage() {
                 دانلود فایل پشتیبان (Backup)
             </Button>
             <div>
-              <Button onClick={handleRestoreClick} className="w-full">
+              <Button onClick={handleRestoreClick} variant="outline" className="w-full">
                 <Upload className="ml-2 h-4 w-4" />
                 بازیابی از فایل (Restore)
               </Button>

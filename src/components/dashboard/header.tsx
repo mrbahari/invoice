@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
-import { Search, Sparkles, Settings, Package2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Sparkles, Settings, Package2, Phone, Copy } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -22,9 +23,11 @@ import {
 import { useSearch } from './search-provider';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 import { LiveClock } from './live-clock';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
-  dashboard: 'گزارشات', // Changed to reflect new default
+  dashboard: 'داشبورد',
   invoices: 'فاکتورها',
   products: 'محصولات',
   customers: 'مشتریان',
@@ -47,10 +50,28 @@ interface HeaderProps {
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
-  const [isSupportDialogOpen, setIsSupportDialogOpen] = React.useState(false);
+  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleSettingsClick = () => {
     onTabChange('settings');
+  };
+
+  const copyToClipboard = () => {
+    const phoneNumber = '09125486083';
+    navigator.clipboard.writeText(phoneNumber).then(() => {
+      toast({
+        variant: 'success',
+        title: 'کپی شد',
+        description: 'شماره تماس در کلیپ‌بورد شما کپی شد.',
+      });
+    }, (err) => {
+      toast({
+        variant: 'destructive',
+        title: 'خطا',
+        description: 'امکان کپی کردن وجود ندارد.',
+      });
+    });
   };
 
   const showSearch = showSearchTabs.includes(activeTab) && isSearchVisible;
@@ -128,17 +149,31 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
       </header>
 
       <Dialog open={isSupportDialogOpen} onOpenChange={setIsSupportDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="items-center text-center">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
-            <DialogDescription className="text-base !mt-4">
-              اسماعیل بهاری
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md bg-background/80 backdrop-blur-sm">
+           <DialogHeader>
+            <div className="flex flex-col items-center text-center gap-2 mb-4">
+                <div className="p-3 bg-primary/10 rounded-full border border-primary/20">
+                    <Sparkles className="h-8 w-8 text-primary animate-pulse-slow" />
+                </div>
+                <DialogTitle className="text-xl">پشتیبانی و توسعه</DialogTitle>
+                <DialogDescription className="text-base">
+                  اسماعیل بهاری
+                </DialogDescription>
+            </div>
           </DialogHeader>
-          <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
-            09125486083
+          
+          <div className="p-3 border rounded-lg flex justify-between items-center bg-muted/50">
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-muted-foreground" />
+              <span className="font-mono text-lg tracking-widest text-foreground">
+                09125486083
+              </span>
+            </div>
+            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+              <Copy className="h-5 w-5" />
+            </Button>
           </div>
+
         </DialogContent>
       </Dialog>
     </>

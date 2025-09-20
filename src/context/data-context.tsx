@@ -48,7 +48,7 @@ const loadData = (): AppData => {
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [data, setData] = useState<AppData>(loadData);
+  const [data, setData] = useState<AppData>(loadData());
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Mark as initialized once the component has mounted and data is set
@@ -76,11 +76,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const resetData = () => {
     if (typeof window !== 'undefined') {
         try {
-            // Clear localStorage first
             localStorage.removeItem('appData');
-            // Then reload the page. On reload, the loadData function will see
-            // an empty localStorage and load the initialData.
-            window.location.reload();
+            setData(initialData); // Reset state to initial data without reloading the page
         } catch (error) {
              console.error("Failed to reset data", error);
             toast({

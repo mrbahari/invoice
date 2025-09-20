@@ -100,16 +100,10 @@ export default function SettingsPage() {
 
   const handleClearData = async () => {
     await clearAllData();
-    // The clearAllData function now handles toast and reload
   };
   
   const handleLoadDefaults = async () => {
     await resetData();
-    toast({
-        variant: 'success',
-        title: 'اطلاعات پیش‌فرض بارگذاری شد',
-        description: 'داده‌های اولیه برنامه با موفقیت جایگزین شدند.',
-    });
   };
 
   const handleBackupData = () => {
@@ -231,30 +225,6 @@ export default function SettingsPage() {
             </CardContent>
         </Card>
         
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <CardHeader>
-                <CardTitle>تم رنگی</CardTitle>
-                <CardDescription>
-                    رنگ اصلی برنامه را انتخاب کنید.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-5 gap-2">
-                    {colorThemes.map(color => (
-                        <Button 
-                            key={color.name}
-                            variant={activeColor === color.value ? 'default' : 'outline'}
-                            size="icon" 
-                            className="h-12 w-12 rounded-lg"
-                            onClick={() => handleThemeColorChange(color.value)}
-                        >
-                            <span className="h-6 w-6 rounded-full" style={{ backgroundColor: `hsl(${color.value})` }}></span>
-                        </Button>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-
         <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <CardHeader>
             <CardTitle>مدیریت واحدها</CardTitle>

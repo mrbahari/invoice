@@ -271,11 +271,22 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
    return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
+    <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-5">
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
              <Card className="animate-fade-in-up">
                 <CardHeader>
-                    <CardTitle>محصولات</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>محصولات</CardTitle>
+                      <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={onCancel}
+                          className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                        >
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                          بازگشت
+                      </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <div className="relative">
@@ -344,7 +355,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     <div>
                         <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                     </div>
-                    <Button type="button" variant="ghost" onClick={onCancel}><ArrowRight className="ml-2 h-4 w-4" />انصراف</Button>
                 </div>
             </CardHeader>
             <CardContent>
@@ -473,5 +483,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
-
-    

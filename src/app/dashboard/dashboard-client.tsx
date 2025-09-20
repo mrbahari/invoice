@@ -8,7 +8,6 @@ import InvoicesPage from '@/components/dashboard/invoices-page';
 import ReportsPage from '@/components/dashboard/reports-page';
 import SettingsPage from '@/components/dashboard/settings-page';
 import EstimatorsPage from '@/components/dashboard/estimators-page';
-import DashboardHomePageContent from '@/components/dashboard/home-page';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Invoice } from '@/lib/definitions';
 
@@ -43,7 +42,8 @@ export default function DashboardClientComponent() {
   return (
       <>
         <div className={activeTab === 'dashboard' ? '' : 'hidden'}>
-          <DashboardHomePageContent onNavigate={handleNavigation} />
+           {/* Reports page is now the default dashboard view */}
+          <ReportsPage onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'invoices' ? '' : 'hidden'}>
           <InvoicesPage initialInvoice={initialInvoice} setInitialInvoice={setInitialInvoice} />
@@ -61,6 +61,7 @@ export default function DashboardClientComponent() {
           <EstimatorsPage onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'reports' ? '' : 'hidden'}>
+          {/* This tab is kept for direct navigation but dashboard shows it by default */}
           <ReportsPage onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'settings' ? '' : 'hidden'}>

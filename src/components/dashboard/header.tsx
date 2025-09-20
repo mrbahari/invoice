@@ -1,16 +1,7 @@
-
 'use client';
 
 import React from 'react';
-import { Search, LogOut, Sparkles, Settings } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Search, Sparkles, Settings, Package2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,14 +19,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { useAuth } from '@/components/auth/auth-provider';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useSearch } from './search-provider';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 import { LiveClock } from './live-clock';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
-  dashboard: 'خانه',
+  dashboard: 'گزارشات', // Changed to reflect new default
   invoices: 'فاکتورها',
   products: 'محصولات',
   customers: 'مشتریان',
@@ -58,12 +47,8 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
-  const { user, logout } = useAuth();
   const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
   const [isSupportDialogOpen, setIsSupportDialogOpen] = React.useState(false);
-
-  const getInitials = (name?: string | null) =>
-    name ? name.split(' ').map((n) => n[0]).join('') : '';
 
   const handleSettingsClick = () => {
     onTabChange('settings');
@@ -93,6 +78,12 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        
+        <div className="flex md:hidden items-center gap-2">
+            <Package2 className="h-6 w-6" />
+            <span className="font-bold">حسابگر</span>
+        </div>
+
 
         <div className="relative ml-auto flex-1 md:grow-0">
           {showSearch && (
@@ -109,7 +100,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2">
           <LiveClock />
         </div>
 
@@ -124,38 +115,16 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             <span className="sr-only">تنظیمات</span>
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="overflow-hidden rounded-full h-9 w-9"
-              >
-                <Avatar className="h-9 w-9">
-                  <AvatarImage
-                    src={user?.photoURL ?? undefined}
-                    alt="آواتار"
-                    data-ai-hint="user avatar"
-                  />
-                  <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                {user?.displayName || user?.email || 'حساب کاربری'}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>
-                پشتیبانی
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOut className="ml-2 h-4 w-4" />
-                خروج
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+           <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setIsSupportDialogOpen(true)}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="sr-only">پشتیبانی</span>
+          </Button>
+
         </div>
       </header>
 

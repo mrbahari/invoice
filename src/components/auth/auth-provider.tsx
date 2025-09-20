@@ -1,154 +1,24 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-    onAuthStateChanged, 
-    signOut, 
-    GoogleAuthProvider, 
-    signInWithRedirect,
-    getRedirectResult,
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword,
-    sendPasswordResetEmail,
-    updateProfile,
-    type User
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import type { AuthFormValues } from '@/lib/definitions';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useRouter, usePathname } from 'next/navigation';
-import { useData } from '@/context/data-context'; // Import useData
+import { DataProvider, useData } from '@/context/data-context'; // Import useData
 
-type AuthContextType = {
-  user: User | null;
-  signInWithGoogle: () => Promise<void>;
-  signUpWithEmail: (values: AuthFormValues) => Promise<User | null>;
-  signInWithEmail: (values: AuthFormValues) => Promise<User | null>;
-  resetPassword: (email: string) => Promise<void>;
-  logout: () => Promise<void>;
-  loading: boolean;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const publicRoutes = ['/login', '/signup'];
+// Auth is removed, so we create a simple provider that just renders children
+// after data is initialized.
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [authLoading, setAuthLoading] = useState(true);
-    const { isInitialized: dataInitialized } = useData(); // Get data loading status
-    const router = useRouter();
-    const pathname = usePathname();
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            try {
-                // First, check if a redirect just happened
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    // Google sign-in successful, `onAuthStateChanged` will fire again with the user.
-                    // We can already set loading to false and let the next check handle the redirect.
-                    setUser(result.user);
-                } else {
-                    setUser(currentUser);
-                }
-            } catch (error) {
-                console.error("Auth state change error:", error);
-                setUser(currentUser); // Set user even if getRedirectResult fails
-            } finally {
-                setAuthLoading(false);
-            }
-        });
-
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
-    }, []);
+    const { isInitialized: dataInitialized } = useData();
     
-    // Combine auth loading and data loading status
-    const loading = authLoading || !dataInitialized;
-
-    useEffect(() => {
-        if (loading) {
-            return; // Don't do anything while loading
-        }
-
-        const isPublicRoute = publicRoutes.includes(pathname);
-
-        if (user && isPublicRoute) {
-            router.push('/dashboard?tab=dashboard');
-        } else if (!user && !isPublicRoute) {
-            router.push('/login');
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, loading, pathname, router]);
-
-    const signInWithGoogle = async () => {
-        setAuthLoading(true);
-        const provider = new GoogleAuthProvider();
-        await signInWithRedirect(auth, provider);
-        // The page will redirect, and the result will be handled by the useEffect above.
-    };
-
-    const signUpWithEmail = async (values: AuthFormValues) => {
-        setAuthLoading(true);
-        if (!values.email || !values.password || !values.firstName) {
-            throw new Error("Missing fields for sign up");
-        }
-        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-        await updateProfile(userCredential.user, {
-            displayName: `${values.firstName} ${values.lastName || ''}`.trim()
-        });
-        // onAuthStateChanged will handle the user state update, and the effect will handle routing
-        return userCredential.user;
-    };
-    
-    const signInWithEmail = async (values: AuthFormValues) => {
-        setAuthLoading(true);
-        if (!values.email || !values.password) {
-            throw new Error("Email or password missing.");
-        }
-        const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-        // onAuthStateChanged will handle the user state update, and the effect will handle routing
-        return userCredential.user;
-    };
-
-    const resetPassword = async (email: string) => {
-        await sendPasswordResetEmail(auth, email);
-    };
-
-    const logout = async () => {
-        await signOut(auth);
-        // The effect will handle the redirect to /login
-    };
-
-    const value: AuthContextType = {
-        user,
-        signInWithGoogle,
-        signUpWithEmail,
-        signInWithEmail,
-        resetPassword,
-        logout,
-        loading,
-    };
-    
-    // While loading (auth or data), or if routing hasn't happened yet, show a full-screen loader.
-    // This prevents flashing the wrong page.
-    if (loading || (user && publicRoutes.includes(pathname)) || (!user && !publicRoutes.includes(pathname))) {
-        return (
-            <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
-                <LoadingSpinner />
-            </div>
-        );
+    // While data is loading, show a full-screen loader.
+    if (!dataInitialized) {
+        return null; // The DataProvider will show its own loading spinner
     }
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return <>{children}</>;
 }
 
+// A dummy useAuth hook to prevent errors in other components that might still call it.
+// It doesn't need to return anything as user/loading is no longer managed here.
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return { user: true, loading: false }; // Return dummy values to prevent crashes
 }

@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Expand } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -14,7 +14,6 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
-import { InvoiceActions } from './invoice-actions';
 
 
 function toWords(num: number): string {
@@ -132,6 +131,15 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             .catch(err => console.error('Failed to generate QR code:', err));
     }
   }, [invoice, customer]);
+  
+  const handleFullScreen = () => {
+    const element = document.getElementById('invoice-card');
+    if (element) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        }
+    }
+  };
 
   if (!invoice || !customer || !store) {
     return (
@@ -158,7 +166,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                <Button size="sm" variant="outline" className="h-8 gap-1 dark:border-white/50 dark:text-white dark:hover:bg-white/10" onClick={() => onEdit(invoiceId)}>
                   ویرایش
                 </Button>
-              <InvoiceActions />
+               <Button size="sm" variant="outline" className="h-8 gap-1 dark:border-white/50 dark:text-white dark:hover:bg-white/10" onClick={handleFullScreen}>
+                  <Expand className="ml-2 h-4 w-4" />
+                  تمام صفحه
+                </Button>
             </div>
         </div>
 

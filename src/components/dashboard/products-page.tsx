@@ -27,6 +27,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
 import { useData } from '@/context/data-context'; // Import useData
+import { cn } from '@/lib/utils';
+
 
 export default function ProductsPage() {
   const { data } = useData(); // Use the central data context
@@ -36,12 +38,13 @@ export default function ProductsPage() {
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
 
   useEffect(() => {
     if (view === 'list' && scrollPositionRef.current > 0) {
       setTimeout(() => {
-        window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
+        window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
         scrollPositionRef.current = 0; // Reset after restoring
       }, 0);
     }
@@ -49,23 +52,30 @@ export default function ProductsPage() {
 
   const handleAddClick = () => {
     setEditingProduct(undefined);
+    setSelectedProductId(null);
     setView('form');
   }
 
   const handleEditClick = (product: Product) => {
     scrollPositionRef.current = window.scrollY;
     setEditingProduct(product);
+    setSelectedProductId(product.id);
     setView('form');
   }
 
   const handleFormSuccess = () => {
     setView('list');
     setEditingProduct(undefined);
+    setSelectedProductId(null);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   const handleFormCancel = () => {
     setView('list');
     setEditingProduct(undefined);
+    setSelectedProductId(null);
   }
 
   const filteredProducts = useMemo(() => {
@@ -178,7 +188,10 @@ export default function ProductsPage() {
                 <TableRow
                   key={product.id}
                   onClick={() => handleEditClick(product)}
-                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                  className={cn(
+                    "cursor-pointer transition-colors",
+                    selectedProductId === product.id ? 'bg-muted' : 'hover:bg-muted/50'
+                  )}
                 >
                   <TableCell className="hidden sm:table-cell">
                     <Image

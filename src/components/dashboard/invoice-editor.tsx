@@ -152,7 +152,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const filteredCustomers = useMemo(() => {
     if (!customerList) return [];
-    return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()));
+    return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
 
   const handleAddProduct = (product: Product) => {
@@ -334,15 +334,15 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </CardHeader>
                     <CardContent>
                        {selectedCustomer ? (
-                            <div className="flex items-center justify-between gap-4 p-4 border rounded-lg">
+                            <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
                                 <div className="flex items-center gap-3">
                                     <Avatar className="h-12 w-12 border">
-                                        <AvatarImage src={selectedCustomer.avatarUrl} />
+                                        <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
                                         <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold text-lg">{selectedCustomer.name}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                                        <p className="font-semibold text-lg">{selectedCustomer.phone}</p>
+                                        <p className="text-sm text-muted-foreground">{selectedCustomer.name !== 'مشتری بدون نام' ? selectedCustomer.name : 'بی نام'}</p>
                                     </div>
                                 </div>
                                 <DialogTrigger asChild>
@@ -354,7 +354,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                             </div>
                         ) : (
                             <DialogTrigger asChild>
-                                <Button variant="outline" className="w-full h-20">
+                                <Button variant="outline" className="w-full h-20 border-dashed">
                                     <UserPlus className="ml-2 h-5 w-5" />
                                     انتخاب مشتری از لیست
                                 </Button>
@@ -363,7 +363,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </CardContent>
                 </Card>
 
-                <DialogContent className="w-[350px] sm:w-[450px]">
+                <DialogContent className="sm:max-w-[450px] bg-white dark:bg-zinc-900">
                     <DialogHeader>
                         <DialogTitle>انتخاب مشتری</DialogTitle>
                     </DialogHeader>
@@ -374,28 +374,33 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         </div>
                         <ScrollArea className="h-[60vh]">
                             <div className="grid gap-2 pr-4">
-                                {(filteredCustomers || []).map(customer => (
-                                    <Button
-                                        key={customer.id}
-                                        variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                        className="justify-start h-16"
-                                        onClick={() => {
-                                            setSelectedCustomer(customer);
-                                            setIsCustomerDialogOpen(false);
-                                        }}
-                                    >
-                                        <div className="flex items-center gap-4 text-right">
-                                            <Avatar className="h-10 w-10 border">
-                                                <AvatarImage src={customer.avatarUrl} />
-                                                <AvatarFallback>{customer.name?.[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className='text-base'>{customer.name}</p>
-                                                <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                {(filteredCustomers || []).map(customer => {
+                                    const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
+                                    const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map((n) => n[0]).join('');
+
+                                    return(
+                                        <Button
+                                            key={customer.id}
+                                            variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                                            className="justify-start h-16"
+                                            onClick={() => {
+                                                setSelectedCustomer(customer);
+                                                setIsCustomerDialogOpen(false);
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-4 text-right w-full">
+                                                <Avatar className="h-10 w-10 border">
+                                                    <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                    <AvatarFallback>{nameInitials}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className='text-base font-semibold'>{customer.phone}</p>
+                                                    <p className="text-xs text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </Button>
-                                ))}
+                                        </Button>
+                                    );
+                                })}
                             </div>
                         </ScrollArea>
                     </div>

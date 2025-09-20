@@ -284,16 +284,19 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                         <TableBody>
                         {topCustomers.map(customer => {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
-                            const displayName = hasValidName ? customer.name : customer.phone;
+                            const initials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
                             return (
                                 <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
                                     <TableCell>
                                         <div className="flex items-center gap-3 hover:underline">
                                             <Avatar className="hidden h-9 w-9 sm:flex">
                                                 <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                                <AvatarFallback>{displayName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                                <AvatarFallback>{initials}</AvatarFallback>
                                             </Avatar>
-                                            <span className="font-medium">{displayName}</span>
+                                            <div>
+                                                <div className="font-medium">{customer.phone}</div>
+                                                <div className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</div>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>

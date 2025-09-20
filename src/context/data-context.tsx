@@ -95,6 +95,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const defaultDataFromMb = initialDataFromFile as AppData;
           setData(defaultDataFromMb);
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDataFromMb));
+          toast({
+            variant: 'success',
+            title: 'اطلاعات پیش‌فرض بارگذاری شد',
+            description: 'داده‌های اولیه برنامه با موفقیت جایگزین شدند.',
+          });
       } catch (error) {
            console.error("Failed to reset data", error);
            toast({

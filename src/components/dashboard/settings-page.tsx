@@ -98,27 +98,13 @@ export default function SettingsPage() {
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = () => {
-    try {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
-        // We reload the page to force the DataProvider to re-initialize
-        // from the default JSON, which is now the "cleared" state.
-        window.location.reload();
-    } catch (error) {
-         toast({
-            variant: 'destructive',
-            title: 'خطا در پاک کردن اطلاعات',
-        });
-    }
+  const handleClearData = async () => {
+    await resetData();
+    // The toast is now shown inside resetData, so we don't need one here.
   };
   
   const handleLoadDefaults = async () => {
     await resetData();
-     toast({
-      variant: 'success',
-      title: 'اطلاعات پیش‌فرض بارگذاری شد',
-      description: 'داده‌های اولیه برنامه با موفقیت جایگزین شدند.',
-    });
   };
 
   const handleBackupData = () => {

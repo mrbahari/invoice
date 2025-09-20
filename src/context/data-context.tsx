@@ -37,7 +37,12 @@ const loadData = (): AppData => {
   }
   try {
     const storedData = localStorage.getItem('appData');
-    return storedData ? JSON.parse(storedData) : initialData;
+    if (storedData) {
+      return JSON.parse(storedData);
+    }
+    // If no data in local storage, save the initial data there first.
+    localStorage.setItem('appData', JSON.stringify(initialData));
+    return initialData;
   } catch (error) {
     console.error("Failed to load or parse data from localStorage, falling back to initial data.", error);
     return initialData;
@@ -48,16 +53,18 @@ const loadData = (): AppData => {
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [data, setData] = useState<AppData>(loadData());
+  const [data, setData] = useState<AppData>(initialData); // Start with default, load from storage in effect
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Mark as initialized once the component has mounted and data is set
+  // Effect to load data from localStorage on mount
   useEffect(() => {
+    setData(loadData());
     setIsInitialized(true);
   }, []);
 
   // Persist data to localStorage whenever it changes
   useEffect(() => {
+    // Only save to localStorage after the initial load is complete
     if (isInitialized) {
         try {
             localStorage.setItem('appData', JSON.stringify(data));
@@ -72,12 +79,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [data, isInitialized, toast]);
 
-  // Function to completely reset data
+  // Function to completely reset data to defaults
   const resetData = () => {
     if (typeof window !== 'undefined') {
         try {
-            localStorage.removeItem('appData');
-            setData(initialData); // Reset state to initial data without reloading the page
+            localStorage.removeItem('appData'); // Clear storage
+            setData(initialData); // Reset state to initial default data
+            // We don't need to save to localStorage here, because the effect above will do it.
         } catch (error) {
              console.error("Failed to reset data", error);
             toast({

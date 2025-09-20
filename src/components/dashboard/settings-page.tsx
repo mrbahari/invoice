@@ -99,7 +99,7 @@ export default function SettingsPage() {
   };
 
   const handleClearData = () => {
-    resetData();
+    resetData(); // This now correctly resets all data
     toast({
       variant: 'success',
       title: 'اطلاعات پاک شد',
@@ -393,5 +393,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

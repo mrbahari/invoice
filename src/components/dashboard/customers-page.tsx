@@ -189,61 +189,69 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCustomers.map((customer) => {
-              const { totalSpent, orderCount } = getCustomerStats(customer.id);
-              const hasValidName =
-                customer.name && customer.name !== 'مشتری بدون نام';
-              const nameInitials = (
-                hasValidName ? customer.name : customer.phone
-              )
-                .split(' ')
-                .map((n) => n[0])
-                .join('');
-              return (
-                <TableRow
-                  key={customer.id}
-                  onClick={() => handleRowClick(customer)}
-                  className="cursor-pointer"
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="hidden h-9 w-9 sm:flex">
-                        <AvatarImage
-                          src={`https://picsum.photos/seed/${customer.id}/36/36`}
-                          alt="آواتار"
-                          data-ai-hint="person avatar"
-                        />
-                        <AvatarFallback>{nameInitials}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{customer.phone}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {hasValidName ? customer.name : 'بی نام'}
+            {filteredCustomers.length > 0 ? (
+              filteredCustomers.map((customer) => {
+                const { totalSpent, orderCount } = getCustomerStats(customer.id);
+                const hasValidName =
+                  customer.name && customer.name !== 'مشتری بدون نام';
+                const nameInitials = (
+                  hasValidName ? customer.name : customer.phone
+                )
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('');
+                return (
+                  <TableRow
+                    key={customer.id}
+                    onClick={() => handleRowClick(customer)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="hidden h-9 w-9 sm:flex">
+                          <AvatarImage
+                            src={`https://picsum.photos/seed/${customer.id}/36/36`}
+                            alt="آواتار"
+                            data-ai-hint="person avatar"
+                          />
+                          <AvatarFallback>{nameInitials}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{customer.phone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {hasValidName ? customer.name : 'بی نام'}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell text-center">
-                    {orderCount}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-left">
-                    {formatCurrency(totalSpent)}
-                  </TableCell>
-                  <TableCell className="text-left">
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditClick(customer);
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      ویرایش
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-center">
+                      {orderCount}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-left">
+                      {formatCurrency(totalSpent)}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(customer);
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        ویرایش
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  هیچ مشتری‌ای یافت نشد.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

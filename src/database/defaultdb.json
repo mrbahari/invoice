@@ -1,73 +1,9 @@
 {
-  "customers": [
-    {
-      "id": "cust-t7qq0wtzl",
-      "name": "09197166675",
-      "email": "ایمیل ثبت نشده",
-      "phone": "شماره ثبت نشده",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید"
-    },
-    {
-      "id": "cust-zv7mf3v4i",
-      "name": "مشتری بدون نام",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09398330932",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید"
-    },
-    {
-      "id": "cust-uv6dic62a",
-      "name": "اصغر حسن زاده | شرکت همراه کوشا کیش",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09121372580",
-      "address": "فرودگاه امام خمینی",
-      "purchaseHistory": "مشتری جدید"
-    }
-  ],
-  "products": [
-    {
-      "id": "prod-ioz0fpkp5",
-      "name": "تایل پی وی سی",
-      "code": "",
-      "description": "تایل‌های پی وی سی کناف، انتخابی ایده‌آل برای سقف‌های کاذب با ظاهری مدرن و دوام بالا. این تایل‌ها با مقاومت فوق‌العاده در برابر رطوبت و قابلیت شستشو، راه‌حلی کاربردی و زیبا برای فضاهای گوناگون ارائه می‌دهند. نصب آسان و نگهداری بی‌دردسر، آن‌ها را به گزینه‌ای محبوب در صنعت کناف تبدیل کرده است.",
-      "price": 1800000,
-      "storeId": "store-dekorband",
-      "subCategoryId": "cat-uu5zv61v0",
-      "unit": "متر مربع",
-      "subUnit": "عدد",
-      "subUnitQuantity": 2.8,
-      "subUnitPrice": 642857,
-      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTv9zbeP0dR6MppCqZiyQG-q2eEsUZ1aH8zCg&s"
-    },
-    {
-      "id": "prod-1onwme7ao",
-      "name": "نبشی L24",
-      "code": "",
-      "description": "نبشی L24 سفید، راه حلی ایده‌آل برای تکمیل گوشه‌های کناف‌کاری شما. این محصول با کیفیت بالا، استحکام و ظاهری بی‌نقص را به پروژه‌های ساختمانی شما هدیه می‌دهد و نصبی آسان و سریع دارد.",
-      "price": 650000,
-      "storeId": "store-dekorband",
-      "subCategoryId": "cat-upvglp6gs",
-      "unit": "شاخه",
-      "subUnit": "متر طول",
-      "subUnitQuantity": 3,
-      "subUnitPrice": 216667,
-      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGu2q4vg1wqDefecaXU5yU7f15XZO7Vn3qYg&s"
-    },
-    {
-      "id": "prod-5aw71so6j",
-      "name": "سپری T60",
-      "code": "",
-      "description": "سپری T60، انتخابی ایده‌آل برای زیرسازی سقف‌های کاذب کناف شما. این محصول با طراحی دقیق و کیفیت بالا، نصب سریع و آسان را تضمین کرده و استحکامی بی‌نظیر به سازه می‌بخشد.",
-      "price": 192000,
-      "storeId": "store-dekorband",
-      "subCategoryId": "cat-upvglp6gs",
-      "unit": "شاخه",
-      "subUnit": "متر طول",
-      "subUnitQuantity": 0.6,
-      "subUnitPrice": 320000,
-      "imageUrl": "data:image/jpeg;base64,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"
-    }
-  ],
-  "backupDate": "2025-09-20T14:38:58.455Z"
+  "customers": [],
+  "products": [],
+  "invoices": [],
+  "stores": [],
+  "categories": [],
+  "units": [],
+  "backupDate": null
 }

@@ -44,7 +44,8 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // Helper function to load data from localStorage or fall back to initial data
 const loadData = (): AppData => {
   if (typeof window === 'undefined') {
-    return initialData.customers?.length ? initialData : emptyData;
+    // Return empty data on server, initialData will be loaded on client
+    return emptyData;
   }
   try {
     const storedData = localStorage.getItem('appData');
@@ -62,7 +63,7 @@ const loadData = (): AppData => {
         return parsedData;
       }
     }
-    // If no data in local storage, or data is invalid, save the initial data there first.
+    // If no data in local storage, or data is invalid, use the (potentially empty) initial data.
     localStorage.setItem('appData', JSON.stringify(initialData));
     return initialData;
   } catch (error) {
@@ -114,8 +115,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // It clears storage and forces a fresh load from the default source.
         try {
           localStorage.removeItem('appData');
-          // Reload the page to force a fresh data load from scratch
-          window.location.reload();
+          // Set data to the initial default data without reloading
+          setData(initialData);
+          toast({
+            variant: 'success',
+            title: 'موفقیت‌آمیز',
+            description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
+          });
         } catch (error) {
           console.error("Failed to reset data", error);
           toast({
@@ -123,11 +129,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
             title: 'خطا در بازنشانی',
             description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
           });
-          setIsResetting(false);
-          resolve();
+        } finally {
+            setIsResetting(false);
+            resolve();
         }
-        // Note: The promise might not resolve if the page reloads successfully.
-        // The setIsResetting(false) is mainly for the error path.
       } else {
         resolve();
       }

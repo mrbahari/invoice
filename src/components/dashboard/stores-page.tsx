@@ -130,50 +130,51 @@ export default function StoresPage() {
           </div>
         </CardHeader>
       </Card>
-
-      <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up"
-        style={{ animationDelay: '0.2s' }}
-      >
-        {sortedAndFilteredStores.map((store) => (
-          <Card
-            key={store.id}
-            onClick={() => handleEditClick(store)}
-            className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer h-full"
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                  {store.logoUrl ? (
-                    <Image
-                      src={store.logoUrl}
-                      alt={store.name}
-                      width={48}
-                      height={48}
-                      className="object-contain rounded-md"
-                      unoptimized
-                    />
-                  ) : (
-                    <StoreIcon className="w-6 h-6 text-muted-foreground" />
-                  )}
-                </div>
-                <span>{store.name}</span>
-              </CardTitle>
-              <CardDescription>{store.address}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow"></CardContent>
-            <CardFooter className="text-xs text-muted-foreground justify-between">
-              <span>{getCategoryCount(store.id)} دسته‌بندی</span>
-              <span>{getProductCount(store.id)} محصول</span>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-      {sortedAndFilteredStores.length === 0 && (
+      
+      {sortedAndFilteredStores.length > 0 ? (
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up"
+          style={{ animationDelay: '0.2s' }}
+        >
+          {sortedAndFilteredStores.map((store) => (
+            <Card
+              key={store.id}
+              onClick={() => handleEditClick(store)}
+              className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer h-full"
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                    {store.logoUrl ? (
+                      <Image
+                        src={store.logoUrl}
+                        alt={store.name}
+                        width={48}
+                        height={48}
+                        className="object-contain rounded-md"
+                        unoptimized
+                      />
+                    ) : (
+                      <StoreIcon className="w-6 h-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span>{store.name}</span>
+                </CardTitle>
+                <CardDescription>{store.address}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow"></CardContent>
+              <CardFooter className="text-xs text-muted-foreground justify-between">
+                <span>{getCategoryCount(store.id)} دسته‌بندی</span>
+                <span>{getProductCount(store.id)} محصول</span>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
         <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground">
-              هیچ فروشگاهی با عبارت «{searchTerm}» یافت نشد.
+            <p className="text-muted-foreground mb-4">
+              {searchTerm ? `هیچ فروشگاهی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ فروشگاهی تعریف نشده است.'}
             </p>
             <Button variant="link" onClick={handleAddClick}>
               یک فروشگاه جدید اضافه کنید.

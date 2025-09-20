@@ -218,47 +218,48 @@ export default function ProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow
-                  key={product.id}
-                  onClick={() => handleEditClick(product)}
-                  className={cn(
-                    'cursor-pointer transition-colors',
-                    selectedProductId === product.id
-                      ? 'bg-muted'
-                      : 'hover:bg-muted/50'
-                  )}
-                >
-                  <TableCell className="hidden sm:table-cell">
-                    <Image
-                      alt={product.name}
-                      className="aspect-square rounded-md object-cover"
-                      height="64"
-                      src={product.imageUrl}
-                      width="64"
-                      data-ai-hint="product image"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {getCategoryName(product.subCategoryId)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell max-w-xs truncate">
-                    {product.description}
-                  </TableCell>
-                  <TableCell className="text-left">
-                    {formatCurrency(product.price)}
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <TableRow
+                    key={product.id}
+                    onClick={() => handleEditClick(product)}
+                    className={cn(
+                      'cursor-pointer transition-colors',
+                      selectedProductId === product.id
+                        ? 'bg-muted'
+                        : 'hover:bg-muted/50'
+                    )}
+                  >
+                    <TableCell className="hidden sm:table-cell">
+                      <Image
+                        alt={product.name}
+                        className="aspect-square rounded-md object-cover"
+                        height="64"
+                        src={product.imageUrl}
+                        width="64"
+                        data-ai-hint="product image"
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {getCategoryName(product.subCategoryId)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell max-w-xs truncate">
+                      {product.description}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {formatCurrency(product.price)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    هیچ محصولی یافت نشد.
                   </TableCell>
                 </TableRow>
-              ))}
-               {filteredProducts.length === 0 && (
-                  <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
-                          محصولی در این فروشگاه یافت نشد.
-                      </TableCell>
-                  </TableRow>
               )}
             </TableBody>
           </Table>

@@ -474,18 +474,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             <Card>
                 <CardHeader><CardTitle>پرداخت</CardTitle></CardHeader>
                 <CardContent className="grid gap-4">
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={invoice.additions || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, additions: parseFloat(e.target.value) || 0 }));}} /></div>
-                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={invoice.discount || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }));}} /></div>
-                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (مبلغ ثابت)</Label><Input id="tax" type="number" value={invoice.tax || ''} onChange={(e) => {setInvoice(prev => ({...prev, tax: parseFloat(e.target.value) || 0}));}} /></div>
-                    </div>
                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between"><span>جمع جزء</span><span>{formatCurrency(invoice.subtotal || 0)}</span></div>
-                        {invoice.discount > 0 && <div className="flex justify-between"><span>تخفیف</span><span className="text-destructive">-{formatCurrency(invoice.discount)}</span></div>}
-                        {invoice.additions > 0 && <div className="flex justify-between"><span>اضافات</span><span>{formatCurrency(invoice.additions)}</span></div>}
-                        {invoice.tax > 0 && <div className="flex justify-between"><span>مالیات</span><span>{formatCurrency(invoice.tax)}</span></div>}
-                        <Separator className="my-2" />
-                        <div className="flex justify-between font-semibold text-base pt-2"><span>جمع کل</span><span>{formatCurrency(invoice.total || 0)}</span></div>
+                        <div className="flex justify-between font-semibold text-lg pt-2"><span>جمع کل</span><span>{formatCurrency(invoice.total || 0)}</span></div>
                     </div>
                 </CardContent>
             </Card>
@@ -528,5 +518,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
-
-    

@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -31,6 +31,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,6 +119,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, invoices.length]);
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCustomerSheetOpen, setIsCustomerSheetOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
 
@@ -138,10 +147,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [invoice.items, invoice.discount, invoice.additions, invoice.tax]);
 
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
     return products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
   }, [products, productSearch]);
 
   const filteredCustomers = useMemo(() => {
+    if (!customerList) return [];
     return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
 
@@ -295,7 +306,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </div>
                     <ScrollArea className="h-96">
                         <div className="grid grid-cols-3 gap-3">
-                        {filteredProducts.map(product => (
+                        {(filteredProducts || []).map(product => (
                             <Card 
                                 key={product.id} 
                                 onClick={() => handleAddProduct(product)}
@@ -314,38 +325,80 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 </CardContent>
             </Card>
 
-            <Card className="animate-fade-in-up">
-                <CardHeader>
-                    <CardTitle>مشتریان</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                    <div className="relative">
-                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
-                    </div>
-                    {selectedCustomer && (
-                        <Card className="bg-muted/50">
-                            <CardContent className="p-3 flex items-center gap-3">
-                                <Avatar className="h-9 w-9"><AvatarImage src={selectedCustomer.avatarUrl} /><AvatarFallback>{selectedCustomer.name[0]}</AvatarFallback></Avatar>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium">{selectedCustomer.name}</p>
-                                    <p className="text-xs text-muted-foreground">{selectedCustomer.phone}</p>
+            <Sheet open={isCustomerSheetOpen} onOpenChange={setIsCustomerSheetOpen}>
+                <Card className="animate-fade-in-up">
+                    <CardHeader>
+                        <CardTitle>مشتری</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {selectedCustomer ? (
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-10 w-10 border">
+                                        <AvatarImage src={selectedCustomer.avatarUrl} />
+                                        <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-medium">{selectedCustomer.name}</p>
+                                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                                    </div>
                                 </div>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedCustomer(undefined)}><X className="h-4 w-4" /></Button>
-                            </CardContent>
-                        </Card>
-                    )}
-                    <ScrollArea className="h-48">
-                        <div className="grid gap-2">
-                            {filteredCustomers.map(customer => (
-                                <Button key={customer.id} variant={selectedCustomer?.id === customer.id ? 'secondary' : 'ghost'} className="justify-start" onClick={() => setSelectedCustomer(customer)} disabled={!!selectedCustomer}>
-                                    {customer.name}
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                        <Pencil className="ml-1 h-3 w-3" />
+                                        تغییر
+                                    </Button>
+                                </SheetTrigger>
+                            </div>
+                        ) : (
+                            <SheetTrigger asChild>
+                                <Button variant="outline" className="w-full">
+                                    <UserPlus className="ml-2 h-4 w-4" />
+                                    افزودن مشتری به فاکتور
                                 </Button>
-                            ))}
+                            </SheetTrigger>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <SheetContent className="w-[350px] sm:w-[450px]">
+                    <SheetHeader>
+                        <SheetTitle>انتخاب مشتری</SheetTitle>
+                    </SheetHeader>
+                    <div className="py-4 grid gap-4">
+                        <div className="relative">
+                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                         </div>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
+                        <ScrollArea className="h-[calc(100vh-12rem)]">
+                            <div className="grid gap-2 pr-4">
+                                {(filteredCustomers || []).map(customer => (
+                                    <Button
+                                        key={customer.id}
+                                        variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                                        className="justify-start h-14"
+                                        onClick={() => {
+                                            setSelectedCustomer(customer);
+                                            setIsCustomerSheetOpen(false);
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-3 text-right">
+                                            <Avatar className="h-9 w-9 border">
+                                                <AvatarImage src={customer.avatarUrl} />
+                                                <AvatarFallback>{customer.name?.[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p>{customer.name}</p>
+                                                <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                            </div>
+                                        </div>
+                                    </Button>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
 
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
@@ -391,7 +444,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
                                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                                 <SelectContent>
-                                                {availableUnits.filter(u => u).map(u => <SelectItem key={u} value={u!}>{u}</SelectItem>)}
+                                                {(availableUnits || []).filter(u => u).map(u => <SelectItem key={u} value={u!}>{u}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                             </TableCell>
@@ -483,3 +536,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
+
+    

@@ -22,7 +22,7 @@ import {
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Customer } from '@/lib/definitions';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from './customer-form';
 import CustomerDetailPage from './customer-detail-page';
@@ -38,20 +38,50 @@ export default function CustomersPage() {
   const { customers: customerList, invoices } = data;
   const { searchTerm } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
+  const scrollPositionRef = useRef(0);
+
+  useEffect(() => {
+    if (view.type === 'list' && scrollPositionRef.current > 0) {
+      setTimeout(() => {
+        window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
+        scrollPositionRef.current = 0; // Reset after restoring
+      }, 0);
+    }
+  }, [view]);
   
-  const handleAddClick = () => setView({ type: 'form' });
-  const handleEditClick = (customer: Customer) => setView({ type: 'form', customer });
-  const handleRowClick = (customer: Customer) => setView({ type: 'detail', customerId: customer.id });
+  const handleAddClick = () => {
+    setEditingCustomer(undefined);
+    setView({ type: 'form' });
+  };
+  
+  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
+
+  const handleEditClick = (customer: Customer) => {
+    scrollPositionRef.current = window.scrollY;
+    setEditingCustomer(customer);
+    setView({ type: 'form', customer });
+  };
+
+  const handleRowClick = (customer: Customer) => {
+    scrollPositionRef.current = window.scrollY;
+    setView({ type: 'detail', customerId: customer.id });
+  };
   
   const handleFormSuccess = () => {
     setView({ type: 'list' });
+    setEditingCustomer(undefined);
   };
-  const handleFormCancel = () => setView({ type: 'list' });
+
+  const handleFormCancel = () => {
+    setView({ type: 'list' });
+    setEditingCustomer(undefined);
+  };
 
   const filteredCustomers = useMemo(() => {
     if (!customerList) return [];
     return customerList.filter(customer =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [customerList, searchTerm]);
 
@@ -74,7 +104,7 @@ export default function CustomersPage() {
   };
   
   if (view.type === 'form') {
-      return <CustomerForm customer={view.customer} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
+      return <CustomerForm customer={editingCustomer} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
   }
 
   if (view.type === 'detail') {
@@ -103,7 +133,7 @@ export default function CustomersPage() {
                         خروجی
                     </span>
                 </Button>
-                <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+                <Button size="sm" className="h-8 gap-1 dark:bg-white dark:text-black" onClick={handleAddClick}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                     افزودن مشتری
@@ -117,7 +147,6 @@ export default function CustomersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>مشتری</TableHead>
-              <TableHead className="hidden sm:table-cell">شماره تماس</TableHead>
               <TableHead className="hidden sm:table-cell text-center">سفارش‌ها</TableHead>
               <TableHead className="hidden md:table-cell text-left">جمع مبلغ سفارشات</TableHead>
               <TableHead>
@@ -128,7 +157,8 @@ export default function CustomersPage() {
           <TableBody>
             {filteredCustomers.map((customer) => {
               const { totalSpent, orderCount } = getCustomerStats(customer.id);
-              const nameInitials = customer.name.split(' ').map(n => n[0]).join('');
+              const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
+              const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
               return (
                 <TableRow key={customer.id} onClick={() => handleRowClick(customer)} className="cursor-pointer">
                   <TableCell>
@@ -137,11 +167,13 @@ export default function CustomersPage() {
                         <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" data-ai-hint="person avatar" />
                         <AvatarFallback>{nameInitials}</AvatarFallback>
                       </Avatar>
-                      <div className="font-medium">{customer.name}</div>
+                       <div>
+                          <div className="font-medium">{customer.phone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {hasValidName ? customer.name : 'بی نام'}
+                          </div>
+                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <div>{customer.phone}</div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-center">
                     {orderCount}

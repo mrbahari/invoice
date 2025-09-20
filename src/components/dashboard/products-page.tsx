@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File } from 'lucide-react';
+import { PlusCircle, File, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import type { Product } from '@/lib/definitions';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
@@ -139,50 +139,68 @@ export default function ProductsPage() {
   }
 
   return (
-    <Card className="animate-fade-in-up">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>محصولات</CardTitle>
-            <CardDescription>
-              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 gap-1"
-              onClick={handleExport}
-            >
-              <File className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                خروجی
-              </span>
-            </Button>
-            <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                افزودن محصول
-              </span>
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
-            <TabsTrigger value="all">همه</TabsTrigger>
-            {stores?.map((store) => (
-              <TabsTrigger
-                key={store.id}
-                value={store.id}
-                className="whitespace-nowrap"
+    <div className="grid gap-6">
+      <Card className="animate-fade-in-up">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>محصولات</CardTitle>
+              <CardDescription>
+                محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1"
+                onClick={handleExport}
               >
-                {store.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  خروجی
+                </span>
+              </Button>
+              <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  افزودن محصول
+                </span>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+              <Card 
+                className={cn("cursor-pointer transition-all hover:shadow-lg", activeTab === 'all' ? 'border-primary shadow-lg' : 'border-border')}
+                onClick={() => setActiveTab('all')}
+              >
+                <CardHeader className="p-4 flex-row items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <Store className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <CardTitle className="text-base">همه محصولات</CardTitle>
+                </CardHeader>
+              </Card>
+
+              {stores?.map((store) => (
+                <Card 
+                  key={store.id} 
+                  className={cn("cursor-pointer transition-all hover:shadow-lg", activeTab === store.id ? 'border-primary shadow-lg' : 'border-border')}
+                  onClick={() => setActiveTab(store.id)}
+                >
+                  <CardHeader className="p-4 flex-row items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      {store.logoUrl ? (
+                        <Image src={store.logoUrl} alt={store.name} width={36} height={36} className="object-contain rounded-md" unoptimized />
+                      ) : <Store className="w-5 h-5 text-muted-foreground" />}
+                    </div>
+                    <CardTitle className="text-base truncate">{store.name}</CardTitle>
+                  </CardHeader>
+                </Card>
+              ))}
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -231,16 +249,23 @@ export default function ProductsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+               {filteredProducts.length === 0 && (
+                  <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+                          محصولی در این فروشگاه یافت نشد.
+                      </TableCell>
+                  </TableRow>
+              )}
             </TableBody>
           </Table>
-        </Tabs>
-      </CardContent>
-      <CardFooter>
-        <div className="text-xs text-muted-foreground">
-          نمایش <strong>{filteredProducts.length}</strong> از{' '}
-          <strong>{products?.length || 0}</strong> محصول
-        </div>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter>
+          <div className="text-xs text-muted-foreground">
+            نمایش <strong>{filteredProducts.length}</strong> از{' '}
+            <strong>{products?.length || 0}</strong> محصول
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

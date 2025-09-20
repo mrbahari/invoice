@@ -344,7 +344,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-        <div className="flex items-center gap-4 sticky top-16 md:top-20 bg-background/80 backdrop-blur-sm z-10 py-4 mb-6 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
+        <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 mb-6 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
             <div className="flex-1">
                 <h1 className="text-xl font-semibold tracking-tight">
                     {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}

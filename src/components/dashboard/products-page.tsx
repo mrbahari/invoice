@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -24,7 +23,7 @@ import {
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Product, Store, Category } from '@/lib/definitions';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
 import { useData } from '@/context/data-context'; // Import useData
@@ -37,6 +36,16 @@ export default function ProductsPage() {
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const scrollPositionRef = useRef(0);
+
+  useEffect(() => {
+    if (view === 'list' && scrollPositionRef.current > 0) {
+      setTimeout(() => {
+        window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
+        scrollPositionRef.current = 0; // Reset after restoring
+      }, 0);
+    }
+  }, [view]);
 
   const handleAddClick = () => {
     setEditingProduct(undefined);
@@ -44,6 +53,7 @@ export default function ProductsPage() {
   }
 
   const handleEditClick = (product: Product) => {
+    scrollPositionRef.current = window.scrollY;
     setEditingProduct(product);
     setView('form');
   }
@@ -102,26 +112,28 @@ export default function ProductsPage() {
 
   return (
     <Card className="animate-fade-in-up">
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <div>
-                <CardTitle>محصولات</CardTitle>
-                <CardDescription>
-                محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                    <File className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    خروجی
-                    </span>
-                </Button>
-                <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    افزودن محصول
-                    </span>
-                </Button>
+        <CardHeader>
+             <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>محصولات</CardTitle>
+                    <CardDescription>
+                    محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+                    </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                        <File className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        خروجی
+                        </span>
+                    </Button>
+                    <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        افزودن محصول
+                        </span>
+                    </Button>
+                </div>
             </div>
         </CardHeader>
         <CardContent>

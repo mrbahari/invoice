@@ -66,7 +66,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Function to reset data to the initial state from JSON files
   const resetData = () => {
-    setData(initialData);
+    try {
+        // First, set the state to the initial data
+        setData(initialData);
+        // Then, remove the data from localStorage to ensure a clean state on next load
+        localStorage.removeItem('appData');
+        // Optional: Reload the page to ensure all components re-initialize with default data
+        if (typeof window !== 'undefined') {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error("Failed to reset data", error);
+        toast({
+            variant: 'destructive',
+            title: 'خطا در بازنشانی',
+            description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
+        });
+    }
   };
   
   // The context is initialized once data is not null.

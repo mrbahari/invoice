@@ -338,7 +338,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                                             <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
                                             <AlertDialogContent>
                                                 <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                                                <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteCategory(cat.id)}>حذف</AlertDialogAction></AlertDialogFooter>
+                                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteCategory(cat.id)}>حذف</AlertDialogAction>
+                                                </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
                                     </div>
@@ -363,7 +366,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                                                     <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader><AlertDialogTitle>حذف زیردسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف زیردسته «{subCat.name}» مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                                                        <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteCategory(subCat.id)}>حذف</AlertDialogAction></AlertDialogFooter>
+                                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeleteCategory(subCat.id)}>حذف</AlertDialogAction>
+                                                        </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
                                             </div>
@@ -399,9 +405,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         این عمل غیرقابل بازگشت است و فروشگاه «{store.name}» و تمام دسته‌بندی‌های آن را برای همیشه حذف می‌کند.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
                 </AlertDialog>

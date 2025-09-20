@@ -237,7 +237,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                         این عمل غیرقابل بازگشت است و مشتری «{customer.name}» را برای همیشه حذف می‌کند.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
+                  <AlertDialogFooter className="grid grid-cols-2 gap-2">
                     <AlertDialogCancel>انصراف</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
                   </AlertDialogFooter>

@@ -492,7 +492,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                                 این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
-                                        <AlertDialogFooter>
+                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
                                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                                             <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
                                         </AlertDialogFooter>

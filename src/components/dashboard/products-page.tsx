@@ -112,88 +112,108 @@ export default function ProductsPage() {
 
   return (
     <Card className="animate-fade-in-up">
-        <CardHeader>
-             <div className="flex items-center justify-between">
-                <div>
-                    <CardTitle>محصولات</CardTitle>
-                    <CardDescription>
-                    محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                    </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                        <File className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        خروجی
-                        </span>
-                    </Button>
-                    <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        افزودن محصول
-                        </span>
-                    </Button>
-                </div>
-            </div>
-        </CardHeader>
-        <CardContent>
-            <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
-                 <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
-                    <TabsTrigger value="all">همه</TabsTrigger>
-                    {stores?.map(store => (
-                        <TabsTrigger key={store.id} value={store.id} className="whitespace-nowrap">
-                        {store.name}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead className="hidden w-[100px] sm:table-cell">
-                            <span className="sr-only">تصویر</span>
-                        </TableHead>
-                        <TableHead>نام</TableHead>
-                        <TableHead>زیردسته</TableHead>
-                        <TableHead className="hidden md:table-cell">
-                            توضیحات
-                        </TableHead>
-                        <TableHead className="text-left">قیمت</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredProducts.map((product) => (
-                        <TableRow key={product.id} onClick={() => handleEditClick(product)} className="cursor-pointer transition-colors hover:bg-muted/50">
-                            <TableCell className="hidden sm:table-cell">
-                            <Image
-                                alt={product.name}
-                                className="aspect-square rounded-md object-cover"
-                                height="64"
-                                src={product.imageUrl}
-                                width="64"
-                                data-ai-hint="product image"
-                            />
-                            </TableCell>
-                            <TableCell className="font-medium">{product.name}</TableCell>
-                            <TableCell>
-                            <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell max-w-xs truncate">
-                            {product.description}
-                            </TableCell>
-                            <TableCell className="text-left">
-                            {formatCurrency(product.price)}
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </Tabs>
-        </CardContent>
-        <CardFooter>
-            <div className="text-xs text-muted-foreground">
-            نمایش <strong>{filteredProducts.length}</strong> از <strong>{products?.length || 0}</strong> محصول
-            </div>
-        </CardFooter>
-        </Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>محصولات</CardTitle>
+            <CardDescription>
+              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1"
+              onClick={handleExport}
+            >
+              <File className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                خروجی
+              </span>
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 gap-1 dark:bg-white dark:text-black"
+              onClick={handleAddClick}
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                افزودن محصول
+              </span>
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="all" dir="rtl" onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
+            <TabsTrigger value="all">همه</TabsTrigger>
+            {stores?.map((store) => (
+              <TabsTrigger
+                key={store.id}
+                value={store.id}
+                className="whitespace-nowrap"
+              >
+                {store.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="hidden w-[100px] sm:table-cell">
+                  <span className="sr-only">تصویر</span>
+                </TableHead>
+                <TableHead>نام</TableHead>
+                <TableHead>زیردسته</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  توضیحات
+                </TableHead>
+                <TableHead className="text-left">قیمت</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProducts.map((product) => (
+                <TableRow
+                  key={product.id}
+                  onClick={() => handleEditClick(product)}
+                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                >
+                  <TableCell className="hidden sm:table-cell">
+                    <Image
+                      alt={product.name}
+                      className="aspect-square rounded-md object-cover"
+                      height="64"
+                      src={product.imageUrl}
+                      width="64"
+                      data-ai-hint="product image"
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {getCategoryName(product.subCategoryId)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell max-w-xs truncate">
+                    {product.description}
+                  </TableCell>
+                  <TableCell className="text-left">
+                    {formatCurrency(product.price)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Tabs>
+      </CardContent>
+      <CardFooter>
+        <div className="text-xs text-muted-foreground">
+          نمایش <strong>{filteredProducts.length}</strong> از{' '}
+          <strong>{products?.length || 0}</strong> محصول
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

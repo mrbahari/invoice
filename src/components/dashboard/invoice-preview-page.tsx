@@ -80,7 +80,7 @@ function toWords(num: number): string {
 
 type InvoicePreviewPageProps = {
     invoiceId: string;
-    onBack: (invoiceId?: string) => void;
+    onBack: () => void;
     onEdit: (invoiceId: string) => void;
 }
 export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
@@ -92,14 +92,36 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
   const invoice = useMemo(() => invoices.find((inv) => inv.id === invoiceId), [invoices, invoiceId]);
-  const customer = useMemo(() => customers.find((c) => c.id === invoice?.customerId), [customers, invoice]);
+  
+  const customer: Customer | undefined = useMemo(() => {
+    if (!invoice) return undefined;
+    const foundCustomer = customers.find((c) => c.id === invoice.customerId);
+    if (foundCustomer) return foundCustomer;
+    // Fallback to a temporary customer object if no customer is found by ID
+    return {
+      id: invoice.customerId,
+      name: invoice.customerName,
+      phone: (invoice as any).customerPhone || 'شماره ثبت نشده',
+      address: (invoice as any).customerAddress || 'آدرس ثبت نشده',
+      email: invoice.customerEmail || 'ایمیل ثبت نشده',
+      purchaseHistory: 'مشتری جدید',
+    };
+  }, [customers, invoice]);
   
   const store = useMemo(() => {
-    if (!invoice?.items.length) return stores[0] || undefined;
-    const firstItem = invoice.items[0];
-    const productInfo = products.find(p => p.id === firstItem?.productId);
-    if (!productInfo) return stores[0] || undefined; // Fallback to first store
-    return stores.find(s => s.id === productInfo.storeId) || stores[0];
+    if (!invoice) return stores[0] || undefined;
+    
+    // Find store from the first product, if items exist
+    if (invoice.items && invoice.items.length > 0) {
+        const firstItem = invoice.items[0];
+        const productInfo = products.find(p => p.id === firstItem?.productId);
+        if (productInfo && productInfo.storeId) {
+            const foundStore = stores.find(s => s.id === productInfo.storeId);
+            if (foundStore) return foundStore;
+        }
+    }
+    // Fallback to the first store if no items or store not found
+    return stores[0] || undefined;
   }, [invoice, products, stores]);
 
   useEffect(() => {
@@ -116,7 +138,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
         <Card>
             <CardContent className="py-16 text-center">
                 <p className="text-muted-foreground mb-4">فاکتور یافت نشد یا داده‌های آن ناقص است.</p>
-                 <Button onClick={() => onBack()}>
+                 <Button onClick={onBack}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                 </Button>
@@ -128,7 +150,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   return (
     <div className="animate-fade-in-up">
         <div className="mb-6 flex justify-between items-center gap-2 no-print">
-            <Button type="button" variant="outline" onClick={() => onBack(invoiceId)} className="dark:border-white/50 dark:text-white dark:hover:bg-white/10">
+            <Button type="button" variant="outline" onClick={onBack} className="dark:border-white/50 dark:text-white dark:hover:bg-white/10">
                 <ArrowRight className="ml-2 h-4 w-4" />
                 بازگشت 
             </Button>
@@ -223,4 +245,5 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
         </div>
     </div>
   );
-}
+
+    

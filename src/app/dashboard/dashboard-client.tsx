@@ -32,6 +32,7 @@ export default function DashboardClientComponent() {
   }, [searchParams, router]);
 
   const handleNavigation = (tab: DashboardTab, data?: any) => {
+    // When switching tabs, always clear old navigation data unless new data is provided.
     setNavigationData(data);
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };

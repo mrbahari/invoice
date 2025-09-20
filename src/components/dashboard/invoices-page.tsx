@@ -27,16 +27,20 @@ export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: Inv
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
+  // Separate state for managing the initial invoice prop
   const [initialInvoice, setInitialInvoice] = useState(initialInvoiceProp);
+
   const [view, setView] = useState<View>({ type: 'list' });
 
+  // Effect to react to changes in the initialInvoiceProp
   useEffect(() => {
-    if (initialInvoice) {
-      setView({ type: 'form', invoice: initialInvoice });
+    setInitialInvoice(initialInvoiceProp);
+    if (initialInvoiceProp) {
+      setView({ type: 'form', invoice: initialInvoiceProp });
     } else {
       setView({ type: 'list' });
     }
-  }, [initialInvoice]);
+  }, [initialInvoiceProp]);
 
   const handleAddClick = () => setView({ type: 'form' });
   const handleEditClick = (invoice: Invoice) => setView({ type: 'form', invoice });

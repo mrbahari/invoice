@@ -376,7 +376,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className='pb-24'>
         <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
             
             <div className="grid gap-6 lg:col-span-2 auto-rows-min">
@@ -577,51 +577,50 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                     </CardContent>
                 </Card>
             </div>
-            
-            {isDirty && (
-                <div className="sticky bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t lg:col-span-3">
-                    <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
-                        <div>
-                             {isEditMode && (
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button type="button" variant="destructive" disabled={isProcessing}>
-                                            <Trash2 className="ml-2 h-4 w-4" />
-                                            حذف محصول
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            )}
-                        </div>
-                        <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
-                            {isEditMode && (
-                                <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                                   <Copy className="ml-2 h-4 w-4" />
-                                    ذخیره با عنوان محصول جدید
-                                </Button>
-                            )}
-                            <Button type="submit" disabled={isProcessing} size="lg" className="w-full">
-                                {isProcessing
-                                ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
-                                : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
+        </div>
+        {isDirty && (
+            <div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t md:left-auto md:right-14">
+                <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
+                    <div>
+                         {isEditMode && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="destructive" disabled={isProcessing}>
+                                        <Trash2 className="ml-2 h-4 w-4" />
+                                        حذف محصول
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
+                    </div>
+                    <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
+                        {isEditMode && (
+                            <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                               <Copy className="ml-2 h-4 w-4" />
+                                ذخیره با عنوان محصول جدید
                             </Button>
-                        </div>
+                        )}
+                        <Button type="submit" disabled={isProcessing} size="lg" className="w-full">
+                            {isProcessing
+                            ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
+                            : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
+                        </Button>
                     </div>
                 </div>
-            )}
-        </div>
+            </div>
+        )}
     </form>
   );
 }

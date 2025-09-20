@@ -525,7 +525,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                                             {...provided.draggableProps}
                                             className={`${snapshot.isDragging ? 'bg-accent shadow-lg' : ''} block md:hidden border-b`}
                                           >
-                                            <TableCell className="p-2 w-full">
+                                            <TableCell className="p-2 w-full pl-2.5">
                                                 <div className="flex items-start gap-3">
                                                     <div {...provided.dragHandleProps} className="cursor-grab pt-1">
                                                       <GripVertical className="h-5 w-5 text-muted-foreground" />

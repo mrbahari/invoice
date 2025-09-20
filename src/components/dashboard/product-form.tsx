@@ -31,8 +31,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
 import { WandSparkles, LoaderCircle, Copy } from 'lucide-react';
-import { generateProductDetails } from '@/ai/flows/generate-product-details';
-import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
   Select,
   SelectContent,
@@ -343,252 +341,265 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
   return (
-      <form onSubmit={handleSubmit}>
-        <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
-            
-            <div className="grid gap-6 lg:col-span-2 auto-rows-min">
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
-                                <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="grid gap-6">
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div className="grid gap-3 md:col-span-2">
-                                <Label htmlFor="product-name">نام محصول</Label>
-                                <Input
-                                    id="product-name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="مثال: لپتاپ پرو"
-                                    required
-                                />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="product-code">کد کالا</Label>
-                                <Input
-                                    id="product-code"
-                                    value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    placeholder="اختیاری"
-                                />
-                            </div>
-                        </div>
-                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="grid gap-3">
-                                <Label htmlFor="store">فروشگاه</Label>
-                                <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
-                                    <SelectTrigger id="store">
-                                        <SelectValue placeholder="انتخاب فروشگاه" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {stores.map((s) => (
-                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="grid gap-3">
-                                <Label htmlFor="sub-category">زیردسته</Label>
-                                <Select value={subCategoryId} onValueChange={setSubCategoryId} required disabled={!storeId}>
-                                    <SelectTrigger id="sub-category">
-                                        <SelectValue placeholder={storeId ? "انتخاب زیردسته" : "ابتدا فروشگاه را انتخاب کنید"} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableSubCategories.map((cat) => (
-                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="grid gap-3">
-                            <div className="flex items-center justify-between">
-                            <Label htmlFor="description">توضیحات</Label>
-                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('description')} disabled={aiLoading.description}>
-                                {aiLoading.description ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
-                            </Button>
-                            </div>
-                            <Textarea
-                                id="description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="توضیحات محصول را اینجا بنویسید یا با هوش مصنوعی تولید کنید..."
-                                className="min-h-32"
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>واحدها و قیمت‌گذاری</CardTitle>
-                    </CardHeader>
-                     <CardContent className="grid gap-4">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="grid gap-3">
-                                <Label htmlFor="unit">واحد اصلی</Label>
-                                <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
-                                    <SelectTrigger id="unit">
-                                        <SelectValue placeholder="واحد" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="sub-unit">واحد فرعی</Label>
-                                <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }}>
-                                    <SelectTrigger id="sub-unit">
-                                        <SelectValue placeholder="اختیاری" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem key="none" value="none">هیچکدام</SelectItem>
-                                        {unitsOfMeasurement.map((u) => (
-                                        <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
-                                <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} step="0.01" />
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                           <div className="grid gap-3">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="price">قیمت واحد اصلی (ریال)</Label>
-                                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
-                                        {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
-                                    </Button>
-                                </div>
-                                <Input 
-                                  id="price" 
-                                  value={displayPrice} 
-                                  onChange={handlePriceChange} 
-                                  required 
-                                />
-                            </div>
-                            
-                            <div className="grid gap-3">
-                                <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
-                                <Input 
-                                  id="sub-unit-price" 
-                                  value={displaySubUnitPrice} 
-                                  onChange={handleSubUnitPriceChange} 
-                                  placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'}
-                                  disabled={!showSubUnitFields}
-                                />
-                            </div>
-                        </div>
-                        
-                         {showSubUnitFields && subUnitQuantity && price && (
-                            <p className="text-xs text-muted-foreground">
-                                هر {subUnitQuantity} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
-                            </p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-            
-             <div className="grid gap-6 auto-rows-min">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>تصویر محصول</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4">
-                        <div className="relative aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
-                           {imageUrl ? (
-                                <Image
-                                    src={imageUrl}
-                                    alt={name || "Product Image"}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    key={imageUrl} // Force re-render on URL change
-                                />
-                            ) : (
-                                <span className="text-sm text-muted-foreground">پیش‌نمایش تصویر</span>
-                            )}
-                        </div>
-                        <div className="grid gap-3">
-                            <Label htmlFor="image-url">آدرس تصویر</Label>
-                            <Input
-                                id="image-url"
-                                value={imageUrl || ''}
-                                onFocus={handleImageFocus}
-                                onChange={(e) => setImageUrl(e.target.value)}
-                                placeholder="https://example.com/image.jpg"
-                            />
-                        </div>
-                        <div className="flex gap-2">
-                             <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
-                                {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
-                                تولید با AI
-                            </Button>
-                            <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
-                                <Search className="ml-2 h-4 w-4" />
-                                جستجو در گوگل
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+    <form onSubmit={handleSubmit}>
+      <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 animate-fade-in-up">
+        <div className="flex items-center gap-4">
+          <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
+            {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}
+          </h1>
         </div>
+        <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
+          <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>جزئیات محصول</CardTitle>
+                <CardDescription>
+                  اطلاعات اصلی محصول، دسته‌بندی و توضیحات.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="grid gap-3">
+                          <Label htmlFor="product-name">نام محصول</Label>
+                          <Input
+                              id="product-name"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              placeholder="مثال: لپتاپ پرو"
+                              required
+                          />
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="product-code">کد کالا</Label>
+                          <Input
+                              id="product-code"
+                              value={code}
+                              onChange={(e) => setCode(e.target.value)}
+                              placeholder="اختیاری"
+                          />
+                      </div>
+                  </div>
+                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="grid gap-3">
+                          <Label htmlFor="store">فروشگاه</Label>
+                          <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
+                              <SelectTrigger id="store">
+                                  <SelectValue placeholder="انتخاب فروشگاه" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {stores.map((s) => (
+                                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                       <div className="grid gap-3">
+                          <Label htmlFor="sub-category">زیردسته</Label>
+                          <Select value={subCategoryId} onValueChange={setSubCategoryId} required disabled={!storeId}>
+                              <SelectTrigger id="sub-category">
+                                  <SelectValue placeholder={storeId ? "انتخاب زیردسته" : "ابتدا فروشگاه را انتخاب کنید"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {availableSubCategories.map((cat) => (
+                                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
 
-        <div className="sticky bottom-[90px] md:bottom-0 z-50 p-4 bg-card border-t mt-4 lg:col-span-3">
-            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
-                <div className='flex items-center gap-2'>
-                   <Button type="button" variant="outline" onClick={onCancel}>
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                        بازگشت به لیست
-                    </Button>
-                    {isEditMode && (
-                        <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button type="button" variant="destructive" disabled={isProcessing}>
-                            <Trash2 className="ml-2 h-4 w-4" />
-                            حذف
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                  <div className="grid gap-3">
+                      <div className="flex items-center justify-between">
+                      <Label htmlFor="description">توضیحات</Label>
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('description')} disabled={aiLoading.description}>
+                          {aiLoading.description ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+                      </Button>
+                      </div>
+                      <Textarea
+                          id="description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="توضیحات محصول را اینجا بنویسید یا با هوش مصنوعی تولید کنید..."
+                          className="min-h-32"
+                      />
+                  </div>
                 </div>
-                 <div className='flex items-center gap-2'>
-                    {isEditMode && (
-                        <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                            <Copy className="ml-2 h-4 w-4" />
-                            ذخیره با عنوان جدید
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>واحدها و قیمت‌گذاری</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <div className="grid gap-3">
+                          <Label htmlFor="unit">واحد اصلی</Label>
+                          <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
+                              <SelectTrigger id="unit">
+                                  <SelectValue placeholder="واحد" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {unitsOfMeasurement.map((u) => (
+                                  <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="sub-unit">واحد فرعی</Label>
+                          <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }}>
+                              <SelectTrigger id="sub-unit">
+                                  <SelectValue placeholder="اختیاری" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem key="none" value="none">هیچکدام</SelectItem>
+                                  {unitsOfMeasurement.map((u) => (
+                                  <SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
+                          <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} step="0.01" />
+                      </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                     <div className="grid gap-3">
+                          <div className="flex items-center justify-between">
+                              <Label htmlFor="price">قیمت واحد اصلی (ریال)</Label>
+                              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
+                                  {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+                              </Button>
+                          </div>
+                          <Input 
+                            id="price" 
+                            value={displayPrice} 
+                            onChange={handlePriceChange} 
+                            required 
+                          />
+                      </div>
+                      
+                      <div className="grid gap-3">
+                          <Label htmlFor="sub-unit-price">قیمت واحد فرعی (ریال)</Label>
+                          <Input 
+                            id="sub-unit-price" 
+                            value={displaySubUnitPrice} 
+                            onChange={handleSubUnitPriceChange} 
+                            placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'}
+                            disabled={!showSubUnitFields}
+                          />
+                      </div>
+                  </div>
+                  
+                   {showSubUnitFields && subUnitQuantity && price && (
+                      <p className="text-xs text-muted-foreground">
+                          هر {subUnitQuantity} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
+                      </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>تصویر محصول</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2">
+                  <div className="relative aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
+                     {imageUrl ? (
+                          <Image
+                              src={imageUrl}
+                              alt={name || "Product Image"}
+                              layout="fill"
+                              objectFit="cover"
+                              key={imageUrl} // Force re-render on URL change
+                          />
+                      ) : (
+                          <span className="text-sm text-muted-foreground">پیش‌نمایش تصویر</span>
+                      )}
+                  </div>
+                   <div className="grid gap-3">
+                      <Label htmlFor="image-url">آدرس تصویر</Label>
+                      <Input
+                          id="image-url"
+                          value={imageUrl || ''}
+                          onFocus={handleImageFocus}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                          placeholder="https://example.com/image.jpg"
+                      />
+                  </div>
+                  <div className="flex gap-2">
+                       <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
+                          {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
+                          تولید با AI
+                      </Button>
+                      <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
+                          <Search className="ml-2 h-4 w-4" />
+                          جستجو در گوگل
+                      </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-2 md:hidden">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            انصراف
+          </Button>
+          <Button type="submit" disabled={isProcessing}>ذخیره</Button>
+        </div>
+      </div>
+      <div className="sticky bottom-0 z-10 p-4 bg-background/95 border-t mt-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+            <div className='flex items-center gap-2'>
+               <Button type="button" variant="outline" onClick={onCancel}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت به لیست
+                </Button>
+                {isEditMode && (
+                    <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive" disabled={isProcessing}>
+                        <Trash2 className="ml-2 h-4 w-4" />
+                        حذف
                         </Button>
-                    )}
-                    <Button type="submit" disabled={isProcessing} size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
-                        <Save className="ml-2 h-4 w-4" />
-                        {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                )}
+            </div>
+             <div className='flex items-center gap-2'>
+                {isEditMode && (
+                    <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                        <Copy className="ml-2 h-4 w-4" />
+                        ذخیره با عنوان جدید
                     </Button>
-                </div>
+                )}
+                <Button type="submit" disabled={isProcessing} size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
+                    <Save className="ml-2 h-4 w-4" />
+                    {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}
+                </Button>
             </div>
         </div>
-      </form>
+      </div>
+    </form>
   );
 }

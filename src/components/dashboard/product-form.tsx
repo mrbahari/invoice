@@ -343,12 +343,25 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 animate-fade-in-up">
-        <div className="flex items-center gap-4">
-          <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-            {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}
-          </h1>
+        <div className="flex flex-col-reverse md:flex-row items-center gap-4 sticky top-16 md:top-20 bg-background/80 backdrop-blur-sm z-10 py-4 mb-6 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
+          <div className="flex-1">
+              <h1 className="text-xl font-semibold tracking-tight">
+                {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}
+              </h1>
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+             <Button type="button" variant="outline" className="flex-1 md:flex-initial" onClick={onCancel}>
+                <ArrowRight className="ml-2 h-4 w-4" />
+                بازگشت به لیست
+              </Button>
+              <Button type="submit" disabled={isProcessing} className="flex-1 md:flex-initial bg-green-600 hover:bg-green-700">
+                  <Save className="ml-2 h-4 w-4" />
+                  {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}
+              </Button>
+          </div>
         </div>
+      <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 animate-fade-in-up">
+        
         <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
           <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
             <Card>
@@ -503,6 +516,36 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                   )}
                 </div>
               </CardContent>
+               <CardFooter className="border-t pt-6 flex flex-col sm:flex-row-reverse justify-between gap-4">
+                 {isEditMode && (
+                    <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                        <Copy className="ml-2 h-4 w-4" />
+                        ذخیره با عنوان جدید
+                    </Button>
+                )}
+                 {isEditMode && (
+                    <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive" disabled={isProcessing} className="mr-auto">
+                        <Trash2 className="ml-2 h-4 w-4" />
+                        حذف محصول
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                )}
+               </CardFooter>
             </Card>
           </div>
           <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
@@ -549,56 +592,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               </CardContent>
             </Card>
           </div>
-        </div>
-        <div className="flex items-center justify-center gap-2 md:hidden">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            انصراف
-          </Button>
-          <Button type="submit" disabled={isProcessing}>ذخیره</Button>
-        </div>
-      </div>
-      <div className="sticky bottom-0 z-10 p-4 bg-background/95 border-t mt-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-            <div className='flex items-center gap-2'>
-               <Button type="button" variant="outline" onClick={onCancel}>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت به لیست
-                </Button>
-                {isEditMode && (
-                    <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button type="button" variant="destructive" disabled={isProcessing}>
-                        <Trash2 className="ml-2 h-4 w-4" />
-                        حذف
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                    </AlertDialog>
-                )}
-            </div>
-             <div className='flex items-center gap-2'>
-                {isEditMode && (
-                    <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                        <Copy className="ml-2 h-4 w-4" />
-                        ذخیره با عنوان جدید
-                    </Button>
-                )}
-                <Button type="submit" disabled={isProcessing} size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
-                    <Save className="ml-2 h-4 w-4" />
-                    {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}
-                </Button>
-            </div>
         </div>
       </div>
     </form>

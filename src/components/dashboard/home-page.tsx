@@ -175,16 +175,17 @@ export default function DashboardHomePageContent({ onNavigate }: DashboardHomePa
                     <TableBody>
                         {recentPaidInvoices.map(invoice => {
                              const customer = allCustomers.find(c => c.id === invoice.customerId);
-                             const hasValidName = invoice.customerName && invoice.customerName !== 'مشتری بدون نام';
-                             const displayPhone = customer?.phone || invoice.customerEmail || 'بدون تماس';
+                             const hasValidName = customer && customer.name && customer.name !== 'مشتری بدون نام';
+                             const displayName = hasValidName ? customer!.name : (invoice.customerName && invoice.customerName !== 'مشتری بدون نام' ? invoice.customerName : '');
+                             const displayPhone = customer?.phone || 'بدون تماس';
 
                              return (
                                <TableRow key={invoice.id}>
                                   <TableCell>
                                       <div className="font-medium">{displayPhone}</div>
-                                      {hasValidName && (
+                                      {displayName && (
                                         <div className="text-sm text-muted-foreground">
-                                          {invoice.customerName}
+                                          {displayName}
                                         </div>
                                       )}
                                   </TableCell>

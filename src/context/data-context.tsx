@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import initialDataFromFile from '@/database/mb.json';
 
 
 // Define the shape of our data
@@ -31,27 +32,26 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
+const defaultData = initialDataFromFile as AppData;
+
+
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [data, setData] = useState<AppData>({ products: [], categories: [], customers: [], invoices: [], units: [], stores: [] });
+  const [data, setData] = useState<AppData>(defaultData);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   // Load initial data from localStorage or the default JSON file
   useEffect(() => {
-    async function loadInitialData() {
+    function loadInitialData() {
       try {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
           setData(JSON.parse(storedData));
         } else {
-          const response = await fetch('/db/defaultdb.json');
-          if (!response.ok) {
-            throw new Error('Failed to fetch default database.');
-          }
-          const initialData = await response.json();
-          setData(initialData);
+          // If no data in local storage, use the imported default data
+          setData(defaultData);
         }
       } catch (error) {
         console.error("Could not load initial data:", error);
@@ -60,8 +60,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
           title: 'خطا در بارگذاری داده‌ها',
           description: 'مشکلی در بارگذاری اطلاعات اولیه برنامه رخ داد.',
         });
-        // Set empty data to prevent app crash
-        setData({ products: [], categories: [], customers: [], invoices: [], units: [], stores: [] });
+        // Fallback to imported default data on error
+        setData(defaultData);
       } finally {
         setIsInitialized(true);
       }
@@ -86,39 +86,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [data, isInitialized, toast]);
 
 
-  // This function resets the application state to the initial data from the JSON file.
+  // This function resets the application state to the initial data from the imported JSON file.
   const resetData = useCallback(async (): Promise<void> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       setIsResetting(true);
-      async function loadDefaultData() {
-        try {
-          const response = await fetch('/db/defaultdb.json');
-          if (!response.ok) throw new Error('Failed to fetch default data.');
-          const initialData = await response.json();
-          setData(initialData);
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialData));
+      try {
+          const defaultDataFromMb = initialDataFromFile as AppData;
+          setData(defaultDataFromMb);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDataFromMb));
           toast({
             variant: 'success',
             title: 'موفقیت‌آمیز',
             description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
           });
-          resolve();
-        } catch (error) {
+      } catch (error) {
            console.error("Failed to reset data", error);
            toast({
              variant: 'destructive',
              title: 'خطا در بازنشانی',
              description: 'مشکلی در هنگام بازنشانی اطلاعات رخ داد.',
            });
-           reject(error);
-        } finally {
-            // Use a timeout to give a visual feedback of the loading state
-            setTimeout(() => {
-                setIsResetting(false);
-            }, 500);
-        }
+      } finally {
+        // Use a timeout to give a visual feedback of the loading state
+        setTimeout(() => {
+            setIsResetting(false);
+            resolve();
+        }, 500);
       }
-      loadDefaultData();
     });
   }, [toast]);
   

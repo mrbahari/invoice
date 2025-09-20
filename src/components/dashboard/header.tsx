@@ -135,47 +135,8 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             <span className="sr-only">تنظیمات</span>
           </Button>
 
-           <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
-            onClick={() => setIsSupportDialogOpen(true)}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="sr-only">پشتیبانی</span>
-          </Button>
-
         </div>
       </header>
-
-      <Dialog open={isSupportDialogOpen} onOpenChange={setIsSupportDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-background/80 backdrop-blur-sm">
-           <DialogHeader>
-            <div className="flex flex-col items-center text-center gap-2 mb-4">
-                <div className="p-3 bg-primary/10 rounded-full border border-primary/20">
-                    <Sparkles className="h-8 w-8 text-primary animate-pulse-slow" />
-                </div>
-                <DialogTitle className="text-xl">پشتیبانی و توسعه</DialogTitle>
-                <DialogDescription className="text-base">
-                  اسماعیل بهاری
-                </DialogDescription>
-            </div>
-          </DialogHeader>
-          
-          <div className="p-3 border rounded-lg flex justify-between items-center bg-muted/50">
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <span className="font-mono text-lg tracking-widest text-foreground">
-                09125486083
-              </span>
-            </div>
-            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-              <Copy className="h-5 w-5" />
-            </Button>
-          </div>
-
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

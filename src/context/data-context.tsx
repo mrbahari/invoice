@@ -25,12 +25,13 @@ interface DataContextType {
   resetData: () => Promise<void>;
   isInitialized: boolean;
   isResetting: boolean;
+  LOCAL_STORAGE_KEY: string;
 }
 
 // Create the context
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
+export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
 const defaultData = initialDataFromFile as AppData;
 
@@ -94,11 +95,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const defaultDataFromMb = initialDataFromFile as AppData;
           setData(defaultDataFromMb);
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDataFromMb));
-          toast({
-            variant: 'success',
-            title: 'موفقیت‌آمیز',
-            description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
-          });
       } catch (error) {
            console.error("Failed to reset data", error);
            toast({
@@ -122,6 +118,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     resetData,
     isInitialized,
     isResetting,
+    LOCAL_STORAGE_KEY,
   };
   
   if (!isInitialized) {

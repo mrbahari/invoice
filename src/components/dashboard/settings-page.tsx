@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, resetData, isResetting } = useData(); // Use the central data context
+  const { data, setData, resetData, isResetting, LOCAL_STORAGE_KEY } = useData();
   const { units = [] } = data; // Use default empty array to prevent error
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
@@ -98,17 +98,27 @@ export default function SettingsPage() {
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = async () => {
-    await resetData(); // This now correctly resets all data
-    toast({
-      variant: 'success',
-      title: 'اطلاعات پاک شد',
-      description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
-    });
+  const handleClearData = () => {
+    try {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        // We reload the page to force the DataProvider to re-initialize
+        // from the default JSON, which is now the "cleared" state.
+        window.location.reload();
+    } catch (error) {
+         toast({
+            variant: 'destructive',
+            title: 'خطا در پاک کردن اطلاعات',
+        });
+    }
   };
   
   const handleLoadDefaults = async () => {
     await resetData();
+     toast({
+      variant: 'success',
+      title: 'اطلاعات پیش‌فرض بارگذاری شد',
+      description: 'داده‌های اولیه برنامه با موفقیت جایگزین شدند.',
+    });
   };
 
   const handleBackupData = () => {

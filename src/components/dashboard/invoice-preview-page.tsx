@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { Printer, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -14,6 +14,7 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
+import { InvoiceActions } from './invoice-actions';
 
 function toWords(num: number): string {
   if (num === 0) return "صفر";
@@ -124,107 +125,98 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     );
   }
 
-  const handlePrint = () => {
-    if (typeof window !== 'undefined') {
-        window.print();
-    }
-  };
-
-
   return (
     <div className="animate-fade-in-up">
-        <div className="bg-muted p-4 sm:p-8 rounded-lg no-print">
-            <div className="flex justify-between gap-2 mb-6">
-                <Button type="button" variant="outline" onClick={onBack}>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت
-                </Button>
-                <Button size="sm" variant="outline" className="h-10 gap-1" onClick={handlePrint}>
-                    <Printer className="h-3.5 w-3.5" />
-                    <span>چاپ / PDF</span>
-                </Button>
+        <div className="mb-6 flex justify-between gap-2 no-print">
+            <Button type="button" variant="outline" onClick={onBack}>
+                <ArrowRight className="ml-2 h-4 w-4" />
+                بازگشت
+            </Button>
+            <div className="flex items-center gap-2">
+              <InvoiceActions />
             </div>
-            <div className="max-w-5xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">
-              <header className="flex justify-between items-start gap-4 mb-4">
-                  <div className="flex items-center justify-center w-1/6">
-                      {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
+        </div>
+
+        <div className="max-w-5xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">
+          <header className="flex justify-between items-start gap-4 mb-4">
+              <div className="flex items-center justify-center w-1/6">
+                  {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
+              </div>
+              <div className="text-center w-2/3">
+                  <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
+                  <h2 className="text-lg font-semibold">{store?.name}</h2>
+                  <div className="flex justify-center gap-8 mt-2 text-sm">
+                    <span>شماره: <span className="font-mono">{invoice.invoiceNumber}</span></span>
+                    <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                   </div>
-                  <div className="text-center w-2/3">
-                      <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
-                      <h2 className="text-lg font-semibold">{store?.name}</h2>
-                      <div className="flex justify-center gap-8 mt-2 text-sm">
-                        <span>شماره: <span className="font-mono">{invoice.invoiceNumber}</span></span>
-                        <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
-                      </div>
-                  </div>
-                   <div className="w-1/6 flex justify-end">
-                     {store.logoUrl && <Image src={store.logoUrl} alt="Store Logo" width={80} height={80} className="object-contain" />}
-                   </div>
-              </header>
+              </div>
+                <div className="w-1/6 flex justify-end">
+                  {store.logoUrl && <Image src={store.logoUrl} alt="Store Logo" width={80} height={80} className="object-contain" />}
+                </div>
+          </header>
 
-              <section className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                 <div className="border rounded-md p-2">
-                   <h3 className="font-bold border-b pb-1 mb-1">فروشنده</h3>
-                   <p><strong>فروشگاه:</strong> {store.name}</p>
-                   <p><strong>تلفن:</strong> {store.phone}</p>
-                   <p><strong>آدرس:</strong> {store.address}</p>
-                 </div>
-                 <div className="border rounded-md p-2">
-                   <h3 className="font-bold border-b pb-1 mb-1">خریدار</h3>
-                   <p><strong>نام:</strong> {customer.name}</p>
-                   <p><strong>تلفن:</strong> {customer.phone}</p>
-                   <p><strong>آدرس:</strong> {customer.address}</p>
-                 </div>
-              </section>
+          <section className="grid grid-cols-2 gap-4 mb-4 text-sm">
+              <div className="border rounded-md p-2">
+                <h3 className="font-bold border-b pb-1 mb-1">فروشنده</h3>
+                <p><strong>فروشگاه:</strong> {store.name}</p>
+                <p><strong>تلفن:</strong> {store.phone}</p>
+                <p><strong>آدرس:</strong> {store.address}</p>
+              </div>
+              <div className="border rounded-md p-2">
+                <h3 className="font-bold border-b pb-1 mb-1">خریدار</h3>
+                <p><strong>نام:</strong> {customer.name}</p>
+                <p><strong>تلفن:</strong> {customer.phone}</p>
+                <p><strong>آدرس:</strong> {customer.address}</p>
+              </div>
+          </section>
 
-              <section className="mt-4">
-                <table className="w-full text-sm border-collapse border">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border p-1 font-semibold">ردیف</th>
-                      <th className="border p-1 font-semibold w-2/5 text-right">شرح کالا / خدمات</th>
-                      <th className="border p-1 font-semibold">مقدار</th>
-                      <th className="border p-1 font-semibold">واحد</th>
-                      <th className="border p-1 font-semibold">مبلغ واحد</th>
-                      <th className="border p-1 font-semibold">مبلغ کل</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoice.items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="border p-1 text-center">{index + 1}</td>
-                        <td className="border p-1">{item.productName}</td>
-                        <td className="border p-1 text-center font-mono">{item.quantity.toLocaleString('fa-IR')}</td>
-                        <td className="border p-1 text-center">{item.unit}</td>
-                        <td className="border p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
-                        <td className="border p-1 text-center font-mono">{formatCurrency(item.totalPrice)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </section>
+          <section className="mt-4">
+            <table className="w-full text-sm border-collapse border">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border p-1 font-semibold">ردیف</th>
+                  <th className="border p-1 font-semibold w-2/5 text-right">شرح کالا / خدمات</th>
+                  <th className="border p-1 font-semibold">مقدار</th>
+                  <th className="border p-1 font-semibold">واحد</th>
+                  <th className="border p-1 font-semibold">مبلغ واحد</th>
+                  <th className="border p-1 font-semibold">مبلغ کل</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map((item, index) => (
+                  <tr key={index}>
+                    <td className="border p-1 text-center">{index + 1}</td>
+                    <td className="border p-1">{item.productName}</td>
+                    <td className="border p-1 text-center font-mono">{item.quantity.toLocaleString('fa-IR')}</td>
+                    <td className="border p-1 text-center">{item.unit}</td>
+                    <td className="border p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
+                    <td className="border p-1 text-center font-mono">{formatCurrency(item.totalPrice)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
 
-               <section className="grid grid-cols-2 gap-4 mt-4 text-sm">
-                 <div className="space-y-1">
-                    <p><strong>توضیحات:</strong> {invoice.description}</p>
-                    <p className="font-bold pt-4">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
-                 </div>
-                 <div className="border rounded-md p-2 space-y-1">
-                    <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
-                    {invoice.discount > 0 && <p className="flex justify-between"><strong>تخفیف:</strong> <span className="font-mono text-red-600">-{formatCurrency(invoice.discount)}</span></p>}
-                    {invoice.additions > 0 && <p className="flex justify-between"><strong>اضافات:</strong> <span className="font-mono">{formatCurrency(invoice.additions)}</span></p>}
-                    {invoice.tax > 0 && <p className="flex justify-between"><strong>مالیات:</strong> <span className="font-mono">{formatCurrency(invoice.tax)}</span></p>}
-                    <hr className="my-1 border-dashed" />
-                    <p className="flex justify-between font-bold text-base"><strong>جمع کل:</strong> <span className="font-mono">{formatCurrency(invoice.total)}</span></p>
-                 </div>
-               </section>
+            <section className="grid grid-cols-2 gap-4 mt-4 text-sm">
+              <div className="space-y-1">
+                <p><strong>توضیحات:</strong> {invoice.description}</p>
+                <p className="font-bold pt-4">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
+              </div>
+              <div className="border rounded-md p-2 space-y-1">
+                <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
+                {invoice.discount > 0 && <p className="flex justify-between"><strong>تخفیف:</strong> <span className="font-mono text-red-600">-{formatCurrency(invoice.discount)}</span></p>}
+                {invoice.additions > 0 && <p className="flex justify-between"><strong>اضافات:</strong> <span className="font-mono">{formatCurrency(invoice.additions)}</span></p>}
+                {invoice.tax > 0 && <p className="flex justify-between"><strong>مالیات:</strong> <span className="font-mono">{formatCurrency(invoice.tax)}</span></p>}
+                <hr className="my-1 border-dashed" />
+                <p className="flex justify-between font-bold text-base"><strong>جمع کل:</strong> <span className="font-mono">{formatCurrency(invoice.total)}</span></p>
+              </div>
+            </section>
 
-               <footer className="border-t mt-4 pt-2 text-xs text-gray-600 space-y-1">
-                  <p>۱. اعتبار پیش فاکتور ۲۴ ساعت می‌باشد.</p>
-                  {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder} <span className="font-mono mx-2">{store.bankCardNumber}</span> {store.bankName}</p>}
-               </footer>
+            <footer className="border-t mt-4 pt-2 text-xs text-gray-600 space-y-1">
+              <p>۱. اعتبار پیش فاکتور ۲۴ ساعت می‌باشد.</p>
+              {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder} <span className="font-mono mx-2">{store.bankCardNumber}</span> {store.bankName}</p>}
+            </footer>
 
-            </div>
         </div>
     </div>
   );

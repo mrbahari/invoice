@@ -73,7 +73,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:h-auto sm:px-6 no-print">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -88,51 +88,51 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <div className="flex items-center gap-4 md:ml-auto">
+        <div className="relative ml-auto flex-1 md:grow-0">
           {showSearch && (
             <div className="relative">
               <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="جستجو..."
-                className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[30%]"
+                className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           )}
-
-          <div className="flex items-center gap-2">
+        </div>
+        
+        <div className="flex items-center gap-2">
             <LiveClock />
-          </div>
+        </div>
 
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSettingsClick}>
-              <Settings className="h-4 w-4" />
-              <span className="sr-only">تنظیمات</span>
-            </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSettingsClick}>
+            <Settings className="h-4 w-4" />
+            <span className="sr-only">تنظیمات</span>
+          </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="overflow-hidden rounded-full h-9 w-9">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
-                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>پشتیبانی</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
-                  <LogOut className="ml-2 h-4 w-4" />
-                  خروج
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="overflow-hidden rounded-full h-9 w-9">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
+                  <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>پشتیبانی</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="ml-2 h-4 w-4" />
+                خروج
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

@@ -8,6 +8,7 @@ import { downloadCSV } from '@/lib/utils';
 import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { useState } from 'react';
 import { InvoiceTable } from '@/components/dashboard/invoice-table';
+import { InvoiceActions } from './invoice-actions';
 
 type TabData = {
   value: string;
@@ -56,7 +57,7 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
         <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
             <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-rap">
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
               خروجی
             </span>
           </Button>

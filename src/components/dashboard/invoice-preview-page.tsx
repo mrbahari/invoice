@@ -245,5 +245,4 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
         </div>
     </div>
   );
-
-    
+}

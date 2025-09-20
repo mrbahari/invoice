@@ -314,17 +314,20 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     return current;
   };
 
-  const handlePreviewClick = () => {
-    // If we are editing an existing invoice, we can just preview it.
-    if (isEditMode && invoice) {
+ const handlePreviewClick = async () => {
+    if (isDirty) {
+        const savedInvoiceId = await handleProcessInvoice(false, true); // Save but don't navigate
+        if (savedInvoiceId) {
+            onSaveAndPreview(savedInvoiceId);
+        }
+    } else if (invoice) {
         onSaveAndPreview(invoice.id);
-        return;
+    } else {
+        toast({ variant: 'destructive', title: 'فاکتور ذخیره نشده است', description: 'لطفا ابتدا فاکتور را ایجاد کنید.' });
     }
-    // If it's a new invoice, it must be saved first.
-    handleProcessInvoice(true);
-  };
+ };
   
-  const handleProcessInvoice = async (navigateToPreview: boolean = false) => {
+ const handleProcessInvoice = async (navigateToPreview: boolean = false, returnId: boolean = false): Promise<string | undefined> => {
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
       return;
@@ -348,7 +351,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     const finalSubtotal = invoiceItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
     const finalTotal = finalSubtotal - (overallDiscount || 0) + (totalBeforeTax * ((tax || 0)/100)) + (additions || 0);
 
-    let processedInvoiceId = '';
+    let processedInvoiceId: string | undefined = '';
 
     if (isEditMode && invoice) {
         processedInvoiceId = invoice.id;
@@ -398,11 +401,18 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     }
 
     setIsProcessing(false);
+    
+    if (returnId) {
+        return processedInvoiceId;
+    }
+    
     if (navigateToPreview && processedInvoiceId) {
           onSaveAndPreview(processedInvoiceId);
     } else if (!navigateToPreview) {
           onCancel();
     }
+    
+    return undefined;
   };
   
   const handleDeleteInvoice = async () => {
@@ -840,7 +850,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                         <span>پیش‌نمایش</span>
                     </Button>
                     
-                    <Button className="min-w-[120px] flex-1 bg-green-600 hover:bg-green-700" size="lg" onClick={() => handleProcessInvoice(false)} disabled={isProcessing || !isDirty}>
+                    <Button className="min-w-[120px] flex-1 bg-green-600 hover:bg-green-700" size="lg" onClick={() => handleProcessInvoice()} disabled={isProcessing || !isDirty}>
                         <Save className="ml-2 h-4 w-4" />
                         {isProcessing
                         ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'

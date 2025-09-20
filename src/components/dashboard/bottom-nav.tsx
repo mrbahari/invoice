@@ -19,7 +19,6 @@ const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] 
   // Central button placeholder
   { tab: 'categories', icon: Store, label: 'فروشگاه‌ها' },
   { tab: 'estimators', icon: Calculator, label: 'برآورد' },
-  { tab: 'reports', icon: LineChart, label: 'گزارشات' },
 ];
 
 interface BottomNavProps {
@@ -64,7 +63,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         </div>
 
 
-        {navItems.slice(3, 6).map((item) => (
+        {navItems.slice(3, 5).map((item) => (
            <button
             key={item.tab}
             onClick={() => handleTabClick(item.tab)}

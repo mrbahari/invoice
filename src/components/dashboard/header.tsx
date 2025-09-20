@@ -30,7 +30,6 @@ const tabToNameMapping: Record<DashboardTab, string> = {
   customers: 'مشتریان',
   categories: 'فروشگاه‌ها',
   estimators: 'برآورد مصالح',
-  reports: 'گزارشات',
   settings: 'تنظیمات',
 };
 

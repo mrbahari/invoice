@@ -12,7 +12,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import type { Invoice } from '@/lib/definitions';
 
 
-export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
 
 export default function DashboardClientComponent() {
   const router = useRouter();
@@ -59,10 +59,6 @@ export default function DashboardClientComponent() {
         </div>
         <div className={activeTab === 'estimators' ? '' : 'hidden'}>
           <EstimatorsPage onNavigate={handleNavigation} />
-        </div>
-        <div className={activeTab === 'reports' ? '' : 'hidden'}>
-          {/* This tab is kept for direct navigation but dashboard shows it by default */}
-          <ReportsPage onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'settings' ? '' : 'hidden'}>
           <SettingsPage />

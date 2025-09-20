@@ -47,7 +47,8 @@ import { useData } from '@/context/data-context';
 import { InvoiceActions } from './invoice-actions';
 
 type InvoiceEditorProps = {
-    invoiceToEdit?: Omit<Invoice, 'id'> | Invoice;
+    invoiceId?: string; // Can be a new invoice (undefined) or an existing one
+    initialUnsavedInvoice?: Omit<Invoice, 'id'> | null; // For invoices coming from estimators
     onSaveSuccess: (invoiceId: string) => void;
     onPreview: (invoiceId: string) => void;
     onCancel: () => void;
@@ -60,16 +61,31 @@ const useIsClient = () => {
   return isClient;
 };
 
-export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
   
-  const isEditMode = invoiceToEdit && 'id' in invoiceToEdit;
+  const isEditMode = !!invoiceId;
 
-  const [invoice, setInvoice] = useState<Partial<Invoice>>(
-    invoiceToEdit || {
+  // Find the invoice to edit from the main data source if an ID is provided
+  const invoiceToEdit = useMemo(() => 
+    isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined
+  , [invoices, invoiceId, isEditMode]);
+  
+
+  const [invoice, setInvoice] = useState<Partial<Invoice>>(() => {
+    if (invoiceToEdit) {
+      return invoiceToEdit;
+    }
+    if (initialUnsavedInvoice) {
+      return {
+        ...initialUnsavedInvoice,
+        invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+      };
+    }
+    return {
         date: new Date().toISOString(),
         status: 'Pending',
         items: [],
@@ -80,11 +96,11 @@ export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCance
         total: 0,
         description: '',
         invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
-    }
-  );
+    };
+  });
   
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(() => 
-    isEditMode ? customerList.find(c => c.id === invoiceToEdit.customerId) : undefined
+    invoiceToEdit ? customerList.find(c => c.id === invoiceToEdit.customerId) : undefined
   );
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -201,7 +217,7 @@ export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCance
     let processedInvoiceId: string;
 
     if (isEditMode) {
-        processedInvoiceId = invoiceToEdit.id;
+        processedInvoiceId = invoiceToEdit!.id;
         const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
         setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === processedInvoiceId ? finalInvoice : inv) }));
         toast({ variant: 'success', title: 'فاکتور ویرایش شد' });
@@ -231,22 +247,23 @@ export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCance
   };
   
   const handlePreviewClick = () => {
-    // If it's an existing invoice, we can preview it directly.
-    // If it's new, it must be saved first.
-    if (isEditMode) {
-        onPreview((invoiceToEdit as Invoice).id);
-    } else {
-        const processedId = handleProcessInvoice();
-        if (processedId) {
-            onPreview(processedId);
+    // If it's a new invoice that hasn't been saved, save it first.
+    if (!isEditMode) {
+        const newId = handleProcessInvoice();
+        if (newId) {
+            onPreview(newId);
         }
+    } else {
+        // If it's an existing invoice, just save any current changes and then preview.
+        handleProcessInvoice(); // This saves any pending changes
+        onPreview(invoiceId!);
     }
   };
   
    return (
     <>
-    <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-        <div className="grid auto-rows-max items-start gap-4 md:gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
+        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
              <Card className="animate-fade-in-up">
                 <CardHeader>
                     <CardTitle>محصولات</CardTitle>
@@ -311,7 +328,7 @@ export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCance
             </Card>
         </div>
 
-        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
+        <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
             <Card className="animate-fade-in-up">
             <CardHeader>
                 <div className="flex items-center justify-between">
@@ -447,3 +464,5 @@ export function InvoiceEditor({ invoiceToEdit, onSaveSuccess, onPreview, onCance
     </>
   );
 }
+
+    

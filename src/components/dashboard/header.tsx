@@ -88,9 +88,9 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   return (
     <>
     <header className="sticky top-0 z-30 flex h-auto flex-col gap-4 border-b bg-background/95 px-4 py-3 backdrop-blur-sm sm:h-14 sm:flex-row sm:items-center sm:justify-between sm:px-6 no-print">
-        {/* Right side: Breadcrumb */}
+        {/* Right side: Breadcrumb & Desktop Search */}
         <div className="flex items-center gap-4">
-            <Breadcrumb>
+            <Breadcrumb className="hidden sm:flex">
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
@@ -103,30 +103,42 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            
+            {/* Desktop Search */}
+            <div className={cn("relative hidden", showSearch && 'sm:block')}>
+                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                type="search"
+                placeholder="جستجو..."
+                className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
         </div>
 
-        {/* Left side: Search, Actions, Profile */}
-        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+        {/* Left side: Mobile Search, Actions, Profile */}
+         <div className="flex items-center justify-between gap-2 sm:justify-end">
             <div className="sm:hidden">
-              <LiveClock />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <button onClick={() => onTabChange('dashboard')}>خانه</button>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                     <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-
+            
             <div className="flex items-center gap-2">
-                 {/* Desktop Search */}
-                <div className={cn("relative hidden", showSearch && 'md:block')}>
-                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                    type="search"
-                    placeholder="جستجو..."
-                    className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                 
                  {/* Mobile Search */}
                 {showSearch && (
-                    <div className="md:hidden">
+                    <div className="sm:hidden">
                         <Sheet>
                           <SheetTrigger asChild>
                             <Button variant="outline" size="icon" className="h-9 w-9">
@@ -184,7 +196,12 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-      </div>
+        </div>
+
+        <div className="sm:hidden">
+            <LiveClock />
+        </div>
+
     </header>
 
     <Dialog open={isSupportDialogOpen} onOpenChange={setIsSupportDialogOpen}>

@@ -14,6 +14,7 @@ import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
+import { useToast } from '@/hooks/use-toast';
 
 function toWords(num: number): string {
   if (num === 0) return "صفر";
@@ -83,6 +84,7 @@ type InvoicePreviewPageProps = {
 export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreviewPageProps) {
   
   const { data } = useData();
+  const { toast } = useToast();
   const { invoices, products, stores, customers } = data;
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -91,10 +93,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
   const customer = useMemo(() => customers.find((c) => c.id === invoice?.customerId), [customers, invoice]);
   
   const store = useMemo(() => {
-    if (!invoice?.items.length) return undefined;
+    if (!invoice?.items.length) return stores[0] || undefined;
     const firstItem = invoice.items[0];
     const productInfo = products.find(p => p.id === firstItem?.productId);
-    if (!productInfo) return stores[0]; // Fallback to first store
+    if (!productInfo) return stores[0] || undefined; // Fallback to first store
     return stores.find(s => s.id === productInfo.storeId) || stores[0];
   }, [invoice, products, stores]);
 
@@ -126,17 +128,36 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
   const handleDownloadImage = () => {
     const invoiceElement = document.getElementById('invoice-card');
     if (invoiceElement) {
-        const originalWidth = invoiceElement.style.width;
-        invoiceElement.style.width = '1024px';
-        html2canvas(invoiceElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 })
-            .then(canvas => {
+        toast({ title: 'در حال آماده‌سازی تصویر...', description: 'لطفا چند لحظه صبر کنید.' });
+
+        // Add a small delay to ensure all fonts and images are rendered
+        setTimeout(() => {
+            const originalWidth = invoiceElement.style.width;
+            invoiceElement.style.width = '1024px'; // Set a fixed width for consistent output
+
+            html2canvas(invoiceElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                windowWidth: 1024,
+                windowHeight: invoiceElement.scrollHeight, // Capture full height
+                onclone: (document) => {
+                    // This can be used to apply styles only for the screenshot
+                }
+            }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `invoice-${invoice.invoiceNumber}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+                toast({ variant: 'success', title: 'دانلود شروع شد', description: 'تصویر فاکتور با موفقیت دانلود شد.' });
+            }).catch(err => {
+                console.error("html2canvas error:", err);
+                toast({ variant: 'destructive', title: 'خطا در دانلود', description: 'مشکلی در ایجاد تصویر پیش آمد.' });
             }).finally(() => {
+                // Restore original style
                 invoiceElement.style.width = originalWidth;
             });
+        }, 500); // 500ms delay
     }
   };
 

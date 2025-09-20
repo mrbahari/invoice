@@ -179,3 +179,15 @@
       }
     }
 }
+
+@media print {
+  html {
+    font-size: 16px;
+  }
+  body {
+    background-color: #fff;
+  }
+  .no-print {
+    display: none;
+  }
+}

@@ -430,9 +430,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     <div {...provided.dragHandleProps} className="cursor-grab p-2 -m-2 sm:p-4 sm:-m-4 flex items-center justify-center sm:border-l">
                                                         <GripVertical className="h-5 w-5 text-muted-foreground" />
                                                     </div>
-                                                    <div className="flex-shrink-0">
-                                                        <Image src={product?.imageUrl || ''} alt={item.productName} width={80} height={80} className="rounded-md object-cover w-full h-auto sm:w-20 sm:h-20" />
-                                                    </div>
                                                     <div className="flex-grow grid gap-3">
                                                         <p className="font-semibold">{item.productName}</p>
                                                         <div className="grid grid-cols-2 gap-4">
@@ -539,3 +536,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
+
+    

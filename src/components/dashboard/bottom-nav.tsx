@@ -55,7 +55,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         <div className="flex h-full w-full items-center justify-center">
             <button 
               onClick={() => handleTabClick('invoices')}
-              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-background/80 text-primary shadow-lg shadow-black/10 backdrop-blur-sm transition-all hover:scale-110 hover:shadow-primary/20 active:scale-95"
+              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm transition-all hover:scale-110 hover:shadow-primary/20 active:scale-95"
             >
               <FileText className="h-8 w-8 transition-transform group-hover:rotate-[-5deg] group-active:rotate-[-10deg]" />
               <span className="sr-only">ایجاد فاکتور</span>

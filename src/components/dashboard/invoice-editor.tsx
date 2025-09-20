@@ -414,6 +414,117 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
   return (
     <>
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+        <div className="grid auto-rows-max items-start gap-4 md:gap-8">
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <CardHeader>
+                <CardTitle>محصولات</CardTitle>
+                <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="relative">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                    </div>
+                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="انتخاب دسته‌بندی" />
+                        </SelectTrigger>
+                        <SelectContent>
+                             <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                             <Separator />
+                             {mainCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                             ))}
+                             <Separator />
+                             {subCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id} className="pr-6">{cat.name}</SelectItem>
+                             ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <ScrollArea className="h-96">
+                    <div className="grid grid-cols-3 gap-3">
+                    {filteredProducts.map(product => (
+                        <Card 
+                            key={product.id} 
+                            onClick={() => handleAddProduct(product)}
+                            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
+                        >
+                            <CardContent className="p-2">
+                                <div className="relative w-full aspect-square mb-2">
+                                    <Image
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        fill
+                                        className="rounded-md object-cover"
+                                    />
+                                </div>
+                                <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                            </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+
+        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <CardHeader>
+                <CardTitle>مشتریان</CardTitle>
+                <CardDescription>یک مشتری برای این فاکتور انتخاب کنید.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                <div className="relative">
+                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="جستجو یا افزودن مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                </div>
+                 {selectedCustomer && (
+                     <Card className="bg-muted/50">
+                        <CardContent className="p-3 flex items-center gap-3">
+                             <Avatar className="h-9 w-9">
+                                <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/36/36`} alt="آواتار" />
+                                <AvatarFallback>{selectedCustomer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium">{selectedCustomer.name}</p>
+                                <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
+                            </div>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedCustomer(undefined)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardContent>
+                     </Card>
+                )}
+                <ScrollArea className="h-48">
+                    <div className="grid gap-2">
+                    {filteredCustomers.map(customer => (
+                        <Button
+                            key={customer.id}
+                            variant={selectedCustomer?.id === customer.id ? 'secondary' : 'ghost'}
+                            className="justify-start"
+                            onClick={() => setSelectedCustomer(customer)}
+                            disabled={!!selectedCustomer}
+                        >
+                            {customer.name}
+                        </Button>
+                    ))}
+                     {filteredCustomers.length === 0 && customerSearch && !selectedCustomer && (
+                        <Button
+                            variant="ghost"
+                            className="justify-start"
+                            onClick={handleAddNewCustomer}
+                        >
+                           <PlusCircle className="ml-2 h-4 w-4" />
+                           افزودن مشتری جدید: "{customerSearch}"
+                        </Button>
+                    )}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+      </div>
+
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
         <Card className="animate-fade-in-up">
           <CardHeader>
@@ -676,116 +787,6 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         </Card>
       </div>
 
-      <div className="grid auto-rows-max items-start gap-4 md:gap-8">
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <CardHeader>
-                <CardTitle>محصولات</CardTitle>
-                <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="relative">
-                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                    </div>
-                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="انتخاب دسته‌بندی" />
-                        </SelectTrigger>
-                        <SelectContent>
-                             <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
-                             <Separator />
-                             {mainCategories.map(cat => (
-                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                             ))}
-                             <Separator />
-                             {subCategories.map(cat => (
-                                <SelectItem key={cat.id} value={cat.id} className="pr-6">{cat.name}</SelectItem>
-                             ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <ScrollArea className="h-96">
-                    <div className="grid grid-cols-3 gap-3">
-                    {filteredProducts.map(product => (
-                        <Card 
-                            key={product.id} 
-                            onClick={() => handleAddProduct(product)}
-                            className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
-                        >
-                            <CardContent className="p-2">
-                                <div className="relative w-full aspect-square mb-2">
-                                    <Image
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        fill
-                                        className="rounded-md object-cover"
-                                    />
-                                </div>
-                                <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                            </CardContent>
-                        </Card>
-                    ))}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
-
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <CardHeader>
-                <CardTitle>مشتریان</CardTitle>
-                <CardDescription>یک مشتری برای این فاکتور انتخاب کنید.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                <div className="relative">
-                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجو یا افزودن مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
-                </div>
-                 {selectedCustomer && (
-                     <Card className="bg-muted/50">
-                        <CardContent className="p-3 flex items-center gap-3">
-                             <Avatar className="h-9 w-9">
-                                <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/36/36`} alt="آواتار" />
-                                <AvatarFallback>{selectedCustomer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                                <p className="text-sm font-medium">{selectedCustomer.name}</p>
-                                <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
-                            </div>
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedCustomer(undefined)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </CardContent>
-                     </Card>
-                )}
-                <ScrollArea className="h-48">
-                    <div className="grid gap-2">
-                    {filteredCustomers.map(customer => (
-                        <Button
-                            key={customer.id}
-                            variant={selectedCustomer?.id === customer.id ? 'secondary' : 'ghost'}
-                            className="justify-start"
-                            onClick={() => setSelectedCustomer(customer)}
-                            disabled={!!selectedCustomer}
-                        >
-                            {customer.name}
-                        </Button>
-                    ))}
-                     {filteredCustomers.length === 0 && customerSearch && !selectedCustomer && (
-                        <Button
-                            variant="ghost"
-                            className="justify-start"
-                            onClick={handleAddNewCustomer}
-                        >
-                           <PlusCircle className="ml-2 h-4 w-4" />
-                           افزودن مشتری جدید: "{customerSearch}"
-                        </Button>
-                    )}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
-      </div>
     </div>
     
     {isDirty && (

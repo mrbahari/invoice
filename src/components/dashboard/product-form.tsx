@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search } from 'lucide-react';
+import { generateProductDetails, type GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 
 
 type ProductFormProps = {
@@ -516,8 +517,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                           <Image
                               src={imageUrl}
                               alt={name || "Product Image"}
-                              layout="fill"
-                              objectFit="cover"
+                              fill
+                              className="object-cover"
                               key={imageUrl} // Force re-render on URL change
                           />
                       ) : (

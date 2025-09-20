@@ -99,7 +99,7 @@ export default function SettingsPage() {
   };
 
   const handleClearData = () => {
-    resetData(); // Use the reliable reset function from the context
+    resetData();
     toast({
       variant: 'success',
       title: 'اطلاعات پاک شد',
@@ -383,7 +383,7 @@ export default function SettingsPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>انصراف</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleLoadDefaults}>بله، بارگذاری کن</AlertDialogAction>
+                  <AlertDialogAction onClick={handleLoadDefaults} className="bg-green-600 hover:bg-green-700">بله، بارگذاری کن</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -393,3 +393,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

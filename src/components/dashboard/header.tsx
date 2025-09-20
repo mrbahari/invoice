@@ -110,29 +110,32 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </Breadcrumb>
             
              {showSearch && (
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-8 w-8 md:hidden">
-                        <Search className="h-4 w-4" />
-                        <span className="sr-only">جستجو</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="top" className="md:hidden">
-                    <SheetHeader>
-                      <SheetTitle>جستجو در {tabToNameMapping[activeTab]}</SheetTitle>
-                    </SheetHeader>
-                    <div className="relative mt-4">
-                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="جستجو..."
-                            className="w-full rounded-lg bg-background pr-8"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                  </SheetContent>
-                </Sheet>
+                <div className="md:hidden">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-8 w-8">
+                            <Search className="h-4 w-4" />
+                            <span className="sr-only">جستجو</span>
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="top">
+                        <SheetHeader>
+                          <SheetTitle>جستجو در {tabToNameMapping[activeTab]}</SheetTitle>
+                        </SheetHeader>
+                        <div className="relative mt-4">
+                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="search"
+                                placeholder="جستجو..."
+                                className="w-full rounded-lg bg-background pr-8"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                </div>
              )}
         </div>
       

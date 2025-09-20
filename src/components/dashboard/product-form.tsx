@@ -367,43 +367,46 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                     <Card>
                         <CardHeader>
                             <CardTitle>جزئیات محصول</CardTitle>
+                            <CardDescription>اطلاعات اصلی محصول، دسته‌بندی و توضیحات.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-6">
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="product-name" className="text-right">نام محصول</Label>
-                                    <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: لپتاپ پرو" required className="col-span-2" />
+                                <div className="grid gap-3">
+                                    <Label htmlFor="product-name">نام محصول</Label>
+                                    <Input id="product-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: لپتاپ پرو" required />
                                 </div>
-                                 <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="product-code" className="text-right">کد کالا</Label>
-                                    <Input id="product-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="اختیاری" className="col-span-2" />
+                                <div className="grid gap-3">
+                                    <Label htmlFor="product-code">کد کالا</Label>
+                                    <Input id="product-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="اختیاری" />
                                 </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="store" className="text-right">فروشگاه</Label>
-                                    <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
-                                        <SelectTrigger id="store" className="col-span-2"><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
-                                        <SelectContent>
-                                            {stores.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                     <div className="grid gap-3">
+                                        <Label htmlFor="store">فروشگاه</Label>
+                                        <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
+                                            <SelectTrigger id="store"><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
+                                            <SelectContent>
+                                                {stores.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="sub-category">زیردسته</Label>
+                                        <Select value={subCategoryId} onValueChange={setSubCategoryId} required disabled={!storeId}>
+                                            <SelectTrigger id="sub-category"><SelectValue placeholder={storeId ? "انتخاب زیردسته" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
+                                            <SelectContent>
+                                                {availableSubCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="sub-category" className="text-right">زیردسته</Label>
-                                    <Select value={subCategoryId} onValueChange={setSubCategoryId} required disabled={!storeId}>
-                                        <SelectTrigger id="sub-category" className="col-span-2"><SelectValue placeholder={storeId ? "انتخاب زیردسته" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
-                                        <SelectContent>
-                                            {availableSubCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid grid-cols-3 items-start gap-4">
-                                    <div className="flex items-center gap-2 h-10">
-                                      <Label htmlFor="description" className="text-right">توضیحات</Label>
-                                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 mr-auto" onClick={() => handleAiGeneration('description')} disabled={aiLoading.description}>
+                                <div className="grid gap-3">
+                                    <div className="flex items-center justify-between">
+                                      <Label htmlFor="description">توضیحات</Label>
+                                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('description')} disabled={aiLoading.description}>
                                           {aiLoading.description ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                       </Button>
                                     </div>
-                                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="توضیحات محصول را اینجا بنویسید یا با هوش مصنوعی تولید کنید..." className="min-h-32 col-span-2" />
+                                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="توضیحات محصول را اینجا بنویسید یا با هوش مصنوعی تولید کنید..." className="min-h-32" />
                                 </div>
                             </div>
                         </CardContent>
@@ -413,51 +416,49 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                             <CardTitle>واحدها و قیمت‌گذاری</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid gap-6">
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                        <Label htmlFor="unit" className="text-right">واحد اصلی</Label>
-                                        <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
-                                            <SelectTrigger id="unit" className="col-span-2"><SelectValue placeholder="واحد" /></SelectTrigger>
-                                            <SelectContent>
-                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>))}
-                                            </SelectContent>
-                                        </Select>
+                             <div className="grid md:grid-cols-2 gap-4">
+                                <div className="grid gap-3">
+                                    <Label htmlFor="unit">واحد اصلی</Label>
+                                    <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
+                                        <SelectTrigger id="unit"><SelectValue placeholder="واحد" /></SelectTrigger>
+                                        <SelectContent>
+                                            {unitsOfMeasurement.map((u) => (<SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                                 <div className="grid grid-cols-3 items-center gap-4">
-                                        <Label htmlFor="sub-unit" className="text-right">واحد فرعی</Label>
-                                        <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }}>
-                                            <SelectTrigger id="sub-unit" className="col-span-2"><SelectValue placeholder="اختیاری" /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem key="none" value="none">هیچکدام</SelectItem>
-                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>))}
-                                            </SelectContent>
-                                        </Select>
+                               <div className="grid gap-3">
+                                    <Label htmlFor="sub-unit">واحد فرعی</Label>
+                                    <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }}>
+                                        <SelectTrigger id="sub-unit"><SelectValue placeholder="اختیاری" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem key="none" value="none">هیچکدام</SelectItem>
+                                            {unitsOfMeasurement.map((u) => (<SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="sub-unit-quantity" className="text-right">مقدار تبدیل</Label>
-                                    <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} step="0.01" className="col-span-2" />
+                                <div className="grid gap-3">
+                                    <Label htmlFor="sub-unit-quantity">مقدار تبدیل</Label>
+                                    <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} step="0.01" />
                                 </div>
-
-                                 <div className="grid grid-cols-3 items-center gap-4">
-                                      <div className="flex items-center gap-2">
-                                          <Label htmlFor="price" className="text-right">قیمت اصلی (ریال)</Label>
-                                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 mr-auto" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
-                                              {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
-                                          </Button>
-                                      </div>
-                                      <Input id="price" value={displayPrice} onChange={handlePriceChange} required className="col-span-2" />
+                                <div className="grid gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="price">قیمت اصلی (ریال)</Label>
+                                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
+                                            {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
+                                        </Button>
+                                    </div>
+                                    <Input id="price" value={displayPrice} onChange={handlePriceChange} required />
                                 </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                      <Label htmlFor="sub-unit-price" className="text-right">قیمت فرعی (ریال)</Label>
-                                      <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'} disabled={!showSubUnitFields} className="col-span-2" />
+                                <div className="grid gap-3 md:col-span-2">
+                                    <Label htmlFor="sub-unit-price">قیمت فرعی (ریال)</Label>
+                                    <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'} disabled={!showSubUnitFields} />
                                 </div>
-                                
-                                {showSubUnitFields && subUnitQuantity && price && (
-                                    <p className="text-xs text-muted-foreground col-span-3">
-                                        هر {subUnitQuantity} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
-                                    </p>
-                                )}
                             </div>
+                            {showSubUnitFields && subUnitQuantity && price && (
+                                <p className="text-xs text-muted-foreground mt-4">
+                                    هر {subUnitQuantity} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
+                                </p>
+                            )}
                         </CardContent>
                         <CardFooter className="border-t pt-6 flex flex-col sm:flex-row-reverse justify-between gap-4">
                             <div className="w-full sm:w-auto flex-1 sm:flex-initial">

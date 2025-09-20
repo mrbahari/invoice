@@ -77,7 +77,11 @@ export function InvoiceTable({ invoiceList, onEdit, onPreview, onDelete }: Invoi
               const displayPhone = customer?.phone || 'بدون تماس';
               
               return (
-              <TableRow key={invoice.id}>
+              <TableRow 
+                key={invoice.id} 
+                onClick={() => onEdit(invoice)}
+                className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-1"
+              >
                 <TableCell>
                   <div className="font-medium">{displayPhone}</div>
                   <div className="text-sm text-muted-foreground">
@@ -95,17 +99,17 @@ export function InvoiceTable({ invoiceList, onEdit, onPreview, onDelete }: Invoi
                 <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
                 <TableCell className="text-left">
                     <div className="flex items-center gap-1 justify-end">
-                      <Button onClick={() => onEdit(invoice)} size="icon" variant="ghost" className="h-8 w-8">
+                      <Button onClick={(e) => { e.stopPropagation(); onEdit(invoice); }} size="icon" variant="ghost" className="h-8 w-8">
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">ویرایش</span>
                       </Button>
-                      <Button onClick={() => onPreview(invoice)} size="icon" variant="ghost" className="h-8 w-8">
+                      <Button onClick={(e) => { e.stopPropagation(); onPreview(invoice); }} size="icon" variant="ghost" className="h-8 w-8">
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">مشاهده</span>
                       </Button>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive/80">
+                            <Button onClick={(e) => e.stopPropagation()} size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive/80">
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">حذف</span>
                             </Button>

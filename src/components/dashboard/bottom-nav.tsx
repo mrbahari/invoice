@@ -8,6 +8,7 @@ import {
   FileText,
   Store,
   Calculator,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
@@ -19,6 +20,7 @@ const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] 
   // Central button placeholder
   { tab: 'categories', icon: Store, label: 'فروشگاه‌ها' },
   { tab: 'estimators', icon: Calculator, label: 'برآورد' },
+  { tab: 'settings', icon: Settings, label: 'تنظیمات' },
 ];
 
 interface BottomNavProps {
@@ -63,7 +65,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         </div>
 
 
-        {navItems.slice(3, 5).map((item) => (
+        {navItems.slice(3, 6).map((item) => (
            <button
             key={item.tab}
             onClick={() => handleTabClick(item.tab)}

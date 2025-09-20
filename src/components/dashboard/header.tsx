@@ -124,18 +124,6 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           <LiveClock />
         </div>
 
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
-            onClick={handleSettingsClick}
-          >
-            <Settings className="h-4 w-4" />
-            <span className="sr-only">تنظیمات</span>
-          </Button>
-
-        </div>
       </header>
     </>
   );

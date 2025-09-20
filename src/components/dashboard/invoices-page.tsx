@@ -20,64 +20,67 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-type ViewType = 'list' | 'editor' | 'preview';
+type View = 'list' | 'editor' | 'preview';
 
 type InvoicesPageProps = {
-  initialInvoice?: Omit<Invoice, 'id'>;
+  initialInvoice?: Omit<Invoice, 'id'> | null;
+  setInitialInvoice: (invoice: Omit<Invoice, 'id'> | null) => void;
 };
 
-
-export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: InvoicesPageProps) {
+export default function InvoicesPage({ initialInvoice, setInitialInvoice }: InvoicesPageProps) {
   const { data, setData } = useData();
   const { invoices: allInvoices } = data;
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  const [view, setView] = useState<ViewType>('list');
-  const [currentInvoice, setCurrentInvoice] = useState<Invoice | undefined>(undefined);
-  
+  const [view, setView] = useState<View>('list');
+  const [currentInvoiceId, setCurrentInvoiceId] = useState<string | undefined>(undefined);
+
+  // Effect to handle the initial invoice prop from estimators
   useEffect(() => {
-    // If an initial invoice is passed (e.g., from estimators), switch to editor view
-    if (initialInvoiceProp) {
-        // Here we can't be sure if it's a full invoice object or just partial data.
-        // We'll treat it as partial and let the editor handle it.
-        setCurrentInvoice(initialInvoiceProp as Invoice);
-        setView('editor');
-    }
-  }, [initialInvoiceProp]);
-  
-  const handleEdit = (invoiceId: string) => {
-    const invoiceToEdit = allInvoices.find(inv => inv.id === invoiceId);
-    if (invoiceToEdit) {
-      setCurrentInvoice(invoiceToEdit);
+    if (initialInvoice) {
+      // It's a new invoice, go directly to editor. We don't set an ID yet.
       setView('editor');
+      setCurrentInvoiceId(undefined); 
     }
+  }, [initialInvoice]);
+
+  const handleCreate = () => {
+    setInitialInvoice(null); // Clear any estimator-passed invoice
+    setCurrentInvoiceId(undefined); // No ID for a new invoice
+    setView('editor');
+  };
+
+  const handleEdit = (invoiceId: string) => {
+    setCurrentInvoiceId(invoiceId);
+    setView('editor');
   };
 
   const handlePreview = (invoiceId: string) => {
-    const invoiceToPreview = allInvoices.find(inv => inv.id === invoiceId);
-    if (invoiceToPreview) {
-      setCurrentInvoice(invoiceToPreview);
-      setView('preview');
-    }
+    setCurrentInvoiceId(invoiceId);
+    setView('preview');
   };
-  
+
   const handleDelete = (invoiceId: string) => {
     setData(prev => ({
-        ...prev,
-        invoices: prev.invoices.filter(inv => inv.id !== invoiceId)
+      ...prev,
+      invoices: prev.invoices.filter(inv => inv.id !== invoiceId)
     }));
     toast({ variant: 'success', title: 'فاکتور حذف شد' });
+    // Stay on the list view
+    setView('list');
+  };
+
+  // Called from editor when saved, then moves to preview
+  const handleSaveAndPreview = (savedInvoiceId: string) => {
+    setCurrentInvoiceId(savedInvoiceId);
+    setView('preview');
   };
   
-  const handleSave = (savedInvoice: Invoice) => {
-    // After saving (new or update), go to preview that invoice
-    setCurrentInvoice(savedInvoice);
-    setView('preview');
-  }
-  
+  // Called when canceling editor or going back from preview/editor
   const handleCancel = () => {
-    setCurrentInvoice(undefined);
+    setInitialInvoice(null); // Always clear the initial invoice on cancel
+    setCurrentInvoiceId(undefined);
     setView('list');
   };
 
@@ -87,20 +90,30 @@ export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: Inv
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [allInvoices, searchTerm]);
-  
+
+  // Determine which invoice to pass to the editor
+  // If it's from an estimator, pass it. Otherwise, pass the one being edited.
+  const editorInvoice = useMemo(() => {
+      if (view === 'editor' && !currentInvoiceId && initialInvoice) {
+          return { ...initialInvoice, id: undefined };
+      }
+      return currentInvoiceId ? allInvoices.find(inv => inv.id === currentInvoiceId) : undefined;
+  }, [view, currentInvoiceId, initialInvoice, allInvoices]);
+
+
   const renderContent = () => {
     switch (view) {
       case 'editor':
         return (
           <InvoiceEditor
-            invoice={currentInvoice}
-            onSave={handleSave}
+            invoiceId={currentInvoiceId}
+            onSaveAndPreview={handleSaveAndPreview}
             onCancel={handleCancel}
           />
         );
       case 'preview':
-        return currentInvoice ? (
-          <InvoicePreviewPage invoiceId={currentInvoice.id} onBack={() => setView('editor')} />
+        return currentInvoiceId ? (
+          <InvoicePreviewPage invoiceId={currentInvoiceId} onBack={() => setView(currentInvoiceId ? 'editor' : 'list')} />
         ) : null;
       case 'list':
       default:
@@ -118,7 +131,7 @@ export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: Inv
                         <CardTitle>فاکتورها</CardTitle>
                         <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
-                     <Button size="sm" className="h-8 gap-1" onClick={() => { setCurrentInvoice(undefined); setView('editor'); }}>
+                     <Button size="sm" className="h-8 gap-1" onClick={handleCreate}>
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         ایجاد فاکتور

@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Download } from 'lucide-react';
+import { ArrowRight, Download, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -14,7 +14,6 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
-import html2canvas from 'html2canvas';
 import { InvoiceActions } from './invoice-actions';
 
 
@@ -102,6 +101,11 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     return stores.find(s => s.id === productInfo.storeId) || stores[0];
   }, [invoice, products, stores]);
 
+  const handlePrint = () => {
+    // This is a simple way to trigger the browser's print dialog.
+    // CSS with @media print will handle the styling for printing.
+    setTimeout(() => window.print(), 500); // Timeout to ensure all styles are applied
+  };
 
 
   useEffect(() => {
@@ -129,12 +133,18 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
 
   return (
     <div className="animate-fade-in-up">
-        <div className="mb-6 flex justify-between gap-2 no-print">
+        <div className="mb-6 flex justify-between items-center gap-2 no-print">
             <Button type="button" variant="outline" onClick={onBack}>
                 <ArrowRight className="ml-2 h-4 w-4" />
                 بازگشت
             </Button>
             <div className="flex items-center gap-2">
+               <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handlePrint}>
+                  <Printer className="ml-2 h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    چاپ / PDF
+                  </span>
+                </Button>
               <InvoiceActions />
             </div>
         </div>

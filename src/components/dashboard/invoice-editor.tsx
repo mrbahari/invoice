@@ -47,10 +47,11 @@ import { useData } from '@/context/data-context';
 import { InvoiceActions } from './invoice-actions';
 
 type InvoiceEditorProps = {
-    invoice?: Invoice;
-    onSave: (invoice: Invoice) => void;
+    invoiceId?: string; // Can be undefined for a new invoice
+    onSaveAndPreview: (invoiceId: string) => void;
     onCancel: () => void;
-}
+};
+
 
 const useIsClient = () => {
   const [isClient, setIsClient] = useState(false);
@@ -58,26 +59,30 @@ const useIsClient = () => {
   return isClient;
 };
 
-export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoiceId, onSaveAndPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
+  const isEditMode = !!invoiceId;
 
-  const isEditMode = !!initialInvoice?.id;
+  // Find the initial invoice from the context if in edit mode
+  const initialInvoice = useMemo(() => isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined, [invoices, invoiceId, isEditMode]);
   
-  const [invoice, setInvoice] = useState<Partial<Invoice>>(initialInvoice || {
-    date: new Date().toISOString(),
-    status: 'Pending',
-    items: [],
-    subtotal: 0,
-    discount: 0,
-    additions: 0,
-    tax: 0,
-    total: 0,
-    description: '',
-    invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
-  });
+  const [invoice, setInvoice] = useState<Partial<Invoice>>(
+    initialInvoice || {
+        date: new Date().toISOString(),
+        status: 'Pending',
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        additions: 0,
+        tax: 0,
+        total: 0,
+        description: '',
+        invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+    }
+  );
   
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(() => 
     initialInvoice ? customerList.find(c => c.id === initialInvoice.customerId) : undefined
@@ -85,19 +90,19 @@ export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: Inv
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
 
+  // This effect synchronizes the state if the initialInvoice prop changes (e.g., switching from new to edit)
   useEffect(() => {
-    // This effect runs once on mount to scroll to top
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (initialInvoice) {
+      setInvoice(initialInvoice);
+      setSelectedCustomer(customerList.find(c => c.id === initialInvoice.customerId));
     }
-  }, []);
-  
+  }, [initialInvoice, customerList]);
+
+  // When customer changes, update invoice details
   useEffect(() => {
-    // When customer changes, update invoice details
     if (selectedCustomer) {
       setInvoice(prev => ({
         ...prev,
@@ -105,22 +110,20 @@ export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: Inv
         customerName: selectedCustomer.name,
         customerEmail: selectedCustomer.email
       }));
+       setIsDirty(true);
     }
   }, [selectedCustomer]);
 
   // Recalculate totals whenever items or financial fields change
   useEffect(() => {
     const subtotal = invoice.items?.reduce((acc, item) => acc + item.totalPrice, 0) || 0;
-    const discount = invoice.discount || 0;
-    const additions = invoice.additions || 0;
-    const taxRate = (invoice.tax || 0) / (subtotal - discount || 1); // Avoid division by zero
-    const totalBeforeTax = subtotal - discount + additions;
-    const taxAmount = totalBeforeTax * taxRate;
-    const total = totalBeforeTax + taxAmount;
+    const discount = Number(invoice.discount) || 0;
+    const additions = Number(invoice.additions) || 0;
+    const tax = Number(invoice.tax) || 0;
+    const total = subtotal - discount + additions + tax;
 
-    setInvoice(prev => ({ ...prev, subtotal, tax: taxAmount, total }));
-  }, [invoice.items, invoice.discount, invoice.additions]);
-
+    setInvoice(prev => ({ ...prev, subtotal, total }));
+  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
@@ -204,36 +207,51 @@ export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: Inv
     });
   };
 
-  const handleProcessInvoice = () => {
+  // This function now returns the ID of the processed invoice
+  const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
       toast({ variant: 'destructive', title: 'مشتری یا آیتم‌های فاکتور انتخاب نشده است.' });
-      return;
+      return null;
     }
     
     setIsProcessing(true);
+    let processedInvoiceId: string;
 
-    const finalInvoice: Invoice = {
-      id: isEditMode ? initialInvoice!.id : `inv-${Math.random().toString(36).substr(2, 9)}`,
-      ...invoice,
-    } as Invoice;
-    
-    setData(prev => {
-      const newInvoices = isEditMode
-        ? prev.invoices.map(inv => inv.id === finalInvoice.id ? finalInvoice : inv)
-        : [finalInvoice, ...prev.invoices];
-      return { ...prev, invoices: newInvoices };
-    });
+    if (isEditMode && invoice.id) {
+        processedInvoiceId = invoice.id;
+        const finalInvoice = { ...invoice } as Invoice;
+        setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === processedInvoiceId ? finalInvoice : inv) }));
+        toast({ variant: 'success', title: 'فاکتور ویرایش شد' });
+    } else {
+        processedInvoiceId = `inv-${Math.random().toString(36).substr(2, 9)}`;
+        const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
+        setData(prev => ({ ...prev, invoices: [finalInvoice, ...prev.invoices] }));
+        toast({ variant: 'success', title: 'فاکتور ایجاد شد' });
+    }
 
-    toast({ variant: 'success', title: isEditMode ? 'فاکتور ویرایش شد' : 'فاکتور ایجاد شد' });
     setIsProcessing(false);
-    onSave(finalInvoice);
+    setIsDirty(false); // Reset dirty state after saving
+    return processedInvoiceId;
   };
   
   const handleDeleteInvoice = () => {
-    if (!initialInvoice) return;
-    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== initialInvoice.id) }));
+    if (!invoiceId) return;
+    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== invoiceId) }));
     toast({ title: 'فاکتور حذف شد' });
     onCancel();
+  };
+
+  const handlePreviewClick = () => {
+      if (isDirty) {
+        const processedId = handleProcessInvoice();
+        if (processedId) {
+            onSaveAndPreview(processedId);
+        }
+      } else if (invoiceId) {
+        onSaveAndPreview(invoiceId);
+      } else {
+        toast({ variant: 'destructive', title: 'ابتدا فاکتور را ذخیره کنید.' });
+      }
   };
   
    return (
@@ -379,7 +397,7 @@ export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: Inv
                 </div>
                 <div className="grid gap-2 mt-6">
                     <Label htmlFor="description">توضیحات</Label>
-                    <Textarea id="description" value={invoice.description} onChange={(e) => setInvoice(prev => ({...prev, description: e.target.value}))} />
+                    <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value})); setIsDirty(true);}} />
                 </div>
             </CardContent>
             </Card>
@@ -387,15 +405,15 @@ export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: Inv
                 <CardHeader><CardTitle>پرداخت</CardTitle></CardHeader>
                 <CardContent className="grid gap-4">
                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={invoice.additions || ''} onChange={(e) => setInvoice(prev => ({ ...prev, additions: parseFloat(e.target.value) || 0 }))} /></div>
-                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={invoice.discount || ''} onChange={(e) => setInvoice(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))} /></div>
-                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (مبلغ ثابت)</Label><Input id="tax" type="number" value={invoice.tax || ''} onChange={(e) => setInvoice(prev => ({...prev, tax: parseFloat(e.target.value) || 0}))} /></div>
+                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={invoice.additions || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, additions: parseFloat(e.target.value) || 0 })); setIsDirty(true);}} /></div>
+                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={invoice.discount || ''} onChange={(e) => {setInvoice(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 })); setIsDirty(true);}} /></div>
+                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (مبلغ ثابت)</Label><Input id="tax" type="number" value={invoice.tax || ''} onChange={(e) => {setInvoice(prev => ({...prev, tax: parseFloat(e.target.value) || 0})); setIsDirty(true);}} /></div>
                     </div>
                      <div className="space-y-2 text-sm">
                         <div className="flex justify-between"><span>جمع جزء</span><span>{formatCurrency(invoice.subtotal || 0)}</span></div>
-                        {invoice.discount && invoice.discount > 0 && <div className="flex justify-between"><span>تخفیف</span><span className="text-destructive">-{formatCurrency(invoice.discount)}</span></div>}
-                        {invoice.additions && invoice.additions > 0 && <div className="flex justify-between"><span>اضافات</span><span>{formatCurrency(invoice.additions)}</span></div>}
-                        {invoice.tax && invoice.tax > 0 && <div className="flex justify-between"><span>مالیات</span><span>{formatCurrency(invoice.tax)}</span></div>}
+                        {invoice.discount > 0 && <div className="flex justify-between"><span>تخفیف</span><span className="text-destructive">-{formatCurrency(invoice.discount)}</span></div>}
+                        {invoice.additions > 0 && <div className="flex justify-between"><span>اضافات</span><span>{formatCurrency(invoice.additions)}</span></div>}
+                        {invoice.tax > 0 && <div className="flex justify-between"><span>مالیات</span><span>{formatCurrency(invoice.tax)}</span></div>}
                         <Separator className="my-2" />
                         <div className="flex justify-between font-semibold text-base pt-2"><span>جمع کل</span><span>{formatCurrency(invoice.total || 0)}</span></div>
                     </div>
@@ -419,20 +437,21 @@ export function InvoiceEditor({ invoice: initialInvoice, onSave, onCancel }: Inv
             )}
             </div>
             <div className="flex items-center gap-4 w-full sm:w-auto">
-                <div className="flex-1">
-                    <InvoiceActions />
-                </div>
+                <Button variant="outline" className="flex-1" onClick={handlePreviewClick}>
+                    <Eye className="ml-2 h-4 w-4" />
+                    پیش‌نمایش
+                </Button>
                 {isEditMode && (
                     <div className="grid gap-2">
                         <Label htmlFor="status" className="sr-only">وضعیت</Label>
-                        <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => setInvoice(prev => ({...prev, status: value}))}>
+                        <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => {setInvoice(prev => ({...prev, status: value})); setIsDirty(true);}}>
                             <SelectTrigger id="status" className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Pending">در انتظار</SelectItem><SelectItem value="Paid">پرداخت شده</SelectItem><SelectItem value="Overdue">سررسید گذشته</SelectItem></SelectContent>
                         </Select>
                     </div>
                 )}
                 
-                <Button onClick={handleProcessInvoice} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
+                <Button onClick={() => { handleProcessInvoice(); onCancel(); }} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700" disabled={!isDirty}><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
             </div>
         </div>
     </div>

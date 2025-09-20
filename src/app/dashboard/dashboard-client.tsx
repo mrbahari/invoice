@@ -32,8 +32,7 @@ export default function DashboardClientComponent() {
   }, [searchParams, router]);
 
   const handleNavigation = (tab: DashboardTab, data?: any) => {
-    // When switching tabs, always clear old navigation data unless new data is provided.
-    setNavigationData(data);
+    setNavigationData(data); // Set data BEFORE pushing route
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
@@ -44,7 +43,7 @@ export default function DashboardClientComponent() {
           <DashboardHomePageContent onNavigate={handleNavigation} />
         </div>
         <div className={activeTab === 'invoices' ? '' : 'hidden'}>
-          <InvoicesPage initialInvoice={navigationData?.invoice} />
+          <InvoicesPage initialInvoice={navigationData?.invoice} setInitialInvoice={(inv) => setNavigationData(inv ? { invoice: inv } : null)} />
         </div>
         <div className={activeTab === 'products' ? '' : 'hidden'}>
           <ProductsPage />

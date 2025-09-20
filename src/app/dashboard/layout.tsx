@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import DashboardLayoutClient from './layout-client';
 

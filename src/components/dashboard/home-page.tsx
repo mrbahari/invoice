@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Invoice, Customer, InvoiceStatus, DailySales } from '@/lib/definitions';
@@ -48,6 +47,9 @@ export default function DashboardHomePageContent({ onNavigate }: DashboardHomePa
   const { invoices: allInvoices, customers: allCustomers } = data;
 
   const { totalRevenue, totalPaidInvoices, newCustomers, paidInvoices, chartData } = useMemo(() => {
+    if (!allInvoices || !allCustomers) {
+      return { totalRevenue: 0, totalPaidInvoices: 0, newCustomers: 0, paidInvoices: [], chartData: [] };
+    }
     const paid = allInvoices.filter(inv => inv.status === 'Paid');
     const revenue = paid.reduce((acc, inv) => acc + inv.total, 0);
 
@@ -92,6 +94,7 @@ export default function DashboardHomePageContent({ onNavigate }: DashboardHomePa
   }, [allInvoices, allCustomers]);
   
   const recentPaidInvoices = useMemo(() => {
+    if (!paidInvoices) return [];
     return paidInvoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
   }, [paidInvoices]);
 

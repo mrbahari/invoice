@@ -6,11 +6,10 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { Download, ArrowRight } from 'lucide-react';
+import { Printer, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
-import html2canvas from 'html2canvas';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
@@ -125,41 +124,12 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
     );
   }
 
-  const handleDownloadImage = () => {
-    const invoiceElement = document.getElementById('invoice-card');
-    if (invoiceElement) {
-        toast({ title: 'در حال آماده‌سازی تصویر...', description: 'لطفا چند لحظه صبر کنید.' });
-
-        // Add a small delay to ensure all fonts and images are rendered
-        setTimeout(() => {
-            const originalWidth = invoiceElement.style.width;
-            invoiceElement.style.width = '1024px'; // Set a fixed width for consistent output
-
-            html2canvas(invoiceElement, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                windowWidth: 1024,
-                windowHeight: invoiceElement.scrollHeight, // Capture full height
-                onclone: (document) => {
-                    // This can be used to apply styles only for the screenshot
-                }
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `invoice-${invoice.invoiceNumber}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                toast({ variant: 'success', title: 'دانلود شروع شد', description: 'تصویر فاکتور با موفقیت دانلود شد.' });
-            }).catch(err => {
-                console.error("html2canvas error:", err);
-                toast({ variant: 'destructive', title: 'خطا در دانلود', description: 'مشکلی در ایجاد تصویر پیش آمد.' });
-            }).finally(() => {
-                // Restore original style
-                invoiceElement.style.width = originalWidth;
-            });
-        }, 500); // 500ms delay
+  const handlePrint = () => {
+    if (typeof window !== 'undefined') {
+        window.print();
     }
   };
+
 
   return (
     <div className="animate-fade-in-up">
@@ -169,9 +139,9 @@ export default function InvoicePreviewPage({ invoiceId, onBack }: InvoicePreview
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                 </Button>
-                <Button size="sm" variant="outline" className="h-10 gap-1" onClick={handleDownloadImage}>
-                    <Download className="h-3.5 w-3.5" />
-                    <span>دانلود تصویر</span>
+                <Button size="sm" variant="outline" className="h-10 gap-1" onClick={handlePrint}>
+                    <Printer className="h-3.5 w-3.5" />
+                    <span>چاپ / PDF</span>
                 </Button>
             </div>
             <div className="max-w-5xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">

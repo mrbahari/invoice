@@ -55,6 +55,17 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     topProducts,
     chartData
   } = useMemo(() => {
+    if (!allInvoices || !allCustomers || !allProducts) {
+      return {
+        totalRevenue: 0,
+        paidInvoiceCount: 0,
+        unpaidInvoiceCount: 0,
+        customerCount: 0,
+        topCustomers: [],
+        topProducts: [],
+        chartData: [],
+      };
+    }
     const now = new Date();
     let startDate: Date;
 

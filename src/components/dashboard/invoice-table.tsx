@@ -107,7 +107,7 @@ export function InvoiceTable({ invoiceList, customers, onStatusChange, onEditInv
                 </TableCell>
                 <TableCell className="text-left" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1 justify-end">
-                      <Button onClick={() => onPreviewInvoice(invoice.id)} size="icon" variant="ghost" className="h-8 w-8">
+                      <Button onClick={(e) => { e.stopPropagation(); onPreviewInvoice(invoice.id); }} size="icon" variant="ghost" className="h-8 w-8">
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">مشاهده</span>
                       </Button>

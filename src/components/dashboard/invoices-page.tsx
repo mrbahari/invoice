@@ -190,7 +190,7 @@ export default function InvoicesPage({
             <CardFooter>
               <div className="text-xs text-muted-foreground">
                 نمایش <strong>{filteredInvoices.length}</strong> از{' '}
-                <strong>{allInvoices.length}</strong> فاکتور
+                <strong>{allInvoices?.length || 0}</strong> فاکتور
               </div>
             </CardFooter>
           </Card>

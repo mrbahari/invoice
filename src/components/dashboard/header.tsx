@@ -96,23 +96,23 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          {showSearch && (
-              <div className="relative flex-1">
+           {showSearch && (
+              <div className="relative flex-1 md:grow-0">
                 <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="جستجو..."
-                  className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[336px]"
+                  className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[320px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
           )}
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2 md:ml-auto">
             <LiveClock />
           </div>
 
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSettingsClick}>
                 <Settings className="h-4 w-4" />
                 <span className="sr-only">تنظیمات</span>

@@ -382,7 +382,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         <Button
                                             key={customer.id}
                                             variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                            className="justify-start h-16"
+                                            className="h-16"
                                             onClick={() => {
                                                 setSelectedCustomer(customer);
                                                 setIsCustomerDialogOpen(false);

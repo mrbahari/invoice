@@ -150,7 +150,7 @@ export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
       description: 'ایجاد شده از برآورد مصالح سقف مشبک',
     };
     
-    toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
+    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
     onNavigate('invoices', { invoice: newInvoice as Invoice });
   };
 

@@ -74,7 +74,7 @@ export default function SettingsPage() {
     
     setData({...data, units: [...units, { name, defaultQuantity: 1 }]});
     setNewUnitName('');
-    toast({ title: 'واحد جدید با موفقیت اضافه شد.' });
+    toast({ variant: 'success', title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
   const handleDeleteUnit = (unitNameToDelete: string) => {
@@ -112,6 +112,7 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
     
     toast({
+      variant: 'success',
       title: 'پشتیبان‌گیری با موفقیت انجام شد',
       description: 'فایل پشتیبان شما در حال دانلود است.',
     });
@@ -144,6 +145,7 @@ export default function SettingsPage() {
           });
           
           toast({
+            variant: 'success',
             title: 'بازیابی موفق',
             description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد.',
           });

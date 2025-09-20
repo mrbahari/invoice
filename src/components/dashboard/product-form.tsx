@@ -245,6 +245,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       }
       
       toast({
+        variant: 'success',
         title: 'هوش مصنوعی انجام شد',
         description: `فیلد ${feature === 'description' ? 'توضیحات' : feature === 'price' ? 'قیمت' : 'تصویر'} با موفقیت تولید شد.`
       })
@@ -322,6 +323,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const updatedProduct = buildProductData(product.id);
       setData(prev => ({...prev, products: prev.products.map(p => p.id === product.id ? updatedProduct : p)}));
       toast({
+        variant: 'success',
         title: 'محصول با موفقیت ویرایش شد',
         description: `تغییرات برای محصول "${name}" ذخیره شد.`,
       });
@@ -329,6 +331,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
       setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
       toast({
+        variant: 'success',
         title: 'محصول جدید ایجاد شد',
         description: `محصول "${name}" با موفقیت ایجاد شد.`,
       });
@@ -346,6 +349,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
     setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
     toast({
+      variant: 'success',
       title: 'محصول جدید از روی کپی ایجاد شد',
       description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
     });

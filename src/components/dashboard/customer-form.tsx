@@ -95,6 +95,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
       const updatedData = buildCustomerData();
        setData({ ...data, customers: data.customers.map(c => c.id === customer.id ? { ...c, ...updatedData } : c) });
       toast({
+        variant: 'success',
         title: 'مشتری با موفقیت ویرایش شد',
         description: `تغییرات برای مشتری "${updatedData.name}" ذخیره شد.`,
       });
@@ -103,6 +104,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
       const newData = { ...buildCustomerData(), id: newId };
       setData({ ...data, customers: [newData, ...data.customers] });
       toast({
+        variant: 'success',
         title: 'مشتری جدید ایجاد شد',
         description: `مشتری "${newData.name}" با موفقیت ایجاد شد.`,
       });
@@ -120,6 +122,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     const newData = { ...buildCustomerData(), id: newId };
     setData({ ...data, customers: [newData, ...data.customers] });
     toast({
+      variant: 'success',
       title: 'مشتری جدید از روی کپی ایجاد شد',
       description: `مشتری جدید "${newData.name}" با موفقیت ایجاد شد.`,
     });

@@ -134,7 +134,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         categories: finalCategories,
     }));
 
-    toast({ title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
+    toast({ variant: 'success', title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
     setIsProcessing(false);
     onSave();
   };

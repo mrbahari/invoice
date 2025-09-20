@@ -142,7 +142,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     
     // This part should be handled by a proper state management solution that updates the context
     // For now, we'll navigate and pass the data. The invoices page should handle it.
-    toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
+    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
     onNavigate('invoices', { invoice: newInvoice as Invoice });
   };
 

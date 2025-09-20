@@ -229,7 +229,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     
     setSelectedCustomer(newCustomerWithId);
     setCustomerSearch('');
-    toast({ title: 'مشتری جدید اضافه شد', description: `${newCustomerWithId.name} به لیست مشتریان شما اضافه شد.`});
+    toast({ variant: 'success', title: 'مشتری جدید اضافه شد', description: `${newCustomerWithId.name} به لیست مشتریان شما اضافه شد.`});
   };
 
   const calculateItemTotal = (item: InvoiceItemState): number => {
@@ -363,7 +363,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
             date: invoice.date
         };
         setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === invoice.id ? { ...updatedInvoiceData, id: invoice.id } : inv) }));
-        toast({ title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
+        toast({ variant: 'success', title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
     } else {
         const firstItemCategory = items[0].product.subCategoryId ? getRootParent(items[0].product.subCategoryId) : undefined;
         const storeName = firstItemCategory?.name || 'Store';
@@ -389,7 +389,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         
         setData(prev => ({ ...prev, invoices: [newInvoiceWithId, ...prev.invoices] }));
         processedInvoiceId = newId;
-        toast({ title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoiceData.invoiceNumber} ایجاد شد.` });
+        toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoiceData.invoiceNumber} ایجاد شد.` });
     }
 
     setIsProcessing(false);

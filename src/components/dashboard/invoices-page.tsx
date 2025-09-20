@@ -56,6 +56,7 @@ export default function InvoicesPage({ initialInvoice }: InvoicesPageProps) {
         )
     });
     toast({
+      variant: 'success',
       title: 'وضعیت فاکتور به‌روزرسانی شد',
       description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status === 'Pending' ? 'در انتظار' : 'سررسید گذشته'}" تغییر یافت.`,
     });

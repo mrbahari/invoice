@@ -173,7 +173,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     
     // The navigation logic passes the invoice object to the InvoicesPage,
     // which then sets it as the initialInvoice for the editor.
-    toast({ title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
+    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
     onNavigate('invoices', { invoice: newInvoice as Invoice });
   };
 

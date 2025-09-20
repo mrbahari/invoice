@@ -99,7 +99,7 @@ export default function SettingsPage() {
   };
 
   const handleClearData = () => {
-    resetData();
+    resetData(); // Use the reliable reset function from the context
     toast({
       variant: 'success',
       title: 'اطلاعات پاک شد',
@@ -108,7 +108,7 @@ export default function SettingsPage() {
   };
   
   const handleLoadDefaults = () => {
-    resetData();
+    resetData(); // This function now handles both clearing and resetting to default
     toast({
         variant: 'success',
         title: 'موفقیت‌آمیز',

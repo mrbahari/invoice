@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 // This handles the case where the JSON is nested under a `default` property during import
 const initialData = (defaultRawData as any).default || defaultRawData;
 
-
 // Define the shape of our data
 interface AppData {
   products: Product[];
@@ -31,66 +30,71 @@ interface DataContextType {
 // Create the context
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// Helper function to load data from localStorage or fall back to initial data
+const loadData = (): AppData => {
+  if (typeof window === 'undefined') {
+    return initialData;
+  }
+  try {
+    const storedData = localStorage.getItem('appData');
+    return storedData ? JSON.parse(storedData) : initialData;
+  } catch (error) {
+    console.error("Failed to load or parse data from localStorage, falling back to initial data.", error);
+    return initialData;
+  }
+};
+
+
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  // We use a state that can be null initially to represent the "not yet loaded" state.
-  const [data, setData] = useState<AppData | null>(null);
+  const [data, setData] = useState<AppData>(loadData);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load data from localStorage on initial render
+  // Mark as initialized once the component has mounted and data is set
   useEffect(() => {
-    try {
-      const storedData = localStorage.getItem('appData');
-      if (storedData) {
-        setData(JSON.parse(storedData));
-      } else {
-        // If nothing is in localStorage, use initialData
-        setData(initialData);
-      }
-    } catch (error) {
-      console.error("Failed to load data from localStorage", error);
-      setData(initialData); // Fallback to initial data on error
-    }
+    setIsInitialized(true);
   }, []);
 
   // Persist data to localStorage whenever it changes
   useEffect(() => {
-    if (data !== null) { // Only save if data has been initialized
-      try {
-        localStorage.setItem('appData', JSON.stringify(data));
-      } catch (error) {
-        console.error("Failed to save data to localStorage", error);
-      }
-    }
-  }, [data]);
-
-  // Function to reset data to the initial state from JSON files
-  const resetData = () => {
-    try {
-        // First, set the state to the initial data
-        setData(initialData);
-        // Then, remove the data from localStorage to ensure a clean state on next load
-        localStorage.removeItem('appData');
-        // Optional: Reload the page to ensure all components re-initialize with default data
-        if (typeof window !== 'undefined') {
-            window.location.reload();
+    if (isInitialized) {
+        try {
+            localStorage.setItem('appData', JSON.stringify(data));
+        } catch (error) {
+            console.error("Failed to save data to localStorage", error);
+             toast({
+                variant: 'destructive',
+                title: 'خطا در ذخیره‌سازی',
+                description: 'امکان ذخیره تغییرات در حافظه مرورگر وجود ندارد.',
+            });
         }
-    } catch (error) {
-        console.error("Failed to reset data", error);
-        toast({
-            variant: 'destructive',
-            title: 'خطا در بازنشانی',
-            description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
-        });
+    }
+  }, [data, isInitialized, toast]);
+
+  // Function to completely reset data
+  const resetData = () => {
+    if (typeof window !== 'undefined') {
+        try {
+            // Clear localStorage first
+            localStorage.removeItem('appData');
+            // Then reload the page. On reload, the loadData function will see
+            // an empty localStorage and load the initialData.
+            window.location.reload();
+        } catch (error) {
+             console.error("Failed to reset data", error);
+            toast({
+                variant: 'destructive',
+                title: 'خطا در بازنشانی',
+                description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
+            });
+        }
     }
   };
   
-  // The context is initialized once data is not null.
-  const isInitialized = data !== null;
-
   const value = {
-    data: data || initialData, // Provide initialData as a fallback if data is null
-    setData: setData as React.Dispatch<React.SetStateAction<AppData>>, // Cast to non-null version
+    data,
+    setData,
     resetData,
     isInitialized,
   };

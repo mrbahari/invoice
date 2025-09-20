@@ -22,24 +22,36 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Product, Store, Category } from '@/lib/definitions';
+import type { Product } from '@/lib/definitions';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
 import { useData } from '@/context/data-context'; // Import useData
 import { cn } from '@/lib/utils';
 
-
 export default function ProductsPage() {
   const { data } = useData(); // Use the central data context
   const { products, stores, categories } = data;
   const [activeTab, setActiveTab] = useState('all');
-  const { searchTerm } = useSearch();
+  const { searchTerm, setSearchVisible } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(
+    undefined
+  );
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null
+  );
   const scrollPositionRef = useRef(0);
+
+  useEffect(() => {
+    // Control search bar visibility based on view
+    if (view === 'list') {
+      setSearchVisible(true);
+    } else {
+      setSearchVisible(false);
+    }
+  }, [view, setSearchVisible]);
 
   useEffect(() => {
     if (view === 'list' && scrollPositionRef.current > 0) {
@@ -54,14 +66,14 @@ export default function ProductsPage() {
     setEditingProduct(undefined);
     setSelectedProductId(null);
     setView('form');
-  }
+  };
 
   const handleEditClick = (product: Product) => {
     scrollPositionRef.current = window.scrollY;
     setEditingProduct(product);
     setSelectedProductId(product.id);
     setView('form');
-  }
+  };
 
   const handleFormSuccess = () => {
     setView('list');
@@ -70,39 +82,39 @@ export default function ProductsPage() {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }
+  };
 
   const handleFormCancel = () => {
     setView('list');
     setEditingProduct(undefined);
     setSelectedProductId(null);
-  }
+  };
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    const productFilter = (product: Product) => product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const productFilter = (product: Product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (activeTab === 'all') {
       return products.filter(productFilter);
     }
-    
+
     return products
-        .filter(p => p.storeId === activeTab)
-        .filter(productFilter);
-
+      .filter((p) => p.storeId === activeTab)
+      .filter(productFilter);
   }, [products, activeTab, searchTerm]);
-
 
   const getCategoryName = (categoryId: string) => {
     if (!categories) return 'بدون زیردسته';
-    return categories.find(c => c.id === categoryId)?.name || 'بدون زیردسته';
+    return categories.find((c) => c.id === categoryId)?.name || 'بدون زیردسته';
   };
 
   const handleExport = () => {
-    const dataToExport = filteredProducts.map(p => ({
-        ...p,
-        categoryName: getCategoryName(p.subCategoryId),
-        storeName: stores?.find(s => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
+    const dataToExport = filteredProducts.map((p) => ({
+      ...p,
+      categoryName: getCategoryName(p.subCategoryId),
+      storeName:
+        stores?.find((s) => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
     }));
 
     const headers = {
@@ -112,12 +124,18 @@ export default function ProductsPage() {
       storeName: 'فروشگاه',
       categoryName: 'زیردسته',
     };
-    
+
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
 
   if (view === 'form') {
-      return <ProductForm product={editingProduct} onSave={handleFormSuccess} onCancel={handleFormCancel} />;
+    return (
+      <ProductForm
+        product={editingProduct}
+        onSave={handleFormSuccess}
+        onCancel={handleFormCancel}
+      />
+    );
   }
 
   return (
@@ -142,11 +160,7 @@ export default function ProductsPage() {
                 خروجی
               </span>
             </Button>
-            <Button
-              size="sm"
-              className="h-8 gap-1"
-              onClick={handleAddClick}
-            >
+            <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 افزودن محصول
@@ -177,9 +191,7 @@ export default function ProductsPage() {
                 </TableHead>
                 <TableHead>نام</TableHead>
                 <TableHead>زیردسته</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  توضیحات
-                </TableHead>
+                <TableHead className="hidden md:table-cell">توضیحات</TableHead>
                 <TableHead className="text-left">قیمت</TableHead>
               </TableRow>
             </TableHeader>
@@ -189,8 +201,10 @@ export default function ProductsPage() {
                   key={product.id}
                   onClick={() => handleEditClick(product)}
                   className={cn(
-                    "cursor-pointer transition-colors",
-                    selectedProductId === product.id ? 'bg-muted' : 'hover:bg-muted/50'
+                    'cursor-pointer transition-colors',
+                    selectedProductId === product.id
+                      ? 'bg-muted'
+                      : 'hover:bg-muted/50'
                   )}
                 >
                   <TableCell className="hidden sm:table-cell">

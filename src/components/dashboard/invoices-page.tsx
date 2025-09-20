@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PlusCircle } from 'lucide-react';
@@ -17,10 +16,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardFooter,
 } from '@/components/ui/card';
 
-type View = 
+type View =
   | { type: 'list' }
   | { type: 'editor'; invoiceId?: string; initialUnsavedInvoice?: Omit<Invoice, 'id'> }
   | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
@@ -30,13 +29,24 @@ type InvoicesPageProps = {
   setInitialInvoice: (invoice: Omit<Invoice, 'id'> | null) => void;
 };
 
-export default function InvoicesPage({ initialInvoice, setInitialInvoice }: InvoicesPageProps) {
+export default function InvoicesPage({
+  initialInvoice,
+  setInitialInvoice,
+}: InvoicesPageProps) {
   const { data, setData } = useData();
   const { invoices: allInvoices } = data;
   const { toast } = useToast();
-  const { searchTerm } = useSearch();
+  const { searchTerm, setSearchVisible } = useSearch();
 
   const [view, setView] = useState<View>({ type: 'list' });
+
+  useEffect(() => {
+    if (view.type === 'list') {
+      setSearchVisible(true);
+    } else {
+      setSearchVisible(false);
+    }
+  }, [view, setSearchVisible]);
 
   // Effect to handle the initial invoice prop from estimators or other pages
   useEffect(() => {
@@ -48,42 +58,59 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
   }, [initialInvoice, setInitialInvoice]);
 
   const handleCreate = useCallback(() => setView({ type: 'editor' }), []);
-  const handleEdit = useCallback((invoiceId: string) => setView({ type: 'editor', invoiceId }), []);
-  const handlePreviewFromList = useCallback((invoiceId: string) => setView({ type: 'preview', invoiceId, from: 'list' }), []);
-  const handlePreviewFromEditor = useCallback((invoiceId: string) => setView({ type: 'preview', invoiceId, from: 'editor' }), []);
-  
-  const handleBackFromPreview = useCallback((invoiceId?: string) => {
-    if (view.type === 'preview' && view.from === 'editor' && invoiceId) {
-      setView({ type: 'editor', invoiceId: invoiceId });
-    } else {
-      setView({ type: 'list' });
-    }
-  }, [view]);
+  const handleEdit = useCallback(
+    (invoice: Invoice) => setView({ type: 'editor', invoiceId: invoice.id }),
+    []
+  );
+  const handlePreviewFromList = useCallback(
+    (invoice: Invoice) =>
+      setView({ type: 'preview', invoiceId: invoice.id, from: 'list' }),
+    []
+  );
+  const handlePreviewFromEditor = useCallback(
+    (invoiceId: string) =>
+      setView({ type: 'preview', invoiceId, from: 'editor' }),
+    []
+  );
 
-  const handleDelete = useCallback((invoiceId: string) => {
-    setData(prev => ({
-      ...prev,
-      invoices: prev.invoices.filter(inv => inv.id !== invoiceId)
-    }));
-    toast({ variant: 'success', title: 'فاکتور حذف شد' });
-    setView({ type: 'list' });
-  }, [setData, toast]);
+  const handleBackFromPreview = useCallback(
+    (invoiceId?: string) => {
+      if (view.type === 'preview' && view.from === 'editor' && invoiceId) {
+        setView({ type: 'editor', invoiceId: invoiceId });
+      } else {
+        setView({ type: 'list' });
+      }
+    },
+    [view]
+  );
+
+  const handleDelete = useCallback(
+    (invoiceId: string) => {
+      setData((prev) => ({
+        ...prev,
+        invoices: prev.invoices.filter((inv) => inv.id !== invoiceId),
+      }));
+      toast({ variant: 'success', title: 'فاکتور حذف شد' });
+      setView({ type: 'list' });
+    },
+    [setData, toast]
+  );
 
   const handleSaveSuccess = useCallback(() => {
     setView({ type: 'list' });
   }, []);
-  
+
   const handleCancel = useCallback(() => {
     setView({ type: 'list' });
   }, []);
 
   const filteredInvoices = useMemo(() => {
-    return allInvoices.filter(invoice =>
-      invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    return allInvoices.filter(
+      (invoice) =>
+        invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [allInvoices, searchTerm]);
-
 
   const renderContent = () => {
     switch (view.type) {
@@ -99,51 +126,73 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
         );
       case 'preview':
         return (
-          <InvoicePreviewPage 
-            invoiceId={view.invoiceId} 
-            onBack={handleBackFromPreview}
-            onEdit={handleEdit}
+          <InvoicePreviewPage
+            invoiceId={view.invoiceId}
+            onBack={() => handleBackFromPreview(view.invoiceId)}
+            onEdit={(id) => handleEdit({ id } as Invoice)}
           />
         );
       case 'list':
       default:
         const tabsData = [
-          { value: 'all', label: `همه (${filteredInvoices.length})`, invoices: filteredInvoices },
-          { value: 'paid', label: `پرداخت شده`, invoices: filteredInvoices.filter(i => i.status === 'Paid')},
-          { value: 'pending', label: `در انتظار`, invoices: filteredInvoices.filter(i => i.status === 'Pending')},
-          { value: 'overdue', label: `سررسید گذشته`, invoices: filteredInvoices.filter(i => i.status === 'Overdue'), className: 'hidden sm:flex' },
+          {
+            value: 'all',
+            label: `همه (${filteredInvoices.length})`,
+            invoices: filteredInvoices,
+          },
+          {
+            value: 'paid',
+            label: `پرداخت شده`,
+            invoices: filteredInvoices.filter((i) => i.status === 'Paid'),
+          },
+          {
+            value: 'pending',
+            label: `در انتظار`,
+            invoices: filteredInvoices.filter((i) => i.status === 'Pending'),
+          },
+          {
+            value: 'overdue',
+            label: `سررسید گذشته`,
+            invoices: filteredInvoices.filter((i) => i.status === 'Overdue'),
+            className: 'hidden sm:flex',
+          },
         ];
         return (
-           <Card className="animate-fade-in-up">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>فاکتورها</CardTitle>
-                        <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
-                    </div>
-                     <Button size="sm" className="h-8 gap-1 dark:bg-primary dark:text-primary-foreground" onClick={handleCreate}>
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        ایجاد فاکتور
-                        </span>
-                    </Button>
+          <Card className="animate-fade-in-up">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>فاکتورها</CardTitle>
+                  <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <InvoiceTabs
-                    tabs={tabsData}
-                    defaultTab="all"
-                    onEdit={handleEdit}
-                    onPreview={handlePreviewFromList}
-                    onDelete={handleDelete}
-                />
-              </CardContent>
-              <CardFooter>
-                 <div className="text-xs text-muted-foreground">
-                    نمایش <strong>{filteredInvoices.length}</strong> از <strong>{allInvoices.length}</strong> فاکتور
-                </div>
-              </CardFooter>
-            </Card>
+                <Button
+                  size="sm"
+                  className="h-8 gap-1 dark:bg-primary dark:text-primary-foreground"
+                  onClick={handleCreate}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    ایجاد فاکتور
+                  </span>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <InvoiceTabs
+                tabs={tabsData}
+                defaultTab="all"
+                onEdit={handleEdit}
+                onPreview={handlePreviewFromList}
+                onDelete={handleDelete}
+              />
+            </CardContent>
+            <CardFooter>
+              <div className="text-xs text-muted-foreground">
+                نمایش <strong>{filteredInvoices.length}</strong> از{' '}
+                <strong>{allInvoices.length}</strong> فاکتور
+              </div>
+            </CardFooter>
+          </Card>
         );
     }
   };

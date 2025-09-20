@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -45,7 +44,12 @@ const tabToNameMapping: Record<DashboardTab, string> = {
   settings: 'تنظیمات',
 };
 
-const showSearchTabs: DashboardTab[] = ['products', 'categories', 'customers', 'invoices'];
+const showSearchTabs: DashboardTab[] = [
+  'products',
+  'categories',
+  'customers',
+  'invoices',
+];
 
 interface HeaderProps {
   activeTab: DashboardTab;
@@ -54,16 +58,17 @@ interface HeaderProps {
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { user, logout } = useAuth();
-  const { searchTerm, setSearchTerm } = useSearch();
+  const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
   const [isSupportDialogOpen, setIsSupportDialogOpen] = React.useState(false);
 
-  const getInitials = (name?: string | null) => (name ? name.split(' ').map((n) => n[0]).join('') : '');
+  const getInitials = (name?: string | null) =>
+    name ? name.split(' ').map((n) => n[0]).join('') : '';
 
   const handleSettingsClick = () => {
     onTabChange('settings');
   };
 
-  const showSearch = showSearchTabs.includes(activeTab);
+  const showSearch = showSearchTabs.includes(activeTab) && isSearchVisible;
 
   React.useEffect(() => {
     if (!showSearch) {
@@ -102,30 +107,47 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </div>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
-            <LiveClock />
+          <LiveClock />
         </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSettingsClick}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={handleSettingsClick}
+          >
             <Settings className="h-4 w-4" />
             <span className="sr-only">تنظیمات</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="overflow-hidden rounded-full h-9 w-9">
+              <Button
+                variant="outline"
+                size="icon"
+                className="overflow-hidden rounded-full h-9 w-9"
+              >
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={user?.photoURL ?? undefined} alt="آواتار" data-ai-hint="user avatar" />
+                  <AvatarImage
+                    src={user?.photoURL ?? undefined}
+                    alt="آواتار"
+                    data-ai-hint="user avatar"
+                  />
                   <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{user?.displayName || user?.email || 'حساب کاربری'}</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {user?.displayName || user?.email || 'حساب کاربری'}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>پشتیبانی</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setIsSupportDialogOpen(true)}>
+                پشتیبانی
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="ml-2 h-4 w-4" />
@@ -141,9 +163,13 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           <DialogHeader className="items-center text-center">
             <Sparkles className="h-8 w-8 text-primary" />
             <DialogTitle className="mt-2">پشتیبانی و توسعه</DialogTitle>
-            <DialogDescription className="text-base !mt-4">اسماعیل بهاری</DialogDescription>
+            <DialogDescription className="text-base !mt-4">
+              اسماعیل بهاری
+            </DialogDescription>
           </DialogHeader>
-          <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">09125486083</div>
+          <div className="text-center font-mono text-lg tracking-widest p-2 bg-muted rounded-md">
+            09125486083
+          </div>
         </DialogContent>
       </Dialog>
     </>

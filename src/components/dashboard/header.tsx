@@ -27,6 +27,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -87,29 +94,57 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   return (
     <>
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
-        <Breadcrumb className="hidden md:flex">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <button onClick={() => onTabChange('dashboard')}>خانه</button>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-               <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <div className="flex items-center gap-2">
+            <Breadcrumb className="hidden md:flex">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <button onClick={() => onTabChange('dashboard')}>خانه</button>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                   <BreadcrumbPage>{tabToNameMapping[activeTab]}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            
+             {showSearch && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8 md:hidden">
+                        <Search className="h-4 w-4" />
+                        <span className="sr-only">جستجو</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="top" className="md:hidden">
+                    <SheetHeader>
+                      <SheetTitle>جستجو در {tabToNameMapping[activeTab]}</SheetTitle>
+                    </SheetHeader>
+                    <div className="relative mt-4">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="جستجو..."
+                            className="w-full rounded-lg bg-background pr-8"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+             )}
+        </div>
       
       <div className="ml-auto flex items-center gap-2">
-        <div className="flex">
+        <div className="hidden md:flex">
             <LiveClock />
         </div>
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSettingsClick}>
-                        <Settings className="h-4 w-4" />
+                     <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Settings className="h-4 w-4" onClick={handleSettingsClick} />
                         <span className="sr-only">تنظیمات</span>
                     </Button>
                 </TooltipTrigger>
@@ -119,7 +154,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             </Tooltip>
         </TooltipProvider>
 
-        <div className={cn("relative hidden md:flex md:grow-0", !showSearch && 'hidden')}>
+        <div className={cn("relative hidden", showSearch && 'md:flex md:grow-0')}>
             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
             type="search"

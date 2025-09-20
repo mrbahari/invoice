@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Download, Printer } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -80,7 +80,7 @@ function toWords(num: number): string {
 
 type InvoicePreviewPageProps = {
     invoiceId: string;
-    onBack: () => void;
+    onBack: (invoiceId?: string) => void;
     onEdit: (invoiceId: string) => void;
 }
 export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
@@ -102,14 +102,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     return stores.find(s => s.id === productInfo.storeId) || stores[0];
   }, [invoice, products, stores]);
 
-  const handlePrint = () => {
-    // A small timeout helps ensure all styles are applied, especially custom fonts.
-    setTimeout(() => {
-      window.print();
-    }, 500); 
-  };
-
-
   useEffect(() => {
     if (invoice && customer) {
         const qrData = `Invoice No: ${invoice.invoiceNumber}\nCustomer: ${customer.name}\nTotal: ${formatCurrency(invoice.total)}`;
@@ -124,7 +116,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
         <Card>
             <CardContent className="py-16 text-center">
                 <p className="text-muted-foreground mb-4">فاکتور یافت نشد یا داده‌های آن ناقص است.</p>
-                 <Button onClick={onBack}>
+                 <Button onClick={() => onBack()}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                 </Button>
@@ -136,16 +128,13 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   return (
     <div className="animate-fade-in-up">
         <div className="mb-6 flex justify-between items-center gap-2 no-print">
-            <Button type="button" variant="outline" onClick={onBack}>
+            <Button type="button" variant="outline" onClick={() => onBack(invoiceId)} className="dark:border-white/50 dark:text-white dark:hover:bg-white/10">
                 <ArrowRight className="ml-2 h-4 w-4" />
-                بازگشت به لیست
+                بازگشت 
             </Button>
             <div className="flex items-center gap-2">
-               <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => onEdit(invoiceId)}>
-                  <Printer className="ml-2 h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    ویرایش
-                  </span>
+               <Button size="sm" variant="outline" className="h-8 gap-1 dark:border-white/50 dark:text-white dark:hover:bg-white/10" onClick={() => onEdit(invoiceId)}>
+                  ویرایش
                 </Button>
               <InvoiceActions />
             </div>

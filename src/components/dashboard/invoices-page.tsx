@@ -4,7 +4,7 @@
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Invoice } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
@@ -15,18 +15,18 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 
 type View = 
   | { type: 'list' }
-  | { type: 'editor'; invoice?: Omit<Invoice, 'id'> | Invoice }
-  | { type: 'preview'; invoiceId: string };
+  | { type: 'editor'; invoiceId?: string; initialUnsavedInvoice?: Omit<Invoice, 'id'> }
+  | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
 
 type InvoicesPageProps = {
-  initialInvoice?: Omit<Invoice, 'id'> | null;
+  initialInvoice: Omit<Invoice, 'id'> | null;
   setInitialInvoice: (invoice: Omit<Invoice, 'id'> | null) => void;
 };
 
@@ -38,58 +38,44 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
 
   const [view, setView] = useState<View>({ type: 'list' });
 
-  // Effect to handle the initial invoice prop from estimators
+  // Effect to handle the initial invoice prop from estimators or other pages
   useEffect(() => {
     if (initialInvoice) {
-      setView({ type: 'editor', invoice: initialInvoice });
+      setView({ type: 'editor', initialUnsavedInvoice: initialInvoice });
       // Clear it after use so it doesn't trigger again on re-renders
       setInitialInvoice(null);
     }
   }, [initialInvoice, setInitialInvoice]);
 
-  const handleCreate = () => {
-    setView({ type: 'editor' });
-  };
+  const handleCreate = useCallback(() => setView({ type: 'editor' }), []);
+  const handleEdit = useCallback((invoiceId: string) => setView({ type: 'editor', invoiceId }), []);
+  const handlePreviewFromList = useCallback((invoiceId: string) => setView({ type: 'preview', invoiceId, from: 'list' }), []);
+  const handlePreviewFromEditor = useCallback((invoiceId: string) => setView({ type: 'preview', invoiceId, from: 'editor' }), []);
+  
+  const handleBackFromPreview = useCallback((invoiceId?: string) => {
+    if (view.type === 'preview' && view.from === 'editor' && invoiceId) {
+      setView({ type: 'editor', invoiceId: invoiceId });
+    } else {
+      setView({ type: 'list' });
+    }
+  }, [view]);
 
-  const handleEdit = (invoice: Invoice) => {
-    setView({ type: 'editor', invoice });
-  };
-
-  const handlePreview = (invoice: Invoice) => {
-    setView({ type: 'preview', invoiceId: invoice.id });
-  };
-
-  const handleDelete = (invoiceId: string) => {
+  const handleDelete = useCallback((invoiceId: string) => {
     setData(prev => ({
       ...prev,
       invoices: prev.invoices.filter(inv => inv.id !== invoiceId)
     }));
     toast({ variant: 'success', title: 'فاکتور حذف شد' });
     setView({ type: 'list' });
-  };
+  }, [setData, toast]);
 
-  const handleSaveSuccess = (savedInvoiceId: string) => {
+  const handleSaveSuccess = useCallback(() => {
     setView({ type: 'list' });
-  };
+  }, []);
   
-  const handleEditorPreview = (invoiceId: string) => {
-    setView({ type: 'preview', invoiceId });
-  };
-  
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setView({ type: 'list' });
-  };
-  
-  const handlePreviewBack = () => {
-    // If the invoice being previewed is the same as the one being edited, go back to editor.
-    // Otherwise, go back to list.
-    if (view.type === 'preview' && 'invoice' in view && (view.invoice as Invoice)?.id === view.invoiceId) {
-        setView({type: 'editor', invoice: view.invoice})
-    } else {
-        setView({ type: 'list' });
-    }
-  };
-
+  }, []);
 
   const filteredInvoices = useMemo(() => {
     return allInvoices.filter(invoice =>
@@ -104,9 +90,10 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
       case 'editor':
         return (
           <InvoiceEditor
-            invoiceToEdit={view.invoice}
+            invoiceId={view.invoiceId}
+            initialUnsavedInvoice={view.initialUnsavedInvoice}
             onSaveSuccess={handleSaveSuccess}
-            onPreview={handleEditorPreview}
+            onPreview={handlePreviewFromEditor}
             onCancel={handleCancel}
           />
         );
@@ -114,8 +101,8 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
         return (
           <InvoicePreviewPage 
             invoiceId={view.invoiceId} 
-            onBack={handleCancel} // Always go back to list from preview for simplicity
-            onEdit={(id) => setView({type: 'editor', invoice: allInvoices.find(i => i.id === id)})}
+            onBack={handleBackFromPreview}
+            onEdit={handleEdit}
           />
         );
       case 'list':
@@ -134,7 +121,7 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
                         <CardTitle>فاکتورها</CardTitle>
                         <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
-                     <Button size="sm" className="h-8 gap-1" onClick={handleCreate}>
+                     <Button size="sm" className="h-8 gap-1 dark:bg-primary dark:text-primary-foreground" onClick={handleCreate}>
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         ایجاد فاکتور
@@ -147,7 +134,7 @@ export default function InvoicesPage({ initialInvoice, setInitialInvoice }: Invo
                     tabs={tabsData}
                     defaultTab="all"
                     onEdit={handleEdit}
-                    onPreview={handlePreview}
+                    onPreview={handlePreviewFromList}
                     onDelete={handleDelete}
                 />
               </CardContent>

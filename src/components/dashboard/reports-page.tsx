@@ -114,12 +114,16 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     }, {});
 
     const topCustomers = Object.entries(customerSpending)
-      .map(([id, { total, name }]) => ({
-        id,
-        name,
-        total,
-        avatar: allCustomers.find(c => c.id === id)?.email || ''
-      }))
+      .map(([id, { total, name }]) => {
+        const customerDetails = allCustomers.find(c => c.id === id);
+        return {
+            id,
+            name,
+            phone: customerDetails?.phone || '',
+            total,
+            avatar: customerDetails?.email || ''
+        }
+      })
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
 
@@ -278,20 +282,24 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {topCustomers.map(customer => (
-                            <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
-                                <TableCell>
-                                    <div className="flex items-center gap-3 hover:underline">
-                                        <Avatar className="hidden h-9 w-9 sm:flex">
-                                            <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                            <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-medium">{customer.name}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>
-                            </TableRow>
-                        ))}
+                        {topCustomers.map(customer => {
+                            const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
+                            const displayName = hasValidName ? customer.name : customer.phone;
+                            return (
+                                <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
+                                    <TableCell>
+                                        <div className="flex items-center gap-3 hover:underline">
+                                            <Avatar className="hidden h-9 w-9 sm:flex">
+                                                <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
+                                                <AvatarFallback>{displayName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-medium">{displayName}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>
+                                </TableRow>
+                            );
+                        })}
                         {topCustomers.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={2} className="text-center text-muted-foreground py-8">

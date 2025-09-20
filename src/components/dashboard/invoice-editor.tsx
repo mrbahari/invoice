@@ -316,7 +316,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
  const handlePreviewClick = async () => {
     if (isDirty) {
-        const savedInvoiceId = await handleProcessInvoice(false, true); // Save but don't navigate
+        const savedInvoiceId = await handleProcessInvoice(true); // Save and navigate
         if (savedInvoiceId) {
             onSaveAndPreview(savedInvoiceId);
         }
@@ -327,7 +327,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
     }
  };
   
- const handleProcessInvoice = async (navigateToPreview: boolean = false, returnId: boolean = false): Promise<string | undefined> => {
+ const handleProcessInvoice = async (isForPreview: boolean = false): Promise<string | undefined> => {
     if (!selectedCustomer) {
       toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
       return;
@@ -402,14 +402,12 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
 
     setIsProcessing(false);
     
-    if (returnId) {
+    if (isForPreview) {
         return processedInvoiceId;
     }
     
-    if (navigateToPreview && processedInvoiceId) {
-          onSaveAndPreview(processedInvoiceId);
-    } else if (!navigateToPreview) {
-          onCancel();
+    if (!isForPreview) {
+        onCancel();
     }
     
     return undefined;

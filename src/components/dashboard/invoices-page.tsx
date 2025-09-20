@@ -27,20 +27,9 @@ export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: Inv
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
-  // Separate state for managing the initial invoice prop
   const [initialInvoice, setInitialInvoice] = useState(initialInvoiceProp);
+  const [view, setView] = useState<View>(initialInvoiceProp ? { type: 'form', invoice: initialInvoiceProp } : { type: 'list' });
 
-  const [view, setView] = useState<View>({ type: 'list' });
-
-  // Effect to react to changes in the initialInvoiceProp
-  useEffect(() => {
-    setInitialInvoice(initialInvoiceProp);
-    if (initialInvoiceProp) {
-      setView({ type: 'form', invoice: initialInvoiceProp });
-    } else {
-      setView({ type: 'list' });
-    }
-  }, [initialInvoiceProp]);
 
   const handleAddClick = () => setView({ type: 'form' });
   const handleEditClick = (invoice: Invoice) => setView({ type: 'form', invoice });
@@ -54,7 +43,6 @@ export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: Inv
   const handleFormSaveAndPreview = (invoiceId: string) => {
       // Data is already updated in the context by the form, just switch view
       setView({ type: 'preview', invoiceId });
-      // DO NOT clear initialInvoice here, so we can return to the editor
   };
   
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {

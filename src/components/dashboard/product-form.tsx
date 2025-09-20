@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, ChangeEvent } from 'react';
@@ -16,17 +15,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Search, WandSparkles, LoaderCircle, Trash2, Copy, ArrowRight } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save } from 'lucide-react';
 import Image from 'next/image';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { generateProductDetails } from '@/ai/flows/generate-product-details';
-import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
+import { Separator } from '../ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +30,17 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
+import { WandSparkles, LoaderCircle, Copy } from 'lucide-react';
+import { generateProductDetails } from '@/ai/flows/generate-product-details';
+import type { GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Search } from 'lucide-react';
 
 
 type ProductFormProps = {
@@ -341,26 +343,18 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
   return (
-    <>
       <form onSubmit={handleSubmit}>
         <div className="mx-auto grid max-w-5xl animate-fade-in-up grid-cols-1 gap-6 lg:grid-cols-3">
             
             <div className="grid gap-6 lg:col-span-2 auto-rows-min">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
-                            <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
+                    <CardHeader>
+                        <div className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>{isEditMode ? `ویرایش محصول` : 'افزودن محصول جدید'}</CardTitle>
+                                <CardDescription>{isEditMode ? `ویرایش جزئیات محصول "${product?.name}"` : 'اطلاعات محصول را وارد کنید.'}</CardDescription>
+                            </div>
                         </div>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={onCancel}
-                          className="dark:bg-white dark:text-black dark:animate-pulse-slow"
-                        >
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                            بازگشت به لیست
-                        </Button>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -491,102 +485,110 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 <Input 
                                   id="sub-unit-price" 
                                   value={displaySubUnitPrice} 
-                                  onChange={handleSubUnitPriceChange}
-                                  disabled={!showSubUnitFields} 
+                                  onChange={handleSubUnitPriceChange} 
+                                  placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'}
+                                  disabled={!showSubUnitFields}
                                 />
                             </div>
                         </div>
+                        
+                         {showSubUnitFields && subUnitQuantity && price && (
+                            <p className="text-xs text-muted-foreground">
+                                هر {subUnitQuantity} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
+                            </p>
+                        )}
                     </CardContent>
                 </Card>
             </div>
             
-            <div className="grid gap-6 auto-rows-min">
+             <div className="grid gap-6 auto-rows-min">
                 <Card>
                     <CardHeader>
                         <CardTitle>تصویر محصول</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4">
-                        <div className="relative w-full aspect-video">
-                            {imageUrl ? (
-                            <Image src={imageUrl} alt="پیش‌نمایش تصویر" fill={true} style={{objectFit: 'contain'}} className="rounded-md border bg-muted/30 p-2" onError={() => { toast({ variant: 'destructive', title: 'خطا در بارگذاری تصویر', description: 'آدرس تصویر معتبر نیست یا دسترسی به آن ممکن نیست.'}); setImageUrl(null); }} unoptimized />
+                        <div className="relative aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
+                           {imageUrl ? (
+                                <Image
+                                    src={imageUrl}
+                                    alt={name || "Product Image"}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    key={imageUrl} // Force re-render on URL change
+                                />
                             ) : (
-                            <div className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed bg-muted">
-                                <span className="text-xs text-muted-foreground">پیش‌نمایش تصویر</span>
-                            </div>
+                                <span className="text-sm text-muted-foreground">پیش‌نمایش تصویر</span>
                             )}
                         </div>
-                        <div className="relative grid gap-3">
-                            <Label htmlFor="image-url">URL تصویر</Label>
-                            <Input id="image-url" value={imageUrl || ''} onChange={(e) => setImageUrl(e.target.value)} onFocus={handleImageFocus} placeholder="URL تصویر یا تولید با AI..." />
-                             {imageUrl && (
-                               <Button
-                                 type="button"
-                                 variant="ghost"
-                                 size="icon"
-                                 className="absolute bottom-1 left-1 h-7 w-7 text-muted-foreground"
-                                 onClick={() => setImageUrl(null)}
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             )}
+                        <div className="grid gap-3">
+                            <Label htmlFor="image-url">آدرس تصویر</Label>
+                            <Input
+                                id="image-url"
+                                value={imageUrl || ''}
+                                onFocus={handleImageFocus}
+                                onChange={(e) => setImageUrl(e.target.value)}
+                                placeholder="https://example.com/image.jpg"
+                            />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
-                                {aiLoading.image ? <LoaderCircle className="animate-spin h-4 w-4" /> : <WandSparkles className="h-4 w-4" />}
-                                <span className="mr-2">تولید با AI</span>
+                        <div className="flex gap-2">
+                             <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
+                                {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
+                                تولید با AI
                             </Button>
-                            <Button type="button" variant="outline" size="sm" onClick={handleImageSearch}>
-                                <Search className="h-4 w-4" />
-                                <span className="mr-2">جستجو در وب</span>
+                            <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
+                                <Search className="ml-2 h-4 w-4" />
+                                جستجو در گوگل
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
             </div>
         </div>
-        
-        <div className="sticky bottom-[90px] md:bottom-0 z-10 p-4 bg-background/80 backdrop-blur-sm border-t mt-4">
-            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2">
-                <div>
-                     {isEditMode && (
+
+        <div className="sticky bottom-[90px] md:bottom-0 z-50 p-4 bg-card border-t mt-4 lg:col-span-3">
+            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+                <div className='flex items-center gap-2'>
+                   <Button type="button" variant="outline" onClick={onCancel}>
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                        بازگشت به لیست
+                    </Button>
+                    {isEditMode && (
                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button type="button" variant="destructive" disabled={isProcessing}>
-                                    <Trash2 className="ml-2 h-4 w-4" />
-                                    حذف محصول
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" variant="destructive" disabled={isProcessing}>
+                            <Trash2 className="ml-2 h-4 w-4" />
+                            حذف
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
                         </AlertDialog>
                     )}
                 </div>
-                <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
+                 <div className='flex items-center gap-2'>
                     {isEditMode && (
-                        <Button type="button" variant="outline" size="lg" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                           <Copy className="ml-2 h-4 w-4" />
-                            ذخیره با عنوان محصول جدید
+                        <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
+                            <Copy className="ml-2 h-4 w-4" />
+                            ذخیره با عنوان جدید
                         </Button>
                     )}
-                    <Button type="submit" disabled={isProcessing} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                        {isProcessing
-                        ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
-                        : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}
+                    <Button type="submit" disabled={isProcessing} size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
+                        <Save className="ml-2 h-4 w-4" />
+                        {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}
                     </Button>
                 </div>
             </div>
         </div>
       </form>
-    </>
   );
 }

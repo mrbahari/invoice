@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { UnitOfMeasurement } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, resetData } = useData(); // Use the central data context
+  const { data, setData, resetData, isResetting } = useData(); // Use the central data context
   const { units = [] } = data; // Use default empty array to prevent error
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
@@ -98,8 +98,8 @@ export default function SettingsPage() {
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = () => {
-    resetData(); // This now correctly resets all data
+  const handleClearData = async () => {
+    await resetData(); // This now correctly resets all data
     toast({
       variant: 'success',
       title: 'اطلاعات پاک شد',
@@ -107,8 +107,8 @@ export default function SettingsPage() {
     });
   };
   
-  const handleLoadDefaults = () => {
-    resetData(); // This function now handles both clearing and resetting to default
+  const handleLoadDefaults = async () => {
+    await resetData(); // This function now handles both clearing and resetting to default
     toast({
         variant: 'success',
         title: 'موفقیت‌آمیز',
@@ -304,12 +304,12 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-            <Button onClick={handleBackupData} variant="outline">
+            <Button onClick={handleBackupData} variant="outline" disabled={isResetting}>
                 <Download className="ml-2 h-4 w-4" />
                 دانلود فایل پشتیبان (Backup)
             </Button>
             <div>
-              <Button onClick={handleRestoreClick} variant="outline" className="w-full">
+              <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isResetting}>
                 <Upload className="ml-2 h-4 w-4" />
                 بازیابی از فایل (Restore)
               </Button>
@@ -332,62 +332,71 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
-            <div>
-              <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
-              <p className="text-sm text-muted-foreground">
-                تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف خواهند شد.
-              </p>
+          {isResetting ? (
+             <div className="flex items-center justify-center p-4 min-h-[160px]">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="mr-4 text-muted-foreground">در حال بازنشانی اطلاعات...</p>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                    <Trash2 className='ml-2 h-4 w-4' />
-                    پاک کردن اطلاعات
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>آیا کاملاً مطمئن هستید؟</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    این عمل غیرقابل بازگشت است و تمام داده‌های شما را برای همیشه حذف خواهد کرد.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>انصراف</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearData} className='bg-destructive hover:bg-destructive/90'>بله، همه چیز را پاک کن</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-          <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/50">
-            <div>
-              <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
-              <p className="text-sm text-muted-foreground">
-                تمام اطلاعات فعلی حذف شده و داده‌های اولیه برنامه جایگزین آن‌ها می‌شود.
-              </p>
-            </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline">
-                    <RefreshCw className='ml-2 h-4 w-4' />
-                    بارگذاری پیش‌فرض
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>بارگذاری داده‌های پیش‌فرض؟</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    این عمل تمام اطلاعات فعلی شما را پاک کرده و داده‌های اولیه برنامه را بارگذاری می‌کند. آیا مطمئن هستید؟
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>انصراف</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleLoadDefaults} className="bg-green-600 hover:bg-green-700">بله، بارگذاری کن</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                <div>
+                  <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
+                  <p className="text-sm text-muted-foreground">
+                    تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف شده و داده‌های اولیه جایگزین می‌شوند.
+                  </p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={isResetting}>
+                        <Trash2 className='ml-2 h-4 w-4' />
+                        پاک کردن اطلاعات
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>آیا کاملاً مطمئن هستید؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        این عمل غیرقابل بازگشت است و تمام داده‌های شما را برای همیشه حذف خواهد کرد.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                      <AlertDialogCancel>انصراف</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearData} className='bg-destructive hover:bg-destructive/90'>بله، همه چیز را پاک کن</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/50">
+                <div>
+                  <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
+                  <p className="text-sm text-muted-foreground">
+                    اطلاعات فعلی با داده‌های اولیه برنامه جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
+                  </p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" disabled={isResetting}>
+                        <RefreshCw className='ml-2 h-4 w-4' />
+                        بارگذاری پیش‌فرض
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>بارگذاری داده‌های پیش‌فرض؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        این عمل تمام اطلاعات فعلی شما را پاک کرده و داده‌های اولیه برنامه را بارگذاری می‌کند. آیا مطمئن هستید؟
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                      <AlertDialogCancel>انصراف</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLoadDefaults} className="bg-green-600 hover:bg-green-700">بله، بارگذاری کن</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

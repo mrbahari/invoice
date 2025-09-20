@@ -33,8 +33,9 @@ const initialData: AppData = (defaultRawData as any).default || defaultRawData;
 interface DataContextType {
   data: AppData;
   setData: React.Dispatch<React.SetStateAction<AppData>>;
-  resetData: () => void;
+  resetData: () => Promise<void>;
   isInitialized: boolean;
+  isResetting: boolean;
 }
 
 // Create the context
@@ -43,20 +44,27 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // Helper function to load data from localStorage or fall back to initial data
 const loadData = (): AppData => {
   if (typeof window === 'undefined') {
-    return initialData.products ? initialData : emptyData;
+    // Check if initialData has content, otherwise return empty structure
+    return initialData.customers?.length ? initialData : emptyData;
   }
   try {
     const storedData = localStorage.getItem('appData');
     if (storedData) {
-      return JSON.parse(storedData);
+      const parsedData = JSON.parse(storedData);
+      // Ensure the loaded data has the correct structure
+      if (parsedData.customers && parsedData.products) {
+        return parsedData;
+      }
     }
-    // If no data in local storage, save the initial data there first.
-    const dataToStore = initialData.products ? initialData : emptyData;
+    // If no data in local storage, or data is invalid, save the initial data there first.
+    const dataToStore = initialData.customers?.length ? initialData : emptyData;
     localStorage.setItem('appData', JSON.stringify(dataToStore));
     return dataToStore;
   } catch (error) {
-    console.error("Failed to load or parse data from localStorage, falling back to empty data.", error);
-    return emptyData;
+    console.error("Failed to load or parse data from localStorage, falling back to initial data.", error);
+    // On error, also try to use initial data
+    localStorage.setItem('appData', JSON.stringify(initialData));
+    return initialData;
   }
 };
 
@@ -66,6 +74,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [data, setData] = useState<AppData>(emptyData); // Start with empty, load from storage in effect
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
 
   // Effect to load data from localStorage on mount
   useEffect(() => {
@@ -91,20 +101,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [data, isInitialized, toast]);
 
   // Function to completely reset data to defaults
-  const resetData = () => {
-    if (typeof window !== 'undefined') {
-        try {
-            localStorage.setItem('appData', JSON.stringify(emptyData)); // Clear storage by saving empty data
-            setData(emptyData); // Reset state to empty data
-        } catch (error) {
-             console.error("Failed to reset data", error);
-            toast({
-                variant: 'destructive',
-                title: 'خطا در بازنشانی',
-                description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
-            });
+  const resetData = async (): Promise<void> => {
+    return new Promise((resolve) => {
+        if (typeof window !== 'undefined') {
+            setIsResetting(true);
+            setTimeout(() => { // Simulate a short delay for user feedback
+                try {
+                    localStorage.setItem('appData', JSON.stringify(initialData));
+                    setData(initialData);
+                } catch (error) {
+                    console.error("Failed to reset data", error);
+                    toast({
+                        variant: 'destructive',
+                        title: 'خطا در بازنشانی',
+                        description: 'مشکلی در هنگام پاک کردن اطلاعات رخ داد.',
+                    });
+                } finally {
+                    setIsResetting(false);
+                    resolve();
+                }
+            }, 1000); // 1-second delay
+        } else {
+            resolve();
         }
-    }
+    });
   };
   
   const value = {
@@ -112,6 +132,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setData,
     resetData,
     isInitialized,
+    isResetting,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

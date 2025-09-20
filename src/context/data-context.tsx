@@ -23,6 +23,7 @@ interface DataContextType {
   data: AppData;
   setData: React.Dispatch<React.SetStateAction<AppData>>;
   resetData: () => Promise<void>;
+  clearAllData: () => Promise<void>;
   isInitialized: boolean;
   isResetting: boolean;
   LOCAL_STORAGE_KEY: string;
@@ -95,11 +96,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const defaultDataFromMb = initialDataFromFile as AppData;
           setData(defaultDataFromMb);
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDataFromMb));
-          toast({
-            variant: 'success',
-            title: 'اطلاعات پیش‌فرض بارگذاری شد',
-            description: 'داده‌های اولیه برنامه با موفقیت جایگزین شدند.',
-          });
       } catch (error) {
            console.error("Failed to reset data", error);
            toast({
@@ -117,10 +113,45 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
   }, [toast]);
   
+  // This function completely clears all application data.
+  const clearAllData = useCallback(async (): Promise<void> => {
+    return new Promise((resolve) => {
+        setIsResetting(true);
+        try {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            // Setting to an empty object structure to avoid errors on reload before useEffect runs
+            setData({ customers: [], products: [], invoices: [], stores: [], categories: [], units: [] });
+            toast({
+                variant: 'success',
+                title: 'اطلاعات پاک شد',
+                description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
+            });
+            // Reload the page to ensure the app state is fully reset
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000); 
+        } catch (error) {
+            console.error("Failed to clear data", error);
+            toast({
+                variant: 'destructive',
+                title: 'خطا در پاک کردن اطلاعات',
+                description: 'مشکلی در هنگام حذف اطلاعات رخ داد.',
+            });
+        } finally {
+             setTimeout(() => {
+                setIsResetting(false);
+                resolve();
+            }, 500);
+        }
+    });
+  }, [toast]);
+
+
   const value = {
     data,
     setData,
     resetData,
+    clearAllData,
     isInitialized,
     isResetting,
     LOCAL_STORAGE_KEY,

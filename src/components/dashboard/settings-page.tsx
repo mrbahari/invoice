@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, resetData, isResetting, LOCAL_STORAGE_KEY } = useData();
+  const { data, setData, resetData, isResetting, LOCAL_STORAGE_KEY, clearAllData } = useData();
   const { units = [] } = data; // Use default empty array to prevent error
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
@@ -98,17 +98,18 @@ export default function SettingsPage() {
     toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
-  const handleClearData = () => {
-    // This function will now ONLY clear the localStorage and reload.
-    // The DataProvider will then fall back to the initial data from the JSON file upon reload.
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    window.location.reload();
-    // No toast here, as the page reloads. A success message might be misleading
-    // as the user sees the initial default data, not an empty state.
+  const handleClearData = async () => {
+    await clearAllData();
+    // The clearAllData function now handles toast and reload
   };
   
   const handleLoadDefaults = async () => {
     await resetData();
+    toast({
+        variant: 'success',
+        title: 'اطلاعات پیش‌فرض بارگذاری شد',
+        description: 'داده‌های اولیه برنامه با موفقیت جایگزین شدند.',
+    });
   };
 
   const handleBackupData = () => {
@@ -338,7 +339,7 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
                   <p className="text-sm text-muted-foreground">
-                    تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف شده و داده‌های اولیه جایگزین می‌شوند.
+                    تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف شده و برنامه به حالت اولیه باز می‌گردد.
                   </p>
                 </div>
                 <AlertDialog>
@@ -366,7 +367,7 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
                   <p className="text-sm text-muted-foreground">
-                    اطلاعات فعلی با داده‌های اولیه برنامه جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
+                    اطلاعات فعلی با داده‌های اولیه برنامه (فایل mb.json) جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
                   </p>
                 </div>
                 <AlertDialog>

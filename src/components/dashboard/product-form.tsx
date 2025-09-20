@@ -578,7 +578,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                             ذخیره با عنوان محصول جدید
                         </Button>
                     )}
-                    <Button type="submit" disabled={isProcessing} size="lg" className="w-full">
+                    <Button type="submit" disabled={isProcessing} size="lg" className="w-full bg-green-600 hover:bg-green-700">
                         {isProcessing
                         ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
                         : isEditMode ? 'ذخیره تغییرات محصول' : 'ایجاد محصول جدید'}

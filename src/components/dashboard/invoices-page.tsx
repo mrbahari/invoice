@@ -5,81 +5,76 @@ import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect } from 'react';
-import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
-import { useData } from '@/context/data-context'; // Import useData
+import { useData } from '@/context/data-context';
 
 type View = 
     | { type: 'list' }
-    | { type: 'form'; invoice?: Invoice }
-    | { type: 'preview'; invoiceId: string };
-
+    | { type: 'editor'; invoiceId?: string }
+    | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
+    
 type InvoicesPageProps = {
-  initialInvoice?: Invoice;
+  initialInvoice?: Omit<Invoice, 'id'>;
 };
 
+
 export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: InvoicesPageProps) {
-  const { data, setData } = useData(); // Use the central data context
+  const { data, setData } = useData();
   const { invoices: allInvoices, customers } = data;
   const { toast } = useToast();
   const { searchTerm } = useSearch();
 
+  const [view, setView] = useState<View>({ type: 'list' });
   const [initialInvoice, setInitialInvoice] = useState(initialInvoiceProp);
-  const [view, setView] = useState<View>(initialInvoiceProp ? { type: 'form', invoice: initialInvoiceProp } : { type: 'list' });
 
+  useEffect(() => {
+    if (initialInvoice) {
+      setView({ type: 'editor', invoiceId: undefined });
+    }
+  }, [initialInvoice]);
 
-  const handleAddClick = () => setView({ type: 'form' });
-  const handleEditClick = (invoice: Invoice) => setView({ type: 'form', invoice });
-  const handlePreviewClick = (invoiceId: string) => setView({ type: 'preview', invoiceId });
   
-  const handleCancelAndClear = () => {
+  const handleBackToList = () => {
     setView({ type: 'list' });
-    setInitialInvoice(undefined); // Clear the initial invoice to prevent re-opening
+    setInitialInvoice(undefined); // Clear initial invoice when going back to list
   };
 
-  const handleFormSaveAndPreview = (invoiceId: string) => {
-      // Data is already updated in the context by the form, just switch view
-      setView({ type: 'preview', invoiceId });
+  const handleSaveAndPreview = (invoiceId: string) => {
+    setView({ type: 'preview', invoiceId, from: 'editor' });
   };
   
+  const handlePreviewFromList = (invoiceId: string) => {
+    setView({ type: 'preview', invoiceId, from: 'list' });
+  };
+  
+  const handleEdit = (invoiceId: string) => {
+    setView({ type: 'editor', invoiceId });
+  };
+
   const handleUpdateStatus = (invoiceId: string, status: InvoiceStatus) => {
     setData({
-        ...data,
-        invoices: data.invoices.map(inv => 
-            inv.id === invoiceId ? { ...inv, status } : inv
-        )
+      ...data,
+      invoices: data.invoices.map(inv =>
+        inv.id === invoiceId ? { ...inv, status } : inv
+      ),
     });
     toast({
       variant: 'success',
       title: 'وضعیت فاکتور به‌روزرسانی شد',
-      description: `فاکتور به وضعیت "${status === 'Paid' ? 'پرداخت شده' : status === 'Pending' ? 'در انتظار' : 'سررسید گذشته'}" تغییر یافت.`,
     });
-  };
-  
-  const handleDeleteInvoice = (invoiceId: string) => {
-    const invoiceToDelete = allInvoices.find(inv => inv.id === invoiceId);
-    setData({
-        ...data,
-        invoices: data.invoices.filter(inv => inv.id !== invoiceId)
-    });
-    toast({
-      title: 'فاکتور حذف شد',
-      description: `فاکتور شماره "${invoiceToDelete?.invoiceNumber}" با موفقیت حذف شد.`,
-    });
-    setView({ type: 'list' });
   };
   
   const filteredInvoices = useMemo(() => {
     if (!allInvoices) return [];
-    return allInvoices.filter(invoice => 
-        invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    return allInvoices.filter(invoice =>
+      invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [allInvoices, searchTerm]);
-
 
   const paidInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Paid'), [filteredInvoices]);
   const pendingInvoices = useMemo(() => filteredInvoices.filter(inv => inv.status === 'Pending'), [filteredInvoices]);
@@ -91,34 +86,46 @@ export default function InvoicesPage({ initialInvoice: initialInvoiceProp }: Inv
     { value: 'pending', label: `در انتظار (${pendingInvoices.length})`, invoices: pendingInvoices },
     { value: 'overdue', label: `سررسید گذشته (${overdueInvoices.length})`, invoices: overdueInvoices, className: 'hidden sm:flex' },
   ], [filteredInvoices, paidInvoices, pendingInvoices, overdueInvoices]);
-  
-  if (view.type === 'form') {
-      return <InvoiceEditor invoice={view.invoice || initialInvoice} onCancel={handleCancelAndClear} onSaveAndPreview={handleFormSaveAndPreview} />;
-  }
 
-  if (view.type === 'preview') {
-      // If we came from an editor, allow returning to it. Otherwise, return to list.
-      const backAction = initialInvoice ? () => setView({ type: 'form', invoice: initialInvoice }) : handleCancelAndClear;
-      return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={backAction} />;
-  }
-
-  return (
-    <InvoiceTabs
-        tabs={tabsData}
-        customers={customers || []}
-        defaultTab="all"
-        onStatusChange={handleUpdateStatus}
-        onDeleteInvoice={handleDeleteInvoice}
-        onEditInvoice={handleEditClick}
-        onPreviewInvoice={handlePreviewClick}
-        pageActions={
-            <Button size="sm" className="h-8 gap-1" onClick={handleAddClick}>
+  const renderContent = () => {
+    switch (view.type) {
+      case 'editor':
+        return (
+          <InvoiceEditor
+            invoiceId={view.invoiceId}
+            initialData={view.invoiceId ? undefined : initialInvoice}
+            onSave={handleBackToList}
+            onCancel={handleBackToList}
+            onSaveAndPreview={handleSaveAndPreview}
+          />
+        );
+      case 'preview':
+        const onBack = view.from === 'editor' && view.invoiceId 
+            ? () => setView({ type: 'editor', invoiceId: view.invoiceId })
+            : handleBackToList;
+        return <InvoicePreviewPage invoiceId={view.invoiceId} onBack={onBack} />;
+      case 'list':
+      default:
+        return (
+          <InvoiceTabs
+            tabs={tabsData}
+            customers={customers || []}
+            defaultTab="all"
+            onStatusChange={handleUpdateStatus}
+            onEditInvoice={handleEdit}
+            onPreviewInvoice={handlePreviewFromList}
+            pageActions={
+              <Button size="sm" className="h-8 gap-1" onClick={() => setView({ type: 'editor' })}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    ایجاد فاکتور
+                  ایجاد فاکتور
                 </span>
-            </Button>
-        }
-    />
-  );
+              </Button>
+            }
+          />
+        );
+    }
+  };
+
+  return renderContent();
 }

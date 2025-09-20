@@ -22,12 +22,11 @@ type InvoiceTabsProps = {
   defaultTab: string;
   pageActions: React.ReactNode;
   onStatusChange: (invoiceId: string, status: InvoiceStatus) => void;
-  onDeleteInvoice: (invoiceId: string) => void;
-  onEditInvoice: (invoice: Invoice) => void;
+  onEditInvoice: (invoiceId: string) => void;
   onPreviewInvoice: (invoiceId: string) => void;
 };
 
-export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onDeleteInvoice, onEditInvoice, onPreviewInvoice }: InvoiceTabsProps) {
+export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatusChange, onEditInvoice, onPreviewInvoice }: InvoiceTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   const handleExport = () => {
@@ -36,14 +35,9 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
         const headers = {
             invoiceNumber: 'شماره فاکتور',
             customerName: 'نام مشتری',
-            customerEmail: 'ایمیل مشتری',
             date: 'تاریخ',
             status: 'وضعیت',
-            subtotal: 'جمع جزء',
-            discount: 'تخفیف',
-            tax: 'مالیات',
             total: 'جمع کل',
-            description: 'توضیحات'
         };
       downloadCSV(activeInvoices, `invoices-${activeTab}.csv`, headers);
     }
@@ -75,7 +69,6 @@ export function InvoiceTabs({ tabs, customers, defaultTab, pageActions, onStatus
             invoiceList={tab.invoices}
             customers={customers} 
             onStatusChange={onStatusChange}
-            onDeleteInvoice={onDeleteInvoice}
             onEditInvoice={onEditInvoice}
             onPreviewInvoice={onPreviewInvoice}
           />

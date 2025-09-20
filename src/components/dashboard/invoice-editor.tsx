@@ -23,14 +23,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, Copy, ArrowRight, Save, GripVertical } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,417 +45,214 @@ import {
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 
-
-type InvoiceItemState = {
-  product: Product;
-  quantity: number;
-  unit: string;
-};
-
 type InvoiceEditorProps = {
-    invoice?: Invoice;
+    invoiceId?: string;
+    initialData?: Omit<Invoice, 'id'>;
+    onSave: (invoiceId: string) => void;
     onCancel: () => void;
     onSaveAndPreview: (invoiceId: string) => void;
 }
 
-// A custom hook that returns true only after the component has mounted on the client.
 const useIsClient = () => {
   const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  useEffect(() => setIsClient(true), []);
   return isClient;
 };
 
-
-export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoiceId, initialData, onSave, onCancel, onSaveAndPreview }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
-  const isEditMode = !!invoice;
-  
+  const isClient = useIsClient();
+
+  const isEditMode = !!invoiceId;
+  const originalInvoice = useMemo(() => invoices.find(inv => inv.id === invoiceId), [invoices, invoiceId]);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
-  
-  const [items, setItems] = useState<InvoiceItemState[]>([]);
-  
-  const [description, setDescription] = useState(invoice?.description || '');
-  const [overallDiscount, setOverallDiscount] = useState(invoice?.discount || 0);
-  const [additions, setAdditions] = useState(invoice?.additions || 0);
-  const [tax, setTax] = useState(invoice && invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - (invoice.discount || 0))) * 100 : 0);
-  const [status, setStatus] = useState<InvoiceStatus>(invoice?.status || 'Pending');
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [description, setDescription] = useState('');
+  const [overallDiscount, setOverallDiscount] = useState(0);
+  const [additions, setAdditions] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [status, setStatus] = useState<InvoiceStatus>('Pending');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  
-  const isClient = useIsClient();
 
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, []);
 
-
-  // Track changes to mark the form as dirty
   useEffect(() => {
-    if (!isEditMode) {
-      // For new invoices, any item or customer selection makes it dirty
-      if (items.length > 0 || selectedCustomer) {
-        setIsDirty(true);
+    const dataToLoad = isEditMode ? originalInvoice : initialData;
+    if (dataToLoad) {
+      if ('customerId' in dataToLoad && dataToLoad.customerId) {
+        setSelectedCustomer(customerList.find(c => c.id === dataToLoad.customerId));
       }
-      return;
+      setItems(dataToLoad.items || []);
+      setDescription(dataToLoad.description || '');
+      setOverallDiscount(dataToLoad.discount || 0);
+      setAdditions(dataToLoad.additions || 0);
+      const sub = dataToLoad.subtotal || 0;
+      const disc = dataToLoad.discount || 0;
+      setTax(sub - disc > 0 ? (dataToLoad.tax / (sub - disc)) * 100 : 0);
+      setStatus(dataToLoad.status || 'Pending');
     }
+  }, [originalInvoice, initialData, customerList, isEditMode]);
 
-    if (!invoice) return;
-
-    const originalItemsOrder = invoice.items.map(i => ({ p: i.productId, q: i.quantity, u: i.unit }));
-    const currentItemsOrder = items.map(i => ({ p: i.product.id, q: i.quantity, u: i.unit }));
-
-    // Compare initial state with current state for edit mode
-    const itemsChanged = JSON.stringify(currentItemsOrder) !== JSON.stringify(originalItemsOrder);
-    const customerChanged = selectedCustomer?.id !== invoice.customerId;
-    const descriptionChanged = description !== (invoice.description || '');
-    const discountChanged = overallDiscount !== (invoice.discount || 0);
-    const additionsChanged = additions !== (invoice.additions || 0);
-    
-    const initialTaxPercent = invoice.subtotal > 0 ? (invoice.tax / (invoice.subtotal - (invoice.discount || 0))) * 100 : 0;
-    const taxChanged = tax !== initialTaxPercent;
-
-    const statusChanged = status !== invoice.status;
-
-    if (itemsChanged || customerChanged || descriptionChanged || discountChanged || additionsChanged || taxChanged || statusChanged) {
-      setIsDirty(true);
-    } else {
-      setIsDirty(false);
-    }
-  }, [items, selectedCustomer, description, overallDiscount, additions, tax, status, invoice, isEditMode]);
-  
-  useEffect(() => {
-    if (isEditMode && invoice && customerList.length > 0 && !selectedCustomer) {
-      const customerForInvoice = customerList.find(c => c.id === invoice.customerId);
-      setSelectedCustomer(customerForInvoice);
-    }
-  }, [invoice, isEditMode, customerList, selectedCustomer]);
-
-  useEffect(() => {
-    if (isEditMode && invoice && products.length > 0 && items.length === 0) {
-        const initialItems = invoice.items.map(item => {
-            const product = products.find(p => p.id === item.productId);
-            if (!product) return null;
-            return {
-                product,
-                quantity: item.quantity,
-                unit: item.unit,
-            };
-        }).filter((item): item is InvoiceItemState => item !== null);
-        setItems(initialItems);
-    }
-  }, [invoice, isEditMode, products, items.length]);
-
-
-
-  const { categoryMap, mainCategories, subCategories } = useMemo(() => {
-    const map = new Map<string, Category>();
-    const main: Category[] = [];
-    const sub: Category[] = [];
-    categories.forEach(category => {
-      map.set(category.id, category);
-      if (category.parentId) {
-        sub.push(category);
-      } else {
-        if (category.name !== 'کناف') { // Filter out the 'کناف' main category
-            main.push(category);
-        }
-      }
-    });
-    return { categoryMap: map, mainCategories: main, subCategories: sub };
-  }, [categories]);
+  const { subtotal, taxAmount, total } = useMemo(() => {
+    const sub = items.reduce((acc, item) => acc + item.totalPrice, 0);
+    const disc = overallDiscount;
+    const totalBeforeTax = sub - disc;
+    const taxAmt = totalBeforeTax * (tax / 100);
+    const total = totalBeforeTax + taxAmt + additions;
+    return { subtotal: sub, taxAmount: taxAmt, total };
+  }, [items, overallDiscount, tax, additions]);
 
   const filteredProducts = useMemo(() => {
-    let intermediateProducts = products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
-
-    if (selectedCategory === 'all') {
-      return intermediateProducts;
-    }
-
-    const category = categoryMap.get(selectedCategory);
-    if (!category) return intermediateProducts;
-    
-    // If it's a main category, get all products from its subcategories
-    if (!category.parentId) {
-        const subCategoryIds = categories
-            .filter(c => c.parentId === selectedCategory)
-            .map(c => c.id);
-        return intermediateProducts.filter(p => subCategoryIds.includes(p.subCategoryId));
-    } else { // It's a subcategory
-        return intermediateProducts.filter(p => p.subCategoryId === selectedCategory);
-    }
-
-  }, [products, productSearch, selectedCategory, categories, categoryMap]);
-
+    return products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+  }, [products, productSearch]);
 
   const filteredCustomers = useMemo(() => {
-    const trimmedSearch = customerSearch.trim();
-    if (!trimmedSearch) return customerList;
-    return customerList.filter(c => c.name.toLowerCase().includes(trimmedSearch.toLowerCase()));
+    return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
-  
-  const getUnitPrice = (item: InvoiceItemState): number => {
-      if (item.unit === item.product.subUnit && item.product.subUnitPrice !== undefined) {
-          return item.product.subUnitPrice;
-      }
-      return item.product.price;
-  };
-
-  const handleAddNewCustomer = async () => {
-    const customerName = customerSearch.trim() || `مشتری جدید ${Math.floor(Math.random() * 1000)}`;
-    const newCustomerData: Omit<Customer, 'id'> = {
-        name: customerName,
-        email: 'ایمیل ثبت نشده',
-        phone: 'شماره ثبت نشده',
-        address: 'آدرس ثبت نشده',
-        purchaseHistory: 'مشتری جدید',
-    };
-    
-    const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
-    const newCustomerWithId = { ...newCustomerData, id: newId };
-    
-    setData(prev => ({ ...prev, customers: [newCustomerWithId, ...prev.customers] }));
-    
-    setSelectedCustomer(newCustomerWithId);
-    setCustomerSearch('');
-    toast({ variant: 'success', title: 'مشتری جدید اضافه شد', description: `${newCustomerWithId.name} به لیست مشتریان شما اضافه شد.`});
-  };
-
-  const calculateItemTotal = (item: InvoiceItemState): number => {
-    const unitPrice = getUnitPrice(item);
-    return item.quantity * unitPrice;
-  };
-
-  const subtotal = useMemo(
-    () => items.reduce((acc, item) => acc + (item.quantity * getUnitPrice(item)), 0),
-    [items]
-  );
-
-  const totalBeforeTax = subtotal - (overallDiscount || 0);
-
-  const taxAmount = useMemo(() => {
-    return totalBeforeTax * ((tax || 0) / 100);
-  }, [totalBeforeTax, tax]);
-
-  const total = useMemo(() => {
-    return totalBeforeTax + taxAmount + (additions || 0);
-  }, [totalBeforeTax, taxAmount, additions]);
 
   const handleAddProduct = (product: Product) => {
-    const initialQuantity = 1;
-
-    setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.product.id === product.id);
+    setItems(prev => {
+      const existingItem = prev.find(item => item.productId === product.id && item.unit === product.unit);
       if (existingItem) {
-        return prevItems.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: item.quantity + initialQuantity } : item
+        return prev.map(item =>
+          item.productId === product.id && item.unit === product.unit
+            ? { ...item, quantity: item.quantity + 1, totalPrice: (item.quantity + 1) * item.unitPrice }
+            : item
         );
       }
-      return [...prevItems, { product, quantity: initialQuantity, unit: product.unit }];
+      const newItem: InvoiceItem = {
+        productId: product.id,
+        productName: product.name,
+        quantity: 1,
+        unit: product.unit,
+        unitPrice: product.price,
+        totalPrice: product.price,
+      };
+      return [...prev, newItem];
     });
   };
-  
-  const handleItemFieldChange = (productId: string, field: 'quantity', value: number) => {
-    if (value < 0) return;
 
-    if (field === 'quantity' && value === 0) {
-        handleRemoveItem(productId);
-        return;
+  const handleItemChange = (productId: string, unit: string, field: 'quantity' | 'unitPrice', value: number) => {
+    setItems(prev => prev.map(item => {
+      if (item.productId === productId && item.unit === unit) {
+        const newItem = { ...item, [field]: value };
+        newItem.totalPrice = newItem.quantity * newItem.unitPrice;
+        return newItem;
+      }
+      return item;
+    }));
+  };
+
+  const handleUnitChange = (productId: string, oldUnit: string, newUnit: string) => {
+    setItems(prev => {
+      const product = products.find(p => p.id === productId);
+      if (!product) return prev;
+
+      const unitPrice = newUnit === product.subUnit ? (product.subUnitPrice || 0) : product.price;
+
+      return prev.map(item => {
+        if (item.productId === productId && item.unit === oldUnit) {
+          const newItem = { ...item, unit: newUnit, unitPrice };
+          newItem.totalPrice = newItem.quantity * newItem.unitPrice;
+          return newItem;
+        }
+        return item;
+      });
+    });
+  };
+
+  const handleRemoveItem = (productId: string, unit: string) => {
+    setItems(prev => prev.filter(item => !(item.productId === productId && item.unit === unit)));
+  };
+
+  const handleProcessInvoice = async (andPreview: boolean = false) => {
+    if (!selectedCustomer) {
+      toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است' });
+      return;
+    }
+    if (items.length === 0) {
+      toast({ variant: 'destructive', title: 'فاکتور خالی است' });
+      return;
+    }
+    
+    setIsProcessing(true);
+
+    const invoiceData = {
+      customerId: selectedCustomer.id,
+      customerName: selectedCustomer.name,
+      customerEmail: selectedCustomer.email,
+      date: originalInvoice?.date || new Date().toISOString(),
+      status,
+      items,
+      subtotal,
+      discount: overallDiscount,
+      additions,
+      tax: taxAmount,
+      total,
+      description,
+      invoiceNumber: originalInvoice?.invoiceNumber || `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+    };
+
+    let processedId: string;
+
+    if (isEditMode && originalInvoice) {
+      processedId = originalInvoice.id;
+      setData(prev => ({
+        ...prev,
+        invoices: prev.invoices.map(inv => inv.id === processedId ? { ...invoiceData, id: processedId } : inv)
+      }));
+      toast({ variant: 'success', title: 'فاکتور ویرایش شد' });
+    } else {
+      processedId = `inv-${Math.random().toString(36).substr(2, 9)}`;
+      setData(prev => ({
+        ...prev,
+        invoices: [{ ...invoiceData, id: processedId }, ...prev.invoices]
+      }));
+      toast({ variant: 'success', title: 'فاکتور ایجاد شد' });
     }
 
-    setItems(prevItems => prevItems.map(item =>
-        item.product.id === productId ? { ...item, [field]: value } : item
-    ));
+    setIsProcessing(false);
+    if (andPreview) {
+      onSaveAndPreview(processedId);
+    } else {
+      onSave(processedId);
+    }
   };
-
-
-  const handleUnitChange = (productId: string, newUnit: string) => {
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.product.id === productId ? { ...item, unit: newUnit } : item
-      )
-    );
-  };
-
-  const handleRemoveItem = (productId: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.product.id !== productId));
+  
+   const handleDeleteInvoice = () => {
+    if (!originalInvoice) return;
+    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== originalInvoice.id) }));
+    toast({ title: 'فاکتور حذف شد' });
+    onCancel();
   };
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-
     const reorderedItems = Array.from(items);
     const [removed] = reorderedItems.splice(result.source.index, 1);
     reorderedItems.splice(result.destination.index, 0, removed);
-
     setItems(reorderedItems);
   };
   
-  const categoriesById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
-
-  const getRootParent = (categoryId: string): Category | undefined => {
-    let current = categoriesById.get(categoryId);
-    while (current && current.parentId) {
-      const parent = categoriesById.get(current.parentId);
-      if (!parent) return current;
-      current = parent;
-    }
-    return current;
-  };
-
- const handlePreviewClick = async () => {
-    if (isDirty) {
-        const savedInvoiceId = await handleProcessInvoice(true); // Save and navigate
-        if (savedInvoiceId) {
-            onSaveAndPreview(savedInvoiceId);
-        }
-    } else if (invoice) {
-        onSaveAndPreview(invoice.id);
-    } else {
-        toast({ variant: 'destructive', title: 'فاکتور ذخیره نشده است', description: 'لطفا ابتدا فاکتور را ایجاد کنید.' });
-    }
- };
-  
- const handleProcessInvoice = async (isForPreview: boolean = false): Promise<string | undefined> => {
-    if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفاً یک مشتری برای این فاکتور انتخاب کنید.' });
-      return;
-    }
-    if (items.length === 0) {
-      toast({ variant: 'destructive', title: 'فاکتور خالی است', description: 'لطفاً حداقل یک محصول به فاکتور اضافه کنید.' });
-      return;
-    }
-
-    setIsProcessing(true);
-
-    const invoiceItems: InvoiceItem[] = items.map(item => ({
-        productId: item.product.id,
-        productName: item.product.name,
-        quantity: item.quantity,
-        unit: item.unit,
-        unitPrice: getUnitPrice(item),
-        totalPrice: calculateItemTotal(item),
-    }));
-    
-    const finalSubtotal = invoiceItems.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
-    const finalTotal = finalSubtotal - (overallDiscount || 0) + (totalBeforeTax * ((tax || 0)/100)) + (additions || 0);
-
-    let processedInvoiceId: string | undefined = '';
-
-    if (isEditMode && invoice) {
-        processedInvoiceId = invoice.id;
-        const updatedInvoiceData: Omit<Invoice, 'id'> = {
-            customerId: selectedCustomer.id,
-            customerName: selectedCustomer.name,
-            customerEmail: selectedCustomer.email,
-            items: invoiceItems,
-            subtotal: finalSubtotal,
-            discount: overallDiscount,
-            additions: additions,
-            tax: taxAmount,
-            total: finalTotal,
-            description: description || 'فاکتور ویرایش شده',
-            status,
-            invoiceNumber: invoice.invoiceNumber,
-            date: invoice.date
-        };
-        setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === invoice.id ? { ...updatedInvoiceData, id: invoice.id } : inv) }));
-        toast({ variant: 'success', title: 'فاکتور با موفقیت ویرایش شد', description: `فاکتور شماره ${invoice.invoiceNumber} به‌روزرسانی شد.` });
-    } else {
-        const firstItemCategory = items[0].product.subCategoryId ? getRootParent(items[0].product.subCategoryId) : undefined;
-        const storeName = firstItemCategory?.name || 'Store';
-        const prefix = getStorePrefix(storeName);
-
-        const newInvoiceData: Omit<Invoice, 'id'> = {
-            invoiceNumber: `${prefix}-${(invoices.length + 1546).toString().padStart(3, '0')}`,
-            customerId: selectedCustomer.id,
-            customerName: selectedCustomer.name,
-            customerEmail: selectedCustomer.email,
-            date: new Date().toISOString(),
-            status: 'Pending',
-            items: invoiceItems,
-            subtotal: finalSubtotal,
-            discount: overallDiscount,
-            additions: additions,
-            tax: taxAmount,
-            total: finalTotal,
-            description: description || 'فاکتور ایجاد شده',
-        };
-        const newId = `inv-${Math.random().toString(36).substr(2, 9)}`;
-        const newInvoiceWithId = { ...newInvoiceData, id: newId };
-        
-        setData(prev => ({ ...prev, invoices: [newInvoiceWithId, ...prev.invoices] }));
-        processedInvoiceId = newId;
-        toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: `فاکتور شماره ${newInvoiceData.invoiceNumber} ایجاد شد.` });
-    }
-
-    setIsProcessing(false);
-    
-    if (isForPreview) {
-        return processedInvoiceId;
-    }
-    
-    if (!isForPreview) {
-        onCancel();
-    }
-    
-    return undefined;
-  };
-  
-  const handleDeleteInvoice = async () => {
-    if (!invoice) return;
-    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== invoice.id) }));
-    toast({
-        title: 'فاکتور حذف شد',
-        description: `فاکتور شماره "${invoice?.invoiceNumber}" با موفقیت حذف شد.`,
-    });
-    onCancel();
-  };
-
-
-  return (
+   return (
     <>
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-        
         <div className="grid auto-rows-max items-start gap-4 md:gap-8">
-             <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+             <Card className="animate-fade-in-up">
                 <CardHeader>
                     <CardTitle>محصولات</CardTitle>
-                    <CardDescription>یک محصول برای افزودن به فاکتور انتخاب کنید.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="relative">
-                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                        </div>
-                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="انتخاب دسته‌بندی" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
-                                <Separator />
-                                {mainCategories.map(cat => (
-                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                ))}
-                                <Separator />
-                                {subCategories.map(cat => (
-                                    <SelectItem key={cat.id} value={cat.id} className="pr-6">{cat.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    <div className="relative">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
                     <ScrollArea className="h-96">
                         <div className="grid grid-cols-3 gap-3">
@@ -467,12 +264,7 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                             >
                                 <CardContent className="p-2">
                                     <div className="relative w-full aspect-square mb-2">
-                                        <Image
-                                            src={product.imageUrl}
-                                            alt={product.name}
-                                            fill
-                                            className="rounded-md object-cover"
-                                        />
+                                        <Image src={product.imageUrl} alt={product.name} fill className="rounded-md object-cover" />
                                     </div>
                                     <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
                                 </CardContent>
@@ -483,56 +275,34 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                 </CardContent>
             </Card>
 
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <Card className="animate-fade-in-up">
                 <CardHeader>
                     <CardTitle>مشتریان</CardTitle>
-                    <CardDescription>یک مشتری برای این فاکتور انتخاب کنید.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <div className="relative">
                         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="جستجو یا افزودن مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                        <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                     </div>
                     {selectedCustomer && (
                         <Card className="bg-muted/50">
                             <CardContent className="p-3 flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/36/36`} alt="آواتار" />
-                                    <AvatarFallback>{selectedCustomer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
+                                <Avatar className="h-9 w-9"><AvatarImage src={selectedCustomer.avatarUrl} /><AvatarFallback>{selectedCustomer.name[0]}</AvatarFallback></Avatar>
                                 <div className="flex-1">
                                     <p className="text-sm font-medium">{selectedCustomer.name}</p>
-                                    <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
+                                    <p className="text-xs text-muted-foreground">{selectedCustomer.phone}</p>
                                 </div>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedCustomer(undefined)}>
-                                    <X className="h-4 w-4" />
-                                </Button>
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSelectedCustomer(undefined)}><X className="h-4 w-4" /></Button>
                             </CardContent>
                         </Card>
                     )}
                     <ScrollArea className="h-48">
                         <div className="grid gap-2">
-                        {filteredCustomers.map(customer => (
-                            <Button
-                                key={customer.id}
-                                variant={selectedCustomer?.id === customer.id ? 'secondary' : 'ghost'}
-                                className="justify-start"
-                                onClick={() => setSelectedCustomer(customer)}
-                                disabled={!!selectedCustomer}
-                            >
-                                {customer.name}
-                            </Button>
-                        ))}
-                        {filteredCustomers.length === 0 && customerSearch && !selectedCustomer && (
-                            <Button
-                                variant="ghost"
-                                className="justify-start"
-                                onClick={handleAddNewCustomer}
-                            >
-                            <PlusCircle className="ml-2 h-4 w-4" />
-                            افزودن مشتری جدید: "{customerSearch}"
-                            </Button>
-                        )}
+                            {filteredCustomers.map(customer => (
+                                <Button key={customer.id} variant={selectedCustomer?.id === customer.id ? 'secondary' : 'ghost'} className="justify-start" onClick={() => setSelectedCustomer(customer)} disabled={!!selectedCustomer}>
+                                    {customer.name}
+                                </Button>
+                            ))}
                         </div>
                     </ScrollArea>
                 </CardContent>
@@ -542,30 +312,19 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
             <Card className="animate-fade-in-up">
             <CardHeader>
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                    <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
-                    <CardDescription>
-                        اقلام فاکتور، توضیحات و جزئیات پرداخت را ویرایش کنید.
-                    </CardDescription>
-                </div>
-                <div className='flex items-center gap-2'>
-                    <Button type="button" variant="ghost" onClick={onCancel} >
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                        انصراف
-                    </Button>
-                    
-                </div>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>{isEditMode ? `ویرایش فاکتور ${originalInvoice?.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
+                    </div>
+                    <Button type="button" variant="ghost" onClick={onCancel}><ArrowRight className="ml-2 h-4 w-4" />انصراف</Button>
                 </div>
             </CardHeader>
-            <CardContent className="grid gap-6">
-                
+            <CardContent>
                 <div className="border rounded-lg overflow-hidden">
                     <Table>
-                        <TableHeader className="hidden md:table-header-group">
+                        <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[50px]"></TableHead>
-                                <TableHead className="w-[80px]">تصویر</TableHead>
                                 <TableHead>نام کالا</TableHead>
                                 <TableHead className="w-[110px]">واحد</TableHead>
                                 <TableHead className="w-[100px] text-center">مقدار</TableHead>
@@ -576,287 +335,109 @@ export function InvoiceEditor({ invoice, onCancel, onSaveAndPreview }: InvoiceEd
                         </TableHeader>
                         {isClient ? (
                         <DragDropContext onDragEnd={handleDragEnd}>
-                            <Droppable droppableId="invoiceItems">
-                                {(provided) => (
+                            <Droppable droppableId="invoice-items">
+                            {(provided) => (
                                 <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                                    {items.length > 0 ? items.map((item, index) => {
-                                        const availableUnits = [item.product.unit];
-                                        if (item.product.subUnit) {
-                                            availableUnits.push(item.product.subUnit);
-                                        }
+                                {items.length > 0 ? items.map((item, index) => {
+                                    const product = products.find(p => p.id === item.productId);
+                                    const availableUnits = [product?.unit];
+                                    if (product?.subUnit) availableUnits.push(product.subUnit);
 
-                                        return (
-                                            <Draggable key={item.product.id} draggableId={item.product.id} index={index}>
-                                            {(provided, snapshot) => (
-                                            <>
-                                            {/* Desktop View */}
-                                            <TableRow 
-                                                ref={provided.innerRef} 
-                                                {...provided.draggableProps} 
-                                                className={`${snapshot.isDragging ? 'bg-accent shadow-lg' : ''} hidden md:table-row`}
-                                            >
-                                                <TableCell {...provided.dragHandleProps} className="cursor-grab">
-                                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Image
-                                                        src={item.product.imageUrl}
-                                                        alt={item.product.name}
-                                                        width={64}
-                                                        height={64}
-                                                        className="rounded-md object-cover"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="font-medium">{item.product.name}</TableCell>
-                                                <TableCell>
-                                                    <Select
-                                                        value={item.unit}
-                                                        onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
-                                                    >
-                                                        <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="واحد" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                        {availableUnits.map(unit => (
-                                                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                                        ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Input
-                                                    type="number"
-                                                    value={item.quantity}
-                                                    onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
-                                                    step="0.01"
-                                                    className="w-full text-center"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-left">{formatCurrency(getUnitPrice(item))}</TableCell>
-                                                <TableCell className="text-left">{formatCurrency(calculateItemTotal(item))}</TableCell>
-                                                <TableCell>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.product.id)}>
-                                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-
-                                            {/* Mobile View */}
-                                            <TableRow
-                                                ref={snapshot.isDragging ? null : provided.innerRef}
-                                                {...provided.draggableProps}
-                                                className={`${snapshot.isDragging ? 'bg-accent shadow-lg' : ''} block md:hidden border-b`}
-                                            >
-                                                <TableCell className="p-2 w-full pl-2.5">
-                                                    <div className="flex items-start gap-3">
-                                                        <div {...provided.dragHandleProps} className="cursor-grab pt-1">
-                                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                        </div>
-                                                        <Image
-                                                            src={item.product.imageUrl}
-                                                            alt={item.product.name}
-                                                            width={48}
-                                                            height={48}
-                                                            className="rounded-md object-cover"
-                                                        />
-                                                        <div className="flex-1 space-y-3">
-                                                        <div className="flex justify-between items-start">
-                                                            <p className="font-medium text-base">{item.product.name}</p>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2" onClick={() => handleRemoveItem(item.product.id)}>
-                                                            <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                                            </Button>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div className="grid gap-1.5">
-                                                            <Label htmlFor={`quantity-mob-${item.product.id}`}>مقدار</Label>
-                                                            <Input
-                                                                id={`quantity-mob-${item.product.id}`}
-                                                                type="number"
-                                                                value={item.quantity}
-                                                                onChange={(e) => handleItemFieldChange(item.product.id, 'quantity', parseFloat(e.target.value))}
-                                                                step="0.01"
-                                                                className="text-center"
-                                                            />
-                                                            </div>
-                                                            <div className="grid gap-1.5">
-                                                            <Label htmlFor={`unit-mob-${item.product.id}`}>واحد</Label>
-                                                            <Select
-                                                                value={item.unit}
-                                                                onValueChange={(value: string) => handleUnitChange(item.product.id, value)}
-                                                                >
-                                                                <SelectTrigger id={`unit-mob-${item.product.id}`}>
-                                                                    <SelectValue placeholder="واحد" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {availableUnits.map(unit => (
-                                                                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground pt-1">
-                                                            <p className="flex justify-between">
-                                                                <span>قیمت واحد:</span>
-                                                                <span>{formatCurrency(getUnitPrice(item))}</span>
-                                                            </p>
-                                                            <p className="flex justify-between font-semibold text-foreground text-sm">
-                                                                <span>جمع کل:</span>
-                                                                <span>{formatCurrency(calculateItemTotal(item))}</span>
-                                                            </p>
-                                                        </div>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                            </>
-                                            )}
-                                            </Draggable>
-                                        )
-                                    }) : (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                                        برای افزودن محصول به این فاکتور، از لیست محصولات انتخاب کنید.
-                                        </TableCell>
-                                    </TableRow>
-                                    )}
-                                    {provided.placeholder}
-                                </TableBody>
+                                    return (
+                                    <Draggable key={`${item.productId}-${item.unit}`} draggableId={`${item.productId}-${item.unit}`} index={index}>
+                                        {(provided) => (
+                                        <TableRow ref={provided.innerRef} {...provided.draggableProps}>
+                                            <TableCell {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="h-5 w-5 text-muted-foreground" /></TableCell>
+                                            <TableCell className="font-medium">{item.productName}</TableCell>
+                                            <TableCell>
+                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(item.productId, item.unit, newUnit)}>
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                {availableUnits.filter(u => u).map(u => <SelectItem key={u} value={u!}>{u}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.productId, item.unit, 'quantity', parseFloat(e.target.value))} className="w-full text-center" />
+                                            </TableCell>
+                                            <TableCell className="text-left">{formatCurrency(item.unitPrice)}</TableCell>
+                                            <TableCell className="text-left">{formatCurrency(item.totalPrice)}</TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.productId, item.unit)}><Trash2 className="h-4 w-4" /></Button>
+                                            </TableCell>
+                                        </TableRow>
+                                        )}
+                                    </Draggable>
+                                    );
+                                }) : (
+                                    <TableRow><TableCell colSpan={7} className="text-center py-10">محصولی اضافه نشده است.</TableCell></TableRow>
                                 )}
+                                {provided.placeholder}
+                                </TableBody>
+                            )}
                             </Droppable>
                         </DragDropContext>
                         ) : (
-                        <TableBody>
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
-                                    در حال بارگذاری آیتم‌ها...
-                                </TableCell>
-                            </TableRow>
-                        </TableBody>
+                             <TableBody><TableRow><TableCell colSpan={7} className="text-center py-10">در حال بارگذاری...</TableCell></TableRow></TableBody>
                         )}
                     </Table>
                 </div>
-
-                <div className="grid gap-2">
-                    <div className="flex justify-between items-center">
-                        <Label htmlFor="description">توضیحات</Label>
-                    </div>
-                    <Textarea id="description" placeholder="فاکتور برای..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                <div className="grid gap-2 mt-6">
+                    <Label htmlFor="description">توضیحات</Label>
+                    <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
                 </div>
             </CardContent>
             </Card>
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <CardHeader>
-                    <CardTitle>پرداخت</CardTitle>
-                </CardHeader>
+            <Card>
+                <CardHeader><CardTitle>پرداخت</CardTitle></CardHeader>
                 <CardContent className="grid gap-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="additions">اضافات (ریال)</Label>
-                        <Input id="additions" type="number" value={additions} onChange={(e) => setAdditions(parseFloat(e.target.value) || 0)} />
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid gap-2"><Label htmlFor="additions">اضافات</Label><Input id="additions" type="number" value={additions} onChange={(e) => setAdditions(parseFloat(e.target.value) || 0)} /></div>
+                        <div className="grid gap-2"><Label htmlFor="discount">تخفیف</Label><Input id="discount" type="number" value={overallDiscount} onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)} /></div>
+                        <div className="grid gap-2"><Label htmlFor="tax">مالیات (%)</Label><Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value) || 0)} /></div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="overall-discount">تخفیف کلی (ریال)</Label>
-                        <Input id="overall-discount" type="number" value={overallDiscount} onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)} />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="tax">مالیات (%)</Label>
-                        <Input id="tax" type="number" value={tax} onChange={(e) => setTax(parseFloat(e.target.value) || 0)} />
-                    </div>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>جمع جزء</span>
-                            <span>{formatCurrency(subtotal)}</span>
-                        </div>
-                        {overallDiscount > 0 && (
-                        <div className="flex justify-between">
-                            <span>تخفیف کلی</span>
-                            <span className="text-destructive">-{formatCurrency(overallDiscount)}</span>
-                        </div>
-                        )}
-                        {additions > 0 && (
-                        <div className="flex justify-between">
-                            <span>اضافات</span>
-                            <span>{formatCurrency(additions)}</span>
-                        </div>
-                        )}
-                        {tax > 0 && (
-                        <div className="flex justify-between">
-                            <span>مالیات ({tax}%)</span>
-                            <span>{formatCurrency(taxAmount)}</span>
-                        </div>
-                        )}
+                     <div className="space-y-2 text-sm">
+                        <div className="flex justify-between"><span>جمع جزء</span><span>{formatCurrency(subtotal)}</span></div>
+                        {overallDiscount > 0 && <div className="flex justify-between"><span>تخفیف</span><span className="text-destructive">-{formatCurrency(overallDiscount)}</span></div>}
+                        {additions > 0 && <div className="flex justify-between"><span>اضافات</span><span>{formatCurrency(additions)}</span></div>}
+                        {tax > 0 && <div className="flex justify-between"><span>مالیات ({tax}%)</span><span>{formatCurrency(taxAmount)}</span></div>}
                         <Separator className="my-2" />
-                        <div className="flex justify-between font-semibold text-base pt-2">
-                            <span>جمع کل</span>
-                            <span>{formatCurrency(total)}</span>
-                        </div>
+                        <div className="flex justify-between font-semibold text-base pt-2"><span>جمع کل</span><span>{formatCurrency(total)}</span></div>
                     </div>
                 </CardContent>
             </Card>
         </div>
     </div>
-    
     <div className="sticky bottom-0 z-50 p-4 bg-card border-t mt-4 lg:col-span-3">
-            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
-                 <div className="w-full sm:w-auto">
-                  {isEditMode && (
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}>
-                                  <Trash2 className="ml-2 h-4 w-4" />
-                                  حذف فاکتور
-                              </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                      این عمل غیرقابل بازگشت است و فاکتور شماره «{invoice?.invoiceNumber}» را برای همیشه حذف می‌کند.
-                                  </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                  <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-4 w-full sm:w-auto">
-                    {isEditMode && (
-                        <div className="grid gap-2">
-                            <Label htmlFor="status" className="sr-only">وضعیت</Label>
-                            <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
-                                <SelectTrigger id="status" className="w-full sm:w-[180px]">
-                                    <SelectValue placeholder="تغییر وضعیت" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Pending">در انتظار</SelectItem>
-                                    <SelectItem value="Paid">پرداخت شده</SelectItem>
-                                    <SelectItem value="Overdue">سررسید گذشته</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
-                    <Button onClick={handlePreviewClick} variant="outline" size="lg" className="flex-1">
-                        <Eye className="ml-2 h-4 w-4" />
-                        <span>پیش‌نمایش</span>
-                    </Button>
-                    
-                    <Button className="min-w-[120px] flex-1 bg-green-600 hover:bg-green-700" size="lg" onClick={() => handleProcessInvoice()} disabled={isProcessing || !isDirty}>
-                        <Save className="ml-2 h-4 w-4" />
-                        {isProcessing
-                        ? isEditMode ? 'در حال ذخیره...' : 'در حال ایجاد...'
-                        : isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
-                    </Button>
-                </div>
+        <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+            <div className="w-full sm:w-auto">
+            {isEditMode && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف فاکتور</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            </div>
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+                {isEditMode && (
+                    <div className="grid gap-2">
+                        <Label htmlFor="status" className="sr-only">وضعیت</Label>
+                        <Select value={status} onValueChange={(value: InvoiceStatus) => setStatus(value)}>
+                            <SelectTrigger id="status" className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="Pending">در انتظار</SelectItem><SelectItem value="Paid">پرداخت شده</SelectItem><SelectItem value="Overdue">سررسید گذشته</SelectItem></SelectContent>
+                        </Select>
+                    </div>
+                )}
+                <Button onClick={() => handleProcessInvoice(true)} variant="outline" size="lg" className="flex-1"><Eye className="ml-2 h-4 w-4" />پیش‌نمایش</Button>
+                <Button onClick={() => handleProcessInvoice(false)} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
             </div>
         </div>
+    </div>
     </>
   );
 }

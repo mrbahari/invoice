@@ -4,17 +4,17 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns-jalali';
 import { Calendar, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function LiveClock() {
-  const [currentDateTime, setCurrentDateTime] = useState('');
+  const [currentDateTime, setCurrentDateTime] = useState({ date: '', time: ''});
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      const formattedDateTime = format(now, 'eeee, d MMMM yyyy, HH:mm', {
-        // No need for locale: faIR here, date-fns-jalali handles it
-      });
-      setCurrentDateTime(formattedDateTime);
+      const date = format(now, 'eeee, d MMMM yyyy');
+      const time = format(now, 'HH:mm');
+      setCurrentDateTime({ date, time });
     };
 
     updateDateTime();
@@ -24,11 +24,15 @@ export function LiveClock() {
   }, []);
 
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Calendar className="h-4 w-4" />
-      <span>{currentDateTime.split(',')[0]}, {currentDateTime.split(',')[1]}</span>
-      <Clock className="h-4 w-4 mr-2" />
-      <span>{currentDateTime.split(',')[2]}</span>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span>{currentDateTime.date}</span>
+        </div>
+         <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span>{currentDateTime.time}</span>
+        </div>
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { PlusCircle, Edit, Eye, Trash2, CheckCircle2, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
@@ -81,7 +80,7 @@ export default function InvoicesPage({
     (invoice: Invoice) => setView({ type: 'editor', invoiceId: invoice.id }),
     []
   );
-  const handlePreviewFromList = useCallback(
+  const handlePreview = useCallback(
     (invoice: Invoice) =>
       setView({ type: 'preview', invoiceId: invoice.id, from: 'list' }),
     []
@@ -149,7 +148,7 @@ export default function InvoicesPage({
           <InvoicePreviewPage
             invoiceId={view.invoiceId}
             onBack={() => handleBackFromPreview(view.invoiceId)}
-            onEdit={(id) => handleEdit({ id } as Invoice)}
+            onEdit={(id) => setView({ type: 'editor', invoiceId: id })}
           />
         );
       case 'list':
@@ -197,7 +196,7 @@ export default function InvoicesPage({
                           <div className="flex justify-between items-start">
                             <div className="grid gap-1">
                               <CardTitle className="text-lg">{displayName}</CardTitle>
-                              <CardDescription>{displayPhone}</CardDescription>
+                              <CardDescription className="text-sm text-muted-foreground">{displayPhone}</CardDescription>
                             </div>
                             <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
                               {statusTranslation[invoice.status]}
@@ -218,12 +217,12 @@ export default function InvoicesPage({
                             <span>{formatCurrency(invoice.total)}</span>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex justify-end gap-2 pt-4">
-                          <Button onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }} size="sm" variant="outline">
+                        <CardFooter className="flex flex-row justify-end gap-2 pt-4">
+                          <Button onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }} size="sm" variant="outline" className="w-full">
                             <Eye className="ml-2 h-4 w-4" />
                             مشاهده
                           </Button>
-                           <Button onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }} size="sm">
+                           <Button onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }} size="sm" className="w-full">
                              <Edit className="ml-2 h-4 w-4" />
                             ویرایش
                           </Button>

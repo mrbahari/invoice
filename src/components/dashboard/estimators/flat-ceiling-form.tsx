@@ -240,7 +240,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
              <p className="text-xs text-muted-foreground">
                 توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد. این محاسبه بر اساس استانداردهای رایج اجرایی است.
             </p>
-            <Button onClick={handleCreateInvoice} size="lg" className="w-full">
+            <Button onClick={handleCreateInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
                 <FilePlus className="ml-2 h-5 w-5" />
                 ایجاد فاکتور از این لیست
             </Button>

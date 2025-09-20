@@ -217,7 +217,7 @@ export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
              <p className="text-xs text-muted-foreground">
                 توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد. همیشه مقداری مصالح اضافی تهیه فرمایید. این محاسبه برای سازه گذاری ۱۲۰ * ۶۰ می باشد.
             </p>
-            <Button onClick={handleCreateInvoice} size="lg" className="w-full">
+            <Button onClick={handleCreateInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
                 <FilePlus className="ml-2 h-5 w-5" />
                 ایجاد فاکتور از این لیست
             </Button>

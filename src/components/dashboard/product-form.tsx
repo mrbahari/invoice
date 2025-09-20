@@ -75,6 +75,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [aiLoading, setAiLoading] = useState({
+    description: false,
+    price: false,
+    image: false,
+  });
   
     useEffect(() => {
         if (typeof window !== 'undefined') {

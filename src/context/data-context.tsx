@@ -6,9 +6,6 @@ import defaultRawData from '@/database/defaultdb.json';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 
-// This handles the case where the JSON is nested under a `default` property during import
-const initialData = (defaultRawData as any).default || defaultRawData;
-
 // Define the shape of our data
 interface AppData {
   products: Product[];
@@ -18,6 +15,19 @@ interface AppData {
   units: UnitOfMeasurement[];
   stores: Store[];
 }
+
+const emptyData: AppData = {
+  products: [],
+  categories: [],
+  customers: [],
+  invoices: [],
+  units: [],
+  stores: [],
+};
+
+
+// This handles the case where the JSON is nested under a `default` property during import
+const initialData: AppData = (defaultRawData as any).default || defaultRawData;
 
 // Define the context type
 interface DataContextType {
@@ -33,7 +43,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // Helper function to load data from localStorage or fall back to initial data
 const loadData = (): AppData => {
   if (typeof window === 'undefined') {
-    return initialData;
+    return initialData.products ? initialData : emptyData;
   }
   try {
     const storedData = localStorage.getItem('appData');
@@ -41,11 +51,12 @@ const loadData = (): AppData => {
       return JSON.parse(storedData);
     }
     // If no data in local storage, save the initial data there first.
-    localStorage.setItem('appData', JSON.stringify(initialData));
-    return initialData;
+    const dataToStore = initialData.products ? initialData : emptyData;
+    localStorage.setItem('appData', JSON.stringify(dataToStore));
+    return dataToStore;
   } catch (error) {
-    console.error("Failed to load or parse data from localStorage, falling back to initial data.", error);
-    return initialData;
+    console.error("Failed to load or parse data from localStorage, falling back to empty data.", error);
+    return emptyData;
   }
 };
 
@@ -53,7 +64,7 @@ const loadData = (): AppData => {
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [data, setData] = useState<AppData>(initialData); // Start with default, load from storage in effect
+  const [data, setData] = useState<AppData>(emptyData); // Start with empty, load from storage in effect
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Effect to load data from localStorage on mount
@@ -83,9 +94,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const resetData = () => {
     if (typeof window !== 'undefined') {
         try {
-            localStorage.removeItem('appData'); // Clear storage
-            setData(initialData); // Reset state to initial default data
-            // We don't need to save to localStorage here, because the effect above will do it.
+            localStorage.setItem('appData', JSON.stringify(emptyData)); // Clear storage by saving empty data
+            setData(emptyData); // Reset state to empty data
         } catch (error) {
              console.error("Failed to reset data", error);
             toast({

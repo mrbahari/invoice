@@ -163,7 +163,7 @@ export default function ProductsPage() {
               </Button>
               <Button
                 size="sm"
-                className="h-8 gap-1 dark:bg-white dark:text-black"
+                className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
                 onClick={handleAddClick}
               >
                 <PlusCircle className="h-3.5 w-3.5" />

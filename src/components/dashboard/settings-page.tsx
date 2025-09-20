@@ -108,12 +108,7 @@ export default function SettingsPage() {
   };
   
   const handleLoadDefaults = async () => {
-    await resetData(); // This function now handles both clearing and resetting to default
-    toast({
-        variant: 'success',
-        title: 'موفقیت‌آمیز',
-        description: 'اطلاعات با موفقیت به حالت پیش‌فرض بازنشانی شد.',
-    });
+    await resetData();
   };
 
   const handleBackupData = () => {

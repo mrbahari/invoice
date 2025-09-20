@@ -173,17 +173,21 @@ export default function DashboardHomePageContent({ onNavigate }: DashboardHomePa
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {recentPaidInvoices.map(invoice => (
-                             <TableRow key={invoice.id}>
-                                <TableCell>
-                                    <div className="font-medium">{invoice.customerName}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {new Date(invoice.date).toLocaleDateString('fa-IR')}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
-                            </TableRow>
-                        ))}
+                        {recentPaidInvoices.map(invoice => {
+                             const customer = allCustomers.find(c => c.id === invoice.customerId);
+                             const displayName = (invoice.customerName === 'مشتری بدون نام' && customer?.phone) ? customer.phone : invoice.customerName;
+                             return (
+                               <TableRow key={invoice.id}>
+                                  <TableCell>
+                                      <div className="font-medium">{displayName}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                          {new Date(invoice.date).toLocaleDateString('fa-IR')}
+                                      </div>
+                                  </TableCell>
+                                  <TableCell className="text-right">{formatCurrency(invoice.total)}</TableCell>
+                              </TableRow>
+                             )
+                        })}
                          {recentPaidInvoices.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={2} className="text-center text-muted-foreground py-8">

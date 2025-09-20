@@ -69,39 +69,46 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
   const isEditMode = !!invoiceId;
 
+  // State for the invoice being edited
+  const [invoice, setInvoice] = useState<Partial<Invoice>>({});
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
+  
   // Find the invoice to edit from the main data source if an ID is provided
   const invoiceToEdit = useMemo(() => 
     isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined
   , [invoices, invoiceId, isEditMode]);
-  
 
-  const [invoice, setInvoice] = useState<Partial<Invoice>>(() => {
-    if (invoiceToEdit) {
-      return invoiceToEdit;
-    }
-    if (initialUnsavedInvoice) {
-      return {
+  // This effect initializes the form for creating a new invoice or editing an existing one
+  useEffect(() => {
+    if (isEditMode && invoiceToEdit) {
+      // Editing an existing invoice
+      setInvoice(invoiceToEdit);
+      const customer = customerList.find(c => c.id === invoiceToEdit.customerId);
+      setSelectedCustomer(customer);
+    } else if (initialUnsavedInvoice) {
+      // Creating a new invoice from an estimator
+      setInvoice({
         ...initialUnsavedInvoice,
         invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
-      };
+      });
+      setSelectedCustomer(undefined);
+    } else if (!isEditMode) {
+      // Creating a brand new invoice
+      setInvoice({
+          date: new Date().toISOString(),
+          status: 'Pending',
+          items: [],
+          subtotal: 0,
+          discount: 0,
+          additions: 0,
+          tax: 0,
+          total: 0,
+          description: '',
+          invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+      });
+      setSelectedCustomer(undefined);
     }
-    return {
-        date: new Date().toISOString(),
-        status: 'Pending',
-        items: [],
-        subtotal: 0,
-        discount: 0,
-        additions: 0,
-        tax: 0,
-        total: 0,
-        description: '',
-        invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
-    };
-  });
-  
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(() => 
-    invoiceToEdit ? customerList.find(c => c.id === invoiceToEdit.customerId) : undefined
-  );
+  }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, invoices.length]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -255,8 +262,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         }
     } else {
         // If it's an existing invoice, just save any current changes and then preview.
-        handleProcessInvoice(); // This saves any pending changes
-        onPreview(invoiceId!);
+        const updatedId = handleProcessInvoice(); // This saves any pending changes
+        if(updatedId) {
+          onPreview(updatedId);
+        }
     }
   };
   

@@ -446,7 +446,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </Card>
         </div>
     </div>
-    <div className="sticky bottom-0 z-50 p-4 bg-card border-t mt-4 lg:col-span-5">
+    <div className="sticky bottom-[90px] md:bottom-0 z-50 p-4 bg-card border-t mt-4 lg:col-span-5">
         <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
             <div className="w-full sm:w-auto">
             {isEditMode && (

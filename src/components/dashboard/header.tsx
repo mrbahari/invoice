@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -78,7 +79,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6 no-print">
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>

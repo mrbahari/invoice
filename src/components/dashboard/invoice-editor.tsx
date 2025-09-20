@@ -69,15 +69,15 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
   const isEditMode = !!invoiceId;
 
-  // State for the invoice being edited
-  const [invoice, setInvoice] = useState<Partial<Invoice>>({});
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
-  
   // Find the invoice to edit from the main data source if an ID is provided
   const invoiceToEdit = useMemo(() => 
     isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined
   , [invoices, invoiceId, isEditMode]);
 
+  // State for the invoice being edited
+  const [invoice, setInvoice] = useState<Partial<Invoice>>({});
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
+  
   // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
     if (isEditMode && invoiceToEdit) {
@@ -473,3 +473,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
+
+    

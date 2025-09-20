@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
-import type { Invoice, InvoiceStatus } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus, Customer } from '@/lib/definitions';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -25,6 +25,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useData } from '@/context/data-context';
+
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: 'text-green-600',
@@ -51,6 +53,9 @@ type InvoiceTableProps = {
 };
 
 export function InvoiceTable({ invoiceList, onEdit, onPreview, onDelete }: InvoiceTableProps) {
+    const { data } = useData();
+    const { customers } = data;
+
   return (
         <Table>
           <TableHeader>
@@ -66,12 +71,17 @@ export function InvoiceTable({ invoiceList, onEdit, onPreview, onDelete }: Invoi
           <TableBody>
             {invoiceList.map((invoice) => {
               const StatusIcon = statusIcons[invoice.status];
+              const customer = customers.find(c => c.id === invoice.customerId);
+              const hasValidName = customer && customer.name && customer.name !== 'مشتری بدون نام';
+              const displayName = hasValidName ? customer!.name : (invoice.customerName && invoice.customerName !== 'مشتری بدون نام' ? invoice.customerName : 'بی نام');
+              const displayPhone = customer?.phone || 'بدون تماس';
+              
               return (
               <TableRow key={invoice.id}>
                 <TableCell>
-                  <div className="font-medium">{invoice.customerName}</div>
-                  <div className="hidden text-sm text-muted-foreground md:inline">
-                    {invoice.customerEmail}
+                  <div className="font-medium">{displayPhone}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {displayName}
                   </div>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">{invoice.invoiceNumber}</TableCell>

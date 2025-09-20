@@ -1,10 +1,10 @@
 'use client';
 
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Edit, Eye, Trash2, CheckCircle2, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceTabs } from '@/components/dashboard/invoice-tabs';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import type { Invoice } from '@/lib/definitions';
+import type { Invoice, InvoiceStatus } from '@/lib/definitions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
@@ -18,6 +18,9 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
+import { Badge } from '../ui/badge';
+import { formatCurrency, cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 
 type View =
   | { type: 'list' }
@@ -29,12 +32,28 @@ type InvoicesPageProps = {
   setInitialInvoice: (invoice: Omit<Invoice, 'id'> | null) => void;
 };
 
+const statusStyles: Record<InvoiceStatus, string> = {
+  Paid: 'text-green-600 border-green-600/50 bg-green-500/10',
+  Pending: 'text-orange-600 border-orange-500/50 bg-orange-500/10',
+  Overdue: 'text-red-600 border-red-500/50 bg-red-500/10',
+};
+const statusTranslation: Record<InvoiceStatus, string> = {
+  Paid: 'پرداخت شده',
+  Pending: 'در انتظار',
+  Overdue: 'سررسید گذشته',
+};
+const statusIcons: Record<InvoiceStatus, React.ElementType> = {
+  Paid: CheckCircle2,
+  Pending: TriangleAlert,
+  Overdue: TriangleAlert,
+};
+
 export default function InvoicesPage({
   initialInvoice,
   setInitialInvoice,
 }: InvoicesPageProps) {
   const { data, setData } = useData();
-  const { invoices: allInvoices } = data;
+  const { customers, invoices: allInvoices } = data;
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
 
@@ -135,65 +154,97 @@ export default function InvoicesPage({
         );
       case 'list':
       default:
-        const tabsData = [
-          {
-            value: 'all',
-            label: `همه (${filteredInvoices.length})`,
-            invoices: filteredInvoices,
-          },
-          {
-            value: 'paid',
-            label: `پرداخت شده`,
-            invoices: filteredInvoices.filter((i) => i.status === 'Paid'),
-          },
-          {
-            value: 'pending',
-            label: `در انتظار`,
-            invoices: filteredInvoices.filter((i) => i.status === 'Pending'),
-          },
-          {
-            value: 'overdue',
-            label: `سررسید گذشته`,
-            invoices: filteredInvoices.filter((i) => i.status === 'Overdue'),
-            className: 'hidden sm:flex',
-          },
-        ];
         return (
-          <Card className="animate-fade-in-up">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>فاکتورها</CardTitle>
-                  <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
+           <div className="grid gap-6">
+              <Card className="animate-fade-in-up">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>فاکتورها</CardTitle>
+                      <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="h-8 gap-1 dark:bg-white dark:text-black"
+                      onClick={handleCreate}
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        ایجاد فاکتور
+                      </span>
+                    </Button>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {filteredInvoices.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredInvoices.map((invoice, index) => {
+                    const StatusIcon = statusIcons[invoice.status];
+                    const customer = customers.find(c => c.id === invoice.customerId);
+                    const hasValidName = customer && customer.name && customer.name !== 'مشتری بدون نام';
+                    const displayName = hasValidName ? customer!.name : (invoice.customerName && invoice.customerName !== 'مشتری بدون نام' ? invoice.customerName : 'بی نام');
+                    const displayPhone = customer?.phone || 'بدون تماس';
+
+                    return (
+                      <Card 
+                        key={invoice.id} 
+                        className="flex flex-col justify-between transition-all hover:shadow-lg animate-fade-in-up"
+                        style={{ animationDelay: `${index * 50}ms`}}
+                        onClick={() => handleEdit(invoice)}
+                      >
+                        <CardHeader className="pb-4">
+                          <div className="flex justify-between items-start">
+                            <div className="grid gap-1">
+                              <CardTitle className="text-lg">{displayName}</CardTitle>
+                              <CardDescription>{displayPhone}</CardDescription>
+                            </div>
+                            <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
+                              {statusTranslation[invoice.status]}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="grid gap-2 text-sm">
+                           <div className="flex justify-between">
+                            <span className="text-muted-foreground">شماره فاکتور</span>
+                            <span>{invoice.invoiceNumber}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">تاریخ</span>
+                            <span>{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
+                          </div>
+                          <div className="flex justify-between font-semibold text-base pt-2 border-t mt-2">
+                            <span className="text-muted-foreground">مبلغ کل</span>
+                            <span>{formatCurrency(invoice.total)}</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2 pt-4">
+                          <Button onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }} size="sm" variant="outline">
+                            <Eye className="ml-2 h-4 w-4" />
+                            مشاهده
+                          </Button>
+                           <Button onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }} size="sm">
+                             <Edit className="ml-2 h-4 w-4" />
+                            ویرایش
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
                 </div>
-                <Button
-                  size="sm"
-                  className="h-8 gap-1 dark:bg-white dark:text-black"
-                  onClick={handleCreate}
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    ایجاد فاکتور
-                  </span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <InvoiceTabs
-                tabs={tabsData}
-                defaultTab="all"
-                onEdit={handleEdit}
-                onPreview={handlePreviewFromList}
-                onDelete={handleDelete}
-              />
-            </CardContent>
-            <CardFooter>
-              <div className="text-xs text-muted-foreground">
-                نمایش <strong>{filteredInvoices.length}</strong> از{' '}
-                <strong>{allInvoices?.length || 0}</strong> فاکتور
-              </div>
-            </CardFooter>
-          </Card>
+              ) : (
+                <Card className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                  <CardContent className="py-16 text-center">
+                    <p className="text-muted-foreground mb-4">
+                      {searchTerm ? `هیچ فاکتوری با عبارت «${searchTerm}» یافت نشد.` : 'هیچ فاکتوری ایجاد نشده است.'}
+                    </p>
+                     <Button variant="link" onClick={handleCreate}>
+                      یک فاکتور جدید ایجاد کنید
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+          </div>
         );
     }
   };

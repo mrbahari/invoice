@@ -63,7 +63,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6 no-print">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white bg-opacity-95 px-4 backdrop-blur-sm sm:px-6 no-print dark:bg-zinc-900/90">
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>

@@ -14,9 +14,9 @@ import { CheckCircle, AlertCircle, Info } from 'lucide-react'
 
 
 const ICONS = {
-  default: <Info className="h-5 w-5" />,
-  destructive: <AlertCircle className="h-5 w-5" />,
-  success: <CheckCircle className="h-5 w-5" />,
+  default: <Info className="h-5 w-5 text-sky-500" />,
+  destructive: <AlertCircle className="h-5 w-5 text-destructive" />,
+  success: <CheckCircle className="h-5 w-5 text-green-500" />,
 }
 
 export function Toaster() {

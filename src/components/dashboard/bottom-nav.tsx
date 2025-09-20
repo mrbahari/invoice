@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -34,7 +33,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/90 backdrop-blur-sm md:hidden no-print">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/90 backdrop-blur-sm no-print">
       <div className="grid h-16 grid-cols-7 items-center justify-items-center">
         {navItems.slice(0, 3).map((item) => (
           <button

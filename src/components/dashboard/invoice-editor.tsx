@@ -341,8 +341,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold text-lg">{selectedCustomer.phone}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedCustomer.name !== 'مشتری بدون نام' ? selectedCustomer.name : 'بی نام'}</p>
+                                        <p className="font-semibold text-lg">{selectedCustomer.name !== 'مشتری بدون نام' ? selectedCustomer.name : 'بی نام'}</p>
+                                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
                                     </div>
                                 </div>
                                 <DialogTrigger asChild>
@@ -382,7 +382,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         <Button
                                             key={customer.id}
                                             variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                            className="h-16"
+                                            className="h-16 justify-start"
                                             onClick={() => {
                                                 setSelectedCustomer(customer);
                                                 setIsCustomerDialogOpen(false);
@@ -394,8 +394,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     <AvatarFallback>{nameInitials}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className='text-base font-semibold'>{customer.phone}</p>
-                                                    <p className="text-xs text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
+                                                    <p className='text-base font-semibold'>{hasValidName ? customer.name : 'بی نام'}</p>
+                                                    <p className="text-xs text-muted-foreground">{customer.phone}</p>
                                                 </div>
                                             </div>
                                         </Button>

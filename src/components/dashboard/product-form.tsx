@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, ChangeEvent } from 'react';
@@ -343,18 +344,18 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex flex-col-reverse md:flex-row items-center gap-4 sticky top-16 md:top-20 bg-background/80 backdrop-blur-sm z-10 py-4 mb-6 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
+      <div className="flex items-center gap-4 sticky top-16 md:top-20 bg-background/80 backdrop-blur-sm z-10 py-4 mb-6 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
         <div className="flex-1">
           <h1 className="text-xl font-semibold tracking-tight">
             {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}
           </h1>
         </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Button type="button" variant="outline" className="flex-1 md:flex-initial" onClick={onCancel}>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
             <ArrowRight className="ml-2 h-4 w-4" />
             بازگشت به لیست
           </Button>
-          <Button type="submit" disabled={isProcessing} className="flex-1 md:flex-initial bg-green-600 hover:bg-green-700">
+          <Button type="submit" disabled={isProcessing} className="bg-green-600 hover:bg-green-700">
             <Save className="ml-2 h-4 w-4" />
             {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}
           </Button>
@@ -513,16 +514,18 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-6 flex flex-col sm:flex-row-reverse justify-between gap-4">
-                {isEditMode && (
-                  <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing}>
-                    <Copy className="ml-2 h-4 w-4" />
-                    ذخیره با عنوان جدید
-                  </Button>
-                )}
+                <div className="w-full sm:w-auto flex-1 sm:flex-initial">
+                  {isEditMode && (
+                    <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-full">
+                      <Copy className="ml-2 h-4 w-4" />
+                      ذخیره با عنوان جدید
+                    </Button>
+                  )}
+                </div>
                 {isEditMode && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button type="button" variant="destructive" disabled={isProcessing} className="mr-auto">
+                      <Button type="button" variant="destructive" disabled={isProcessing}>
                         <Trash2 className="ml-2 h-4 w-4" />
                         حذف محصول
                       </Button>

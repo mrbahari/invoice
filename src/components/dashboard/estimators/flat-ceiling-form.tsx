@@ -118,7 +118,10 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
 
       if (item.material.includes('پیچ پانل')) {
         product = products.find(p => p.name.includes('پیچ پنل 2.5'));
-      } else {
+      } else if (item.material.includes('نبشی')) {
+        product = products.find(p => p.name.includes('L25'));
+      }
+      else {
         product = products.find(p => p.name.includes(item.material));
       }
 

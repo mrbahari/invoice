@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -99,9 +100,8 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </BreadcrumbList>
         </Breadcrumb>
         
-        <div className="flex md:hidden items-center gap-2">
-            <Package2 className="h-6 w-6" />
-            <span className="font-bold">حسابگر</span>
+         <div className="flex-1 justify-center items-center hidden sm:flex">
+          <LiveClock />
         </div>
 
 
@@ -118,10 +118,6 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
               />
             </div>
           )}
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2">
-          <LiveClock />
         </div>
 
       </header>

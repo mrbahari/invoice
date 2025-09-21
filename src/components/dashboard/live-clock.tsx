@@ -24,7 +24,7 @@ export function LiveClock() {
   }, []);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+    <div className="flex items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>{currentDateTime.date}</span>

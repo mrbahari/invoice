@@ -17,6 +17,7 @@ export function useDraggableScroll(
     (e: React.MouseEvent) => {
       if (!ref.current) return;
       isDragging.current = true;
+      ref.current.style.cursor = 'grabbing';
       if (options.direction === 'horizontal') {
         startPos.current = e.pageX - ref.current.offsetLeft;
         scrollPos.current = ref.current.scrollLeft;
@@ -29,12 +30,18 @@ export function useDraggableScroll(
   );
 
   const handleMouseLeave = useCallback(() => {
+    if (ref.current) {
+        ref.current.style.cursor = 'grab';
+    }
     isDragging.current = false;
-  }, []);
+  }, [ref]);
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
-  }, []);
+     if (ref.current) {
+        ref.current.style.cursor = 'grab';
+    }
+  }, [ref]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -50,7 +57,7 @@ export function useDraggableScroll(
         ref.current.scrollTop = scrollPos.current - walk;
       }
     },
-    [ref, options.direction]
+    [ref, options.direction, startPos, scrollPos]
   );
 
   return {

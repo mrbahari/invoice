@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Box, Grid, MinusSquare, ArrowRight, Trash2, FilePlus } from 'lucide-react';
+import { Box, Grid, MinusSquare, ArrowRight, Trash2, FilePlus, Square } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import { FlatCeilingForm } from './estimators/flat-ceiling-form';
+import { DrywallForm } from './estimators/drywall-form';
 import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStorePrefix } from '@/lib/utils';
@@ -48,10 +49,17 @@ const estimatorTypes = [
         description: 'مساحت سقف را وارد کرده و برآورد مصالح لازم را دریافت کنید.',
         icon: MinusSquare,
         component: FlatCeilingForm,
+    },
+    {
+        id: 'drywall' as EstimatorType,
+        title: 'محاسبه مصالح دیوار خشک',
+        description: 'ابعاد دیوار (جداکننده یا پوششی) و عایق صوتی آن را مشخص کنید.',
+        icon: Square,
+        component: DrywallForm,
     }
 ];
 
-type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling';
+type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall';
 
 type EstimatorsPageProps = {
     onNavigate: (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'> }) => void;
@@ -86,7 +94,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const aggregatedResults: MaterialResult[] = estimationList.reduce((acc, current) => {
     current.results.forEach(result => {
-        const existing = acc.find(item => item.material === result.material);
+        const existing = acc.find(item => item.material.trim().toLowerCase() === result.material.trim().toLowerCase());
         if (existing) {
             existing.quantity += result.quantity;
         } else {
@@ -104,24 +112,43 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
     let notFoundProducts: string[] = [];
+    
+    // Create a more robust mapping for product names
+    const productMap: Record<string, string[]> = {
+        'سازه F47': ['f47'],
+        'سازه U36': ['u36'],
+        'نبشی L25': ['l25'],
+        'نبشی L24': ['l24'],
+        'سپری T360': ['t360'],
+        'سپری T120': ['t120'],
+        'سپری T60': ['t60'],
+        'رانر': ['رانر', 'runner'],
+        'استاد': ['استاد', 'stud'],
+        'پانل': ['پنل', 'پانل', 'panel'],
+        'پیچ پنل': ['پیچ پنل', 'tn25'],
+        'پیچ سازه': ['پیچ سازه', 'ln9'],
+        'تایل': ['تایل', 'tile'],
+        'آویز': ['آویز', 'hanger'],
+        'میخ و چاشنی': ['میخ', 'چاشنی'],
+        'پشم سنگ': ['پشم سنگ', 'rockwool'],
+    };
 
     aggregatedResults.forEach(item => {
         let product: Product | undefined;
         const materialLowerCase = item.material.toLowerCase();
         
-        if (materialLowerCase.includes('پیچ سازه')) { 
-            product = products.find(p => p.name.toLowerCase().includes('پیچ سازه'));
-        }
-        else if (materialLowerCase.includes('f47')) { product = products.find(p => p.name.toLowerCase().includes('f47')); }
-        else if (materialLowerCase.includes('u36')) { product = products.find(p => p.name.toLowerCase().includes('u36')); }
-        else if (materialLowerCase.includes('l25')) { product = products.find(p => p.name.toLowerCase().includes('l25')); }
-        else if (materialLowerCase.includes('l24')) { product = products.find(p => p.name.toLowerCase().includes('l24')); }
-        else if (materialLowerCase.includes('t360')) { product = products.find(p => p.name.toLowerCase().includes('t360')); }
-        else if (materialLowerCase.includes('t120')) { product = products.find(p => p.name.toLowerCase().includes('t120')); }
-        else if (materialLowerCase.includes('t60')) { product = products.find(p => p.name.toLowerCase().includes('t60')); }
-        else {
-            const searchTerms = materialLowerCase.split(' ').filter(t => t);
-            product = products.find(p => searchTerms.every(term => p.name.toLowerCase().includes(term)));
+        const matchingKey = Object.keys(productMap).find(key => 
+            productMap[key].some(term => materialLowerCase.includes(term.toLowerCase()))
+        );
+
+        if (matchingKey) {
+            // Find a product whose name includes one of the aliases for the matched key
+            product = products.find(p => 
+                productMap[matchingKey].some(term => p.name.toLowerCase().includes(term.toLowerCase()))
+            );
+        } else {
+            // Fallback for items not in the map
+            product = products.find(p => p.name.toLowerCase().includes(materialLowerCase));
         }
 
         if (product) {

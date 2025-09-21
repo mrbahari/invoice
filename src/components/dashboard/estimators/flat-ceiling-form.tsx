@@ -74,7 +74,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     const nailAndChargeCount = totalHangers;
     const nailAndChargePacks = nailAndChargeCount < 100 && nailAndChargeCount > 0 ? 1 : Math.ceil(nailAndChargeCount / 100);
 
-    const structureScrews = totalHangers * 2; // پیچ سازه به سازه (LN)
+    const structureScrews = totalHangers * 2; // پیچ سازه به سازه
     
     const panelScrewsForPerimeter = Math.ceil(perimeter / 0.2);
     const panelScrewsForF47 = Math.ceil(totalF47Length / 0.2);
@@ -115,15 +115,18 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
 
     results.forEach(item => {
       let product: Product | undefined;
+      const materialLowerCase = item.material.toLowerCase();
       
-      if (item.material.toLowerCase().includes('f47')) {
+      if (materialLowerCase.includes('f47')) {
         product = products.find(p => p.name.toLowerCase().includes('f47'));
-      } else if (item.material.toLowerCase().includes('u36')) {
+      } else if (materialLowerCase.includes('u36')) {
         product = products.find(p => p.name.toLowerCase().includes('u36'));
-      } else if (item.material.toLowerCase().includes('l25')) {
+      } else if (materialLowerCase.includes('l25')) {
          product = products.find(p => p.name.toLowerCase().includes('l25'));
+      } else if (materialLowerCase.includes('پیچ سازه')) {
+         product = products.find(p => p.name.toLowerCase().includes('پیچ سازه'));
       } else {
-        const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
+        const searchTerms = materialLowerCase.split(' ').filter(t => t);
         product = products.find(p => 
           searchTerms.every(term => p.name.toLowerCase().includes(term))
         );

@@ -107,14 +107,16 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let product: Product | undefined;
         const materialLowerCase = item.material.toLowerCase();
         
-        if (materialLowerCase.includes('f47')) { product = products.find(p => p.name.toLowerCase().includes('f47')); }
+        if (materialLowerCase.includes('پیچ سازه')) { 
+            product = products.find(p => p.name.toLowerCase().includes('پیچ سازه'));
+        }
+        else if (materialLowerCase.includes('f47')) { product = products.find(p => p.name.toLowerCase().includes('f47')); }
         else if (materialLowerCase.includes('u36')) { product = products.find(p => p.name.toLowerCase().includes('u36')); }
         else if (materialLowerCase.includes('l25')) { product = products.find(p => p.name.toLowerCase().includes('l25')); }
         else if (materialLowerCase.includes('l24')) { product = products.find(p => p.name.toLowerCase().includes('l24')); }
         else if (materialLowerCase.includes('t360')) { product = products.find(p => p.name.toLowerCase().includes('t360')); }
         else if (materialLowerCase.includes('t120')) { product = products.find(p => p.name.toLowerCase().includes('t120')); }
         else if (materialLowerCase.includes('t60')) { product = products.find(p => p.name.toLowerCase().includes('t60')); }
-        else if (materialLowerCase.includes('پیچ سازه')) { product = products.find(p => p.name.toLowerCase().includes('پیچ سازه')); }
         else {
             const searchTerms = materialLowerCase.split(' ').filter(t => t);
             product = products.find(p => searchTerms.every(term => p.name.toLowerCase().includes(term)));

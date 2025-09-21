@@ -6,11 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Waves, Square, Layers, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { MaterialResult } from '../estimators-page';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 
 type DrywallFormProps = {
@@ -57,9 +56,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
     const panelsNeeded = Math.ceil(totalPanelArea / panelArea);
     
     // Screw calculation (approximation)
-    const totalStudMeter = studCount * h;
-    const screwsPerStud = Math.ceil(h / 0.2) * 2; // both edges of stud
-    const totalScrews = (totalStudMeter / 0.2) * panelMultiplier;
+    const totalScrews = (studCount * h * panelMultiplier * 15);
     const screwPacks = Math.ceil(totalScrews / 1000); // Assuming 1000 screws per pack
 
     // Rock wool calculation
@@ -112,63 +109,84 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
           ابعاد دیوار و نوع آن را مشخص کنید تا لیست مصالح مورد نیاز را دریافت کنید.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="grid gap-2">
-            <Label htmlFor="length">طول دیوار (متر)</Label>
-            <Input
-              id="length"
-              type="number"
-              placeholder="مثال: 3.20"
-              value={length}
-              onChange={handleInputChange(setLength)}
-              step="0.01"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="height">ارتفاع دیوار (متر)</Label>
-            <Input
-              id="height"
-              type="number"
-              placeholder="مثال: 2.80"
-              value={height}
-              onChange={handleInputChange(setHeight)}
-              step="0.01"
-            />
-          </div>
+      <CardContent className="space-y-8">
+        <div>
+            <h3 className="text-lg font-semibold mb-4 text-primary">۱. ابعاد دیوار</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="length">طول دیوار (متر)</Label>
+                <Input
+                  id="length"
+                  type="number"
+                  placeholder="مثال: 3.20"
+                  value={length}
+                  onChange={handleInputChange(setLength)}
+                  step="0.01"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="height">ارتفاع دیوار (متر)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  placeholder="مثال: 2.80"
+                  value={height}
+                  onChange={handleInputChange(setHeight)}
+                  step="0.01"
+                />
+              </div>
+            </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="grid gap-2">
-                <Label>نوع دیوار</Label>
-                <RadioGroup defaultValue="partition" onValueChange={(value) => setWallType(value as WallType)} className="flex gap-4 pt-2">
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <RadioGroupItem value="partition" id="r-partition" />
-                        <Label htmlFor="r-partition">جداکننده (دو طرف پنل)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                        <RadioGroupItem value="lining" id="r-lining" />
-                        <Label htmlFor="r-lining">پوششی (یک طرف پنل)</Label>
-                    </div>
-                </RadioGroup>
+        <div>
+            <h3 className="text-lg font-semibold mb-4 text-primary">۲. گزینه‌های دیوار</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card 
+                    className={cn("cursor-pointer transition-all hover:shadow-md", wallType === 'partition' && 'border-primary ring-2 ring-primary')}
+                    onClick={() => setWallType('partition')}
+                >
+                    <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
+                        <Layers className="h-8 w-8 text-primary" />
+                        <div className="grid gap-1">
+                            <CardTitle className="text-base">دیوار جداکننده</CardTitle>
+                            <CardDescription className="text-xs">دو طرف دیوار با پنل پوشیده می‌شود.</CardDescription>
+                        </div>
+                        {wallType === 'partition' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
+                    </CardHeader>
+                </Card>
+                <Card 
+                    className={cn("cursor-pointer transition-all hover:shadow-md", wallType === 'lining' && 'border-primary ring-2 ring-primary')}
+                    onClick={() => setWallType('lining')}
+                >
+                    <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
+                        <Square className="h-8 w-8 text-primary" />
+                        <div className="grid gap-1">
+                            <CardTitle className="text-base">دیوار پوششی</CardTitle>
+                            <CardDescription className="text-xs">یک طرف دیوار با پنل پوشیده می‌شود.</CardDescription>
+                        </div>
+                         {wallType === 'lining' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
+                    </CardHeader>
+                </Card>
             </div>
-             <div className="grid gap-2">
-                <Label>عایق صوتی</Label>
-                <div className="flex items-center space-x-2 space-x-reverse pt-2">
-                    <Checkbox id="include-wool" checked={includeWool} onCheckedChange={(checked) => setIncludeWool(checked as boolean)} />
-                    <label
-                        htmlFor="include-wool"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                        محاسبه پشم سنگ برای عایق صوتی
-                    </label>
-                </div>
-            </div>
+             <Card 
+                className={cn("cursor-pointer transition-all hover:shadow-md mt-4", includeWool && 'border-primary ring-2 ring-primary')}
+                onClick={() => setIncludeWool(!includeWool)}
+            >
+                <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
+                    <Waves className="h-8 w-8 text-primary" />
+                    <div className="grid gap-1">
+                        <CardTitle className="text-base">عایق صوتی (پشم سنگ)</CardTitle>
+                        <CardDescription className="text-xs">پشم سنگ برای بهبود عملکرد صوتی دیوار محاسبه شود.</CardDescription>
+                    </div>
+                    {includeWool && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
+                </CardHeader>
+            </Card>
         </div>
+
 
         {results.length > 0 && (
           <div className="animate-fade-in-up">
-            <h3 className="text-lg font-semibold mb-4">لیست مصالح مورد نیاز:</h3>
+            <h3 className="text-lg font-semibold mb-4 text-primary">۳. لیست مصالح مورد نیاز</h3>
             <Table>
               <TableHeader>
                 <TableRow>

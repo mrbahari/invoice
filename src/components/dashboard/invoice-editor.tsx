@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -495,7 +495,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         <div className="flex items-center justify-between sm:justify-end gap-2">
                                                             <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>
                                                             <div className="flex items-center">
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenSimilarProducts(item, index)}><Copy className="h-4 w-4" /></Button>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenSimilarProducts(item, index)}><Shuffle className="h-4 w-4" /></Button>
                                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                             </div>
                                                         </div>

@@ -114,11 +114,17 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      // New rewritten logic: flexible product finding
-      const searchTerms = item.material.split(' ').filter(t => t); // e.g., ['نبشی', 'L25']
-      const product = products.find(p => 
-        searchTerms.every(term => p.name.includes(term))
-      );
+      let product: Product | undefined;
+      if (item.material.includes('F47')) {
+        product = products.find(p => p.name.includes('F47'));
+      } else if (item.material.includes('U36')) {
+        product = products.find(p => p.name.includes('U36'));
+      } else {
+        const searchTerms = item.material.split(' ').filter(t => t);
+        product = products.find(p => 
+          searchTerms.every(term => p.name.includes(term))
+        );
+      }
 
       if (product) {
         invoiceItems.push({

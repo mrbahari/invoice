@@ -34,7 +34,7 @@ interface MaterialResult {
 }
 
 type FlatCeilingFormProps = {
-    onNavigate: (tab: 'invoices', data: { invoice: Invoice }) => void;
+    onNavigate: (tab: 'invoices', data: { invoice: Omit<Invoice, 'id'>}) => void;
 };
 
 
@@ -89,8 +89,8 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
-      { material: 'پیچ سازه به سازه (LN)', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
-      { material: 'پیچ پانل به سازه (TN)', quantity: Math.ceil(totalPanelScrews / 1000), unit: 'بسته' },
+      { material: 'پیچ سازه به سازه', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
+      { material: 'پیچ پنل', quantity: Math.ceil(totalPanelScrews / 1000), unit: 'بسته' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   
@@ -114,24 +114,19 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      let product: Product | undefined;
-
-      if (item.material.includes('پیچ پانل')) {
-        product = products.find(p => p.name.includes('پیچ پنل 2.5'));
-      } else if (item.material.includes('نبشی')) {
-        product = products.find(p => p.name.includes('L25'));
-      }
-      else {
-        product = products.find(p => p.name.includes(item.material));
-      }
+      // New rewritten logic: flexible product finding
+      const searchTerms = item.material.split(' ').filter(t => t); // e.g., ['نبشی', 'L25']
+      const product = products.find(p => 
+        searchTerms.every(term => p.name.includes(term))
+      );
 
       if (product) {
         invoiceItems.push({
           productId: product.id,
-          productName: item.material, // Use the specific material name for the invoice
+          productName: product.name, // Use the actual product name
           quantity: item.quantity,
-          unit: item.unit,
-          unitPrice: product.price, // Price per package/item
+          unit: item.unit, // Use the calculated unit
+          unitPrice: product.price,
           totalPrice: item.quantity * product.price,
         });
       } else {

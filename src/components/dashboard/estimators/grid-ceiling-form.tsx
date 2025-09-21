@@ -34,7 +34,7 @@ interface MaterialResult {
 }
 
 type GridCeilingFormProps = {
-    onNavigate: (tab: 'invoices', data: { invoice: Invoice }) => void;
+    onNavigate: (tab: 'invoices', data: { invoice: Omit<Invoice, 'id'>}) => void;
 };
 
 
@@ -100,7 +100,12 @@ export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      const product = products.find(p => p.name.includes(item.material));
+      // New rewritten logic: flexible product finding
+      const searchTerms = item.material.split(' ').filter(t => t);
+      const product = products.find(p => 
+        searchTerms.every(term => p.name.includes(term))
+      );
+      
       if (product) {
         invoiceItems.push({
           productId: product.id,

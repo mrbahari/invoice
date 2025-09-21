@@ -417,6 +417,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 <DialogContent className="sm:max-w-[450px]">
                     <DialogHeader>
                         <DialogTitle>انتخاب مشتری</DialogTitle>
+                         <DialogDescription>
+                            مشتری مورد نظر خود را جستجو و انتخاب کنید.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 grid gap-4">
                         <div className="relative">
@@ -603,5 +606,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
-
-    

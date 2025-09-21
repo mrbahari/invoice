@@ -84,10 +84,9 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     let notFoundProducts: string[] = [];
 
     results.forEach(item => {
-      // New rewritten logic: flexible product finding
-      const searchTerms = item.material.split(' ').filter(t => t);
+      const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
       const product = products.find(p => 
-        searchTerms.every(term => p.name.includes(term))
+        searchTerms.every(term => p.name.toLowerCase().includes(term))
       );
       
       if (product) {
@@ -142,7 +141,7 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     // This part should be handled by a proper state management solution that updates the context
     // For now, we'll navigate and pass the data. The invoices page should handle it.
     toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice as Invoice });
+    onNavigate('invoices', { invoice: newInvoice });
   };
 
   return (

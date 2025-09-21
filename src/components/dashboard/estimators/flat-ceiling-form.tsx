@@ -115,14 +115,17 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
 
     results.forEach(item => {
       let product: Product | undefined;
-      if (item.material.includes('F47')) {
-        product = products.find(p => p.name.includes('F47'));
-      } else if (item.material.includes('U36')) {
-        product = products.find(p => p.name.includes('U36'));
+      const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
+      
+      if (item.material.toLowerCase().includes('f47')) {
+        product = products.find(p => p.name.toLowerCase().includes('f47'));
+      } else if (item.material.toLowerCase().includes('u36')) {
+        product = products.find(p => p.name.toLowerCase().includes('u36'));
+      } else if (item.material.toLowerCase().includes('l25')) {
+         product = products.find(p => p.name.toLowerCase().includes('l25'));
       } else {
-        const searchTerms = item.material.split(' ').filter(t => t);
         product = products.find(p => 
-          searchTerms.every(term => p.name.includes(term))
+          searchTerms.every(term => p.name.toLowerCase().includes(term))
         );
       }
 
@@ -178,7 +181,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     // The navigation logic passes the invoice object to the InvoicesPage,
     // which then sets it as the initialInvoice for the editor.
     toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice as Invoice });
+    onNavigate('invoices', { invoice: newInvoice });
   };
 
   return (

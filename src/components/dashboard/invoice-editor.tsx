@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice, InvoiceStatus } from '@/lib/definitions';
 import {
   Card,
@@ -53,6 +53,7 @@ import {
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 import { InvoiceActions } from './invoice-actions';
+import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 
 type InvoiceEditorProps = {
     invoiceId?: string; // Can be a new invoice (undefined) or an existing one
@@ -127,6 +128,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+
+  const productsRef = useRef<HTMLDivElement>(null);
+  const { events } = useDraggableScroll(productsRef);
 
   // When customer changes, update invoice details
   useEffect(() => {
@@ -355,12 +359,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
                     <ScrollArea className="h-auto">
-                        <div className="flex overflow-x-auto gap-3 pb-4">
+                        <div 
+                          ref={productsRef}
+                          className="flex overflow-x-auto gap-3 pb-4 cursor-grab"
+                          {...events}
+                        >
                         {(filteredProducts || []).map(product => (
                             <Card 
                                 key={product.id} 
                                 onClick={() => handleAddProduct(product)}
-                                className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 w-32 flex-shrink-0"
+                                className="transition-all hover:shadow-lg hover:-translate-y-1 w-32 flex-shrink-0"
                             >
                                 <CardContent className="p-2">
                                     <div className="relative w-full aspect-square mb-2">
@@ -414,7 +422,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </CardContent>
                 </Card>
 
-                <DialogContent className="max-w-[450px]">
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>انتخاب مشتری</DialogTitle>
                          <DialogDescription>
@@ -573,7 +581,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
      {/* Similar Products Dialog */}
       <Dialog open={isSimilarProductsDialogOpen} onOpenChange={setIsSimilarProductsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>جایگزینی محصول</DialogTitle>
             <DialogDescription>

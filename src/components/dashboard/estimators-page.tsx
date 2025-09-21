@@ -12,8 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getStorePrefix } from '@/lib/utils';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 
-type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling';
 
 export interface MaterialResult {
   material: string;
@@ -51,8 +51,10 @@ const estimatorTypes = [
     }
 ];
 
+type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling';
+
 type EstimatorsPageProps = {
-    onNavigate: (tab: 'invoices', data?: { invoice: Omit<Invoice, 'id'> }) => void;
+    onNavigate: (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'> }) => void;
 };
 
 export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {

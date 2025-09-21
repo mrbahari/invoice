@@ -89,7 +89,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
-      { material: 'پیچ سازه به سازه (LN)', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
+      { material: 'پیچ سازه به سازه', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
       { material: 'پیچ پنل 2.5', quantity: Math.ceil(totalPanelScrews / 1000), unit: 'بسته' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
@@ -115,7 +115,6 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
 
     results.forEach(item => {
       let product: Product | undefined;
-      const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
       
       if (item.material.toLowerCase().includes('f47')) {
         product = products.find(p => p.name.toLowerCase().includes('f47'));
@@ -124,6 +123,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       } else if (item.material.toLowerCase().includes('l25')) {
          product = products.find(p => p.name.toLowerCase().includes('l25'));
       } else {
+        const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
         product = products.find(p => 
           searchTerms.every(term => p.name.toLowerCase().includes(term))
         );

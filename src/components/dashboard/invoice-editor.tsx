@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -37,6 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -84,6 +85,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   // State for the invoice being edited
   const [invoice, setInvoice] = useState<Partial<Invoice>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
+  
+  // State for similar products dialog
+  const [isSimilarProductsDialogOpen, setIsSimilarProductsDialogOpen] = useState(false);
+  const [currentItemForReplacement, setCurrentItemForReplacement] = useState<{ item: InvoiceItem; index: number } | null>(null);
+
   
   // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
@@ -154,6 +160,17 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     if (!customerList) return [];
     return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
+  
+    const similarProducts = useMemo(() => {
+    if (!currentItemForReplacement) return [];
+    const originalProduct = products.find(p => p.id === currentItemForReplacement.item.productId);
+    if (!originalProduct) return [];
+    
+    return products.filter(p => 
+      p.subCategoryId === originalProduct.subCategoryId && p.id !== originalProduct.id
+    );
+  }, [products, currentItemForReplacement]);
+
 
   const handleAddProduct = (product: Product) => {
     setInvoice(prev => {
@@ -223,6 +240,40 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       return {...prev, items};
     });
   };
+  
+  const handleOpenSimilarProducts = (item: InvoiceItem, index: number) => {
+    setCurrentItemForReplacement({ item, index });
+    setIsSimilarProductsDialogOpen(true);
+  };
+  
+  const handleReplaceItem = (newProduct: Product) => {
+    if (!currentItemForReplacement) return;
+    const { index } = currentItemForReplacement;
+
+    setInvoice(prev => {
+      const items = [...(prev.items || [])];
+      const oldItem = items[index];
+      
+      items[index] = {
+        ...oldItem,
+        productId: newProduct.id,
+        productName: newProduct.name,
+        unit: newProduct.unit, // Reset unit to main unit of new product
+        unitPrice: newProduct.price,
+        totalPrice: oldItem.quantity * newProduct.price,
+      };
+
+      return { ...prev, items };
+    });
+
+    setIsSimilarProductsDialogOpen(false);
+    toast({
+        variant: 'success',
+        title: 'محصول جایگزین شد',
+        description: `محصول «${newProduct.name}» با موفقیت جایگزین شد.`,
+    });
+  };
+
   
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
@@ -341,7 +392,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-semibold text-lg">{selectedCustomer.name !== 'مشتری بدون نام' ? selectedCustomer.name : 'بی نام'}</p>
+                                        <p className="font-semibold">{selectedCustomer.name}</p>
                                         <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
                                     </div>
                                 </div>
@@ -363,7 +414,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </CardContent>
                 </Card>
 
-                <DialogContent className="sm:max-w-[450px] bg-white dark:bg-zinc-900">
+                <DialogContent className="sm:max-w-[450px]">
                     <DialogHeader>
                         <DialogTitle>انتخاب مشتری</DialogTitle>
                     </DialogHeader>
@@ -375,14 +426,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <ScrollArea className="h-[60vh]">
                             <div className="grid gap-2 pr-4">
                                 {(filteredCustomers || []).map(customer => {
-                                    const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
-                                    const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map((n) => n[0]).join('');
-
                                     return(
                                         <Button
                                             key={customer.id}
                                             variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                            className="h-16 justify-start"
+                                            className="h-16 justify-start text-right"
                                             onClick={() => {
                                                 setSelectedCustomer(customer);
                                                 setIsCustomerDialogOpen(false);
@@ -391,10 +439,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <div className="flex items-center gap-4 text-right w-full">
                                                 <Avatar className="h-10 w-10 border">
                                                     <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                    <AvatarFallback>{nameInitials}</AvatarFallback>
+                                                    <AvatarFallback>{customer.name[0]}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className='text-base font-semibold'>{hasValidName ? customer.name : 'بی نام'}</p>
+                                                    <p className='text-base font-semibold'>{customer.name}</p>
                                                     <p className="text-xs text-muted-foreground">{customer.phone}</p>
                                                 </div>
                                             </div>
@@ -445,8 +493,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                             </Select>
                                                         </div>
                                                         <div className="flex items-center justify-between sm:justify-end gap-2">
-                                                             <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                            <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>
+                                                            <div className="flex items-center">
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenSimilarProducts(item, index)}><Copy className="h-4 w-4" /></Button>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </CardContent>
@@ -516,6 +567,39 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </div>
         </div>
     </div>
+    
+     {/* Similar Products Dialog */}
+      <Dialog open={isSimilarProductsDialogOpen} onOpenChange={setIsSimilarProductsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>جایگزینی محصول</DialogTitle>
+            <DialogDescription>
+              محصولی را برای جایگزینی «{currentItemForReplacement?.item.productName}» انتخاب کنید.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <ScrollArea className="h-72">
+              <div className="grid gap-3 pr-4">
+                {similarProducts && similarProducts.length > 0 ? similarProducts.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => handleReplaceItem(p)}
+                    className="flex items-center gap-4 text-right w-full p-2 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <Image src={p.imageUrl} alt={p.name} width={50} height={50} className="rounded-md object-cover" />
+                    <div className="flex-1">
+                      <p className="font-semibold">{p.name}</p>
+                      <p className="text-sm text-muted-foreground">{formatCurrency(p.price)}</p>
+                    </div>
+                  </button>
+                )) : (
+                  <p className="text-center text-muted-foreground py-10">محصول مشابهی در این زیردسته یافت نشد.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

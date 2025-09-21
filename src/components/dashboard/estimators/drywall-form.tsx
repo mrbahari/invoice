@@ -20,8 +20,8 @@ type WallType = 'partition' | 'lining';
 
 
 export function DrywallForm({ onAddToList }: DrywallFormProps) {
-  const [length, setLength] = useState<number | ''>(3.20);
-  const [height, setHeight] = useState<number | ''>(2.80);
+  const [length, setLength] = useState<number | ''>('');
+  const [height, setHeight] = useState<number | ''>('');
   const [wallType, setWallType] = useState<WallType>('partition');
   const [includeWool, setIncludeWool] = useState(true);
 

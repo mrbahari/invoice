@@ -89,7 +89,7 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
-      { material: 'پیچ سازه به سازه', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
+      { material: 'پیچ سازه به سازه (LN)', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
       { material: 'پیچ پنل 2.5', quantity: Math.ceil(totalPanelScrews / 1000), unit: 'بسته' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);

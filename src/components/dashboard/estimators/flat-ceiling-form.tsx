@@ -1,48 +1,22 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { FilePlus } from 'lucide-react';
-import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
+import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorePrefix } from '@/lib/utils';
-import { useData } from '@/context/data-context';
-
-interface MaterialResult {
-  material: string;
-  quantity: number;
-  unit: string;
-}
+import type { MaterialResult } from '../estimators-page';
 
 type FlatCeilingFormProps = {
-    onNavigate: (tab: 'invoices', data: { invoice: Omit<Invoice, 'id'>}) => void;
+    onAddToList: (description: string, results: MaterialResult[]) => void;
 };
 
-
-export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
+export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
-  const { data, setData } = useData();
-  const { products, invoices } = data;
   const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
@@ -56,32 +30,28 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     const area = l * w;
     const perimeter = (l + w) * 2;
     
-    // F47 profiles are installed along the length (l), spaced every 60cm across the width (w)
     const f47RowCount = Math.ceil(w / 0.6);
     const totalF47Length = f47RowCount * l;
-    const f47Profiles = Math.ceil(totalF47Length / 4); // Assuming 4m length for F47 profiles
+    const f47Profiles = Math.ceil(totalF47Length / 4);
 
-    // Hangers (aviz) calculation based on user's new logic
     const hangersPerRun = Math.ceil(l / 0.6);
     const totalHangers = f47RowCount * hangersPerRun;
 
-    const u36HangerLength = totalHangers * 0.30; // 30cm per hanger
-    const u36Profiles = Math.ceil(u36HangerLength / 4); // Assuming 4m length for U36 profiles
+    const u36HangerLength = totalHangers * 0.30;
+    const u36Profiles = Math.ceil(u36HangerLength / 4);
 
-    const l25Profiles = Math.ceil(perimeter / 3); // Assuming 3m length for L25 profiles
+    const l25Profiles = Math.ceil(perimeter / 3);
     
-    // Fasteners calculation based on user's new logic
     const nailAndChargeCount = totalHangers;
     const nailAndChargePacks = nailAndChargeCount < 100 && nailAndChargeCount > 0 ? 1 : Math.ceil(nailAndChargeCount / 100);
 
-    const structureScrews = totalHangers * 2; // پیچ سازه به سازه
+    const structureScrews = totalHangers * 2;
     
     const panelScrewsForPerimeter = Math.ceil(perimeter / 0.2);
     const panelScrewsForF47 = Math.ceil(totalF47Length / 0.2);
     const totalPanelScrews = panelScrewsForPerimeter + panelScrewsForF47;
 
-
-    const panels = Math.ceil(area / 2.88); // Assuming panel size 1.2m x 2.4m = 2.88 sqm
+    const panels = Math.ceil(area / 2.88);
 
     return [
       { material: 'سازه F47', quantity: f47Profiles, unit: 'شاخه' },
@@ -104,87 +74,13 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
     }
   };
 
-  const handleCreateInvoice = () => {
+  const handleAddClick = () => {
     if (results.length === 0) {
       toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا ابعاد را وارد کرده و مصالح را محاسبه کنید.'});
       return;
     }
-
-    const invoiceItems: InvoiceItem[] = [];
-    let notFoundProducts: string[] = [];
-
-    results.forEach(item => {
-      let product: Product | undefined;
-      const materialLowerCase = item.material.toLowerCase();
-      
-      if (materialLowerCase.includes('f47')) {
-        product = products.find(p => p.name.toLowerCase().includes('f47'));
-      } else if (materialLowerCase.includes('u36')) {
-        product = products.find(p => p.name.toLowerCase().includes('u36'));
-      } else if (materialLowerCase.includes('l25')) {
-         product = products.find(p => p.name.toLowerCase().includes('l25'));
-      } else if (materialLowerCase.includes('پیچ سازه')) {
-         product = products.find(p => p.name.toLowerCase().includes('پیچ سازه'));
-      } else {
-        const searchTerms = materialLowerCase.split(' ').filter(t => t);
-        product = products.find(p => 
-          searchTerms.every(term => p.name.toLowerCase().includes(term))
-        );
-      }
-
-      if (product) {
-        invoiceItems.push({
-          productId: product.id,
-          productName: product.name, // Use the actual product name
-          quantity: item.quantity,
-          unit: item.unit, // Use the calculated unit
-          unitPrice: product.price,
-          totalPrice: item.quantity * product.price,
-        });
-      } else {
-        notFoundProducts.push(item.material);
-      }
-    });
-
-    if (notFoundProducts.length > 0) {
-      toast({
-        variant: 'destructive',
-        title: 'برخی محصولات یافت نشدند',
-        description: `محصولات زیر در لیست شما یافت نشدند و به فاکتور اضافه نشدند: ${notFoundProducts.join(', ')}`,
-      });
-    }
-
-    if (invoiceItems.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'هیچ محصولی به فاکتور اضافه نشد',
-        description: 'هیچ‌کدام از مصالح محاسبه شده در لیست محصولات شما یافت نشد.',
-      });
-      return;
-    }
-
-    const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
-
-    const newInvoice: Omit<Invoice, 'id'> = {
-      invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      customerId: '', // To be selected in editor
-      customerName: '',
-      customerEmail: '',
-      date: new Date().toISOString(),
-      status: 'Pending',
-      items: invoiceItems,
-      subtotal: subtotal,
-      discount: 0,
-      additions: 0,
-      tax: 0,
-      total: subtotal,
-      description: 'ایجاد شده از برآورد مصالح سقف فلت',
-    };
-    
-    // The navigation logic passes the invoice object to the InvoicesPage,
-    // which then sets it as the initialInvoice for the editor.
-    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice });
+    const description = `سقف فلت: ${length} * ${width} متر`;
+    onAddToList(description, results);
   };
 
   return (
@@ -248,11 +144,11 @@ export function FlatCeilingForm({ onNavigate }: FlatCeilingFormProps) {
       {results.length > 0 && (
         <CardFooter className="flex-col items-stretch gap-4">
              <p className="text-xs text-muted-foreground">
-                توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد. این محاسبه بر اساس استانداردهای رایج اجرایی است.
+                توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد.
             </p>
-            <Button onClick={handleCreateInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                <FilePlus className="ml-2 h-5 w-5" />
-                ایجاد فاکتور از این لیست
+            <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                <PlusCircle className="ml-2 h-5 w-5" />
+                افزودن به لیست برآورد
             </Button>
         </CardFooter>
        )}

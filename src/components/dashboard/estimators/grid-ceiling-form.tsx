@@ -1,48 +1,23 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { FilePlus } from 'lucide-react';
-import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
+import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorePrefix } from '@/lib/utils';
-import { useData } from '@/context/data-context';
-
-interface MaterialResult {
-  material: string;
-  quantity: number;
-  unit: string;
-}
+import type { MaterialResult } from '../estimators-page';
 
 type GridCeilingFormProps = {
-    onNavigate: (tab: 'invoices', data: { invoice: Omit<Invoice, 'id'>}) => void;
+    onAddToList: (description: string, results: MaterialResult[]) => void;
 };
 
 
-export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
+export function GridCeilingForm({ onAddToList }: GridCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
-  const { data, setData } = useData();
-  const { products, invoices } = data;
   const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
@@ -90,72 +65,13 @@ export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
     }
   };
 
-  const handleCreateInvoice = () => {
+  const handleAddClick = () => {
     if (results.length === 0) {
       toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا ابعاد را وارد کرده و مصالح را محاسبه کنید.'});
       return;
     }
-
-    const invoiceItems: InvoiceItem[] = [];
-    let notFoundProducts: string[] = [];
-
-    results.forEach(item => {
-      const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
-      const product = products.find(p => 
-        searchTerms.every(term => p.name.toLowerCase().includes(term))
-      );
-      
-      if (product) {
-        invoiceItems.push({
-          productId: product.id,
-          productName: product.name,
-          quantity: item.quantity,
-          unit: product.unit,
-          unitPrice: product.price,
-          totalPrice: item.quantity * product.price,
-        });
-      } else {
-        notFoundProducts.push(item.material);
-      }
-    });
-
-    if (notFoundProducts.length > 0) {
-      toast({
-        variant: 'destructive',
-        title: 'برخی محصولات یافت نشدند',
-        description: `محصولات زیر در لیست شما یافت نشدند و به فاکتور اضافه نشدند: ${notFoundProducts.join(', ')}`,
-      });
-    }
-
-    if (invoiceItems.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'هیچ محصولی به فاکتور اضافه نشد',
-        description: 'هیچ‌کدام از مصالح محاسبه شده در لیست محصولات شما یافت نشد.',
-      });
-      return;
-    }
-
-    const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
-
-    const newInvoice: Omit<Invoice, 'id'> = {
-      invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      customerId: '', // To be selected in editor
-      customerName: '',
-      customerEmail: '',
-      date: new Date().toISOString(),
-      status: 'Pending',
-      items: invoiceItems,
-      subtotal: subtotal,
-      discount: 0,
-      additions: 0,
-      tax: 0,
-      total: subtotal,
-      description: 'ایجاد شده از برآورد مصالح سقف مشبک',
-    };
-    
-    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice });
+    const description = `سقف مشبک: ${length} * ${width} متر`;
+    onAddToList(description, results);
   };
 
   return (
@@ -219,11 +135,11 @@ export function GridCeilingForm({ onNavigate }: GridCeilingFormProps) {
       {results.length > 0 && (
         <CardFooter className="flex-col items-stretch gap-4">
              <p className="text-xs text-muted-foreground">
-                توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد. همیشه مقداری مصالح اضافی تهیه فرمایید. این محاسبه برای سازه گذاری ۱۲۰ * ۶۰ می باشد.
+                توجه: مقادیر محاسبه شده تقریبی است. این محاسبه برای سازه گذاری ۱۲۰ * ۶۰ می باشد.
             </p>
-            <Button onClick={handleCreateInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                <FilePlus className="ml-2 h-5 w-5" />
-                ایجاد فاکتور از این لیست
+            <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                <PlusCircle className="ml-2 h-5 w-5" />
+                افزودن به لیست برآورد
             </Button>
         </CardFooter>
        )}

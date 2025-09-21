@@ -1,47 +1,22 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { FilePlus } from 'lucide-react';
-import type { Product, Invoice, InvoiceItem } from '@/lib/definitions';
+import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorePrefix } from '@/lib/utils';
-import { useData } from '@/context/data-context';
-
-interface MaterialResult {
-  material: string;
-  quantity: number;
-  unit: string;
-}
+import type { MaterialResult } from '../estimators-page';
 
 type BoxCeilingFormProps = {
-    onNavigate: (tab: 'invoices', data: { invoice: Omit<Invoice, 'id'>}) => void;
+    onAddToList: (description: string, results: MaterialResult[]) => void;
 };
 
 
-export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
+export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
-  const { data: appData } = useData();
-  const { products, invoices } = appData;
   const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
@@ -51,8 +26,8 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
       return [];
     }
     
-    const screws = l * (2200 / 45); // For 45m -> 2200 screws
-    const screwPacks = screws > 0 ? Math.round(screws / 1000) : 0; // Round to nearest pack
+    const screws = l * (2200 / 45);
+    const screwPacks = screws > 0 ? Math.round(screws / 1000) : 0;
     const l25Profiles = Math.ceil(l);
     const panels = Math.ceil(l / 4.5);
 
@@ -74,74 +49,13 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
     }
   };
 
-  const handleCreateInvoice = () => {
+  const handleAddClick = () => {
     if (results.length === 0) {
       toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا طول باکس را وارد کرده و مصالح را محاسبه کنید.'});
       return;
     }
-
-    const invoiceItems: InvoiceItem[] = [];
-    let notFoundProducts: string[] = [];
-
-    results.forEach(item => {
-      const searchTerms = item.material.toLowerCase().split(' ').filter(t => t);
-      const product = products.find(p => 
-        searchTerms.every(term => p.name.toLowerCase().includes(term))
-      );
-      
-      if (product) {
-        invoiceItems.push({
-          productId: product.id,
-          productName: product.name,
-          quantity: item.quantity,
-          unit: product.unit,
-          unitPrice: product.price,
-          totalPrice: item.quantity * product.price,
-        });
-      } else {
-        notFoundProducts.push(item.material);
-      }
-    });
-
-    if (notFoundProducts.length > 0) {
-      toast({
-        variant: 'destructive',
-        title: 'برخی محصولات یافت نشدند',
-        description: `محصولات زیر در لیست شما یافت نشدند و به فاکتور اضافه نشدند: ${notFoundProducts.join(', ')}`,
-      });
-    }
-
-    if (invoiceItems.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'هیچ محصولی به فاکتور اضافه نشد',
-        description: 'هیچ‌کدام از مصالح محاسبه شده در لیست محصولات شما یافت نشد.',
-      });
-      return;
-    }
-
-    const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
-
-    const newInvoice: Omit<Invoice, 'id'> = {
-      invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      customerId: '', // To be selected in editor
-      customerName: '',
-      customerEmail: '',
-      date: new Date().toISOString(),
-      status: 'Pending',
-      items: invoiceItems,
-      subtotal: subtotal,
-      discount: 0,
-      additions: 0,
-      tax: 0,
-      total: subtotal,
-      description: 'ایجاد شده از برآورد مصالح باکس و نورمخفی',
-    };
-    
-    // This part should be handled by a proper state management solution that updates the context
-    // For now, we'll navigate and pass the data. The invoices page should handle it.
-    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کرده و مشتری را انتخاب کنید.'});
-    onNavigate('invoices', { invoice: newInvoice });
+    const description = `باکس و نورمخفی: ${length} متر`;
+    onAddToList(description, results);
   };
 
   return (
@@ -196,9 +110,9 @@ export function BoxCeilingForm({ onNavigate }: BoxCeilingFormProps) {
              <p className="text-xs text-muted-foreground">
                 توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد.
             </p>
-            <Button onClick={handleCreateInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                <FilePlus className="ml-2 h-5 w-5" />
-                ایجاد فاکتور از این لیست
+            <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                <PlusCircle className="ml-2 h-5 w-5" />
+                افزودن به لیست برآورد
             </Button>
         </CardFooter>
        )}

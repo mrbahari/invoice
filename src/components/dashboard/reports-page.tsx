@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { subDays, format, parseISO } from 'date-fns-jalali';
+import { subDays, format, parseISO, isValid } from 'date-fns-jalali';
 import {
   Card,
   CardContent,
@@ -84,7 +84,10 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         startDate = new Date(0); // The beginning of time
     }
 
-    const invoicesInPeriod = allInvoices.filter(inv => parseISO(inv.date) >= startDate);
+    const invoicesInPeriod = allInvoices.filter(inv => {
+        const invoiceDate = parseISO(inv.date);
+        return isValid(invoiceDate) && invoiceDate >= startDate;
+    });
     
     const paidInvoicesInPeriod = invoicesInPeriod.filter(inv => inv.status === 'Paid');
     const unpaidInvoicesInPeriod = invoicesInPeriod.filter(inv => inv.status !== 'Paid');
@@ -98,22 +101,28 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     const salesByDay: Record<string, { paid: number; unpaid: number }> = {};
     
     invoicesInPeriod.forEach(invoice => {
-        const day = format(parseISO(invoice.date), 'yyyy-MM-dd');
-        if (!salesByDay[day]) {
-            salesByDay[day] = { paid: 0, unpaid: 0 };
-        }
-        if (invoice.status === 'Paid') {
-            salesByDay[day].paid += invoice.total;
-        } else {
-            salesByDay[day].unpaid += invoice.total;
+        const invoiceDate = parseISO(invoice.date);
+        if (isValid(invoiceDate)) {
+            const day = format(invoiceDate, 'yyyy-MM-dd');
+            if (!salesByDay[day]) {
+                salesByDay[day] = { paid: 0, unpaid: 0 };
+            }
+            if (invoice.status === 'Paid') {
+                salesByDay[day].paid += invoice.total;
+            } else {
+                salesByDay[day].unpaid += invoice.total;
+            }
         }
     });
 
-    const chartData: DailySales[] = Object.keys(salesByDay).sort().map(dayString => ({
-        date: format(parseISO(dayString), 'MM/dd'),
+    const chartData: DailySales[] = Object.keys(salesByDay).sort().map(dayString => {
+      const dateObj = parseISO(dayString);
+      return {
+        date: isValid(dateObj) ? format(dateObj, 'MM/dd') : 'تاریخ نامعتبر',
         paid: salesByDay[dayString].paid,
         unpaid: salesByDay[dayString].unpaid,
-    }));
+      };
+    });
 
 
     const customerSpending = paidInvoicesInPeriod.reduce<Record<string, { total: number, name: string }>>((acc, inv) => {
@@ -377,4 +386,3 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     </div>
   );
 }
-

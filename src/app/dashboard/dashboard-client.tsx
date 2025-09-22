@@ -36,9 +36,6 @@ export default function DashboardClientComponent() {
         setInitialInvoice(null);
     }
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
-    if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   };
   
 

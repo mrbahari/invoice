@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useRef, MouseEvent, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice, InvoiceStatus } from '@/lib/definitions';
 import {
   Card,
@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -53,6 +53,7 @@ import {
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
+import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 
 
 type InvoiceEditorProps = {
@@ -77,6 +78,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const isClient = useIsClient();
   
   const isEditMode = !!invoiceId;
+
+  // Draggable scroll setup
+  const productsRef = useRef<HTMLDivElement>(null);
+  const { events: draggableEvents } = useDraggableScroll(productsRef);
 
   // Find the invoice to edit from the main data source if an ID is provided
   const invoiceToEdit = useMemo(() => 
@@ -123,41 +128,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-
-  // Draggable scroll state
-  const productsRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    if (!productsRef.current) return;
-    isDragging.current = true;
-    productsRef.current.classList.add('cursor-grabbing');
-    startX.current = e.pageX - productsRef.current.offsetLeft;
-    scrollLeft.current = productsRef.current.scrollLeft;
-  };
-
-  const handleMouseLeave = () => {
-    if (!productsRef.current) return;
-    isDragging.current = false;
-    productsRef.current.classList.remove('cursor-grabbing');
-  };
-
-  const handleMouseUp = () => {
-    if (!productsRef.current) return;
-    isDragging.current = false;
-    productsRef.current.classList.remove('cursor-grabbing');
-  };
-
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!isDragging.current || !productsRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - productsRef.current.offsetLeft;
-    const walk = (x - startX.current) * 2; // scroll-fast
-    productsRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
 
   // When customer changes, update invoice details
   useEffect(() => {
@@ -341,19 +311,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
                     <ScrollArea className="h-auto">
-                        <div
+                         <div
                             ref={productsRef}
                             className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
-                            onMouseDown={handleMouseDown}
-                            onMouseLeave={handleMouseLeave}
-                            onMouseUp={handleMouseUp}
-                            onMouseMove={handleMouseMove}
+                            {...draggableEvents}
                         >
                             {(filteredProducts || []).map(product => (
                                 <Card
                                     key={product.id}
                                     onClick={() => handleAddProduct(product)}
-                                    className="transition-shadow hover:shadow-lg w-32 flex-shrink-0"
+                                    className="w-32 flex-shrink-0"
                                 >
                                     <CardContent className="p-2">
                                         <div className="relative w-full aspect-square mb-2">

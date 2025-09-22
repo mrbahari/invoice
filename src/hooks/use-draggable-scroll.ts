@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useState, useCallback, RefObject } from 'react';
+import { useRef, useCallback, type RefObject, useEffect } from 'react';
 
 export function useDraggableScroll(
   ref: RefObject<HTMLElement>,
@@ -30,10 +30,10 @@ export function useDraggableScroll(
   );
 
   const handleMouseLeave = useCallback(() => {
+    isDragging.current = false;
     if (ref.current) {
         ref.current.style.cursor = 'grab';
     }
-    isDragging.current = false;
   }, [ref]);
 
   const handleMouseUp = useCallback(() => {
@@ -57,8 +57,18 @@ export function useDraggableScroll(
         ref.current.scrollTop = scrollPos.current - walk;
       }
     },
-    [ref, options.direction, startPos, scrollPos]
+    [ref, options.direction]
   );
+  
+    // Add effect to clean up cursor on unmount
+    useEffect(() => {
+        const currentRef = ref.current;
+        return () => {
+            if (currentRef) {
+                currentRef.style.cursor = 'auto';
+            }
+        };
+    }, [ref]);
 
   return {
     events: {

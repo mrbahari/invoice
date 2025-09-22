@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -139,7 +140,7 @@ export default function StoresPage() {
             <Card
               key={store.id}
               onClick={() => handleEditClick(store)}
-              className="flex flex-col transition-shadow hover:shadow-lg cursor-pointer h-full"
+              className="flex flex-col cursor-pointer h-full"
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

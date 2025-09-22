@@ -207,7 +207,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in-up grid gap-6">
+    <div className="max-w-4xl mx-auto grid gap-6">
         <Card>
             <CardHeader>
                 <div className="flex flex-row items-center justify-between">
@@ -223,7 +223,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                       type="button" 
                       variant="outline" 
                       onClick={onCancel}
-                      className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                      className="dark:bg-white dark:text-black"
                     >
                         <ArrowRight className="ml-2 h-4 w-4" />
                         بازگشت به لیست

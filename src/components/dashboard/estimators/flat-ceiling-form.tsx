@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -57,7 +58,7 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
       { material: 'سازه F47', quantity: f47Profiles, unit: 'شاخه' },
       { material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
-      { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
+      { material: 'پنل والیز', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
       { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
       { material: 'پیچ ۲.۵', quantity: totalPanelScrews, unit: 'عدد' },
@@ -84,7 +85,7 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
   };
 
   return (
-    <Card className="animate-fade-in-up">
+    <Card>
       <CardHeader>
         <CardTitle>محاسبه مصالح سقف فلت</CardTitle>
         <CardDescription>
@@ -118,7 +119,7 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
         </div>
 
         {results.length > 0 && (
-          <div className="animate-fade-in-up">
+          <div>
             <h3 className="text-lg font-semibold mb-4">لیست مصالح مورد نیاز:</h3>
             <Table>
               <TableHeader>

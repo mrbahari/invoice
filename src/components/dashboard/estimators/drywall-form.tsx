@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -68,7 +69,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
     const materialList: MaterialResult[] = [
       { material: 'رانر', quantity: totalRunners, unit: 'شاخه' },
       { material: 'استاد', quantity: studsNeeded, unit: 'شاخه' },
-      { material: 'پانل', quantity: panelsNeeded, unit: 'برگ' },
+      { material: 'پنل والیز', quantity: panelsNeeded, unit: 'برگ' },
       { material: 'پیچ ۲.۵', quantity: totalScrews, unit: 'عدد' },
     ];
     
@@ -101,7 +102,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
   };
 
   return (
-    <Card className="animate-fade-in-up">
+    <Card>
       <CardHeader>
         <CardTitle>محاسبه مصالح دیوار خشک (کناف)</CardTitle>
         <CardDescription>
@@ -141,7 +142,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
             <h3 className="text-lg font-semibold mb-4 text-primary">۲. گزینه‌های دیوار</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card 
-                    className={cn("cursor-pointer transition-all hover:shadow-md", wallType === 'partition' && 'border-primary ring-2 ring-primary')}
+                    className={cn("cursor-pointer", wallType === 'partition' && 'border-primary ring-2 ring-primary')}
                     onClick={() => setWallType('partition')}
                 >
                     <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
@@ -154,7 +155,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
                     </CardHeader>
                 </Card>
                 <Card 
-                    className={cn("cursor-pointer transition-all hover:shadow-md", wallType === 'lining' && 'border-primary ring-2 ring-primary')}
+                    className={cn("cursor-pointer", wallType === 'lining' && 'border-primary ring-2 ring-primary')}
                     onClick={() => setWallType('lining')}
                 >
                     <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
@@ -168,7 +169,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
                 </Card>
             </div>
              <Card 
-                className={cn("cursor-pointer transition-all hover:shadow-md mt-4", includeWool && 'border-primary ring-2 ring-primary')}
+                className={cn("cursor-pointer mt-4", includeWool && 'border-primary ring-2 ring-primary')}
                 onClick={() => setIncludeWool(!includeWool)}
             >
                 <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
@@ -184,7 +185,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
 
 
         {results.length > 0 && (
-          <div className="animate-fade-in-up">
+          <div>
             <h3 className="text-lg font-semibold mb-4 text-primary">۳. لیست مصالح مورد نیاز</h3>
             <Table>
               <TableHeader>

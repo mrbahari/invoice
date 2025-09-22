@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -116,7 +117,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     
     // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
-        'پانل': ['پنل', 'پانل', 'panel', 'پانل گچی'],
+        'پنل والیز': ['پنل والیز', 'پانل', 'panel'],
+        'تایل پی وی سی': ['تایل پی وی سی', 'تایل', 'tile'],
         'سازه f47': ['f47'],
         'سازه u36': ['u36'],
         'نبشی l25': ['l25'],
@@ -126,9 +128,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'سپری t60': ['t60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
-        'پیچ ۲.۵': ['پیچ پنل', 'پیچ 2.5', 'tn25', 'پیچ ۲.۵'],
+        'پیچ ۲.۵': ['پیچ ۲.۵', 'پیچ پنل', 'tn25'],
         'پیچ سازه': ['پیچ سازه', 'ln9'],
-        'تایل': ['تایل', 'tile'],
         'آویز': ['آویز', 'hanger'],
         'میخ و چاشنی': ['میخ', 'چاشنی', 'میخ و چاشنی'],
         'پشم سنگ': ['پشم سنگ', 'rockwool'],
@@ -138,8 +139,16 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let product: Product | undefined;
         const materialNameLower = item.material.trim().toLowerCase();
         
-        const aliases = productMap[materialNameLower] || [materialNameLower];
+        let foundKey: string | undefined;
+        for (const key in productMap) {
+            if (productMap[key].includes(materialNameLower)) {
+                foundKey = key;
+                break;
+            }
+        }
         
+        const aliases = foundKey ? productMap[foundKey] : [materialNameLower];
+
         product = products.find(p => 
             aliases.some(alias => p.name.toLowerCase().includes(alias))
         );
@@ -235,7 +244,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                     <Card 
                         key={estimator.id}
                         onClick={() => setActiveEstimator(estimator.id)}
-                        className="flex flex-col transition-shadow hover:shadow-lg cursor-pointer"
+                        className="flex flex-col cursor-pointer"
                     >
                         <CardHeader className="flex-row gap-4 items-center">
                             <estimator.icon className="h-10 w-10 text-primary" />

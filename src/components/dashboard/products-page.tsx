@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -177,7 +178,7 @@ export default function ProductsPage() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
               <Card 
-                className={cn("cursor-pointer transition-shadow hover:shadow-lg", activeTab === 'all' ? 'border-primary shadow-lg' : 'border-border')}
+                className={cn("cursor-pointer", activeTab === 'all' ? 'border-primary' : 'border-border')}
                 onClick={() => setActiveTab('all')}
               >
                 <CardHeader className="p-4 flex-row items-center gap-4">
@@ -191,7 +192,7 @@ export default function ProductsPage() {
               {stores?.map((store) => (
                 <Card 
                   key={store.id} 
-                  className={cn("cursor-pointer transition-shadow hover:shadow-lg", activeTab === store.id ? 'border-primary shadow-lg' : 'border-border')}
+                  className={cn("cursor-pointer", activeTab === store.id ? 'border-primary' : 'border-border')}
                   onClick={() => setActiveTab(store.id)}
                 >
                   <CardHeader className="p-4 flex-row items-center gap-4">

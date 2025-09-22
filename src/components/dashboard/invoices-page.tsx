@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PlusCircle, Edit, Eye, Trash2, CheckCircle2, TriangleAlert } from 'lucide-react';
@@ -188,7 +189,7 @@ export default function InvoicesPage({
                     return (
                       <Card 
                         key={invoice.id} 
-                        className="flex flex-col justify-between transition-shadow hover:shadow-lg"
+                        className="flex flex-col justify-between"
                         onClick={() => handleEdit(invoice)}
                       >
                         <CardHeader className="pb-4">

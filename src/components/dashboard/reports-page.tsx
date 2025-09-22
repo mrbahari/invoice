@@ -85,6 +85,8 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     }
 
     const invoicesInPeriod = allInvoices.filter(inv => {
+        // Ensure inv.date is a valid date string before parsing
+        if (!inv.date || typeof inv.date !== 'string') return false;
         const invoiceDate = parseISO(inv.date);
         return isValid(invoiceDate) && invoiceDate >= startDate;
     });
@@ -200,7 +202,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-shadow hover:shadow-lg">
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -216,7 +218,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-shadow hover:shadow-lg">
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
@@ -230,7 +232,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-shadow hover:shadow-lg">
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right">
            <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
@@ -244,7 +246,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('customers')} className="w-full text-right transition-shadow hover:shadow-lg">
+        <button onClick={() => onNavigate('customers')} className="w-full text-right">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>

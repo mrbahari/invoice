@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -50,7 +51,7 @@ export function GridCeilingForm({ onAddToList }: GridCeilingFormProps) {
       { material: 'سپری T360', quantity: t360Pieces, unit: 'شاخه' },
       { material: 'سپری T120', quantity: t120Pieces, unit: 'شاخه' },
       { material: 'سپری T60', quantity: t60Pieces, unit: 'شاخه' },
-      { material: 'تایل', quantity: tiles, unit: 'عدد' },
+      { material: 'تایل پی وی سی', quantity: tiles, unit: 'عدد' },
       { material: 'آویز', quantity: hangers, unit: 'عدد' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
@@ -75,7 +76,7 @@ export function GridCeilingForm({ onAddToList }: GridCeilingFormProps) {
   };
 
   return (
-    <Card className="animate-fade-in-up">
+    <Card>
       <CardHeader>
         <CardTitle>محاسبه مصالح سقف مشبک</CardTitle>
         <CardDescription>
@@ -109,7 +110,7 @@ export function GridCeilingForm({ onAddToList }: GridCeilingFormProps) {
         </div>
 
         {results.length > 0 && (
-          <div className="animate-fade-in-up">
+          <div>
             <h3 className="text-lg font-semibold mb-4">لیست مصالح مورد نیاز:</h3>
             <Table>
               <TableHeader>

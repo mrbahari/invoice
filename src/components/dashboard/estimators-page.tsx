@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Box, Grid, MinusSquare, ArrowRight, Trash2, FilePlus, Square } from 'lucide-react';
+import { Box, Grid, MinusSquare, ArrowRight, Trash2, FilePlus, Square, Shuffle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
@@ -116,8 +116,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     
     // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
-        'پانل': ['پنل', 'پانل', 'panel'],
-        'پانل گچی': ['پنل', 'پانل', 'panel'],
+        'پانل': ['پنل', 'پانل', 'panel', 'پانل گچی'],
         'سازه f47': ['f47'],
         'سازه u36': ['u36'],
         'نبشی l25': ['l25'],
@@ -127,7 +126,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'سپری t60': ['t60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
-        'پیچ ۲.۵': ['پیچ پنل', 'پیچ 2.5', 'tn25'],
+        'پیچ ۲.۵': ['پیچ پنل', 'پیچ 2.5', 'tn25', 'پیچ ۲.۵'],
         'پیچ سازه': ['پیچ سازه', 'ln9'],
         'تایل': ['تایل', 'tile'],
         'آویز': ['آویز', 'hanger'],
@@ -222,7 +221,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   return (
     <div className='grid md:grid-cols-3 gap-8 pb-28'>
         <div className="md:col-span-2 grid gap-8">
-            <Card className="animate-fade-in-up">
+            <Card>
                 <CardHeader>
                     <CardTitle>برآورد مصالح</CardTitle>
                     <CardDescription>
@@ -231,12 +230,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                 </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {estimatorTypes.map((estimator) => (
                     <Card 
                         key={estimator.id}
                         onClick={() => setActiveEstimator(estimator.id)}
-                        className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+                        className="flex flex-col transition-shadow hover:shadow-lg cursor-pointer"
                     >
                         <CardHeader className="flex-row gap-4 items-center">
                             <estimator.icon className="h-10 w-10 text-primary" />
@@ -254,7 +253,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
         <div className="md:col-span-1">
              {estimationList.length > 0 && (
-                <Card className="animate-fade-in-up sticky top-20" style={{animationDelay: '0.1s'}}>
+                <Card className="sticky top-20">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                         <CardTitle>لیست تجمیعی مصالح</CardTitle>

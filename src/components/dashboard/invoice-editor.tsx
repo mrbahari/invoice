@@ -130,36 +130,33 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
-  const handleMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    if (!productsRef.current) return;
     isDragging.current = true;
-    if (productsRef.current) {
-        productsRef.current.classList.add('cursor-grabbing');
-        startX.current = e.pageX - productsRef.current.offsetLeft;
-        scrollLeft.current = productsRef.current.scrollLeft;
-    }
-  }, []);
+    productsRef.current.classList.add('cursor-grabbing');
+    startX.current = e.pageX - productsRef.current.offsetLeft;
+    scrollLeft.current = productsRef.current.scrollLeft;
+  };
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = () => {
+    if (!productsRef.current) return;
     isDragging.current = false;
-    if (productsRef.current) {
-        productsRef.current.classList.remove('cursor-grabbing');
-    }
-  }, []);
+    productsRef.current.classList.remove('cursor-grabbing');
+  };
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
+    if (!productsRef.current) return;
     isDragging.current = false;
-    if (productsRef.current) {
-        productsRef.current.classList.remove('cursor-grabbing');
-    }
-  }, []);
+    productsRef.current.classList.remove('cursor-grabbing');
+  };
 
-  const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!isDragging.current || !productsRef.current) return;
     e.preventDefault();
     const x = e.pageX - productsRef.current.offsetLeft;
     const walk = (x - startX.current) * 2; // scroll-fast
     productsRef.current.scrollLeft = scrollLeft.current - walk;
-  }, []);
+  };
 
 
   // When customer changes, update invoice details
@@ -323,7 +320,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     <>
     <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-5">
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-             <Card className="animate-fade-in-up">
+             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle>محصولات</CardTitle>
@@ -331,7 +328,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                           type="button" 
                           variant="outline" 
                           onClick={onCancel}
-                          className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                          className="dark:bg-white dark:text-black"
                         >
                           <ArrowRight className="ml-2 h-4 w-4" />
                           بازگشت
@@ -356,7 +353,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 <Card
                                     key={product.id}
                                     onClick={() => handleAddProduct(product)}
-                                    className="transition-all hover:shadow-lg hover:-translate-y-1 w-32 flex-shrink-0"
+                                    className="transition-shadow hover:shadow-lg w-32 flex-shrink-0"
                                 >
                                     <CardContent className="p-2">
                                         <div className="relative w-full aspect-square mb-2">
@@ -375,7 +372,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-3">
              <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-                <Card className="animate-fade-in-up">
+                <Card>
                     <CardHeader>
                         <CardTitle>{isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}</CardTitle>
                     </CardHeader>
@@ -454,7 +451,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 </DialogContent>
             </Dialog>
 
-            <Card className="animate-fade-in-up">
+            <Card>
             <CardHeader>
                 <CardTitle>آیتم‌های فاکتور</CardTitle>
             </CardHeader>

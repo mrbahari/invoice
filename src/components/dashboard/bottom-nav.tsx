@@ -34,7 +34,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white bg-opacity-95 backdrop-blur-sm no-print dark:bg-zinc-900/90">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white bg-opacity-95 no-print dark:bg-zinc-900/90">
       <div className="grid h-16 grid-cols-7 items-center justify-items-center">
         {navItems.slice(0, 3).map((item) => (
           <button
@@ -43,10 +43,10 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
           >
             <div className="relative">
-              <item.icon className={cn("h-6 w-6 transition-transform", activeTab === item.tab && "scale-125 text-primary")} />
+              <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
               <span className={cn(
-                "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0 transition-all",
-                activeTab === item.tab && "opacity-100 w-4"
+                "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
+                activeTab === item.tab && "opacity-100"
               )} />
             </div>
             <span className={cn("text-xs", activeTab === item.tab && "text-primary font-semibold")}>{item.label}</span>
@@ -57,9 +57,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         <div className="flex h-full w-full items-center justify-center">
             <button 
               onClick={() => handleTabClick('invoices')}
-              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm transition-all hover:scale-110 hover:shadow-primary/20 active:scale-95"
+              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm transition-all active:scale-95"
             >
-              <FileText className="h-8 w-8 transition-transform group-hover:rotate-[-5deg] group-active:rotate-[-10deg]" />
+              <FileText className="h-8 w-8" />
               <span className="sr-only">ایجاد فاکتور</span>
             </button>
         </div>
@@ -72,10 +72,10 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
           >
             <div className="relative">
-              <item.icon className={cn("h-6 w-6 transition-transform", activeTab === item.tab && "scale-125 text-primary")} />
+              <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
               <span className={cn(
-                "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0 transition-all",
-                activeTab === item.tab && "opacity-100 w-4"
+                "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
+                activeTab === item.tab && "opacity-100"
               )} />
             </div>
             <span className={cn("text-xs", activeTab === item.tab && "text-primary font-semibold")}>{item.label}</span>

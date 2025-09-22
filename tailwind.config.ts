@@ -74,7 +74,7 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'blob': 'animate-blob 7s infinite',
+        'spin': 'spin 1s linear infinite',
       },
       keyframes: {
         'accordion-down': {
@@ -91,20 +91,6 @@ export default {
           },
           to: {
             height: '0',
-          },
-        },
-         'animate-blob': {
-          '0%': {
-            transform: 'scale(1) translateY(0px) rotate(0deg)',
-            opacity: '0.7',
-          },
-          '50%': {
-            transform: 'scale(1.1) translateY(-20px) rotate(90deg)',
-            opacity: '0.5',
-          },
-          '100%': {
-            transform: 'scale(1) translateY(0px) rotate(180deg)',
-            opacity: '0.7',
           },
         },
       },

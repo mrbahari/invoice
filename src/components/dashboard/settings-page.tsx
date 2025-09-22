@@ -185,7 +185,7 @@ export default function SettingsPage() {
 
   return (
     <div className="grid gap-6">
-      <Card className="animate-fade-in-up">
+      <Card>
         <CardHeader>
           <CardTitle>تنظیمات</CardTitle>
           <CardDescription>
@@ -195,11 +195,11 @@ export default function SettingsPage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <Card>
             <CardHeader>
             <CardTitle>ظاهر برنامه</CardTitle>
             <CardDescription>
-                حالت نمایش روشن، تاریک یا هماهنگ با سیستم را انتخاب کنید.
+                حالت نمایش روشن, تاریک یا هماهنگ با سیستم را انتخاب کنید.
             </CardDescription>
             </CardHeader>
             <CardContent>
@@ -225,7 +225,7 @@ export default function SettingsPage() {
             </CardContent>
         </Card>
         
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <Card>
             <CardHeader>
             <CardTitle>مدیریت واحدها</CardTitle>
             <CardDescription>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
         </Card>
       </div>
       
-      <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+      <Card>
         <CardHeader>
           <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
           <CardDescription>
@@ -290,7 +290,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+      <Card className="border-destructive">
         <CardHeader>
           <CardTitle className="text-destructive">منطقه خطر</CardTitle>
           <CardDescription>

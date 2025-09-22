@@ -200,8 +200,8 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
-          <Card className="animate-fade-in-up">
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-shadow hover:shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 درآمد کل
@@ -216,8 +216,8 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
-          <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-shadow hover:shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -230,8 +230,8 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
-           <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <button onClick={() => onNavigate('invoices')} className="w-full text-right transition-shadow hover:shadow-lg">
+           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
               <Hourglass className="h-4 w-4 text-muted-foreground" />
@@ -244,8 +244,8 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('customers')} className="w-full text-right transition-all hover:shadow-lg hover:-translate-y-1">
-          <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <button onClick={() => onNavigate('customers')} className="w-full text-right transition-shadow hover:shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -266,7 +266,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         className="grid gap-4 md:gap-8"
       >
         <AccordionItem value="sales-overview" className="border-b-0">
-          <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <Card>
               <AccordionTrigger className="p-6 hover:no-underline">
                 <div className='text-right'>
                   <CardTitle>نمای کلی فروش</CardTitle>
@@ -283,7 +283,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         
         <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
           <AccordionItem value="top-customers" className="border-b-0">
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <Card>
               <AccordionTrigger className="p-6 hover:no-underline">
                  <div className='text-right'>
                     <CardTitle>مشتریان برتر</CardTitle>
@@ -306,7 +306,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                             const initials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
                             return (
-                                <TableRow key={customer.id} className="transition-all hover:shadow-md hover:-translate-y-1">
+                                <TableRow key={customer.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3 hover:underline">
                                             <Avatar className="hidden h-9 w-9 sm:flex">
@@ -338,7 +338,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
           </AccordionItem>
 
           <AccordionItem value="top-products" className="border-b-0">
-            <Card className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <Card>
                 <AccordionTrigger className="p-6 hover:no-underline">
                   <div className='text-right'>
                     <CardTitle>پرفروش‌ترین محصولات</CardTitle>
@@ -358,7 +358,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             </TableHeader>
                             <TableBody>
                             {topProducts.map(product => (
-                                <TableRow key={product.id} className="transition-all hover:shadow-md hover:-translate-y-1">
+                                <TableRow key={product.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3 hover:underline">
                                             <Image src={product.imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />

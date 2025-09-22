@@ -70,7 +70,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
 
   if (!customer) {
     return (
-        <Card className="animate-fade-in-up">
+        <Card>
             <CardContent className="py-16 text-center">
                 <p className="text-muted-foreground mb-4">مشتری مورد نظر یافت نشد.</p>
                  <Button onClick={onBack}>
@@ -86,7 +86,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in-up">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
                  <Button onClick={onBack} variant="outline" size="icon" className="h-8 w-8">
                     <ArrowRight className="h-4 w-4" />
@@ -107,7 +107,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">مجموع خرید</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -116,7 +116,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
             <div className="text-2xl font-bold">{formatCurrency(totalSpent)}</div>
           </CardContent>
         </Card>
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">تعداد سفارشات پرداخت شده</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
@@ -128,7 +128,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
       </div>
       
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <Card>
             <CardHeader>
                 <CardTitle>تاریخچه خرید</CardTitle>
                 <CardDescription>نمودار میزان خرید مشتری در ۷ روز گذشته.</CardDescription>
@@ -138,7 +138,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
             </CardContent>
         </Card>
         
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+        <Card>
             <CardHeader>
                 <CardTitle>فاکتورها</CardTitle>
                 <CardDescription>لیست تمام فاکتورهای صادر شده برای این مشتری.</CardDescription>

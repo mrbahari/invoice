@@ -155,7 +155,7 @@ export default function InvoicesPage({
       default:
         return (
            <div className="grid gap-6">
-              <Card className="animate-fade-in-up">
+              <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -188,8 +188,7 @@ export default function InvoicesPage({
                     return (
                       <Card 
                         key={invoice.id} 
-                        className="flex flex-col justify-between transition-all hover:shadow-lg animate-fade-in-up"
-                        style={{ animationDelay: `${index * 50}ms`}}
+                        className="flex flex-col justify-between transition-shadow hover:shadow-lg"
                         onClick={() => handleEdit(invoice)}
                       >
                         <CardHeader className="pb-4">
@@ -232,7 +231,7 @@ export default function InvoicesPage({
                   })}
                 </div>
               ) : (
-                <Card className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <Card>
                   <CardContent className="py-16 text-center">
                     <p className="text-muted-foreground mb-4">
                       {searchTerm ? `هیچ فاکتوری با عبارت «${searchTerm}» یافت نشد.` : 'هیچ فاکتوری ایجاد نشده است.'}

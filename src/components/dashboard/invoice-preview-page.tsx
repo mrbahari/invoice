@@ -156,7 +156,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   }
 
   return (
-    <div className="animate-fade-in-up">
+    <div>
         <div className="mb-6 flex justify-between items-center gap-2 no-print">
             <Button type="button" variant="outline" onClick={onBack} className="dark:border-white/50 dark:text-white dark:hover:bg-white/10">
                 <ArrowRight className="ml-2 h-4 w-4" />

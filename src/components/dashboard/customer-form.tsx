@@ -151,7 +151,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="max-w-2xl mx-auto animate-fade-in-up">
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
             <div className="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -166,7 +166,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                     type="button" 
                     variant="outline" 
                     onClick={onCancel}
-                    className="dark:bg-white dark:text-black dark:animate-pulse-slow"
+                    className="dark:bg-white dark:text-black"
                   >
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت به لیست

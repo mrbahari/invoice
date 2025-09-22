@@ -58,7 +58,7 @@ export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
   };
 
   return (
-    <Card className="animate-fade-in-up">
+    <Card>
       <CardHeader>
         <CardTitle>محاسبه مصالح باکس و نورمخفی</CardTitle>
         <CardDescription>
@@ -81,7 +81,7 @@ export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
         </div>
 
         {results.length > 0 && (
-          <div className="animate-fade-in-up">
+          <div>
             <h3 className="text-lg font-semibold mb-4">لیست مصالح مورد نیاز:</h3>
             <Table>
               <TableHeader>

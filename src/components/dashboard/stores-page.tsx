@@ -105,7 +105,7 @@ export default function StoresPage() {
 
   return (
     <div className="grid gap-8">
-      <Card className="animate-fade-in-up">
+      <Card>
         <CardHeader>
           <div className="flex justify-between items-center gap-4">
             <div>
@@ -133,14 +133,13 @@ export default function StoresPage() {
       
       {sortedAndFilteredStores.length > 0 ? (
         <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up"
-          style={{ animationDelay: '0.2s' }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {sortedAndFilteredStores.map((store) => (
             <Card
               key={store.id}
               onClick={() => handleEditClick(store)}
-              className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer h-full"
+              className="flex flex-col transition-shadow hover:shadow-lg cursor-pointer h-full"
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -171,7 +170,7 @@ export default function StoresPage() {
           ))}
         </div>
       ) : (
-        <Card className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <Card>
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground mb-4">
               {searchTerm ? `هیچ فروشگاهی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ فروشگاهی تعریف نشده است.'}

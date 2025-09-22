@@ -140,7 +140,7 @@ export default function ProductsPage() {
 
   return (
     <div className="grid gap-6">
-      <Card className="animate-fade-in-up">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -177,7 +177,7 @@ export default function ProductsPage() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
               <Card 
-                className={cn("cursor-pointer transition-all hover:shadow-lg", activeTab === 'all' ? 'border-primary shadow-lg' : 'border-border')}
+                className={cn("cursor-pointer transition-shadow hover:shadow-lg", activeTab === 'all' ? 'border-primary shadow-lg' : 'border-border')}
                 onClick={() => setActiveTab('all')}
               >
                 <CardHeader className="p-4 flex-row items-center gap-4">
@@ -191,7 +191,7 @@ export default function ProductsPage() {
               {stores?.map((store) => (
                 <Card 
                   key={store.id} 
-                  className={cn("cursor-pointer transition-all hover:shadow-lg", activeTab === store.id ? 'border-primary shadow-lg' : 'border-border')}
+                  className={cn("cursor-pointer transition-shadow hover:shadow-lg", activeTab === store.id ? 'border-primary shadow-lg' : 'border-border')}
                   onClick={() => setActiveTab(store.id)}
                 >
                   <CardHeader className="p-4 flex-row items-center gap-4">
@@ -224,7 +224,7 @@ export default function ProductsPage() {
                     key={product.id}
                     onClick={() => handleEditClick(product)}
                     className={cn(
-                      'cursor-pointer transition-colors',
+                      'cursor-pointer',
                       selectedProductId === product.id
                         ? 'bg-muted'
                         : 'hover:bg-muted/50'

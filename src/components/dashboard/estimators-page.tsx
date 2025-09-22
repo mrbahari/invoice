@@ -113,7 +113,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     }
 
     const invoiceItems: InvoiceItem[] = [];
-    let notFoundProducts: string[] = [];
     
     const productMap: Record<string, string[]> = {
         'سازه F47': ['f47'],
@@ -150,32 +149,29 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             product = products.find(p => p.name.toLowerCase().includes(materialLowerCase));
         }
 
-        if (product) {
-            let quantity = item.quantity;
-            let unit = item.unit;
-
-             if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
-                quantity = Math.ceil(item.quantity / 1000);
-                unit = 'بسته';
-            }
+        let quantity = item.quantity;
+        let unit = item.unit;
+        let unitPrice = product ? product.price : 0;
+        let productId = product ? product.id : `mat-${item.material}`;
 
 
-            invoiceItems.push({
-                productId: product.id,
-                productName: product.name,
-                quantity: Math.ceil(quantity), // Round up to nearest whole number
-                unit: unit,
-                unitPrice: product.price,
-                totalPrice: Math.ceil(quantity) * product.price,
-            });
-        } else {
-            notFoundProducts.push(item.material);
+        if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
+            quantity = Math.ceil(item.quantity / 1000);
+            unit = 'بسته';
+            // If the product price is for a pack, we don't need to change it.
+            // If it was per-piece, this logic would need adjustment. Assuming price is per pack.
         }
-    });
 
-    if (notFoundProducts.length > 0) {
-      toast({ variant: 'destructive', title: 'برخی محصولات یافت نشدند', description: `موارد زیر در لیست محصولات شما یافت نشدند: ${notFoundProducts.join(', ')}`});
-    }
+        invoiceItems.push({
+            productId: productId,
+            productName: product ? product.name : item.material,
+            quantity: Math.ceil(quantity), // Round up to nearest whole number
+            unit: unit,
+            unitPrice: unitPrice,
+            totalPrice: Math.ceil(quantity) * unitPrice,
+        });
+
+    });
 
     if (invoiceItems.length === 0) {
       toast({ variant: 'destructive', title: 'هیچ محصولی به فاکتور اضافه نشد' });

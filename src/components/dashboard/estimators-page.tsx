@@ -114,7 +114,9 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
     
+    // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
+        'پانل': ['پنل', 'پانل', 'panel'],
         'سازه F47': ['f47'],
         'سازه U36': ['u36'],
         'نبشی L25': ['l25'],
@@ -124,7 +126,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'سپری T60': ['t60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
-        'پانل': ['پنل', 'پانل', 'panel'],
         'پیچ پنل': ['پیچ پنل', 'tn25'],
         'پیچ سازه': ['پیچ سازه', 'ln9'],
         'تایل': ['تایل', 'tile'],
@@ -135,17 +136,19 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     aggregatedResults.forEach(item => {
         let product: Product | undefined;
-        const materialLowerCase = item.material.toLowerCase();
+        const materialLowerCase = item.material.toLowerCase().trim();
         
+        // Find a product that matches any of the aliases in the productMap
         const matchingKey = Object.keys(productMap).find(key => 
             productMap[key].some(term => materialLowerCase.includes(term.toLowerCase()))
         );
 
         if (matchingKey) {
-            product = products.find(p => 
+             product = products.find(p => 
                 productMap[matchingKey].some(term => p.name.toLowerCase().includes(term.toLowerCase()))
             );
         } else {
+            // Fallback to direct name match if no alias found
             product = products.find(p => p.name.toLowerCase().includes(materialLowerCase));
         }
 
@@ -153,24 +156,33 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let unit = item.unit;
         let unitPrice = product ? product.price : 0;
         let productId = product ? product.id : `mat-${item.material}`;
-
+        let productName = product ? product.name : item.material;
 
         if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
-            // If the product price is for a pack, we don't need to change it.
-            // If it was per-piece, this logic would need adjustment. Assuming price is per pack.
+        } else {
+            quantity = Math.ceil(quantity); // Round up quantities like panels, profiles, etc.
         }
 
-        invoiceItems.push({
-            productId: productId,
-            productName: product ? product.name : item.material,
-            quantity: Math.ceil(quantity), // Round up to nearest whole number
-            unit: unit,
-            unitPrice: unitPrice,
-            totalPrice: Math.ceil(quantity) * unitPrice,
-        });
+        const existingInvoiceItemIndex = invoiceItems.findIndex(invItem => invItem.productId === productId && invItem.unit === unit);
 
+        if (existingInvoiceItemIndex > -1) {
+            // If item already exists, just update the quantity and total price
+            const existingItem = invoiceItems[existingInvoiceItemIndex];
+            existingItem.quantity += quantity;
+            existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
+        } else {
+            // If it's a new item, add it to the list
+            invoiceItems.push({
+                productId: productId,
+                productName: productName,
+                quantity: quantity,
+                unit: unit,
+                unitPrice: unitPrice,
+                totalPrice: quantity * unitPrice,
+            });
+        }
     });
 
     if (invoiceItems.length === 0) {
@@ -220,85 +232,89 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }
 
   return (
-    <div className='grid gap-8 pb-28'>
-        <Card className="animate-fade-in-up">
-            <CardHeader>
-                <CardTitle>برآورد مصالح</CardTitle>
-                <CardDescription>
-                ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
-                </CardDescription>
-            </CardHeader>
-        </Card>
-
-        {estimationList.length > 0 && (
-            <Card className="animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+    <div className='grid md:grid-cols-3 gap-8 pb-28'>
+        <div className="md:col-span-2 grid gap-8">
+            <Card className="animate-fade-in-up">
                 <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>لیست تجمیعی مصالح</CardTitle>
-                       <Button onClick={handleClearList} variant="destructive" size="sm">
-                            <Trash2 className="ml-2 h-4 w-4" />
-                            پاک کردن لیست
-                        </Button>
-                    </div>
+                    <CardTitle>برآورد مصالح</CardTitle>
+                    <CardDescription>
+                    ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>نوع مصالح</TableHead>
-                            <TableHead className="text-center">مقدار کل</TableHead>
-                            <TableHead>واحد</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {aggregatedResults.map((item) => (
-                            <TableRow key={item.material}>
-                                <TableCell className="font-medium">{item.material}</TableCell>
-                                <TableCell className="text-center font-mono text-lg">{Math.ceil(item.quantity).toLocaleString('fa-IR')}</TableCell>
-                                <TableCell>{item.unit}</TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <div className="mt-4 text-sm text-muted-foreground space-y-1">
-                        <p className="font-semibold">بخش‌های محاسبه شده:</p>
-                        {estimationList.map(est => (
-                             <div key={est.id} className="flex items-center justify-between">
-                                <span>- {est.description}</span>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveFromList(est.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                        <FilePlus className="ml-2 h-5 w-5" />
-                        ایجاد فاکتور نهایی از لیست
-                    </Button>
-                </CardFooter>
             </Card>
-        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-            {estimatorTypes.map((estimator) => (
-                <Card 
-                    key={estimator.id}
-                    onClick={() => setActiveEstimator(estimator.id)}
-                    className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
-                >
-                    <CardHeader className="flex-row gap-4 items-center">
-                        <estimator.icon className="h-10 w-10 text-primary" />
-                        <div>
-                            <CardTitle>{estimator.title}</CardTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                {estimatorTypes.map((estimator) => (
+                    <Card 
+                        key={estimator.id}
+                        onClick={() => setActiveEstimator(estimator.id)}
+                        className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+                    >
+                        <CardHeader className="flex-row gap-4 items-center">
+                            <estimator.icon className="h-10 w-10 text-primary" />
+                            <div>
+                                <CardTitle>{estimator.title}</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                            <CardDescription>{estimator.description}</CardDescription>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+
+        <div className="md:col-span-1">
+             {estimationList.length > 0 && (
+                <Card className="animate-fade-in-up sticky top-20" style={{animationDelay: '0.1s'}}>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                        <CardTitle>لیست تجمیعی مصالح</CardTitle>
+                        <Button onClick={handleClearList} variant="destructive" size="sm">
+                                <Trash2 className="ml-2 h-4 w-4" />
+                                پاک کردن لیست
+                            </Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="flex-grow">
-                        <CardDescription>{estimator.description}</CardDescription>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead>نوع مصالح</TableHead>
+                                <TableHead className="text-center">مقدار</TableHead>
+                                <TableHead>واحد</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {aggregatedResults.map((item) => (
+                                <TableRow key={`${item.material}-${item.unit}`}>
+                                    <TableCell className="font-medium">{item.material}</TableCell>
+                                    <TableCell className="text-center font-mono text-lg">{Math.ceil(item.quantity).toLocaleString('fa-IR')}</TableCell>
+                                    <TableCell>{item.unit}</TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="mt-4 text-sm text-muted-foreground space-y-1">
+                            <p className="font-semibold">بخش‌های محاسبه شده:</p>
+                            {estimationList.map(est => (
+                                <div key={est.id} className="flex items-center justify-between">
+                                    <span>- {est.description}</span>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveFromList(est.id)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
+                    <CardFooter>
+                        <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
+                            <FilePlus className="ml-2 h-5 w-5" />
+                            ایجاد فاکتور نهایی
+                        </Button>
+                    </CardFooter>
                 </Card>
-            ))}
+            )}
         </div>
     </div>
   );

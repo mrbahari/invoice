@@ -44,7 +44,7 @@ const estimatorTypes = [
         component: GridCeilingForm,
     },
     {
-        id: 'flat-ceiling' as EstimatorType,
+        id: 'flat-ceiling'_as EstimatorType,
         title: 'محاسبه مصالح سقف فلت',
         description: 'مساحت سقف را وارد کرده و برآورد مصالح لازم را دریافت کنید.',
         icon: MinusSquare,
@@ -207,7 +207,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const ActiveComponent = estimatorTypes.find(e => e.id === activeEstimator)?.component;
     if (ActiveComponent) {
         return (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto pb-28">
                  <div className="mb-4">
                     <Button onClick={() => setActiveEstimator(null)} variant="outline">
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -221,7 +221,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }
 
   return (
-    <div className='grid gap-8'>
+    <div className='grid gap-8 pb-28'>
         <Card className="animate-fade-in-up">
             <CardHeader>
                 <CardTitle>برآورد مصالح</CardTitle>

@@ -246,6 +246,15 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
   
   const handleOpenSimilarProducts = (item: InvoiceItem, index: number) => {
+    const product = products.find(p => p.id === item.productId);
+    if (!product) {
+        toast({
+            variant: 'destructive',
+            title: 'محصول یافت نشد',
+            description: 'امکان یافتن محصولات مشابه برای آیتم‌های یافت‌نشده وجود ندارد.',
+        });
+        return;
+    }
     setCurrentItemForReplacement({ item, index });
     setIsSimilarProductsDialogOpen(true);
   };
@@ -479,8 +488,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
                                 {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
                                     const product = products.find(p => p.id === item.productId);
-                                    const availableUnits = [product?.unit];
-                                    if (product?.subUnit) availableUnits.push(product.subUnit);
+                                    const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [];
+                                    const isProductFound = !!product;
 
                                     return (
                                     <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
@@ -496,12 +505,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2 sm:col-span-2">
                                                             <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} placeholder="مقدار" />
-                                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
-                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                <SelectContent>
-                                                                    {(availableUnits || []).filter(u => u).map(u => <SelectItem key={u} value={u!}>{u}</SelectItem>)}
-                                                                </SelectContent>
-                                                            </Select>
+                                                            {isProductFound ? (
+                                                                <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
+                                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            ) : (
+                                                                <Input value={item.unit} disabled className="bg-background/50" />
+                                                            )}
                                                         </div>
                                                         <div className="flex items-center justify-between sm:justify-end gap-2">
                                                             <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>

@@ -116,16 +116,15 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     
     // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
-        // This maps a material name from estimation to possible product names
         'پانل': ['پنل', 'پانل', 'panel'],
         'پانل گچی': ['پنل', 'پانل', 'panel'],
-        'سازه F47': ['f47'],
-        'سازه U36': ['u36'],
-        'نبشی L25': ['l25'],
-        'نبشی L24': ['l24'],
-        'سپری T360': ['t360'],
-        'سپری T120': ['t120'],
-        'سپری T60': ['t60'],
+        'سازه f47': ['f47'],
+        'سازه u36': ['u36'],
+        'نبشی l25': ['l25'],
+        'نبشی l24': ['l24'],
+        'سپری t360': ['t360'],
+        'سپری t120': ['t120'],
+        'سپری t60': ['t60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
         'پیچ پنل': ['پیچ پنل', 'tn25'],
@@ -138,19 +137,22 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     aggregatedResults.forEach(item => {
         let product: Product | undefined;
-        const materialName = item.material;
-        const aliases = productMap[materialName] || [materialName];
+        const materialNameLower = item.material.trim().toLowerCase();
         
-        product = products.find(p => aliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase())));
+        const aliases = productMap[materialNameLower] || [materialNameLower];
+        
+        product = products.find(p => 
+            aliases.some(alias => p.name.toLowerCase().includes(alias))
+        );
 
         let quantity = item.quantity;
         let unit = item.unit;
         let unitPrice = product ? product.price : 0;
-        let productId = product ? product.id : `mat-${item.material}`;
+        let productId = product ? product.id : `mat-${item.material.replace(/\s+/g, '-')}`;
         let productName = product ? product.name : item.material;
 
         // Convert screw count to packs if needed
-        if ((materialName.toLowerCase().includes('پیچ پنل') || materialName.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
+        if ((materialNameLower.includes('پیچ پنل') || materialNameLower.includes('پیچ سازه')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
         } else {
@@ -160,12 +162,10 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         const existingInvoiceItemIndex = invoiceItems.findIndex(invItem => invItem.productId === productId && invItem.unit === unit);
 
         if (existingInvoiceItemIndex > -1) {
-            // If item already exists, just update the quantity
             invoiceItems[existingInvoiceItemIndex].quantity += quantity;
             const currentItem = invoiceItems[existingInvoiceItemIndex];
             currentItem.totalPrice = currentItem.quantity * currentItem.unitPrice;
         } else {
-            // If it's a new item, add it to the list
             invoiceItems.push({
                 productId: productId,
                 productName: productName,

@@ -310,28 +310,26 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
-                    <ScrollArea className="h-auto">
-                         <div
-                            ref={productsRef}
-                            className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
-                            {...draggableEvents}
-                        >
-                            {(filteredProducts || []).map(product => (
-                                <Card
-                                    key={product.id}
-                                    onClick={() => handleAddProduct(product)}
-                                    className="w-32 flex-shrink-0"
-                                >
-                                    <CardContent className="p-2">
-                                        <div className="relative w-full aspect-square mb-2">
-                                            <Image src={product.imageUrl} alt={product.name} fill className="rounded-md object-cover" />
-                                        </div>
-                                        <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </ScrollArea>
+                     <div
+                        ref={productsRef}
+                        className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
+                        {...draggableEvents}
+                    >
+                        {(filteredProducts || []).map(product => (
+                            <Card
+                                key={product.id}
+                                onClick={() => handleAddProduct(product)}
+                                className="w-32 flex-shrink-0"
+                            >
+                                <CardContent className="p-2">
+                                    <div className="relative w-full aspect-square mb-2">
+                                        <Image src={product.imageUrl} alt={product.name} fill className="rounded-md object-cover" />
+                                    </div>
+                                    <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
 

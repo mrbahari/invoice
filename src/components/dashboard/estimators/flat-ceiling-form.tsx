@@ -60,7 +60,7 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
       { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
-      { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
+      { material: 'پیچ ۲.۵', quantity: totalPanelScrews, unit: 'عدد' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   

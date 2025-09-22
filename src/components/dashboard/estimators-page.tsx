@@ -127,7 +127,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'سپری t60': ['t60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
-        'پیچ پنل': ['پیچ پنل', 'tn25'],
+        'پیچ ۲.۵': ['پیچ پنل', 'پیچ 2.5', 'tn25'],
         'پیچ سازه': ['پیچ سازه', 'ln9'],
         'تایل': ['تایل', 'tile'],
         'آویز': ['آویز', 'hanger'],
@@ -152,7 +152,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let productName = product ? product.name : item.material;
 
         // Convert screw count to packs if needed
-        if ((materialNameLower.includes('پیچ پنل') || materialNameLower.includes('پیچ سازه')) && item.unit === 'عدد') {
+        if ((materialNameLower.includes('پیچ ۲.۵') || materialNameLower.includes('پیچ سازه')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
         } else {

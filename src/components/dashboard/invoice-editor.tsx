@@ -488,7 +488,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
                                 {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
                                     const product = products.find(p => p.id === item.productId);
-                                    const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [];
+                                    const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
                                     const isProductFound = !!product;
 
                                     return (

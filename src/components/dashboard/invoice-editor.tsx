@@ -323,7 +323,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                             >
                                 <CardContent className="p-2">
                                     <div className="relative w-full aspect-square mb-2">
-                                        <Image src={product.imageUrl} alt={product.name} fill className="rounded-md object-cover" />
+                                        <Image 
+                                            src={product.imageUrl} 
+                                            alt={product.name} 
+                                            fill 
+                                            className="rounded-md object-cover"
+                                            draggable="false"
+                                        />
                                     </div>
                                     <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
                                 </CardContent>

@@ -96,7 +96,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const aggregatedResults: MaterialResult[] = estimationList.reduce((acc, current) => {
     current.results.forEach(result => {
-        const existing = acc.find(item => item.material.trim().toLowerCase() === result.material.trim().toLowerCase());
+        const existing = acc.find(item => item.material.trim().toLowerCase() === result.material.trim().toLowerCase() && item.unit === result.unit);
         if (existing) {
             existing.quantity += result.quantity;
         } else {
@@ -281,7 +281,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             </Card>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
             {estimatorTypes.map((estimator) => (
                 <Card 
                     key={estimator.id}

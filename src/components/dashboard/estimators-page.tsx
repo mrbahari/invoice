@@ -113,7 +113,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const invoiceItems: InvoiceItem[] = [];
     let notFoundProducts: string[] = [];
     
-    // Create a more robust mapping for product names
     const productMap: Record<string, string[]> = {
         'سازه F47': ['f47'],
         'سازه U36': ['u36'],
@@ -142,23 +141,29 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         );
 
         if (matchingKey) {
-            // Find a product whose name includes one of the aliases for the matched key
             product = products.find(p => 
                 productMap[matchingKey].some(term => p.name.toLowerCase().includes(term.toLowerCase()))
             );
         } else {
-            // Fallback for items not in the map
             product = products.find(p => p.name.toLowerCase().includes(materialLowerCase));
         }
 
         if (product) {
+            let quantity = item.quantity;
+            let unit = item.unit;
+
+            if (item.material.toLowerCase().includes('پیچ') && item.unit === 'عدد') {
+                quantity = Math.ceil(item.quantity / 1000);
+                unit = 'بسته';
+            }
+
             invoiceItems.push({
-            productId: product.id,
-            productName: product.name,
-            quantity: Math.ceil(item.quantity), // Round up to nearest whole number
-            unit: item.unit,
-            unitPrice: product.price,
-            totalPrice: Math.ceil(item.quantity) * product.price,
+                productId: product.id,
+                productName: product.name,
+                quantity: Math.ceil(quantity), // Round up to nearest whole number
+                unit: unit,
+                unitPrice: product.price,
+                totalPrice: Math.ceil(quantity) * product.price,
             });
         } else {
             notFoundProducts.push(item.material);

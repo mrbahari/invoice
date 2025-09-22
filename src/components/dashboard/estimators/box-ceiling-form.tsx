@@ -26,14 +26,13 @@ export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
       return [];
     }
     
-    const screws = l * (2200 / 45);
-    const screwPacks = screws > 0 ? Math.round(screws / 1000) : 0;
+    const screws = Math.ceil(l * (2200 / 45));
     const l25Profiles = Math.ceil(l);
     const panels = Math.ceil(l / 4.5);
 
 
     return [
-      { material: 'پیچ پنل 2.5', quantity: screwPacks, unit: 'بسته' },
+      { material: 'پیچ پنل', quantity: screws, unit: 'عدد' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل', quantity: panels, unit: 'عدد' },
     ].filter(item => item.quantity > 0);

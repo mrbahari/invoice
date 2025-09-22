@@ -45,11 +45,11 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
     const nailAndChargeCount = totalHangers;
     const nailAndChargePacks = nailAndChargeCount < 100 && nailAndChargeCount > 0 ? 1 : Math.ceil(nailAndChargeCount / 100);
 
-    const structureScrews = totalHangers * 2;
+    const structureScrews = Math.ceil(totalHangers * 2);
     
     const panelScrewsForPerimeter = Math.ceil(perimeter / 0.2);
     const panelScrewsForF47 = Math.ceil(totalF47Length / 0.2);
-    const totalPanelScrews = panelScrewsForPerimeter + panelScrewsForF47;
+    const totalPanelScrews = Math.ceil(panelScrewsForPerimeter + panelScrewsForF47);
 
     const panels = Math.ceil(area / 2.88);
 
@@ -59,8 +59,8 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پانل گچی', quantity: panels, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
-      { material: 'پیچ سازه به سازه', quantity: Math.ceil(structureScrews / 1000), unit: 'بسته' },
-      { material: 'پیچ پنل 2.5', quantity: Math.ceil(totalPanelScrews / 1000), unit: 'بسته' },
+      { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
+      { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   

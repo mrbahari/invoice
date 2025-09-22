@@ -56,8 +56,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
     const panelsNeeded = Math.ceil(totalPanelArea / panelArea);
     
     // Screw calculation (approximation)
-    const totalScrews = (studCount * h * panelMultiplier * 15);
-    const screwPacks = Math.ceil(totalScrews / 1000); // Assuming 1000 screws per pack
+    const totalScrews = Math.ceil(studCount * h * panelMultiplier * 15);
 
     // Rock wool calculation
     let woolSheetsNeeded = 0;
@@ -70,7 +69,7 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
       { material: 'رانر', quantity: totalRunners, unit: 'شاخه' },
       { material: 'استاد', quantity: studsNeeded, unit: 'شاخه' },
       { material: 'پانل', quantity: panelsNeeded, unit: 'برگ' },
-      { material: 'پیچ پنل', quantity: screwPacks, unit: 'بسته' },
+      { material: 'پیچ پنل', quantity: totalScrews, unit: 'عدد' },
     ];
     
     if (includeWool) {

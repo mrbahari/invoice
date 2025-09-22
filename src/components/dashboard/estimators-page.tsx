@@ -28,6 +28,8 @@ export interface Estimation {
   results: MaterialResult[];
 }
 
+type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall';
+
 const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
@@ -59,7 +61,7 @@ const estimatorTypes = [
     }
 ];
 
-type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall';
+
 
 type EstimatorsPageProps = {
     onNavigate: (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'> }) => void;
@@ -152,10 +154,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             let quantity = item.quantity;
             let unit = item.unit;
 
-            if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
+             if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
                 quantity = Math.ceil(item.quantity / 1000);
                 unit = 'بسته';
             }
+
 
             invoiceItems.push({
                 productId: product.id,

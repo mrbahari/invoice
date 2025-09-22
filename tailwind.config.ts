@@ -74,8 +74,7 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'spin-slow': 'spin 3s linear infinite',
-        'fade-in-out': 'fade-in-out 1.2s ease-in-out infinite alternate',
+        'wave': 'wave 1.2s linear infinite',
       },
       keyframes: {
         'accordion-down': {
@@ -94,9 +93,9 @@ export default {
             height: '0',
           },
         },
-        'fade-in-out': {
-          '0%': { opacity: '0.2' },
-          '100%': { opacity: '1' },
+        'wave': {
+          '0%, 40%, 100%': { transform: 'scaleY(0.4)' },
+          '20%': { transform: 'scaleY(1)' },
         }
       },
     },

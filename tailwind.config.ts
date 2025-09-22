@@ -74,7 +74,7 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'spin': 'spin 1s linear infinite',
+        'morph': 'morph 8s ease-in-out infinite',
       },
       keyframes: {
         'accordion-down': {
@@ -93,11 +93,17 @@ export default {
             height: '0',
           },
         },
-        'spin': {
-          from: {
+        'morph': {
+          '0%': {
+            borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%',
             transform: 'rotate(0deg)',
           },
-          to: {
+          '50%': {
+            borderRadius: '30% 60% 70% 40% / 50% 60% 30% 60%',
+            transform: 'rotate(180deg)',
+          },
+          '100%': {
+            borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%',
             transform: 'rotate(360deg)',
           },
         },

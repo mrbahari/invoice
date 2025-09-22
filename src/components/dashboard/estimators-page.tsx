@@ -44,7 +44,7 @@ const estimatorTypes = [
         component: GridCeilingForm,
     },
     {
-        id: 'flat-ceiling'_as EstimatorType,
+        id: 'flat-ceiling' as EstimatorType,
         title: 'محاسبه مصالح سقف فلت',
         description: 'مساحت سقف را وارد کرده و برآورد مصالح لازم را دریافت کنید.',
         icon: MinusSquare,
@@ -152,7 +152,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             let quantity = item.quantity;
             let unit = item.unit;
 
-            if (item.material.toLowerCase().includes('پیچ') && item.unit === 'عدد') {
+            if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
                 quantity = Math.ceil(item.quantity / 1000);
                 unit = 'بسته';
             }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, MouseEvent, useCallback } from 'react';
 import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice, InvoiceStatus } from '@/lib/definitions';
 import {
   Card,
@@ -52,8 +52,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
-import { InvoiceActions } from './invoice-actions';
-import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
+import { cn } from '@/lib/utils';
+
 
 type InvoiceEditorProps = {
     invoiceId?: string; // Can be a new invoice (undefined) or an existing one
@@ -124,8 +124,43 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
 
+  // Draggable scroll state
   const productsRef = useRef<HTMLDivElement>(null);
-  const { events } = useDraggableScroll(productsRef);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
+  const handleMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    isDragging.current = true;
+    if (productsRef.current) {
+        productsRef.current.classList.add('cursor-grabbing');
+        startX.current = e.pageX - productsRef.current.offsetLeft;
+        scrollLeft.current = productsRef.current.scrollLeft;
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    isDragging.current = false;
+    if (productsRef.current) {
+        productsRef.current.classList.remove('cursor-grabbing');
+    }
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDragging.current = false;
+    if (productsRef.current) {
+        productsRef.current.classList.remove('cursor-grabbing');
+    }
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !productsRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - productsRef.current.offsetLeft;
+    const walk = (x - startX.current) * 2; // scroll-fast
+    productsRef.current.scrollLeft = scrollLeft.current - walk;
+  }, []);
+
 
   // When customer changes, update invoice details
   useEffect(() => {
@@ -309,25 +344,28 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
                     <ScrollArea className="h-auto">
-                        <div 
-                          ref={productsRef}
-                          className="flex overflow-x-auto gap-3 pb-4 cursor-grab"
-                          {...events}
+                        <div
+                            ref={productsRef}
+                            className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
+                            onMouseDown={handleMouseDown}
+                            onMouseLeave={handleMouseLeave}
+                            onMouseUp={handleMouseUp}
+                            onMouseMove={handleMouseMove}
                         >
-                        {(filteredProducts || []).map(product => (
-                            <Card 
-                                key={product.id} 
-                                onClick={() => handleAddProduct(product)}
-                                className="transition-all hover:shadow-lg hover:-translate-y-1 w-32 flex-shrink-0"
-                            >
-                                <CardContent className="p-2">
-                                    <div className="relative w-full aspect-square mb-2">
-                                        <Image src={product.imageUrl} alt={product.name} fill className="rounded-md object-cover" />
-                                    </div>
-                                    <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                                </CardContent>
-                            </Card>
-                        ))}
+                            {(filteredProducts || []).map(product => (
+                                <Card
+                                    key={product.id}
+                                    onClick={() => handleAddProduct(product)}
+                                    className="transition-all hover:shadow-lg hover:-translate-y-1 w-32 flex-shrink-0"
+                                >
+                                    <CardContent className="p-2">
+                                        <div className="relative w-full aspect-square mb-2">
+                                            <Image src={product.imageUrl} alt={product.name} fill className="rounded-md object-cover" />
+                                        </div>
+                                        <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                                    </CardContent>
+                                </Card>
+                            ))}
                         </div>
                     </ScrollArea>
                 </CardContent>
@@ -446,7 +484,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2 sm:col-span-2">
                                                             <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} placeholder="مقدار" />
-                                                            {isProductFound ? (
+                                                            {isProductFound && availableUnits.length > 1 ? (
                                                                 <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
                                                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                                                     <SelectContent>

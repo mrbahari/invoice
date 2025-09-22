@@ -87,11 +87,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [invoice, setInvoice] = useState<Partial<Invoice>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   
-  // State for similar products dialog
-  const [isSimilarProductsDialogOpen, setIsSimilarProductsDialogOpen] = useState(false);
-  const [currentItemForReplacement, setCurrentItemForReplacement] = useState<{ item: InvoiceItem; index: number } | null>(null);
-
-  
   // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
     if (isEditMode && invoiceToEdit) {
@@ -165,17 +160,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
   
-    const similarProducts = useMemo(() => {
-    if (!currentItemForReplacement) return [];
-    const originalProduct = products.find(p => p.id === currentItemForReplacement.item.productId);
-    if (!originalProduct) return [];
-    
-    return products.filter(p => 
-      p.subCategoryId === originalProduct.subCategoryId && p.id !== originalProduct.id
-    );
-  }, [products, currentItemForReplacement]);
-
-
   const handleAddProduct = (product: Product) => {
     setInvoice(prev => {
       const items = prev.items ? [...prev.items] : [];
@@ -244,49 +228,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       return {...prev, items};
     });
   };
-  
-  const handleOpenSimilarProducts = (item: InvoiceItem, index: number) => {
-    const product = products.find(p => p.id === item.productId);
-    if (!product) {
-        toast({
-            variant: 'destructive',
-            title: 'محصول یافت نشد',
-            description: 'امکان یافتن محصولات مشابه برای آیتم‌های یافت‌نشده وجود ندارد.',
-        });
-        return;
-    }
-    setCurrentItemForReplacement({ item, index });
-    setIsSimilarProductsDialogOpen(true);
-  };
-  
-  const handleReplaceItem = (newProduct: Product) => {
-    if (!currentItemForReplacement) return;
-    const { index } = currentItemForReplacement;
-
-    setInvoice(prev => {
-      const items = [...(prev.items || [])];
-      const oldItem = items[index];
-      
-      items[index] = {
-        ...oldItem,
-        productId: newProduct.id,
-        productName: newProduct.name,
-        unit: newProduct.unit, // Reset unit to main unit of new product
-        unitPrice: newProduct.price,
-        totalPrice: oldItem.quantity * newProduct.price,
-      };
-
-      return { ...prev, items };
-    });
-
-    setIsSimilarProductsDialogOpen(false);
-    toast({
-        variant: 'success',
-        title: 'محصول جایگزین شد',
-        description: `محصول «${newProduct.name}» با موفقیت جایگزین شد.`,
-    });
-  };
-
   
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
@@ -519,7 +460,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         <div className="flex items-center justify-between sm:justify-end gap-2">
                                                             <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>
                                                             <div className="flex items-center">
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenSimilarProducts(item, index)}><Shuffle className="h-4 w-4" /></Button>
                                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                             </div>
                                                         </div>
@@ -591,39 +531,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </div>
         </div>
     </div>
-    
-     {/* Similar Products Dialog */}
-      <Dialog open={isSimilarProductsDialogOpen} onOpenChange={setIsSimilarProductsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>جایگزینی محصول</DialogTitle>
-            <DialogDescription>
-              محصولی را برای جایگزینی «{currentItemForReplacement?.item.productName}» انتخاب کنید.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <ScrollArea className="h-72">
-              <div className="grid gap-3 pr-4">
-                {similarProducts && similarProducts.length > 0 ? similarProducts.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => handleReplaceItem(p)}
-                    className="flex items-center gap-4 text-right w-full p-2 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    <Image src={p.imageUrl} alt={p.name} width={50} height={50} className="rounded-md object-cover" />
-                    <div className="flex-1">
-                      <p className="font-semibold">{p.name}</p>
-                      <p className="text-sm text-muted-foreground">{formatCurrency(p.price)}</p>
-                    </div>
-                  </button>
-                )) : (
-                  <p className="text-center text-muted-foreground py-10">محصول مشابهی در این زیردسته یافت نشد.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

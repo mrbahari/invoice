@@ -116,7 +116,9 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     
     // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
+        // This maps a material name from estimation to possible product names
         'پانل': ['پنل', 'پانل', 'panel'],
+        'پانل گچی': ['پنل', 'پانل', 'panel'],
         'سازه F47': ['f47'],
         'سازه U36': ['u36'],
         'نبشی L25': ['l25'],
@@ -130,27 +132,16 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'پیچ سازه': ['پیچ سازه', 'ln9'],
         'تایل': ['تایل', 'tile'],
         'آویز': ['آویز', 'hanger'],
-        'میخ و چاشنی': ['میخ', 'چاشنی'],
+        'میخ و چاشنی': ['میخ', 'چاشنی', 'میخ و چاشنی'],
         'پشم سنگ': ['پشم سنگ', 'rockwool'],
     };
 
     aggregatedResults.forEach(item => {
         let product: Product | undefined;
-        const materialLowerCase = item.material.toLowerCase().trim();
+        const materialName = item.material;
+        const aliases = productMap[materialName] || [materialName];
         
-        // Find a product that matches any of the aliases in the productMap
-        const matchingKey = Object.keys(productMap).find(key => 
-            productMap[key].some(term => materialLowerCase.includes(term.toLowerCase()))
-        );
-
-        if (matchingKey) {
-             product = products.find(p => 
-                productMap[matchingKey].some(term => p.name.toLowerCase().includes(term.toLowerCase()))
-            );
-        } else {
-            // Fallback to direct name match if no alias found
-            product = products.find(p => p.name.toLowerCase().includes(materialLowerCase));
-        }
+        product = products.find(p => aliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase())));
 
         let quantity = item.quantity;
         let unit = item.unit;
@@ -158,7 +149,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let productId = product ? product.id : `mat-${item.material}`;
         let productName = product ? product.name : item.material;
 
-        if ((item.material.toLowerCase().includes('پیچ پنل') || item.material.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
+        // Convert screw count to packs if needed
+        if ((materialName.toLowerCase().includes('پیچ پنل') || materialName.toLowerCase().includes('پیچ سازه')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
         } else {
@@ -168,10 +160,10 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         const existingInvoiceItemIndex = invoiceItems.findIndex(invItem => invItem.productId === productId && invItem.unit === unit);
 
         if (existingInvoiceItemIndex > -1) {
-            // If item already exists, just update the quantity and total price
-            const existingItem = invoiceItems[existingInvoiceItemIndex];
-            existingItem.quantity += quantity;
-            existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
+            // If item already exists, just update the quantity
+            invoiceItems[existingInvoiceItemIndex].quantity += quantity;
+            const currentItem = invoiceItems[existingInvoiceItemIndex];
+            currentItem.totalPrice = currentItem.quantity * currentItem.unitPrice;
         } else {
             // If it's a new item, add it to the list
             invoiceItems.push({
@@ -185,10 +177,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         }
     });
 
-    if (invoiceItems.length === 0) {
-      toast({ variant: 'destructive', title: 'هیچ محصولی به فاکتور اضافه نشد' });
-      return;
-    }
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
     const invoiceDescription = estimationList.map(est => `- ${est.description}`).join('\n');

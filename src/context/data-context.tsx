@@ -3,7 +3,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
-import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import initialDataFromFile from '@/database/mb.json';
 
@@ -39,7 +38,6 @@ const defaultData = initialDataFromFile as AppData;
 
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
   const [data, setData] = useState<AppData>(defaultData);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -57,11 +55,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error("Could not load initial data:", error);
-        toast({
-          variant: 'destructive',
-          title: 'خطا در بارگذاری داده‌ها',
-          description: 'مشکلی در بارگذاری اطلاعات اولیه برنامه رخ داد.',
-        });
         // Fallback to imported default data on error
         setData(defaultData);
       } finally {
@@ -69,7 +62,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     }
     loadInitialData();
-  }, [toast]);
+  }, []);
 
   // Save data to localStorage whenever it changes
   useEffect(() => {
@@ -78,14 +71,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
       } catch (error) {
         console.error("Failed to save data to localStorage:", error);
-        toast({
-            variant: 'destructive',
-            title: 'خطا در ذخیره‌سازی',
-            description: 'فضای کافی برای ذخیره اطلاعات در مرورگر وجود ندارد.',
-        });
+        console.error("Failed to save data, not enough space.");
       }
     }
-  }, [data, isInitialized, toast]);
+  }, [data, isInitialized]);
 
 
   // This function resets the application state to the initial data from the imported JSON file.
@@ -98,11 +87,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDataFromMb));
       } catch (error) {
            console.error("Failed to reset data", error);
-           toast({
-             variant: 'destructive',
-             title: 'خطا در بازنشانی',
-             description: 'مشکلی در هنگام بازنشانی اطلاعات رخ داد.',
-           });
+           console.error("Failed to reset data.", "An error occurred while resetting data.");
       } finally {
         // Use a timeout to give a visual feedback of the loading state
         setTimeout(() => {
@@ -111,7 +96,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }, 500);
       }
     });
-  }, [toast]);
+  }, []);
   
   // This function completely clears all application data.
   const clearAllData = useCallback(async (): Promise<void> => {
@@ -121,22 +106,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem(LOCAL_STORAGE_KEY);
             // Setting to an empty object structure to avoid errors on reload before useEffect runs
             setData({ customers: [], products: [], invoices: [], stores: [], categories: [], units: [] });
-            toast({
-                variant: 'success',
-                title: 'اطلاعات پاک شد',
-                description: 'تمام داده‌های برنامه با موفقیت حذف شدند.',
-            });
             // Reload the page to ensure the app state is fully reset
             setTimeout(() => {
                 window.location.reload();
             }, 1000); 
         } catch (error) {
             console.error("Failed to clear data", error);
-            toast({
-                variant: 'destructive',
-                title: 'خطا در پاک کردن اطلاعات',
-                description: 'مشکلی در هنگام حذف اطلاعات رخ داد.',
-            });
         } finally {
              setTimeout(() => {
                 setIsResetting(false);
@@ -144,7 +119,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             }, 500);
         }
     });
-  }, [toast]);
+  }, []);
 
 
   const value = {

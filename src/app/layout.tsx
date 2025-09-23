@@ -1,10 +1,7 @@
 
 import type {Metadata} from 'next';
-import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/components/auth/auth-provider';
-import { DataProvider } from '@/context/data-context'; // Import DataProvider
-import { ThemeProvider } from '@/components/theme-provider';
+import { DataProvider } from '@/context/data-context';
+import '@/app/DashboardKit/src/index.scss';
 
 export const metadata: Metadata = {
   title: 'حسابگر',
@@ -24,21 +21,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased overflow-x-hidden">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
           <DataProvider>
-            <AuthProvider>
               <div className="relative z-10">
                 {children}
               </div>
-            </AuthProvider>
           </DataProvider>
-          <Toaster />
-        </ThemeProvider>
       </body>
     </html>
   );

@@ -71,6 +71,25 @@ const useIsClient = () => {
   return isClient;
 };
 
+const formatNumber = (num: number | ''): string => {
+    if (num === '' || num === null || isNaN(Number(num))) return '';
+    return new Intl.NumberFormat('fa-IR').format(Number(num));
+};
+
+const parseFormattedNumber = (str: string): number | '' => {
+    if (!str) return '';
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    const englishDigits = '0123456789';
+    let numericString = str;
+    for (let i = 0; i < 10; i++) {
+        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
+    }
+    numericString = numericString.replace(/[^0-9]/g, '');
+    const number = parseInt(numericString, 10);
+    return isNaN(number) ? '' : number;
+};
+
+
 export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, invoices, units: unitsOfMeasurement } = data;
@@ -91,24 +110,30 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   // State for the invoice being edited
   const [invoice, setInvoice] = useState<Partial<Invoice>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
+
+  // Display state for formatted numbers
+  const [displayDiscount, setDisplayDiscount] = useState('');
+  const [displayAdditions, setDisplayAdditions] = useState('');
+  const [displayTax, setDisplayTax] = useState('');
   
   // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
+    let currentInvoice: Partial<Invoice>;
     if (isEditMode && invoiceToEdit) {
       // Editing an existing invoice
-      setInvoice(invoiceToEdit);
+      currentInvoice = invoiceToEdit;
       const customer = customerList.find(c => c.id === invoiceToEdit.customerId);
       setSelectedCustomer(customer);
     } else if (initialUnsavedInvoice) {
       // Creating a new invoice from an estimator
-      setInvoice({
+      currentInvoice = {
         ...initialUnsavedInvoice,
         invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      });
+      };
       setSelectedCustomer(undefined);
-    } else if (!isEditMode) {
+    } else {
       // Creating a brand new invoice
-      setInvoice({
+      currentInvoice = {
           date: new Date().toISOString(),
           status: 'Pending',
           items: [],
@@ -119,9 +144,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           total: 0,
           description: '',
           invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      });
+      };
       setSelectedCustomer(undefined);
     }
+
+    setInvoice(currentInvoice);
+    // Initialize display values
+    setDisplayDiscount(formatNumber(currentInvoice.discount || 0));
+    setDisplayAdditions(formatNumber(currentInvoice.additions || 0));
+    setDisplayTax(formatNumber(currentInvoice.tax || 0));
+
   }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, invoices.length]);
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -188,7 +220,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     setInvoice(prev => {
         const items = prev.items ? [...prev.items] : [];
         if (items[index]) {
-            (items[index] as any)[field] = value;
+            const numericValue = typeof value === 'string' ? parseFormattedNumber(value) : value;
+            (items[index] as any)[field] = numericValue;
             if (field === 'quantity' || field === 'unitPrice') {
                 items[index].totalPrice = (items[index].quantity || 0) * (items[index].unitPrice || 0);
             }
@@ -231,6 +264,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     });
   };
   
+  const handleFinancialFieldChange = (
+    field: 'discount' | 'additions' | 'tax',
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    value: string
+  ) => {
+    const numericValue = parseFormattedNumber(value);
+    setInvoice(prev => ({...prev, [field]: numericValue === '' ? 0 : numericValue}));
+    setter(formatNumber(numericValue));
+  };
+
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
       toast({ variant: 'destructive', title: 'مشتری یا آیتم‌های فاکتور انتخاب نشده است.' });
@@ -285,10 +328,29 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         }
     }
   };
+
+  const renderItemPrice = (index: number) => {
+    const item = invoice.items?.[index];
+    if (!item) return '';
+
+    const handleItemPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        handleItemChange(index, 'unitPrice', value);
+    };
+
+    return (
+        <Input 
+            value={formatNumber(item.unitPrice)}
+            onChange={handleItemPriceChange}
+            placeholder="مبلغ واحد"
+            className="text-right font-mono"
+        />
+    );
+  };
   
    return (
     <>
-    <div className="grid auto-rows-max items-start gap-4 md:gap-8">
+    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
             <div className="flex-1">
                 <h1 className="text-xl font-semibold tracking-tight">
@@ -300,247 +362,268 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                 </Button>
-                <Button onClick={handleSaveAndExit} disabled={isProcessing} className="bg-green-600 hover:bg-green-700">
-                    <Save className="ml-2 h-4 w-4" />
-                    {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
-                </Button>
             </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-             <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>اطلاعات مشتری</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       {selectedCustomer ? (
-                            <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-12 w-12 border">
-                                        <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
-                                        <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{selectedCustomer.name}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+        <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
+            <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+                <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>اطلاعات مشتری</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                        {selectedCustomer ? (
+                                <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 border">
+                                            <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
+                                            <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{selectedCustomer.name}</p>
+                                            <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                                        </div>
                                     </div>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline">
+                                            <Pencil className="ml-1 h-3 w-3" />
+                                            تغییر
+                                        </Button>
+                                    </DialogTrigger>
                                 </div>
+                            ) : (
                                 <DialogTrigger asChild>
-                                    <Button variant="outline">
-                                        <Pencil className="ml-1 h-3 w-3" />
-                                        تغییر
+                                    <Button variant="outline" className="w-full h-20 border-dashed">
+                                        <UserPlus className="ml-2 h-5 w-5" />
+                                        انتخاب مشتری از لیست
                                     </Button>
                                 </DialogTrigger>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>انتخاب مشتری</DialogTitle>
+                            <DialogDescription>
+                                مشتری مورد نظر خود را جستجو و انتخاب کنید.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 grid gap-4">
+                            <div className="relative">
+                                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                             </div>
-                        ) : (
-                            <DialogTrigger asChild>
-                                <Button variant="outline" className="w-full h-20 border-dashed">
-                                    <UserPlus className="ml-2 h-5 w-5" />
-                                    انتخاب مشتری از لیست
-                                </Button>
-                            </DialogTrigger>
-                        )}
+                            <ScrollArea className="h-[60vh]">
+                                <div className="grid gap-2 pr-4">
+                                    {(filteredCustomers || []).map(customer => {
+                                        return(
+                                            <Button
+                                                key={customer.id}
+                                                variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                                                className="h-16 justify-start text-right"
+                                                onClick={() => {
+                                                    setSelectedCustomer(customer);
+                                                    setIsCustomerDialogOpen(false);
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-4 text-right w-full">
+                                                    <Avatar className="h-10 w-10 border">
+                                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                        <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className='text-base font-semibold'>{customer.name}</p>
+                                                        <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                                    </div>
+                                                </div>
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
+                            </ScrollArea>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>آیتم‌های فاکتور</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4">
+                            {isClient ? (
+                                <DragDropContext onDragEnd={handleDragEnd}>
+                                    <Droppable droppableId="invoice-items">
+                                    {(provided) => (
+                                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
+                                        {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
+                                            const product = products.find(p => p.id === item.productId);
+                                            const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
+                                            const isProductFound = !!product;
+
+                                            return (
+                                            <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
+                                                {(provided) => (
+                                                    <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden bg-muted/30">
+                                                        <CardContent className="p-2">
+                                                            <div className="grid grid-cols-12 items-center gap-2">
+                                                                <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center border-l col-span-1">
+                                                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                                </div>
+                                                                <div className="col-span-11 sm:col-span-3">
+                                                                    <p className="font-semibold truncate">{item.productName}</p>
+                                                                </div>
+                                                                <div className="col-span-full sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                                    <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} placeholder="مقدار" />
+                                                                    {isProductFound && availableUnits.length > 1 ? (
+                                                                        <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
+                                                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                            <SelectContent>
+                                                                                {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                    ) : (
+                                                                        <Input value={item.unit} disabled className="bg-background/50" />
+                                                                    )}
+                                                                    {renderItemPrice(index)}
+                                                                    <Input value={formatCurrency(item.totalPrice)} disabled placeholder="مبلغ کل" className="bg-background/50 font-mono text-right" />
+                                                                </div>
+                                                                <div className="col-span-full sm:col-span-2 flex items-center justify-end gap-2">
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                                                </div>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                )}
+                                            </Draggable>
+                                            );
+                                        }) : (
+                                            <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
+                                        )}
+                                        {provided.placeholder}
+                                        </div>
+                                    )}
+                                    </Droppable>
+                                </DragDropContext>
+                                ) : (
+                                    <div className="text-center py-10">در حال بارگذاری...</div>
+                                )}
+                        </div>
                     </CardContent>
                 </Card>
 
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>انتخاب مشتری</DialogTitle>
-                         <DialogDescription>
-                            مشتری مورد نظر خود را جستجو و انتخاب کنید.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 grid gap-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>افزودن محصولات</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
                         <div className="relative">
                             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                            <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                         </div>
-                        <ScrollArea className="h-[60vh]">
-                            <div className="grid gap-2 pr-4">
-                                {(filteredCustomers || []).map(customer => {
-                                    return(
-                                        <Button
-                                            key={customer.id}
-                                            variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                            className="h-16 justify-start text-right"
-                                            onClick={() => {
-                                                setSelectedCustomer(customer);
-                                                setIsCustomerDialogOpen(false);
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-4 text-right w-full">
-                                                <Avatar className="h-10 w-10 border">
-                                                    <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                    <AvatarFallback>{customer.name[0]}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className='text-base font-semibold'>{customer.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                                                </div>
-                                            </div>
-                                        </Button>
-                                    );
-                                })}
-                            </div>
-                        </ScrollArea>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>پرداخت</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                     <div className="space-y-2 text-sm">
-                        <div className="flex justify-between font-semibold text-lg pt-2">
-                            <span>جمع کل</span>
-                            <span>{formatCurrency(invoice.total || 0)}</span>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-
-
-        <Card>
-        <CardHeader>
-            <CardTitle>آیتم‌های فاکتور</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <div className="grid gap-4">
-                {isClient ? (
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="invoice-items">
-                        {(provided) => (
-                            <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
-                            {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
-                                const product = products.find(p => p.id === item.productId);
-                                const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
-                                const isProductFound = !!product;
-
-                                return (
-                                <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
-                                    {(provided) => (
-                                        <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden bg-muted/30">
-                                            <CardContent className="p-2">
-                                                <div className="grid grid-cols-12 items-center gap-2">
-                                                    <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center border-l col-span-1">
-                                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                    </div>
-                                                    <div className="col-span-11 sm:col-span-3">
-                                                        <p className="font-semibold truncate">{item.productName}</p>
-                                                    </div>
-                                                    <div className="col-span-full sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                        <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} placeholder="مقدار" />
-                                                        {isProductFound && availableUnits.length > 1 ? (
-                                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
-                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                <SelectContent>
-                                                                    {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                                                                </SelectContent>
-                                                            </Select>
-                                                        ) : (
-                                                            <Input value={item.unit} disabled className="bg-background/50" />
-                                                        )}
-                                                         <Input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} placeholder="مبلغ واحد" />
-                                                         <Input value={formatCurrency(item.totalPrice)} disabled placeholder="مبلغ کل" className="bg-background/50 font-mono" />
-                                                    </div>
-                                                    <div className="col-span-full sm:col-span-2 flex items-center justify-end gap-2">
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
-                                </Draggable>
-                                );
-                            }) : (
-                                <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
-                            )}
-                            {provided.placeholder}
-                            </div>
-                        )}
-                        </Droppable>
-                    </DragDropContext>
-                    ) : (
-                         <div className="text-center py-10">در حال بارگذاری...</div>
-                    )}
-            </div>
-        </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>افزودن محصولات</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                <div className="relative">
-                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                </div>
-                 <div
-                    ref={productsRef}
-                    className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
-                    {...draggableEvents}
-                >
-                    {(filteredProducts || []).map(product => (
-                        <Card
-                            key={product.id}
-                            onClick={() => handleAddProduct(product)}
-                            className="w-32 flex-shrink-0"
+                        <div
+                            ref={productsRef}
+                            className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
+                            {...draggableEvents}
                         >
-                            <CardContent className="p-2">
-                                <div className="relative w-full aspect-square mb-2">
-                                    <Image 
-                                        src={product.imageUrl} 
-                                        alt={product.name} 
-                                        fill 
-                                        className="rounded-md object-cover"
-                                        draggable="false"
-                                    />
-                                </div>
-                                <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+                            {(filteredProducts || []).map(product => (
+                                <Card
+                                    key={product.id}
+                                    onClick={() => handleAddProduct(product)}
+                                    className="w-32 flex-shrink-0"
+                                >
+                                    <CardContent className="p-2">
+                                        <div className="relative w-full aspect-square mb-2">
+                                            <Image 
+                                                src={product.imageUrl} 
+                                                alt={product.name} 
+                                                fill 
+                                                className="rounded-md object-cover"
+                                                draggable="false"
+                                            />
+                                        </div>
+                                        <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>خلاصه مالی</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
+                         <div className="grid gap-3">
+                            <Label>جمع جزء</Label>
+                            <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono text-lg h-12" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-3">
+                                <Label htmlFor="discount">تخفیف (ریال)</Label>
+                                <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                            </div>
+                             <div className="grid gap-3">
+                                <Label htmlFor="additions">اضافات (ریال)</Label>
+                                <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                            </div>
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
+                            <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
+                        </div>
+                        <Separator />
+                        <div className="grid gap-3">
+                            <Label className="text-base">جمع کل</Label>
+                            <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-2xl h-16 font-bold" />
+                        </div>
+                    </CardContent>
+                </Card>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>توضیحات</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="grid gap-3">
-                    <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} />
-                </div>
-            </CardContent>
-        </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>توضیحات</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-3">
+                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {isEditMode && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>عملیات</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-2">
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف این فاکتور</Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+        </div>
     </div>
     <div className="sticky bottom-[90px] md:bottom-0 z-50 p-4 bg-card border-t mt-4">
-        <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
-            <div className="w-full sm:w-auto">
-            {isEditMode && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف فاکتور</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
-            </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-                <Button variant="outline" className="flex-1" onClick={handlePreviewClick}>
-                    <Eye className="ml-2 h-4 w-4" />
-                    پیش‌نمایش
-                </Button>
-                {isEditMode && (
+        <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+            <div>
+                 {isEditMode && (
                     <div className="grid gap-2">
                         <Label htmlFor="status" className="sr-only">وضعیت</Label>
                         <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => {setInvoice(prev => ({...prev, status: value}));}}>
@@ -549,7 +632,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         </Select>
                     </div>
                 )}
-                
+            </div>
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+                <Button variant="outline" className="flex-1" onClick={handlePreviewClick}>
+                    <Eye className="ml-2 h-4 w-4" />
+                    پیش‌نمایش
+                </Button>
                 <Button onClick={handleSaveAndExit} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
             </div>
         </div>

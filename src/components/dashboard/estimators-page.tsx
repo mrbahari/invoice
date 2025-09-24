@@ -117,15 +117,16 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     
     // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
-        'پنل والیز': ['پنل والیز', 'پانل', 'panel'],
+        'پنل والیز': ['پنل والیز', 'پانل گچی', 'panel'],
+        'پنل جی برد': ['پنل جی برد', 'پانل گچی', 'panel'],
         'تایل پی وی سی': ['تایل پی وی سی', 'تایل', 'tile'],
-        'سازه f47': ['f47'],
-        'سازه u36': ['u36'],
-        'نبشی l25': ['l25'],
-        'نبشی l24': ['l24'],
-        'سپری t360': ['t360'],
-        'سپری t120': ['t120'],
-        'سپری t60': ['t60'],
+        'سازه f47': ['سازه f47', 'f47'],
+        'سازه u36': ['سازه u36', 'u36'],
+        'نبشی l25': ['نبشی l25', 'l25'],
+        'نبشی l24': ['نبشی l24', 'l24'],
+        'سپری t360': ['سپری t360', 't360'],
+        'سپری t120': ['سپری t120', 't120'],
+        'سپری t60': ['سپری t60', 't60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
         'پیچ ۲.۵': ['پیچ ۲.۵', 'پیچ پنل', 'tn25'],
@@ -141,7 +142,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         
         let foundKey: string | undefined;
         for (const key in productMap) {
-            if (productMap[key].includes(materialNameLower)) {
+            if (productMap[key].some(alias => materialNameLower.includes(alias.toLowerCase()))) {
                 foundKey = key;
                 break;
             }
@@ -150,7 +151,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         const aliases = foundKey ? productMap[foundKey] : [materialNameLower];
 
         product = products.find(p => 
-            aliases.some(alias => p.name.toLowerCase().includes(alias))
+            aliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase()))
         );
 
         let quantity = item.quantity;

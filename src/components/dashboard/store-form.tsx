@@ -155,6 +155,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       storeId: store?.id || 'temp', // temp id until store is saved
     };
     setStoreCategories(prev => [...prev, newCat]);
+    // Also update global state
+    setData(prevData => ({ ...prevData, categories: [...prevData.categories, newCat]}));
     setNewCategoryName('');
   };
 
@@ -168,6 +170,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       parentId,
     };
     setStoreCategories(prev => [...prev, newSubCat]);
+     // Also update global state
+    setData(prevData => ({ ...prevData, categories: [...prevData.categories, newSubCat]}));
     setNewSubCategoryNames(prev => ({ ...prev, [parentId]: '' }));
   };
 

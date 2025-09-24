@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import initialDataFromFile from '@/database/mb.json';
+import Defaultdb from '@/database/defaultdb.json';
 
 
 // Define the shape of our data
@@ -33,7 +32,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
-const defaultData = initialDataFromFile as AppData;
+const defaultData = Defaultdb as AppData;
 
 
 // Create the provider component
@@ -81,20 +80,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const resetData = useCallback(async (): Promise<void> => {
     return new Promise((resolve) => {
       setIsResetting(true);
-      try {
-          const defaultDataFromMb = initialDataFromFile as AppData;
-          setData(defaultDataFromMb);
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDataFromMb));
-      } catch (error) {
-           console.error("Failed to reset data", error);
-           console.error("Failed to reset data.", "An error occurred while resetting data.");
-      } finally {
-        // Use a timeout to give a visual feedback of the loading state
-        setTimeout(() => {
+      fetch('/db/backup.json')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(backupData => {
+          setData(backupData);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(backupData));
+        })
+        .catch(error => {
+          console.error("Failed to fetch backup data, falling back to default:", error);
+          // Fallback to the imported default data if fetch fails
+          setData(defaultData);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
+        })
+        .finally(() => {
+          setTimeout(() => {
             setIsResetting(false);
             resolve();
-        }, 500);
-      }
+          }, 500);
+        });
     });
   }, []);
   

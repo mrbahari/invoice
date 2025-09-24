@@ -89,7 +89,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         }
     }, []);
 
-  const availableSubCategories = categories.filter(c => c.storeId === storeId && c.parentId);
+  const availableSubCategories = categories ? categories.filter(c => c.storeId === storeId && c.parentId) : [];
   
   const formatNumber = (num: number | ''): string => {
     if (num === '' || num === null || isNaN(Number(num))) return '';
@@ -451,7 +451,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         قیمت اصلی (ریال)
                                     </Label>
                                     <div className="col-span-2 flex items-center gap-2">
-                                        <Input id="price" value={displayPrice} onChange={handlePriceChange} required className="flex-1" />
+                                        <Input id="price" value={displayPrice} onChange={handlePriceChange} required className="flex-1 font-mono" />
                                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleAiGeneration('price')} disabled={aiLoading.price}>
                                             {aiLoading.price ? <LoaderCircle className="animate-spin" /> : <WandSparkles />}
                                         </Button>
@@ -459,7 +459,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="sub-unit-price" className="text-right">قیمت فرعی (ریال)</Label>
-                                    <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'} disabled={!showSubUnitFields} className="col-span-2" />
+                                    <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'} disabled={!showSubUnitFields} className="col-span-2 font-mono" />
                                 </div>
                             </div>
                             {showSubUnitFields && subUnitQuantity && price && (

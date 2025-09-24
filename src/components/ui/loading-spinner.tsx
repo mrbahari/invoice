@@ -1,91 +1,90 @@
-
 'use client';
 
 import { motion } from 'framer-motion';
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-      ease: 'easeInOut',
-    },
-  },
-};
-
-const textContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
-
-const letterVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-  },
-};
+import { cn } from '@/lib/utils';
 
 export function LoadingSpinner() {
   const loadingText = 'درحال بارگذاری...';
+  const colors = [
+    'hsl(var(--primary))',
+    'hsl(var(--accent))',
+    'hsl(var(--secondary))',
+    'hsl(var(--muted-foreground))',
+  ];
+
+  const containerVariants = {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
+      transition: {
+        duration: 0.3,
+        ease: 'easeInOut',
+      },
+    },
+    exit: {
+        opacity: 0,
+        transition: {
+          duration: 0.3,
+          ease: 'easeInOut',
+        },
+    }
+  };
+
+  const textVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1, transition: { duration: 0.5, delay: 0.5 } },
+  };
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm"
       variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
+      initial="initial"
+      animate="animate"
+      exit="exit"
     >
-      <div className="relative h-24 w-24">
-        <motion.div
-          className="absolute inset-0 rounded-full border-4 border-t-transparent border-l-transparent"
-          style={{
-            borderRightColor: '#3b82f6', // blue-500
-            borderBottomColor: '#a855f7', // purple-500
-          }}
-          animate={{ rotate: 360 }}
-          transition={{
-            loop: Infinity,
-            duration: 1.2,
-            ease: 'linear',
-          }}
-        />
-        <motion.div
-          className="absolute inset-2 rounded-full border-4 border-b-transparent border-r-transparent"
-          style={{
-            borderLeftColor: '#ec4899', // pink-500
-            borderTopColor: '#8b5cf6', // violet-500
-          }}
-          animate={{ rotate: -360 }}
-          transition={{
-            loop: Infinity,
-            duration: 0.8,
-            ease: 'linear',
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-lg"></div>
+      <div className="relative h-28 w-28">
+        {[...Array(4)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute inset-0 flex items-center justify-center"
+            animate={{
+              rotate: 360,
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              loop: Infinity,
+              duration: 8 + i * 2,
+              ease: 'linear',
+              delay: i * 0.2,
+            }}
+          >
+            <div
+              className={cn(
+                'aspect-square rounded-lg border-2',
+                'absolute'
+              )}
+              style={{
+                width: `${75 - i * 18}%`,
+                height: `${75 - i * 18}%`,
+                borderColor: colors[i],
+                transform: `rotate(${i * 20}deg)`,
+                boxShadow: `0 0 10px ${colors[i]}, inset 0 0 10px ${colors[i]}`,
+                opacity: 0.8
+              }}
+            />
+          </motion.div>
+        ))}
+         <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-primary/10 via-accent/10 to-secondary/10 blur-xl"></div>
         </div>
       </div>
-      <motion.div
-        className="mt-6 flex overflow-hidden text-lg font-medium text-gray-300"
-        variants={textContainerVariants}
-        initial="hidden"
-        animate="visible"
+      <motion.p
+        className="mt-8 text-lg font-medium text-foreground tracking-widest"
+        variants={textVariants}
       >
-        {loadingText.split('').map((char, index) => (
-          <motion.span key={index} variants={letterVariants} className={char === ' ' ? 'w-2' : ''}>
-            {char}
-          </motion.span>
-        ))}
-      </motion.div>
+        {loadingText}
+      </motion.p>
     </motion.div>
   );
 }

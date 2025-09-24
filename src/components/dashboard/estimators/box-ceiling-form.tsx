@@ -35,7 +35,7 @@ export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
     return [
       { material: 'پیچ ۲.۵', quantity: screws, unit: 'عدد' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
-      { material: 'پنل والیز', quantity: panels, unit: 'عدد' },
+      { material: 'پنل والیز', quantity: panels, unit: 'برگ' },
     ].filter(item => item.quantity > 0);
   }, [length]);
   

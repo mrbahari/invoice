@@ -58,7 +58,7 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
       { material: 'سازه F47', quantity: f47Profiles, unit: 'شاخه' },
       { material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
-      { material: 'پنل والیز', quantity: panels, unit: 'عدد' },
+      { material: 'پنل والیز', quantity: panels, unit: 'برگ' },
       { material: 'میخ و چاشنی', quantity: nailAndChargePacks, unit: 'بسته' },
       { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
       { material: 'پیچ ۲.۵', quantity: totalPanelScrews, unit: 'عدد' },

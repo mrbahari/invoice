@@ -38,15 +38,16 @@ export function LoadingSpinner() {
     initial: {},
     animate: {
       transition: {
-        staggerChildren: 0.15,
+        staggerChildren: 0.1,
+        staggerDirection: 1,
       },
     },
   };
 
   const barVariants = {
-    initial: { y: '0%' },
+    initial: { y: '100%' },
     animate: {
-      y: ['0%', '100%', '0%'],
+      y: ['100%', '0%', '100%'],
       transition: {
         duration: 1.5,
         ease: 'easeInOut',
@@ -64,15 +65,15 @@ export function LoadingSpinner() {
       exit="exit"
     >
       <motion.div 
-        className="flex items-end justify-center h-12 w-24 gap-1"
+        className="flex items-end h-12 w-24 gap-1"
         variants={barContainerVariants}
       >
         {[...Array(5)].map((_, i) => (
-           <div key={i} className="w-3 h-full overflow-hidden">
+           <div key={i} className="w-3 h-full overflow-hidden bg-background">
                 <motion.div
                     className="w-full h-full bg-primary"
                     variants={barVariants}
-                    transition={{ ...barVariants.transition, delay: i * 0.1 }}
+                    transition={{ ...barVariants.transition, delay: i * 0.15 }}
                 />
            </div>
         ))}

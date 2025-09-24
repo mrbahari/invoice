@@ -27,6 +27,19 @@
   ],
   "products": [
     {
+      "id": "prod-03wsqgmuw",
+      "name": "پشم سنگ دانسیته 50",
+      "code": "",
+      "description": "پشم سنگ دانسیته 50، انتخابی ایده‌آل برای عایق‌کاری حرارتی و صوتی در ساختمان‌ها و صنایع. با مقاومت بالا در برابر حرارت و آتش، راهکاری مطمئن برای کاهش مصرف انرژی و افزایش ایمنی محیط است.",
+      "price": 1850000,
+      "storeId": "store-rmn4dd0j1",
+      "subCategoryId": "cat-tdypiio2r",
+      "unit": "بسته",
+      "subUnitQuantity": 0,
+      "subUnitPrice": 0,
+      "imageUrl": "data:image/jpeg;base64,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"
+    },
+    {
       "id": "prod-ioz0fpkp5",
       "name": "تایل پی وی سی",
       "code": "",
@@ -172,8 +185,8 @@
       "code": "",
       "description": "پیچ پنل 2.5 کناف، انتخابی ایده‌آل برای نصب سریع و ایمن پنل‌های گچی. با طراحی مقاوم و نوک تیز، نفوذ آسان و اتصال محکم را تضمین می‌کند و پروژه‌های کناف شما را به بهترین شکل به اتمام می‌رساند.",
       "price": 4600000,
-      "storeId": "store-dekorband",
-      "subCategoryId": "cat-kymcjdgzs",
+      "storeId": "store-rmn4dd0j1",
+      "subCategoryId": "cat-wsmndjx8g",
       "unit": "بسته",
       "subUnit": "عدد",
       "subUnitQuantity": 1000,
@@ -322,6 +335,248 @@
     }
   ],
   "invoices": [
+    {
+      "invoiceNumber": "INV-1553",
+      "customerId": "cust-uv6dic62a",
+      "customerName": "اصغر حسن زاده | شرکت همراه کوشا کیش",
+      "customerEmail": "ایمیل ثبت نشده",
+      "date": "2025-09-24T18:43:48.520Z",
+      "status": "Pending",
+      "items": [
+        {
+          "productId": "mat-پیچ-۲.۵",
+          "productName": "پیچ ۲.۵",
+          "quantity": 2,
+          "unit": "بسته",
+          "unitPrice": 0,
+          "totalPrice": 0
+        },
+        {
+          "productId": "prod-ok2tikiw6",
+          "productName": "L25 نبشی",
+          "quantity": 16,
+          "unit": "شاخه",
+          "unitPrice": 600000,
+          "totalPrice": 9600000
+        },
+        {
+          "productId": "prod-pb3qrc09n",
+          "productName": "پنل والیز",
+          "quantity": 24,
+          "unit": "برگ",
+          "unitPrice": 3500000,
+          "totalPrice": 84000000
+        },
+        {
+          "productId": "prod-1onwme7ao",
+          "productName": "نبشی L24",
+          "quantity": 6,
+          "unit": "شاخه",
+          "unitPrice": 650000,
+          "totalPrice": 3900000
+        },
+        {
+          "productId": "prod-n697qpd6m",
+          "productName": "سپری T360",
+          "quantity": 5,
+          "unit": "شاخه",
+          "unitPrice": 1152000,
+          "totalPrice": 5760000
+        },
+        {
+          "productId": "prod-kpki0s342",
+          "productName": "سپری T120",
+          "quantity": 20,
+          "unit": "شاخه",
+          "unitPrice": 384000,
+          "totalPrice": 7680000
+        },
+        {
+          "productId": "prod-5aw71so6j",
+          "productName": "سپری T60",
+          "quantity": 23,
+          "unit": "شاخه",
+          "unitPrice": 192000,
+          "totalPrice": 4416000
+        },
+        {
+          "productId": "prod-ioz0fpkp5",
+          "productName": "تایل پی وی سی",
+          "quantity": 46,
+          "unit": "عدد",
+          "unitPrice": 1800000,
+          "totalPrice": 82800000
+        },
+        {
+          "productId": "mat-آویز",
+          "productName": "آویز",
+          "quantity": 13,
+          "unit": "عدد",
+          "unitPrice": 0,
+          "totalPrice": 0
+        },
+        {
+          "productId": "prod-3vbal8r5t",
+          "productName": "F47 ضخامت 0.6",
+          "quantity": 7,
+          "unit": "شاخه",
+          "unitPrice": 108000,
+          "totalPrice": 756000
+        },
+        {
+          "productId": "prod-jzqwsyrlb",
+          "productName": "U36",
+          "quantity": 4,
+          "unit": "شاخه",
+          "unitPrice": 800000,
+          "totalPrice": 3200000
+        },
+        {
+          "productId": "prod-19q0bl8zv",
+          "productName": "میخ و چاشنی آهن",
+          "quantity": 1,
+          "unit": "بسته",
+          "unitPrice": 4200000,
+          "totalPrice": 4200000
+        },
+        {
+          "productId": "prod-e5vwe4ugd",
+          "productName": "پیچ سازه",
+          "quantity": 1,
+          "unit": "بسته",
+          "unitPrice": 4500000,
+          "totalPrice": 4500000
+        },
+        {
+          "productId": "prod-mnlj5syxn",
+          "productName": "رانر 70",
+          "quantity": 6,
+          "unit": "شاخه",
+          "unitPrice": 1628000,
+          "totalPrice": 9768000
+        },
+        {
+          "productId": "prod-cc3873duy",
+          "productName": "استاد 70",
+          "quantity": 12,
+          "unit": "شاخه",
+          "unitPrice": 1840000,
+          "totalPrice": 22080000
+        },
+        {
+          "productId": "mat-پشم-سنگ",
+          "productName": "پشم سنگ",
+          "quantity": 5,
+          "unit": "بسته",
+          "unitPrice": 0,
+          "totalPrice": 0
+        }
+      ],
+      "subtotal": 242660000,
+      "discount": 0,
+      "additions": 0,
+      "tax": 0,
+      "total": 242660000,
+      "description": "ایجاد شده از برآورد مصالح برای بخش‌های:\n- باکس و نورمخفی: 10 متر\n- سقف مشبک: 4 * 4 متر\n- سقف فلت: 4 * 4 متر\n- دیوار جداکننده: 7 * 3 متر (با پشم سنگ)",
+      "id": "inv-kihjh8bnn"
+    },
+    {
+      "invoiceNumber": "INV-1552",
+      "customerId": "cust-uv6dic62a",
+      "customerName": "اصغر حسن زاده | شرکت همراه کوشا کیش",
+      "customerEmail": "ایمیل ثبت نشده",
+      "date": "2025-09-24T18:23:09.777Z",
+      "status": "Pending",
+      "items": [
+        {
+          "productId": "mat-پیچ-۲.۵",
+          "productName": "پیچ ۲.۵",
+          "quantity": 2,
+          "unit": "بسته",
+          "unitPrice": 0,
+          "totalPrice": 0
+        },
+        {
+          "productId": "mat-نبشی-L25",
+          "productName": "نبشی L25",
+          "quantity": 14,
+          "unit": "شاخه",
+          "unitPrice": 0,
+          "totalPrice": 0
+        },
+        {
+          "productId": "prod-pb3qrc09n",
+          "productName": "پنل والیز",
+          "quantity": 16,
+          "unit": "برگ",
+          "unitPrice": 3500000,
+          "totalPrice": 56000000
+        },
+        {
+          "productId": "mat-سازه-F47",
+          "productName": "سازه F47",
+          "quantity": 9,
+          "unit": "شاخه",
+          "unitPrice": 0,
+          "totalPrice": 0
+        },
+        {
+          "productId": "mat-سازه-U36",
+          "productName": "سازه U36",
+          "quantity": 5,
+          "unit": "شاخه",
+          "unitPrice": 0,
+          "totalPrice": 0
+        },
+        {
+          "productId": "prod-19q0bl8zv",
+          "productName": "میخ و چاشنی آهن",
+          "quantity": 1,
+          "unit": "بسته",
+          "unitPrice": 4200000,
+          "totalPrice": 4200000
+        },
+        {
+          "productId": "prod-e5vwe4ugd",
+          "productName": "پیچ سازه",
+          "quantity": 1,
+          "unit": "بسته",
+          "unitPrice": 4500000,
+          "totalPrice": 4500000
+        },
+        {
+          "productId": "prod-mnlj5syxn",
+          "productName": "رانر 70",
+          "quantity": 4,
+          "unit": "شاخه",
+          "unitPrice": 1628000,
+          "totalPrice": 6512000
+        },
+        {
+          "productId": "prod-cc3873duy",
+          "productName": "استاد 70",
+          "quantity": 5,
+          "unit": "شاخه",
+          "unitPrice": 1840000,
+          "totalPrice": 9200000
+        },
+        {
+          "productId": "mat-پشم-سنگ",
+          "productName": "پشم سنگ",
+          "quantity": 3,
+          "unit": "بسته",
+          "unitPrice": 0,
+          "totalPrice": 0
+        }
+      ],
+      "subtotal": 80412000,
+      "discount": 0,
+      "additions": 0,
+      "tax": 0,
+      "total": 80412000,
+      "description": "ایجاد شده از برآورد مصالح برای بخش‌های:\n- باکس و نورمخفی: 8 متر\n- سقف فلت: 5 * 4 متر\n- دیوار جداکننده: 3 * 3 متر (با پشم سنگ)",
+      "id": "inv-xeq4bkcyc"
+    },
     {
       "id": "inv-xd99ajcuo",
       "invoiceNumber": "EST-0006",
@@ -723,6 +978,12 @@
       "name": "سازه سقف مشبک",
       "storeId": "store-rmn4dd0j1",
       "parentId": "cat-4wvkm1da4"
+    },
+    {
+      "id": "cat-tdypiio2r",
+      "name": "پشم سنگ",
+      "storeId": "store-rmn4dd0j1",
+      "parentId": "cat-4wvkm1da4"
     }
   ],
   "units": [
@@ -759,5 +1020,5 @@
       "defaultQuantity": 1
     }
   ],
-  "backupDate": "2025-09-23T13:28:01.287Z"
+  "backupDate": "2025-09-24T19:30:10.613Z"
 }

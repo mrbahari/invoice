@@ -44,9 +44,9 @@ export function LoadingSpinner() {
   };
 
   const barVariants = {
-    initial: { y: '100%' },
+    initial: { y: '0%' },
     animate: {
-      y: ['100%', '0%', '100%'],
+      y: ['0%', '100%', '0%'],
       transition: {
         duration: 1.5,
         ease: 'easeInOut',

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { motion } from 'framer-motion';
@@ -11,57 +12,42 @@ export function LoadingSpinner() {
       opacity: 1,
       transition: {
         duration: 0.5,
-        ease: 'easeInOut',
       },
     },
-    exit: {
-      opacity: 0,
+  };
+
+  const textVariants = {
+    initial: { opacity: 0, y: 10 },
+    animate: {
+      opacity: 1,
+      y: 0,
       transition: {
         duration: 0.5,
-        ease: 'easeInOut',
+        delay: 0.2,
+      },
+    },
+  };
+
+  const barContainerVariants = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1,
       },
     },
   };
   
-  const textVariants = {
-    initial: { opacity: 0 },
-    animate: { 
-        opacity: 1,
-        transition: {
-            duration: 0.8,
-            delay: 0.5,
-        }
-    },
-  };
-
-  const loadingContainerVariants = {
-    start: {
+  const barVariants = {
+    animate: (i: number) => ({
+      scaleY: [1, 1.5, 1],
       transition: {
-        staggerChildren: 0.1,
+        duration: 1,
+        repeat: Infinity,
+        ease: 'easeInOut',
+        delay: i * 0.1,
       },
-    },
-    end: {
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    }),
   };
 
-  const loadingCircleVariants = {
-    start: {
-      y: "0%",
-    },
-    end: {
-      y: "100%",
-    },
-  };
-
-  const loadingCircleTransition = {
-    duration: 0.4,
-    repeat: Infinity,
-    repeatType: "reverse" as const,
-    ease: "easeInOut",
-  };
 
   return (
     <motion.div
@@ -69,21 +55,22 @@ export function LoadingSpinner() {
       variants={containerVariants}
       initial="initial"
       animate="animate"
-      exit="exit"
+      exit="initial"
     >
-      <motion.div
-        className="flex justify-around w-20 h-10"
-        variants={loadingContainerVariants}
-        initial="start"
-        animate="end"
+      <motion.div 
+        className="flex items-end h-12 gap-1.5"
+        variants={barContainerVariants}
+        initial="initial"
+        animate="animate"
       >
         {[...Array(5)].map((_, i) => (
-           <motion.span
+          <motion.div
             key={i}
-            className="block w-3 h-full bg-primary rounded-full"
-            variants={loadingCircleVariants}
-            transition={{ ...loadingCircleTransition, delay: i * 0.1 }}
-           />
+            className="w-3 bg-primary rounded-full"
+            style={{ height: `${(i === 2 ? 32 : (i === 1 || i === 3) ? 24 : 16)}px` }}
+            variants={barVariants}
+            custom={i}
+          />
         ))}
       </motion.div>
       <motion.p

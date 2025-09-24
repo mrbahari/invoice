@@ -1,8 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import CanvasBackground from '../canvas-background';
 
 export function LoadingSpinner() {
   const loadingText = 'درحال بارگذاری...';
@@ -17,59 +15,73 @@ export function LoadingSpinner() {
       },
     },
     exit: {
-        opacity: 0,
+      opacity: 0,
+      transition: {
+        duration: 0.5,
+        ease: 'easeInOut',
+      },
+    },
+  };
+  
+  const textVariants = {
+    initial: { opacity: 0 },
+    animate: { 
+        opacity: 1,
         transition: {
-          duration: 0.5,
-          ease: 'easeInOut',
-        },
-    }
+            duration: 0.8,
+            delay: 0.5,
+        }
+    },
   };
 
-  const textContainerVariants = {
+  const barContainerVariants = {
     initial: {},
     animate: {
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
+        staggerChildren: 0.15,
       },
     },
   };
 
-  const letterVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { 
-      opacity: 1, 
-      y: 0,
+  const barVariants = {
+    initial: { y: '100%' },
+    animate: {
+      y: ['100%', '0%', '100%'],
       transition: {
-        ease: "circOut",
-        duration: 0.5
-      }
+        duration: 1.5,
+        ease: 'easeInOut',
+        repeat: Infinity,
+      },
     },
   };
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background"
       variants={containerVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
-      <CanvasBackground />
-      <motion.p
-        className="mt-8 text-lg font-medium text-foreground tracking-widest"
-        variants={textContainerVariants}
-        aria-label={loadingText}
+      <motion.div 
+        className="flex items-end justify-center h-12 w-24 gap-1"
+        variants={barContainerVariants}
       >
-        {loadingText.split('').map((char, index) => (
-          <motion.span
-            key={index}
-            variants={letterVariants}
-            className="inline-block"
-          >
-            {char}
-          </motion.span>
+        {[...Array(5)].map((_, i) => (
+           <div key={i} className="w-3 h-full overflow-hidden">
+                <motion.div
+                    className="w-full h-full bg-primary"
+                    variants={barVariants}
+                    transition={{ ...barVariants.transition, delay: i * 0.1 }}
+                />
+           </div>
         ))}
+      </motion.div>
+      <motion.p
+        className="mt-6 text-lg font-medium text-foreground tracking-wider"
+        variants={textVariants}
+      >
+        {loadingText}
       </motion.p>
     </motion.div>
   );

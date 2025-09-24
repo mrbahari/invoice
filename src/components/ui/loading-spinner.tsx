@@ -34,26 +34,33 @@ export function LoadingSpinner() {
     },
   };
 
-  const barContainerVariants = {
-    initial: {},
-    animate: {
+  const loadingContainerVariants = {
+    start: {
       transition: {
         staggerChildren: 0.1,
-        staggerDirection: 1,
+      },
+    },
+    end: {
+      transition: {
+        staggerChildren: 0.1,
       },
     },
   };
 
-  const barVariants = {
-    initial: { y: '100%' },
-    animate: {
-      y: ['100%', '0%', '100%'],
-      transition: {
-        duration: 1.5,
-        ease: 'easeInOut',
-        repeat: Infinity,
-      },
+  const loadingCircleVariants = {
+    start: {
+      y: "0%",
     },
+    end: {
+      y: "100%",
+    },
+  };
+
+  const loadingCircleTransition = {
+    duration: 0.4,
+    repeat: Infinity,
+    repeatType: "reverse" as const,
+    ease: "easeInOut",
   };
 
   return (
@@ -64,18 +71,19 @@ export function LoadingSpinner() {
       animate="animate"
       exit="exit"
     >
-      <motion.div 
-        className="flex items-end h-12 w-24 gap-1"
-        variants={barContainerVariants}
+      <motion.div
+        className="flex justify-around w-20 h-10"
+        variants={loadingContainerVariants}
+        initial="start"
+        animate="end"
       >
         {[...Array(5)].map((_, i) => (
-           <div key={i} className="w-3 h-full overflow-hidden bg-background">
-                <motion.div
-                    className="w-full h-full bg-primary"
-                    variants={barVariants}
-                    transition={{ ...barVariants.transition, delay: i * 0.15 }}
-                />
-           </div>
+           <motion.span
+            key={i}
+            className="block w-3 h-full bg-primary rounded-full"
+            variants={loadingCircleVariants}
+            transition={{ ...loadingCircleTransition, delay: i * 0.1 }}
+           />
         ))}
       </motion.div>
       <motion.p

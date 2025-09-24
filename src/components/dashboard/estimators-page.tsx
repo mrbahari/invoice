@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -129,7 +128,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'سپری t60': ['سپری t60', 't60'],
         'رانر': ['رانر', 'runner'],
         'استاد': ['استاد', 'stud'],
-        'پیچ ۲.۵': ['پیچ ۲.۵', 'پیچ پنل', 'tn25'],
+        'پیچ ۲.۵': ['پیچ ۲.۵', 'پیچ پنل', 'tn25', 'پیچ 2.5'],
         'پیچ سازه': ['پیچ سازه', 'ln9'],
         'آویز': ['آویز', 'hanger'],
         'میخ و چاشنی': ['میخ', 'چاشنی', 'میخ و چاشنی'],

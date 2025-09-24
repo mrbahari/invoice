@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -103,7 +102,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       // Creating a new invoice from an estimator
       setInvoice({
         ...initialUnsavedInvoice,
-        invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+        invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
       });
       setSelectedCustomer(undefined);
     } else if (!isEditMode) {
@@ -118,7 +117,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           tax: 0,
           total: 0,
           description: '',
-          invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1548).toString().padStart(3, '0')}`,
+          invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
       });
       setSelectedCustomer(undefined);
     }
@@ -443,11 +442,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         {(provided) => (
                                             <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden bg-muted/30">
                                                 <CardContent className="p-2">
-                                                    <div className="grid grid-cols-1 sm:grid-cols-5 items-center gap-2">
-                                                        <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center sm:border-l">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-2">
+                                                        <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center sm:border-l sm:col-span-1">
                                                             <GripVertical className="h-5 w-5 text-muted-foreground" />
                                                         </div>
-                                                        <div className="sm:col-span-2">
+                                                        <div className="sm:col-span-3">
                                                             <p className="font-semibold truncate">{item.productName}</p>
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2 sm:col-span-2">
@@ -463,11 +462,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                                 <Input value={item.unit} disabled className="bg-background/50" />
                                                             )}
                                                         </div>
-                                                        <div className="flex items-center justify-between sm:justify-end gap-2">
-                                                            <p className="font-semibold sm:hidden">{formatCurrency(item.totalPrice)}</p>
-                                                            <div className="flex items-center">
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                            </div>
+                                                        <div className="grid grid-cols-2 gap-2 sm:col-span-4">
+                                                             <Input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} placeholder="مبلغ واحد" />
+                                                             <Input value={formatCurrency(item.totalPrice)} disabled placeholder="مبلغ کل" className="bg-background/50 font-mono" />
+                                                        </div>
+                                                        <div className="flex items-center justify-end gap-2 sm:col-span-2">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                                         </div>
                                                     </div>
                                                 </CardContent>

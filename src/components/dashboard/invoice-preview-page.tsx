@@ -14,7 +14,7 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 function toWords(num: number): string {

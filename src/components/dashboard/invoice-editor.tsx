@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -473,7 +473,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 <DragDropContext onDragEnd={handleDragEnd}>
                                     <Droppable droppableId="invoice-items">
                                     {(provided) => (
-                                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2">
+                                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-3">
                                         {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
                                             const product = products.find(p => p.id === item.productId);
                                             const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
@@ -482,39 +482,44 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             return (
                                             <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                                 {(provided) => (
-                                                    <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden bg-muted/30">
-                                                        <CardContent className="p-2">
-                                                            <div className="grid grid-cols-12 items-center gap-2 md:gap-4">
-                                                                <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center border-l col-span-1">
-                                                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                                </div>
-                                                                <div className="col-span-11 sm:col-span-3">
-                                                                    <p className="font-semibold truncate">{item.productName}</p>
-                                                                </div>
-                                                                <div className="col-span-full sm:col-span-6 grid grid-cols-2 md:grid-cols-2 gap-2">
-                                                                    <div className="grid grid-cols-2 gap-2">
-                                                                        <Input type="number" value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
-                                                                        {isProductFound && availableUnits.length > 1 ? (
-                                                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
-                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                                                                                </SelectContent>
-                                                                            </Select>
-                                                                        ) : (
-                                                                            <Input value={item.unit} disabled className="bg-background/50" />
-                                                                        )}
-                                                                    </div>
-                                                                     <div className="grid grid-cols-2 gap-2">
-                                                                        {renderItemPriceInputs(index)}
-                                                                     </div>
-                                                                </div>
-                                                                <div className="col-span-full sm:col-span-2 flex items-center justify-end gap-2">
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                                                </div>
-                                                            </div>
-                                                        </CardContent>
-                                                    </Card>
+                                                    <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
+                                                      <div className="grid grid-cols-12 items-center gap-x-4 gap-y-2">
+                                                        <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center col-span-1">
+                                                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                
+                                                        <div className="col-span-11 sm:col-span-5 flex items-center gap-2">
+                                                          <div className="flex-grow">
+                                                            <p className="font-semibold truncate">{item.productName}</p>
+                                                            <p className="text-xs text-muted-foreground">واحد: {item.unit}</p>
+                                                          </div>
+                                                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                            <Shuffle className="h-4 w-4" />
+                                                          </Button>
+                                                        </div>
+                                                
+                                                        <div className="col-span-full sm:col-span-4 grid grid-cols-2 gap-2">
+                                                          <div className="grid gap-1">
+                                                            <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
+                                                            <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
+                                                          </div>
+                                                          <div className="grid gap-1">
+                                                            <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
+                                                            <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} placeholder="مبلغ" className="font-mono" />
+                                                          </div>
+                                                        </div>
+                                                
+                                                        <div className="col-span-full sm:col-span-2 flex items-center justify-end gap-2 text-left">
+                                                          <div className="flex-grow">
+                                                            <p className="text-xs text-muted-foreground">مبلغ کل</p>
+                                                            <p className="font-semibold font-mono">{formatCurrency(item.totalPrice)}</p>
+                                                          </div>
+                                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveItem(index)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                          </Button>
+                                                        </div>
+                                                      </div>
+                                                    </div>
                                                 )}
                                             </Draggable>
                                             );

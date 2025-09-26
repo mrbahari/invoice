@@ -168,6 +168,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const [filteredSubCategoryId, setFilteredSubCategoryId] = useState<string | null>(null);
+
 
   // When customer changes, update invoice details
   useEffect(() => {
@@ -194,8 +196,21 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    return products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
-  }, [products, productSearch]);
+    
+    let categoryFiltered = products;
+    if(filteredSubCategoryId) {
+      categoryFiltered = products.filter(p => p.subCategoryId === filteredSubCategoryId);
+    }
+
+    return categoryFiltered.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+  }, [products, productSearch, filteredSubCategoryId]);
+  
+  // Effect to clear category filter when search term is cleared
+  useEffect(() => {
+    if (productSearch === '') {
+      setFilteredSubCategoryId(null);
+    }
+  }, [productSearch]);
   
   const getSimilarProducts = (productId: string) => {
     const currentProduct = products.find(p => p.id === productId);
@@ -380,297 +395,309 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
    return (
     <>
-    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
+    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-32">
         <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
             <div className="flex-1">
                 <h1 className="text-xl font-semibold tracking-tight">
                     {isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}
                 </h1>
             </div>
-            <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" onClick={onCancel}>
+            <div className="hidden sm:flex items-center gap-2">
+                 <Button type="button" variant="outline" onClick={onCancel}>
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
+                </Button>
+                <Button onClick={handleSaveAndExit} size="sm" className="h-9 gap-1 bg-green-600 hover:bg-green-700">
+                    <Save className="ml-2 h-4 w-4" />
+                    {isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
                 </Button>
             </div>
         </div>
 
-        <div className="grid gap-4">
-            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
-                <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>اطلاعات مشتری</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                        {selectedCustomer ? (
-                                <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-12 w-12 border">
-                                            <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
-                                            <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold">{selectedCustomer.name}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
-                                        </div>
-                                    </div>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline">
-                                            <Pencil className="ml-1 h-3 w-3" />
-                                            تغییر
-                                        </Button>
-                                    </DialogTrigger>
-                                </div>
-                            ) : (
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" className="w-full h-20 border-dashed">
-                                        <UserPlus className="ml-2 h-5 w-5" />
-                                        انتخاب مشتری از لیست
-                                    </Button>
-                                </DialogTrigger>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>انتخاب مشتری</DialogTitle>
-                            <DialogDescription>
-                                مشتری مورد نظر خود را جستجو و انتخاب کنید.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 grid gap-4">
-                            <div className="relative">
-                                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
-                            </div>
-                            <ScrollArea className="h-[60vh]">
-                                <div className="grid gap-2 pr-4">
-                                    {(filteredCustomers || []).map(customer => {
-                                        return(
-                                            <Button
-                                                key={customer.id}
-                                                variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                                className="h-16 justify-start text-right"
-                                                onClick={() => {
-                                                    setSelectedCustomer(customer);
-                                                    setIsCustomerDialogOpen(false);
-                                                }}
-                                            >
-                                                <div className="flex items-center gap-4 text-right w-full">
-                                                    <Avatar className="h-10 w-10 border">
-                                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                        <AvatarFallback>{customer.name[0]}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className='text-base font-semibold'>{customer.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                                                    </div>
-                                                </div>
-                                            </Button>
-                                        );
-                                    })}
-                                </div>
-                            </ScrollArea>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-
+        <div className="grid gap-4 md:gap-8">
+            <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
                 <Card>
                     <CardHeader>
-                        <CardTitle>آیتم‌های فاکتور</CardTitle>
+                        <CardTitle>اطلاعات مشتری</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-4">
-                            {isClient ? (
-                                <DragDropContext onDragEnd={handleDragEnd}>
-                                    <Droppable droppableId="invoice-items">
-                                    {(provided) => (
-                                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-3">
-                                        {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
-                                            const product = products.find(p => p.id === item.productId);
-                                            const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
-                                            const isProductFound = !!product;
-                                            const similarProducts = getSimilarProducts(item.productId);
-
-                                            return (
-                                            <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
-                                                {(provided) => (
-                                                    <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
-                                                      <div className="grid grid-cols-12 items-center gap-x-4 gap-y-2">
-                                                        <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center col-span-1">
-                                                          <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                        </div>
-                                                
-                                                        <div className="col-span-11 sm:col-span-5 flex items-center gap-2">
-                                                          <div className="flex-grow">
-                                                            <p className="font-semibold truncate">{item.productName}</p>
-                                                            <p className="text-xs text-muted-foreground">واحد: {item.unit}</p>
-                                                          </div>
-                                                          <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                                                                <Shuffle className="h-4 w-4" />
-                                                              </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent className="w-64" align="start">
-                                                              <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
-                                                              <DropdownMenuSeparator />
-                                                              <ScrollArea className="h-[200px]">
-                                                                {similarProducts.length > 0 ? similarProducts.map(p => (
-                                                                  <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => e.preventDefault()}>
-                                                                    <Image src={p.imageUrl} alt={p.name} width={32} height={32} className="rounded-sm object-cover" />
-                                                                    <span className="flex-grow truncate">{p.name}</span>
-                                                                    <Button size="sm" variant="outline" className="h-7" onClick={() => handleAddProduct(p)}>افزودن</Button>
-                                                                  </DropdownMenuItem>
-                                                                )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
-                                                              </ScrollArea>
-                                                            </DropdownMenuContent>
-                                                          </DropdownMenu>
-                                                        </div>
-                                                
-                                                        <div className="col-span-full sm:col-span-4 grid grid-cols-2 gap-2">
-                                                          <div className="grid gap-1">
-                                                            <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
-                                                            <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
-                                                          </div>
-                                                          <div className="grid gap-1">
-                                                            <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                                            <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} placeholder="مبلغ" className="font-mono" />
-                                                          </div>
-                                                        </div>
-                                                
-                                                        <div className="col-span-full sm:col-span-2 flex items-center justify-end gap-2 text-left">
-                                                          <div className="flex-grow">
-                                                            <p className="text-xs text-muted-foreground">مبلغ کل</p>
-                                                            <p className="font-semibold font-mono">{formatCurrency(item.totalPrice)}</p>
-                                                          </div>
-                                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveItem(index)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                          </Button>
-                                                        </div>
-                                                      </div>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                            );
-                                        }) : (
-                                            <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
-                                        )}
-                                        {provided.placeholder}
-                                        </div>
-                                    )}
-                                    </Droppable>
-                                </DragDropContext>
-                                ) : (
-                                    <div className="text-center py-10">در حال بارگذاری...</div>
-                                )}
-                        </div>
+                    {selectedCustomer ? (
+                            <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-12 w-12 border">
+                                        <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
+                                        <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{selectedCustomer.name}</p>
+                                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                                    </div>
+                                </div>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Pencil className="ml-1 h-3 w-3" />
+                                        تغییر
+                                    </Button>
+                                </DialogTrigger>
+                            </div>
+                        ) : (
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="w-full h-20 border-dashed">
+                                    <UserPlus className="ml-2 h-5 w-5" />
+                                    انتخاب مشتری از لیست
+                                </Button>
+                            </DialogTrigger>
+                        )}
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>افزودن محصولات</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>انتخاب مشتری</DialogTitle>
+                        <DialogDescription>
+                            مشتری مورد نظر خود را جستجو و انتخاب کنید.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 grid gap-4">
                         <div className="relative">
                             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                            <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                         </div>
-                        <div
-                            ref={productsRef}
-                            className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
-                            {...draggableEvents}
-                        >
-                            {(filteredProducts || []).map(product => (
-                                <Card
-                                    key={product.id}
-                                    onClick={() => handleAddProduct(product)}
-                                    className="w-32 flex-shrink-0"
-                                >
-                                    <CardContent className="p-2">
-                                        <div className="relative w-full aspect-square mb-2">
-                                            <Image 
-                                                src={product.imageUrl} 
-                                                alt={product.name} 
-                                                fill 
-                                                className="rounded-md object-cover"
-                                                draggable="false"
-                                            />
-                                        </div>
-                                        <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                        <ScrollArea className="h-[60vh]">
+                            <div className="grid gap-2 pr-4">
+                                {(filteredCustomers || []).map(customer => {
+                                    return(
+                                        <Button
+                                            key={customer.id}
+                                            variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                                            className="h-16 justify-start text-right"
+                                            onClick={() => {
+                                                setSelectedCustomer(customer);
+                                                setIsCustomerDialogOpen(false);
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-4 text-right w-full">
+                                                <Avatar className="h-10 w-10 border">
+                                                    <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                    <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className='text-base font-semibold'>{customer.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                                </div>
+                                            </div>
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </ScrollArea>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>افزودن محصولات</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                    <div className="relative">
+                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                    </div>
+                    <div
+                        ref={productsRef}
+                        className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
+                        {...draggableEvents}
+                    >
+                        {(filteredProducts || []).map(product => (
+                            <Card
+                                key={product.id}
+                                onClick={() => handleAddProduct(product)}
+                                className="w-32 flex-shrink-0"
+                            >
+                                <CardContent className="p-2">
+                                    <div className="relative w-full aspect-square mb-2">
+                                        <Image 
+                                            src={product.imageUrl} 
+                                            alt={product.name} 
+                                            fill 
+                                            className="rounded-md object-cover"
+                                            draggable="false"
+                                        />
+                                    </div>
+                                    <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>خلاصه مالی و توضیحات</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
-                        <div className="grid gap-4">
-                             <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                    <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
-                                </div>
-                                 <div className="grid gap-2">
-                                    <Label htmlFor="additions">اضافات (ریال)</Label>
-                                    <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
-                                </div>
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                                <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
-                            </div>
-                            <Separator />
-                            <div className="grid gap-2">
-                                <Label>جمع جزء</Label>
-                                <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono h-11" />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label className="text-base">جمع کل</Label>
-                                <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-xl h-14 font-bold" />
-                            </div>
-                        </div>
-                         <div className="grid gap-2">
-                            <Label htmlFor="description">توضیحات</Label>
-                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} className="min-h-[240px]" />
-                        </div>
-                    </CardContent>
-                </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>آیتم‌های فاکتور</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-4">
+                        {isClient ? (
+                            <DragDropContext onDragEnd={handleDragEnd}>
+                                <Droppable droppableId="invoice-items">
+                                {(provided) => (
+                                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-3">
+                                    {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
+                                        const product = products.find(p => p.id === item.productId);
+                                        const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
+                                        const isProductFound = !!product;
+                                        const similarProducts = getSimilarProducts(item.productId);
 
-            </div>
+                                        return (
+                                        <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
+                                            {(provided) => (
+                                                <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
+                                                  <div className="grid grid-cols-12 items-center gap-x-4 gap-y-2">
+                                                    <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center col-span-1">
+                                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                    </div>
+                                            
+                                                    <div className="col-span-11 sm:col-span-5 flex items-center gap-2">
+                                                      <div className="flex-grow">
+                                                        <p className="font-semibold truncate">{item.productName}</p>
+                                                        <p className="text-xs text-muted-foreground">{`واحد: ${item.unit}`}</p>
+                                                      </div>
+                                                      <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                            <Shuffle className="h-4 w-4" />
+                                                          </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent className="w-64" align="start">
+                                                          <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
+                                                          <DropdownMenuSeparator />
+                                                          <ScrollArea className="h-[200px]">
+                                                            {similarProducts.length > 0 ? similarProducts.map(p => (
+                                                              <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => {e.preventDefault(); handleAddProduct(p);}}>
+                                                                  <div className="relative w-12 h-12 rounded-md overflow-hidden">
+                                                                     <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" />
+                                                                  </div>
+                                                                  <span className="flex-grow truncate text-xs">{p.name}</span>
+                                                              </DropdownMenuItem>
+                                                            )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
+                                                          </ScrollArea>
+                                                        </DropdownMenuContent>
+                                                      </DropdownMenu>
+                                                    </div>
+                                            
+                                                    <div className="col-span-6 sm:col-span-3 grid grid-cols-2 gap-2">
+                                                        <div className="grid gap-1">
+                                                          <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
+                                                          <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
+                                                        </div>
+                                                        <div className="grid gap-1">
+                                                            <Label htmlFor={`unit-${index}`} className="text-xs">واحد</Label>
+                                                            <Select value={item.unit} onValueChange={(value) => handleUnitChange(index, value)} disabled={availableUnits.length <= 1}>
+                                                              <SelectTrigger id={`unit-${index}`}><SelectValue /></SelectTrigger>
+                                                              <SelectContent>
+                                                                {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                                              </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                    </div>
+
+                                                     <div className="col-span-6 sm:col-span-3 grid grid-cols-2 gap-2">
+                                                        <div className="grid gap-1">
+                                                            <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
+                                                            <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} placeholder="مبلغ" className="font-mono" />
+                                                        </div>
+                                                        <div className="grid gap-1">
+                                                          <Label className="text-xs">مبلغ کل</Label>
+                                                          <p className="font-semibold font-mono text-sm flex items-center h-10">{formatCurrency(item.totalPrice)}</p>
+                                                        </div>
+                                                    </div>
+                                            
+                                                    <div className="col-span-12 sm:col-span-1 flex items-center justify-end text-left">
+                                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveItem(index)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                      </Button>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                        );
+                                    }) : (
+                                        <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
+                                    )}
+                                    {provided.placeholder}
+                                    </div>
+                                )}
+                                </Droppable>
+                            </DragDropContext>
+                            ) : (
+                                <div className="text-center py-10">در حال بارگذاری...</div>
+                            )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>خلاصه مالی و توضیحات</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-2">
+                    <div className="grid gap-4">
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="discount">تخفیف (ریال)</Label>
+                                <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="additions">اضافات (ریال)</Label>
+                                <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
+                            <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
+                        </div>
+                        <Separator />
+                        <div className="grid gap-2">
+                            <Label>جمع جزء</Label>
+                            <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono h-11" />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-base">جمع کل</Label>
+                            <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-xl h-14 font-bold" />
+                        </div>
+                    </div>
+                     <div className="grid gap-2">
+                        <Label htmlFor="description">توضیحات</Label>
+                        <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} className="min-h-[240px]" />
+                    </div>
+                </CardContent>
+            </Card>
+
         </div>
     </div>
-    <div className="sticky bottom-[90px] md:bottom-0 z-50 p-4 bg-card border-t mt-4">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-card border-t mt-4">
         <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
-            <div>
-                 {isEditMode && (
-                    <div className="grid grid-cols-2 gap-2">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-
-                        <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => {setInvoice(prev => ({...prev, status: value}));}}>
-                            <SelectTrigger id="status" className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="Pending">در انتظار</SelectItem><SelectItem value="Paid">پرداخت شده</SelectItem><SelectItem value="Overdue">سررسید گذشته</SelectItem></SelectContent>
-                        </Select>
-                    </div>
+            <div className="flex w-full sm:w-auto items-center gap-2">
+                <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت
+                </Button>
+                {isEditMode && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" variant="destructive" className="w-full sm:w-auto" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 )}
             </div>
             <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -678,7 +705,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     <Eye className="ml-2 h-4 w-4" />
                     پیش‌نمایش
                 </Button>
-                <Button onClick={handleSaveAndExit} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700"><Save className="ml-2 h-4 w-4" />{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</Button>
+                <Button onClick={handleSaveAndExit} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700">
+                    <Save className="ml-2 h-4 w-4" />
+                    {isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
+                </Button>
             </div>
         </div>
     </div>

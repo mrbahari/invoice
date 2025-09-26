@@ -710,7 +710,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         </div>
     </div>
-    <div className="fixed bottom-4 left-0 right-0 z-50 px-4 mt-4">
+    <div className="fixed bottom-16 left-0 right-0 z-50 px-4">
         <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-lg">
             <div className="flex w-full sm:w-auto items-center gap-2">
                 <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">

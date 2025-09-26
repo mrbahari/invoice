@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -294,14 +295,14 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                 </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-4 md:gap-6">
                 {estimatorTypes.map((estimator) => (
                     <Card 
                         key={estimator.id}
                         onClick={() => setActiveEstimator(estimator.id)}
                         className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
                     >
-                        <div className="relative aspect-video">
+                        <div className="relative aspect-[4/3]">
                             <Image 
                                 src={estimator.imageUrl} 
                                 alt={estimator.title} 
@@ -309,8 +310,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 className="object-cover transition-transform group-hover:scale-105"
                                 data-ai-hint="construction material"
                             />
-                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                                <CardTitle className="text-lg font-bold text-white">{estimator.title}</CardTitle>
+                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 md:p-4">
+                                <CardTitle className="text-sm md:text-lg font-bold text-white">{estimator.title}</CardTitle>
                             </div>
                         </div>
                     </Card>

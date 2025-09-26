@@ -21,6 +21,8 @@ import {
 import { Badge } from '../ui/badge';
 import { formatCurrency, cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 type View =
   | { type: 'list' }
@@ -160,7 +162,8 @@ export default function InvoicesPage({
       case 'list':
       default:
         return (
-           <div className="grid gap-6">
+          <TooltipProvider>
+           <div className="grid gap-6 pb-24">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -168,19 +171,26 @@ export default function InvoicesPage({
                       <CardTitle>فاکتورها</CardTitle>
                       <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
-                    <Button
-                      size="sm"
-                      className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                      onClick={handleCreate}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        ایجاد فاکتور
-                      </span>
-                    </Button>
                   </div>
                 </CardHeader>
               </Card>
+
+               <div 
+                  className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40"
+                  style={{ bottom: '90px' }}
+                >
+                  <div className="p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button onClick={handleCreate} size="icon" className="w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                <PlusCircle className="h-7 w-7" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>ایجاد فاکتور جدید</p></TooltipContent>
+                      </Tooltip>
+                  </div>
+              </div>
+
 
               {filteredInvoices.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -195,7 +205,6 @@ export default function InvoicesPage({
                       <Card 
                         key={invoice.id} 
                         className="flex flex-col justify-between"
-                        onClick={() => handleEdit(invoice)}
                       >
                         <CardHeader className="pb-4">
                           <div className="flex justify-between items-start">
@@ -203,12 +212,27 @@ export default function InvoicesPage({
                               <CardTitle className="text-lg">{displayName}</CardTitle>
                               <CardDescription className="text-sm text-muted-foreground">{displayPhone}</CardDescription>
                             </div>
-                            <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
-                              {statusTranslation[invoice.status]}
-                            </Badge>
+                             <div className="flex items-center gap-2">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }} size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>مشاهده</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }} size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>ویرایش</p></TooltipContent>
+                                </Tooltip>
+                            </div>
                           </div>
                         </CardHeader>
-                        <CardContent className="grid gap-2 text-sm">
+                        <CardContent className="grid gap-2 text-sm"  onClick={() => handleEdit(invoice)}>
                            <div className="flex justify-between">
                             <span className="text-muted-foreground">شماره فاکتور</span>
                             <span>{invoice.invoiceNumber}</span>
@@ -222,15 +246,10 @@ export default function InvoicesPage({
                             <span>{formatCurrency(invoice.total)}</span>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex flex-row justify-end gap-2 pt-4">
-                          <Button onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }} size="sm" variant="outline" className="w-full">
-                            <Eye className="ml-2 h-4 w-4" />
-                            مشاهده
-                          </Button>
-                           <Button onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }} size="sm" className="w-full">
-                             <Edit className="ml-2 h-4 w-4" />
-                            ویرایش
-                          </Button>
+                        <CardFooter className="flex flex-row justify-end gap-2 pt-4" onClick={() => handleEdit(invoice)}>
+                           <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
+                              {statusTranslation[invoice.status]}
+                            </Badge>
                         </CardFooter>
                       </Card>
                     );
@@ -249,6 +268,7 @@ export default function InvoicesPage({
                 </Card>
               )}
           </div>
+          </TooltipProvider>
         );
     }
   };

@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Expand } from 'lucide-react';
+import { ArrowRight, Expand, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -14,6 +14,7 @@ import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 function toWords(num: number): string {
@@ -156,22 +157,43 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   }
 
   return (
-    <div>
-        <div className="sticky top-16 z-10 mb-6 flex items-center justify-between gap-2 rounded-lg border bg-card/80 p-2 shadow-lg backdrop-blur-sm no-print md:-mx-4">
-            <Button type="button" variant="outline" onClick={onBack} className="dark:border-white/50 dark:text-white dark:hover:bg-white/10">
-                <ArrowRight className="ml-2 h-4 w-4" />
-                بازگشت 
-            </Button>
-            <div className="flex items-center gap-2">
-               <Button size="sm" variant="outline" className="h-8 gap-1 dark:border-white/50 dark:text-white dark:hover:bg-white/10" onClick={() => onEdit(invoiceId)}>
-                  ویرایش
-                </Button>
-               <Button size="sm" variant="outline" className="h-8 gap-1 dark:border-white/50 dark:text-white dark:hover:bg-white/10" onClick={handleFullScreen}>
-                  <Expand className="ml-2 h-4 w-4" />
-                  تمام صفحه
-                </Button>
-            </div>
+    <TooltipProvider>
+      <div className="pb-24">
+        {/* Floating Action Bar */}
+        <div 
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 no-print"
+          style={{ bottom: '90px' }}
+        >
+          <div 
+            className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
+          >
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" onClick={onBack} className="w-12 h-12">
+                        <ArrowRight className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>بازگشت</p></TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>
+                        <Pencil className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>ویرایش</p></TooltipContent>
+             </Tooltip>
+             <Tooltip>
+                 <TooltipTrigger asChild>
+                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleFullScreen}>
+                        <Expand className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>تمام صفحه</p></TooltipContent>
+            </Tooltip>
+          </div>
         </div>
+
 
         <div className="max-w-5xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">
           <header className="flex justify-between items-start gap-4 mb-4">
@@ -255,5 +277,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
 
         </div>
     </div>
+    </TooltipProvider>
   );
 }

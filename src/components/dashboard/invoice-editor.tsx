@@ -124,7 +124,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   // State for the invoice being edited
   const [invoice, setInvoice] = useState<Partial<Invoice>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
-  const [storeId, setStoreId] = useState<string>(stores?.[0]?.id || '');
+  const [storeId, setStoreId] = useState<string>('');
 
 
   // Display state for formatted numbers
@@ -164,13 +164,22 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       setSelectedCustomer(undefined);
     }
 
+    // Set initial store based on products or default
+    const initialStoreId =
+      currentInvoice.items && currentInvoice.items.length > 0
+        ? products.find((p) => p.id === currentInvoice.items![0].productId)
+            ?.storeId || stores?.[0]?.id || ''
+        : stores?.[0]?.id || '';
+    
     setInvoice(currentInvoice);
+    setStoreId(initialStoreId);
+
     // Initialize display values
     setDisplayDiscount(formatNumber(currentInvoice.discount || 0));
     setDisplayAdditions(formatNumber(currentInvoice.additions || 0));
     setDisplayTax(formatNumber(currentInvoice.tax || 0));
 
-  }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, invoices.length]);
+  }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, products, stores, invoices.length]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
@@ -761,7 +770,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button onClick={handleSaveAndExit} size="icon" className="bg-primary text-primary-foreground hover:bg-primary/90 w-12 h-12">
+                     <Button onClick={handleSaveAndExit} size="icon" className="bg-green-600 text-white hover:bg-green-700 w-12 h-12">
                         <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
@@ -776,4 +785,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+
 

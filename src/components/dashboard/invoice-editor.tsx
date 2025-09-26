@@ -725,7 +725,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         </div>
     </div>
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed left-1/2 -translate-x-1/2 z-50" style={{ bottom: '90px' }}>
         <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -770,7 +770,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button onClick={handleSaveAndExit} size="icon" className="bg-green-600 text-white hover:bg-green-700 w-12 h-12">
+                     <Button onClick={handleSaveAndExit} variant="default" size="icon" className="w-12 h-12">
                         <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
@@ -785,6 +785,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+
 
 
 

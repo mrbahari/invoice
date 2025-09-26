@@ -62,6 +62,12 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
 import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 
 type InvoiceEditorProps = {
@@ -414,8 +420,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
   
    return (
-    <>
-    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-32">
+    <TooltipProvider>
+    <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
             <div className="flex-1">
                 <h1 className="text-xl font-semibold tracking-tight">
@@ -425,7 +431,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         </div>
 
         <div className="grid gap-4 md:gap-8">
-            <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+             <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
                 <Card>
                     <CardHeader>
                         <CardTitle>اطلاعات مشتری</CardTitle>
@@ -451,7 +457,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 </DialogTrigger>
                             </div>
                         ) : (
-                            <DialogTrigger asChild>
+                           <DialogTrigger asChild>
                                 <Button variant="outline" className="w-full h-20 border-dashed">
                                     <UserPlus className="ml-2 h-5 w-5" />
                                     انتخاب مشتری از لیست
@@ -713,14 +719,25 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     <div className="fixed bottom-20 left-0 right-0 z-50 px-4">
         <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2 p-2 bg-card border rounded-lg shadow-lg">
             <div className="flex w-full sm:w-auto items-center gap-1">
-                <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت
-                </Button>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button type="button" variant="outline" size="icon" onClick={onCancel}>
+                            <ArrowRight className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>بازگشت</p></TooltipContent>
+                </Tooltip>
                 {isEditMode && (
-                    <AlertDialog>
+                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button type="button" variant="destructive" className="w-full sm:w-auto" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف</Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button type="button" variant="destructive" size="icon" disabled={isProcessing}>
+                                        <Trash2 className="h-5 w-5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>حذف فاکتور</p></TooltipContent>
+                            </Tooltip>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
@@ -733,18 +750,26 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 )}
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button variant="outline" className="flex-1" onClick={handlePreviewClick}>
-                    <Eye className="ml-2 h-4 w-4" />
-                    پیش‌نمایش
-                </Button>
-                <Button onClick={handleSaveAndExit} size="lg" className="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700">
-                    <Save className="ml-2 h-4 w-4" />
-                    {isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
-                </Button>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="outline" size="icon" onClick={handlePreviewClick}>
+                            <Eye className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
+                </Tooltip>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button onClick={handleSaveAndExit} size="icon" className="bg-green-600 hover:bg-green-700 w-12 h-10">
+                            <Save className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</p></TooltipContent>
+                </Tooltip>
             </div>
         </div>
     </div>
-    </>
+    </TooltipProvider>
   );
 }
 

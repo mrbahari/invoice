@@ -490,6 +490,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
                 </Button>
+                 <Button onClick={handleSaveAndExit} variant="default" className="bg-green-600 hover:bg-green-700">
+                    <Save className="ml-2 h-4 w-4" />
+                    {isProcessing ? 'در حال ذخیره...' : isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
+                </Button>
             </div>
             <div className="flex-1">
                 <h1 className="text-xl font-semibold tracking-tight text-center">
@@ -515,9 +519,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 )}
                  <Button variant="outline" size="icon" onClick={handlePreviewClick}>
                     <Eye className="h-4 w-4" />
-                </Button>
-                 <Button onClick={handleSaveAndExit} variant="default" size="icon" disabled={isProcessing}>
-                    <Save className="h-4 w-4" />
                 </Button>
             </div>
         </div>
@@ -648,7 +649,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                           </motion.button>
                                       </div>
                                       {isInInvoice && quantityInInvoice > 0 && (
-                                           <Badge variant="default" className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs">
+                                           <Badge variant="default" className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs bg-green-600 text-white">
                                                 {quantityInInvoice}
                                             </Badge>
                                       )}
@@ -810,59 +811,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         </div>
     </div>
-    <div className="fixed left-1/2 -translate-x-1/2 z-50" style={{ bottom: '90px' }}>
-        <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-full shadow-lg backdrop-blur-sm">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
-                        <ArrowRight className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>بازگشت</p></TooltipContent>
-            </Tooltip>
-            
-            {isEditMode && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isProcessing}>
-                                    <Trash2 className="h-5 w-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>حذف فاکتور</p></TooltipContent>
-                        </Tooltip>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
-
-            <Separator orientation="vertical" className="h-6" />
-
-             <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" onClick={handlePreviewClick}>
-                        <Eye className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
-            </Tooltip>
-             <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button onClick={handleSaveAndExit} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 hover:bg-green-700 text-white">
-                        <Save className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</p></TooltipContent>
-            </Tooltip>
-        </div>
-    </div>
     </TooltipProvider>
   );
 }
@@ -877,3 +825,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
 
 
+
+
+    

@@ -221,7 +221,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
 
   const AggregatedListContent = () => (
-      <div className="bg-background border-t border-b rounded-t-lg">
+      <div className="bg-card border-t border-b rounded-t-lg">
         <ScrollArea className="h-[40vh] p-4">
             <Table>
                 <TableHeader>

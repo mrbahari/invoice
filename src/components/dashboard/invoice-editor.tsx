@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle, CheckCircle } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -168,7 +168,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-  const [filteredSubCategoryId, setFilteredSubCategoryId] = useState<string | null>(null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | 'all'>('all');
 
 
   // When customer changes, update invoice details
@@ -198,19 +198,27 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     if (!products) return [];
     
     let categoryFiltered = products;
-    if(filteredSubCategoryId) {
-      categoryFiltered = products.filter(p => p.subCategoryId === filteredSubCategoryId);
+    if(selectedSubCategoryId && selectedSubCategoryId !== 'all') {
+      categoryFiltered = products.filter(p => p.subCategoryId === selectedSubCategoryId);
+    }
+
+    if (!productSearch) {
+        return categoryFiltered;
     }
 
     return categoryFiltered.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
-  }, [products, productSearch, filteredSubCategoryId]);
+  }, [products, productSearch, selectedSubCategoryId]);
   
   // Effect to clear category filter when search term is cleared
   useEffect(() => {
     if (productSearch === '') {
-      setFilteredSubCategoryId(null);
+      // Don't reset category filter automatically
+      // setSelectedSubCategoryId(null);
     }
   }, [productSearch]);
+  
+  const subCategories = useMemo(() => categories.filter(c => c.parentId), [categories]);
+  const invoiceProductIds = useMemo(() => new Set(invoice.items?.map(item => item.productId)), [invoice.items]);
   
   const getSimilarProducts = (productId: string) => {
     const currentProduct = products.find(p => p.id === productId);
@@ -229,8 +237,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       if (existingItemIndex > -1) {
-        items[existingItemIndex].quantity += 1;
-        items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
+        // If product already exists, maybe just give feedback or do nothing
+        toast({ title: 'محصول در فاکتور موجود است', variant: 'default' });
       } else {
         items.push({
           productId: product.id,
@@ -402,16 +410,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     {isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}
                 </h1>
             </div>
-            <div className="hidden sm:flex items-center gap-2">
-                 <Button type="button" variant="outline" onClick={onCancel}>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت
-                </Button>
-                <Button onClick={handleSaveAndExit} size="sm" className="h-9 gap-1 bg-green-600 hover:bg-green-700">
-                    <Save className="ml-2 h-4 w-4" />
-                    {isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}
-                </Button>
-            </div>
         </div>
 
         <div className="grid gap-4 md:gap-8">
@@ -494,7 +492,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </div>
                 </DialogContent>
             </Dialog>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle>افزودن محصولات</CardTitle>
@@ -504,35 +502,43 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
-                    <div
-                        ref={productsRef}
-                        className="flex select-none overflow-x-auto gap-3 pb-4 cursor-grab"
-                        {...draggableEvents}
-                    >
-                        {(filteredProducts || []).map(product => (
-                            <Card
-                                key={product.id}
-                                onClick={() => handleAddProduct(product)}
-                                className="w-32 flex-shrink-0"
-                            >
-                                <CardContent className="p-2">
-                                    <div className="relative w-full aspect-square mb-2">
-                                        <Image 
-                                            src={product.imageUrl} 
-                                            alt={product.name} 
-                                            fill 
-                                            className="rounded-md object-cover"
-                                            draggable="false"
-                                        />
-                                    </div>
-                                    <h3 className="text-xs font-semibold truncate text-center">{product.name}</h3>
-                                </CardContent>
-                            </Card>
+                     <div className="flex flex-wrap gap-2">
+                        <Button variant={selectedSubCategoryId === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setSelectedSubCategoryId('all')}>
+                            همه
+                        </Button>
+                        {subCategories.map(cat => (
+                            <Button key={cat.id} variant={selectedSubCategoryId === cat.id ? 'default' : 'outline'} size="sm" onClick={() => setSelectedSubCategoryId(cat.id)}>
+                                {cat.name}
+                            </Button>
                         ))}
                     </div>
+                    <ScrollArea className="h-80 w-full rounded-md border">
+                        <div className="p-4 grid gap-2">
+                           {(filteredProducts || []).map(product => {
+                             const isInInvoice = invoiceProductIds.has(product.id);
+                             return (
+                                <div
+                                    key={product.id}
+                                    className="flex items-center justify-between p-2 rounded-md hover:bg-muted"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded-md object-cover" />
+                                        <div>
+                                            <p className="font-semibold">{product.name}</p>
+                                            <p className="text-sm text-muted-foreground">{formatCurrency(product.price)} / {product.unit}</p>
+                                        </div>
+                                    </div>
+                                    <Button size="sm" variant="ghost" onClick={() => handleAddProduct(product)} disabled={isInInvoice}>
+                                        {isInInvoice ? <CheckCircle className="h-5 w-5 text-green-500" /> : <PlusCircle className="h-5 w-5" />}
+                                    </Button>
+                                </div>
+                            )})}
+                            {filteredProducts.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">محصولی یافت نشد.</p>}
+                        </div>
+                    </ScrollArea>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader>
                     <CardTitle>آیتم‌های فاکتور</CardTitle>
@@ -576,7 +582,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                           <ScrollArea className="h-[200px]">
                                                             {similarProducts.length > 0 ? similarProducts.map(p => (
                                                               <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => {e.preventDefault(); handleAddProduct(p);}}>
-                                                                  <div className="relative w-12 h-12 rounded-md overflow-hidden">
+                                                                  <div className="relative w-16 h-16 rounded-md overflow-hidden">
                                                                      <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" />
                                                                   </div>
                                                                   <span className="flex-grow truncate text-xs">{p.name}</span>
@@ -587,7 +593,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                       </DropdownMenu>
                                                     </div>
                                             
-                                                    <div className="col-span-6 sm:col-span-3 grid grid-cols-2 gap-2">
+                                                     <div className="col-span-6 sm:col-span-3 grid grid-cols-2 gap-2">
                                                         <div className="grid gap-1">
                                                           <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                                           <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />

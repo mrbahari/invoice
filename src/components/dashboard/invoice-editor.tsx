@@ -70,6 +70,7 @@ import {
 } from '@/components/ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../ui/badge';
+import { CustomerForm } from './customer-form';
 
 
 type InvoiceEditorProps = {
@@ -143,6 +144,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
   const [flyingProduct, setFlyingProduct] = useState<FlyingProduct | null>(null);
   const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
+  
+  const [customerDialogView, setCustomerDialogView] = useState<'select' | 'create'>('select');
+
 
   // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
@@ -392,8 +396,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleProcessInvoice = (): string | null => {
-    if (!selectedCustomer || !invoice.items || invoice.items.length === 0) {
-      toast({ variant: 'destructive', title: 'مشتری یا آیتم‌های فاکتور انتخاب نشده است.' });
+    if (!selectedCustomer) {
+      toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفا یک مشتری برای فاکتور انتخاب کنید.' });
+      setIsCustomerDialogOpen(true);
+      return null;
+    }
+    if (!invoice.items || invoice.items.length === 0) {
+      toast({ variant: 'destructive', title: 'فاکتور خالی است', description: 'حداقل یک آیتم به فاکتور اضافه کنید.' });
       return null;
     }
     
@@ -555,7 +564,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                     </div>
                                 </div>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline">
+                                    <Button variant="outline" onClick={() => setCustomerDialogView('select')}>
                                         <Pencil className="ml-1 h-3 w-3" />
                                         تغییر
                                     </Button>
@@ -572,48 +581,74 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </CardContent>
                 </Card>
 
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>انتخاب مشتری</DialogTitle>
-                        <DialogDescription>
-                            مشتری مورد نظر خود را جستجو و انتخاب کنید.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 grid gap-4">
-                        <div className="relative">
-                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
-                        </div>
-                        <ScrollArea className="h-[60vh]">
-                            <div className="grid gap-2 pr-4">
-                                {(filteredCustomers || []).map(customer => {
-                                    return(
-                                        <Button
-                                            key={customer.id}
-                                            variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                            className="h-16 justify-start text-right"
-                                            onClick={() => {
-                                                setSelectedCustomer(customer);
-                                                setIsCustomerDialogOpen(false);
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-4 text-right w-full">
-                                                <Avatar className="h-10 w-10 border">
-                                                    <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                    <AvatarFallback>{customer.name[0]}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className='text-base font-semibold'>{customer.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                                                </div>
-                                            </div>
-                                        </Button>
-                                    );
-                                })}
-                            </div>
-                        </ScrollArea>
-                    </div>
-                </DialogContent>
+                <DialogContent className="max-w-3xl">
+                  {customerDialogView === 'select' ? (
+                    <>
+                      <DialogHeader>
+                          <DialogTitle>انتخاب مشتری</DialogTitle>
+                          <DialogDescription>
+                              مشتری مورد نظر خود را جستجو و انتخاب کنید.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 grid gap-4">
+                          <div className="flex justify-between items-center gap-4">
+                              <div className="relative flex-grow">
+                                  <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                  <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                              </div>
+                              <Button onClick={() => setCustomerDialogView('create')}>
+                                  <UserPlus className="ml-2 h-4 w-4" />
+                                  افزودن مشتری جدید
+                              </Button>
+                          </div>
+                          <ScrollArea className="h-[60vh]">
+                              <div className="grid gap-2 pr-4">
+                                  {(filteredCustomers || []).map(customer => {
+                                      return(
+                                          <Button
+                                              key={customer.id}
+                                              variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                                              className="h-16 justify-start text-right"
+                                              onClick={() => {
+                                                  setSelectedCustomer(customer);
+                                                  setIsCustomerDialogOpen(false);
+                                              }}
+                                          >
+                                              <div className="flex items-center gap-4 text-right w-full">
+                                                  <Avatar className="h-10 w-10 border">
+                                                      <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                      <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                  </Avatar>
+                                                  <div>
+                                                      <p className='text-base font-semibold'>{customer.name}</p>
+                                                      <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                                  </div>
+                                              </div>
+                                          </Button>
+                                      );
+                                  })}
+                              </div>
+                          </ScrollArea>
+                      </div>
+                    </>
+                  ) : (
+                     <div className="pt-8">
+                        <CustomerForm 
+                          onSave={() => {
+                            // Find the newly added customer (usually the last one)
+                            const newCustomer = data.customers[0];
+                            if(newCustomer){
+                                setSelectedCustomer(newCustomer);
+                            }
+                            setIsCustomerDialogOpen(false);
+                            setCustomerDialogView('select'); // Reset view for next time
+                          }} 
+                          onCancel={() => setCustomerDialogView('select')}
+                        />
+                     </div>
+                  )}
+              </DialogContent>
+
             </Dialog>
 
             <Card>
@@ -649,7 +684,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                       {(filteredProducts || []).map(product => {
                          const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                          const isInInvoice = !!invoiceItem;
-                         const quantityInInvoice = invoiceItem?.quantity ?? 0;
 
                         return (
                           <div key={product.id} className="w-32 flex-shrink-0 group">
@@ -662,8 +696,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                           </motion.button>
                                       </div>
                                       {isInInvoice && (
-                                        <Badge variant="default" className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs bg-green-600 text-white">
-                                          {quantityInInvoice}
+                                        <Badge className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs bg-green-600 text-white">
+                                          {invoiceItem?.quantity}
                                         </Badge>
                                       )}
                                   </div>
@@ -918,3 +952,4 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+

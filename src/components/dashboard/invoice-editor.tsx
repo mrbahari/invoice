@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice, InvoiceStatus } from '@/lib/definitions';
+import type { Customer, Product, Category, InvoiceItem, UnitOfMeasurement, Invoice, InvoiceStatus, Store } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -170,7 +170,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | 'all'>('all');
 
 
   // When customer changes, update invoice details
@@ -207,7 +207,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     }
   
     // Then filter by sub-category if one is selected
-    if (selectedSubCategoryId) {
+    if (selectedSubCategoryId && selectedSubCategoryId !== 'all') {
       availableProducts = availableProducts.filter(p => p.subCategoryId === selectedSubCategoryId);
     }
     
@@ -510,25 +510,25 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <CardTitle>افزودن محصولات</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4">
-                  <div className="relative">
-                      <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
+                        <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
+                        <SelectContent>
+                          {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
+                        <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">همه زیردسته‌ها</SelectItem>
+                            {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                      <div className="relative lg:col-span-1">
+                          <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                      </div>
                   </div>
-                    <div className="flex flex-wrap gap-2">
-                        {subCategories.map(cat => (
-                           <Button 
-                                key={cat.id} 
-                                variant={selectedSubCategoryId === cat.id ? 'default' : 'outline'} 
-                                size="sm" 
-                                onClick={() => setSelectedSubCategoryId(cat.id === selectedSubCategoryId ? null : cat.id)}
-                                className={cn("transition-all duration-300 rounded-full px-4 py-1.5 hover:shadow-lg hover:-translate-y-0.5", 
-                                selectedSubCategoryId === cat.id && "bg-primary text-primary-foreground hover:bg-primary/90"
-                                )}
-                            >
-                                {cat.name}
-                            </Button>
-                        ))}
-                    </div>
                   <div
                     ref={productsRef}
                     className="flex w-full space-x-4 overflow-x-auto pb-4 cursor-grab"
@@ -538,7 +538,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                       {(filteredProducts || []).map(product => {
                         const isInInvoice = invoiceProductIds.has(product.id);
                         return (
-                          <div key={product.id} className="w-40 flex-shrink-0 group">
+                          <div key={product.id} className="w-32 flex-shrink-0 group">
                               <Card className="overflow-hidden">
                                   <div className="relative aspect-square w-full">
                                       <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
@@ -710,7 +710,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         </div>
     </div>
-    <div className="fixed bottom-16 left-0 right-0 z-50 px-4">
+    <div className="fixed bottom-20 left-0 right-0 z-50 px-4">
         <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-lg">
             <div className="flex w-full sm:w-auto items-center gap-2">
                 <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
@@ -747,5 +747,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </>
   );
 }
+
+    
 
     

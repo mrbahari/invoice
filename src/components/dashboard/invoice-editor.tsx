@@ -221,14 +221,27 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         const items = prev.items ? [...prev.items] : [];
         if (items[index]) {
             const numericValue = typeof value === 'string' ? parseFormattedNumber(value) : value;
-            (items[index] as any)[field] = numericValue;
+            (items[index] as any)[field] = numericValue === '' ? 0 : numericValue;
+            
             if (field === 'quantity' || field === 'unitPrice') {
-                items[index].totalPrice = (items[index].quantity || 0) * (items[index].unitPrice || 0);
+                const item = items[index];
+                item.totalPrice = (item.quantity || 0) * (item.unitPrice || 0);
             }
         }
         return { ...prev, items };
     });
   };
+
+  const handleItemDisplayChange = (
+    index: number,
+    field: 'quantity' | 'unitPrice',
+    displaySetter: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+    value: string
+  ) => {
+      const numericValue = parseFormattedNumber(value);
+      handleItemChange(index, field, numericValue);
+      displaySetter(prev => ({...prev, [`${field}-${index}`]: formatNumber(numericValue)}));
+  }
   
   const handleUnitChange = (index: number, newUnit: string) => {
     setInvoice(prev => {
@@ -322,29 +335,32 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         }
     } else {
         // If it's an existing invoice, just save any current changes and then preview.
-        const updatedId = handleProcessInvoice(); // This saves any pending changes
+        const updatedId = handleProcessInvoice(); // This saves any pending pending changes
         if(updatedId) {
           onPreview(updatedId);
         }
     }
   };
 
-  const renderItemPrice = (index: number) => {
+  const renderItemPriceInputs = (index: number) => {
     const item = invoice.items?.[index];
-    if (!item) return '';
-
-    const handleItemPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        handleItemChange(index, 'unitPrice', value);
-    };
+    if (!item) return null;
 
     return (
-        <Input 
-            value={formatNumber(item.unitPrice)}
-            onChange={handleItemPriceChange}
-            placeholder="مبلغ واحد"
-            className="text-right font-mono"
-        />
+        <>
+            <Input 
+                value={formatNumber(item.unitPrice)}
+                onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                placeholder="مبلغ واحد"
+                className="text-right font-mono"
+            />
+             <Input 
+                value={formatCurrency(item.totalPrice)} 
+                disabled 
+                placeholder="مبلغ کل" 
+                className="bg-background/50 font-mono text-right" 
+            />
+        </>
     );
   };
   
@@ -365,8 +381,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
-            <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+        <div className="grid gap-4">
+            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
                 <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
                     <Card>
                         <CardHeader>
@@ -468,27 +484,30 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 {(provided) => (
                                                     <Card ref={provided.innerRef} {...provided.draggableProps} className="overflow-hidden bg-muted/30">
                                                         <CardContent className="p-2">
-                                                            <div className="grid grid-cols-12 items-center gap-2">
+                                                            <div className="grid grid-cols-12 items-center gap-2 md:gap-4">
                                                                 <div {...provided.dragHandleProps} className="cursor-grab p-2 flex items-center justify-center border-l col-span-1">
                                                                     <GripVertical className="h-5 w-5 text-muted-foreground" />
                                                                 </div>
                                                                 <div className="col-span-11 sm:col-span-3">
                                                                     <p className="font-semibold truncate">{item.productName}</p>
                                                                 </div>
-                                                                <div className="col-span-full sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                                    <Input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))} placeholder="مقدار" />
-                                                                    {isProductFound && availableUnits.length > 1 ? (
-                                                                        <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
-                                                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                            <SelectContent>
-                                                                                {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                                                                            </SelectContent>
-                                                                        </Select>
-                                                                    ) : (
-                                                                        <Input value={item.unit} disabled className="bg-background/50" />
-                                                                    )}
-                                                                    {renderItemPrice(index)}
-                                                                    <Input value={formatCurrency(item.totalPrice)} disabled placeholder="مبلغ کل" className="bg-background/50 font-mono text-right" />
+                                                                <div className="col-span-full sm:col-span-6 grid grid-cols-2 md:grid-cols-2 gap-2">
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        <Input type="number" value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
+                                                                        {isProductFound && availableUnits.length > 1 ? (
+                                                                            <Select value={item.unit} onValueChange={(newUnit) => handleUnitChange(index, newUnit)}>
+                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        ) : (
+                                                                            <Input value={item.unit} disabled className="bg-background/50" />
+                                                                        )}
+                                                                    </div>
+                                                                     <div className="grid grid-cols-2 gap-2">
+                                                                        {renderItemPriceInputs(index)}
+                                                                     </div>
                                                                 </div>
                                                                 <div className="col-span-full sm:col-span-2 flex items-center justify-end gap-2">
                                                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -551,72 +570,44 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         </div>
                     </CardContent>
                 </Card>
-            </div>
-            
-            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+
                 <Card>
                     <CardHeader>
-                        <CardTitle>خلاصه مالی</CardTitle>
+                        <CardTitle>خلاصه مالی و توضیحات</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid gap-4">
-                         <div className="grid gap-3">
-                            <Label>جمع جزء</Label>
-                            <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono text-lg h-12" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-3">
-                                <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                    <CardContent className="grid gap-6 md:grid-cols-2">
+                        <div className="grid gap-4">
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="discount">تخفیف (ریال)</Label>
+                                    <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="additions">اضافات (ریال)</Label>
+                                    <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                                </div>
                             </div>
-                             <div className="grid gap-3">
-                                <Label htmlFor="additions">اضافات (ریال)</Label>
-                                <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                            <div className="grid gap-2">
+                                <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
+                                <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
+                            </div>
+                            <Separator />
+                            <div className="grid gap-2">
+                                <Label>جمع جزء</Label>
+                                <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono h-11" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-base">جمع کل</Label>
+                                <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-xl h-14 font-bold" />
                             </div>
                         </div>
-                        <div className="grid gap-3">
-                            <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                            <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
-                        </div>
-                        <Separator />
-                        <div className="grid gap-3">
-                            <Label className="text-base">جمع کل</Label>
-                            <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-2xl h-16 font-bold" />
+                         <div className="grid gap-2">
+                            <Label htmlFor="description">توضیحات</Label>
+                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} className="min-h-[240px]" />
                         </div>
                     </CardContent>
                 </Card>
 
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>توضیحات</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-3">
-                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {isEditMode && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>عملیات</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-2">
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف این فاکتور</Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     </div>
@@ -624,8 +615,20 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
             <div>
                  {isEditMode && (
-                    <div className="grid gap-2">
-                        <Label htmlFor="status" className="sr-only">وضعیت</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="destructive" className="w-full" disabled={isProcessing}><Trash2 className="ml-2 h-4 w-4" />حذف</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
                         <Select value={invoice.status} onValueChange={(value: InvoiceStatus) => {setInvoice(prev => ({...prev, status: value}));}}>
                             <SelectTrigger id="status" className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent><SelectItem value="Pending">در انتظار</SelectItem><SelectItem value="Paid">پرداخت شده</SelectItem><SelectItem value="Overdue">سررسید گذشته</SelectItem></SelectContent>

@@ -216,7 +216,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     }
   }, [productSearch]);
   
-  const subCategories = useMemo(() => categories.filter(c => c.parentId), [categories]);
+    const subCategories = useMemo(() => {
+        const productSubCategoryIds = new Set(products.map(p => p.subCategoryId));
+        return categories.filter(c => c.parentId && productSubCategoryIds.has(c.id));
+    }, [products, categories]);
+
   const invoiceProductIds = useMemo(() => new Set(invoice.items?.map(item => item.productId)), [invoice.items]);
   
   const getSimilarProducts = (productId: string) => {
@@ -503,7 +507,15 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   </div>
                     <div className="flex flex-wrap gap-2">
                         {subCategories.map(cat => (
-                            <Button key={cat.id} variant={selectedSubCategoryId === cat.id ? 'default' : 'outline'} size="sm" onClick={() => setSelectedSubCategoryId(cat.id)}>
+                           <Button 
+                                key={cat.id} 
+                                variant={selectedSubCategoryId === cat.id ? 'default' : 'outline'} 
+                                size="sm" 
+                                onClick={() => setSelectedSubCategoryId(cat.id === selectedSubCategoryId ? null : cat.id)}
+                                className={cn(
+                                    selectedSubCategoryId === cat.id && "bg-primary text-primary-foreground hover:bg-primary/90"
+                                )}
+                            >
                                 {cat.name}
                             </Button>
                         ))}

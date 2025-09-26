@@ -139,13 +139,15 @@ export default function InvoicesPage({
     switch (view.type) {
       case 'editor':
         return (
-          <InvoiceEditor
-            invoiceId={view.invoiceId}
-            initialUnsavedInvoice={view.initialUnsavedInvoice}
-            onSaveSuccess={handleSaveSuccess}
-            onPreview={handlePreviewFromEditor}
-            onCancel={handleCancel}
-          />
+          <div className="pb-16">
+            <InvoiceEditor
+              invoiceId={view.invoiceId}
+              initialUnsavedInvoice={view.initialUnsavedInvoice}
+              onSaveSuccess={handleSaveSuccess}
+              onPreview={handlePreviewFromEditor}
+              onCancel={handleCancel}
+            />
+          </div>
         );
       case 'preview':
         return (

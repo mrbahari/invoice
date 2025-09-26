@@ -157,7 +157,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
 
   return (
     <div>
-        <div className="mb-6 flex justify-between items-center gap-2 no-print">
+        <div className="sticky top-16 z-10 mb-6 flex items-center justify-between gap-2 rounded-lg border bg-card/80 p-2 shadow-lg backdrop-blur-sm no-print md:-mx-4">
             <Button type="button" variant="outline" onClick={onBack} className="dark:border-white/50 dark:text-white dark:hover:bg-white/10">
                 <ArrowRight className="ml-2 h-4 w-4" />
                 بازگشت 

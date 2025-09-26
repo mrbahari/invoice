@@ -50,6 +50,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
@@ -188,6 +196,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     if (!products) return [];
     return products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
   }, [products, productSearch]);
+  
+  const getSimilarProducts = (productId: string) => {
+    const currentProduct = products.find(p => p.id === productId);
+    if (!currentProduct) return [];
+    return products.filter(p => p.subCategoryId === currentProduct.subCategoryId && p.id !== currentProduct.id);
+  };
 
   const filteredCustomers = useMemo(() => {
     if (!customerList) return [];
@@ -478,6 +492,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             const product = products.find(p => p.id === item.productId);
                                             const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
                                             const isProductFound = !!product;
+                                            const similarProducts = getSimilarProducts(item.productId);
 
                                             return (
                                             <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
@@ -493,9 +508,26 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                             <p className="font-semibold truncate">{item.productName}</p>
                                                             <p className="text-xs text-muted-foreground">واحد: {item.unit}</p>
                                                           </div>
-                                                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                                                            <Shuffle className="h-4 w-4" />
-                                                          </Button>
+                                                          <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                                                <Shuffle className="h-4 w-4" />
+                                                              </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent className="w-64" align="start">
+                                                              <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
+                                                              <DropdownMenuSeparator />
+                                                              <ScrollArea className="h-[200px]">
+                                                                {similarProducts.length > 0 ? similarProducts.map(p => (
+                                                                  <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => e.preventDefault()}>
+                                                                    <Image src={p.imageUrl} alt={p.name} width={32} height={32} className="rounded-sm object-cover" />
+                                                                    <span className="flex-grow truncate">{p.name}</span>
+                                                                    <Button size="sm" variant="outline" className="h-7" onClick={() => handleAddProduct(p)}>افزودن</Button>
+                                                                  </DropdownMenuItem>
+                                                                )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
+                                                              </ScrollArea>
+                                                            </DropdownMenuContent>
+                                                          </DropdownMenu>
                                                         </div>
                                                 
                                                         <div className="col-span-full sm:col-span-4 grid grid-cols-2 gap-2">

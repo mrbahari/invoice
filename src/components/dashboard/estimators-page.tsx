@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import { FlatCeilingForm } from './estimators/flat-ceiling-form';
-import { DrywallForm } from './drywall-form';
+import { DrywallForm } from './estimators/drywall-form';
 import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStorePrefix } from '@/lib/utils';
@@ -40,25 +40,25 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        imageUrl: '/images/estimators/box-ceiling.jpg',
+        imageUrl: 'https://picsum.photos/seed/est1/600/400',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        imageUrl: '/images/estimators/grid-ceiling.jpg',
+        imageUrl: 'https://picsum.photos/seed/est2/600/400',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        imageUrl: '/images/estimators/flat-ceiling.jpg',
+        imageUrl: 'https://picsum.photos/seed/est3/600/400',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        imageUrl: '/images/estimators/drywall.jpg',
+        imageUrl: 'https://picsum.photos/seed/est4/600/400',
         component: DrywallForm,
     }
 ];
@@ -307,6 +307,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 alt={estimator.title} 
                                 fill 
                                 className="object-cover transition-transform group-hover:scale-105"
+                                data-ai-hint="construction material"
                             />
                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                                 <CardTitle className="text-lg font-bold text-white">{estimator.title}</CardTitle>

@@ -59,63 +59,71 @@ export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>محاسبه مصالح باکس و نورمخفی</CardTitle>
-        <CardDescription>
-          طول باکس را به متر وارد کنید تا لیست مصالح مورد نیاز را دریافت کنید.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="grid gap-2">
-            <Label htmlFor="length">طول باکس (متر)</Label>
-            <Input
-              id="length"
-              type="number"
-              placeholder="مثال: 15"
-              value={length}
-              onChange={handleInputChange(setLength)}
-              step="0.01"
-            />
+    <div className="pb-28">
+      <Card>
+        <CardHeader>
+          <CardTitle>محاسبه مصالح باکس و نورمخفی</CardTitle>
+          <CardDescription>
+            طول باکس را به متر وارد کنید تا لیست مصالح مورد نیاز را دریافت کنید.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid gap-2">
+              <Label htmlFor="length">طول باکس (متر)</Label>
+              <Input
+                id="length"
+                type="number"
+                placeholder="مثال: 15"
+                value={length}
+                onChange={handleInputChange(setLength)}
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          {results.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">لیست مصالح مورد نیاز:</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>نوع مصالح</TableHead>
+                    <TableHead className="text-center">مقدار</TableHead>
+                    <TableHead>واحد</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {results.map((item) => (
+                    <TableRow key={item.material}>
+                      <TableCell className="font-medium">{item.material}</TableCell>
+                      <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="text-xs text-muted-foreground pt-4">
+                  توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {results.length > 0 && (
+        <div 
+          className="fixed bottom-20 left-0 right-0 z-10 p-4 bg-background/90 border-t backdrop-blur-sm no-print"
+          style={{ bottom: '64px' }}
+        >
+          <div className="max-w-4xl mx-auto">
+              <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                  <PlusCircle className="ml-2 h-5 w-5" />
+                  افزودن به لیست برآورد
+              </Button>
           </div>
         </div>
-
-        {results.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">لیست مصالح مورد نیاز:</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>نوع مصالح</TableHead>
-                  <TableHead className="text-center">مقدار</TableHead>
-                  <TableHead>واحد</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map((item) => (
-                  <TableRow key={item.material}>
-                    <TableCell className="font-medium">{item.material}</TableCell>
-                    <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-      {results.length > 0 && (
-        <CardFooter className="flex-col items-stretch gap-4">
-             <p className="text-xs text-muted-foreground">
-                توجه: مقادیر محاسبه شده تقریبی بوده و ممکن است بسته به شرایط اجرایی و پرت مصالح، تا ۱۰٪ افزایش یابد.
-            </p>
-            <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
-                <PlusCircle className="ml-2 h-5 w-5" />
-                افزودن به لیست برآورد
-            </Button>
-        </CardFooter>
-       )}
-    </Card>
+      )}
+    </div>
   );
 }

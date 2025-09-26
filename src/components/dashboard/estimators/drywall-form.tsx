@@ -102,123 +102,130 @@ export function DrywallForm({ onAddToList }: DrywallFormProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>محاسبه مصالح دیوار خشک (کناف)</CardTitle>
-        <CardDescription>
-          ابعاد دیوار و نوع آن را مشخص کنید تا لیست مصالح مورد نیاز را دریافت کنید.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8">
-        <div>
-            <h3 className="text-lg font-semibold mb-4 text-primary">۱. ابعاد دیوار</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="length">طول دیوار (متر)</Label>
-                <Input
-                  id="length"
-                  type="number"
-                  placeholder="مثال: 3.20"
-                  value={length}
-                  onChange={handleInputChange(setLength)}
-                  step="0.01"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="height">ارتفاع دیوار (متر)</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  placeholder="مثال: 2.80"
-                  value={height}
-                  onChange={handleInputChange(setHeight)}
-                  step="0.01"
-                />
-              </div>
-            </div>
-        </div>
-        
-        <div>
-            <h3 className="text-lg font-semibold mb-4 text-primary">۲. گزینه‌های دیوار</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card 
-                    className={cn("cursor-pointer", wallType === 'partition' && 'border-primary ring-2 ring-primary')}
-                    onClick={() => setWallType('partition')}
-                >
-                    <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
-                        <Layers className="h-8 w-8 text-primary" />
-                        <div className="grid gap-1">
-                            <CardTitle className="text-base">دیوار جداکننده</CardTitle>
-                            <CardDescription className="text-xs">دو طرف دیوار با پنل پوشیده می‌شود.</CardDescription>
-                        </div>
-                        {wallType === 'partition' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
-                    </CardHeader>
-                </Card>
-                <Card 
-                    className={cn("cursor-pointer", wallType === 'lining' && 'border-primary ring-2 ring-primary')}
-                    onClick={() => setWallType('lining')}
-                >
-                    <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
-                        <Square className="h-8 w-8 text-primary" />
-                        <div className="grid gap-1">
-                            <CardTitle className="text-base">دیوار پوششی</CardTitle>
-                            <CardDescription className="text-xs">یک طرف دیوار با پنل پوشیده می‌شود.</CardDescription>
-                        </div>
-                         {wallType === 'lining' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
-                    </CardHeader>
-                </Card>
-            </div>
-             <Card 
-                className={cn("cursor-pointer mt-4", includeWool && 'border-primary ring-2 ring-primary')}
-                onClick={() => setIncludeWool(!includeWool)}
-            >
-                <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
-                    <Waves className="h-8 w-8 text-primary" />
-                    <div className="grid gap-1">
-                        <CardTitle className="text-base">عایق صوتی (پشم سنگ)</CardTitle>
-                        <CardDescription className="text-xs">پشم سنگ برای بهبود عملکرد صوتی دیوار محاسبه شود.</CardDescription>
-                    </div>
-                    {includeWool && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
-                </CardHeader>
-            </Card>
-        </div>
-
-
-        {results.length > 0 && (
+    <div className="pb-28">
+      <Card>
+        <CardHeader>
+          <CardTitle>محاسبه مصالح دیوار خشک (کناف)</CardTitle>
+          <CardDescription>
+            ابعاد دیوار و نوع آن را مشخص کنید تا لیست مصالح مورد نیاز را دریافت کنید.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-primary">۳. لیست مصالح مورد نیاز</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>نوع مصالح</TableHead>
-                  <TableHead className="text-center">مقدار</TableHead>
-                  <TableHead>واحد</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map((item) => (
-                  <TableRow key={item.material}>
-                    <TableCell className="font-medium">{item.material}</TableCell>
-                    <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+              <h3 className="text-lg font-semibold mb-4 text-primary">۱. ابعاد دیوار</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid gap-2">
+                  <Label htmlFor="length">طول دیوار (متر)</Label>
+                  <Input
+                    id="length"
+                    type="number"
+                    placeholder="مثال: 3.20"
+                    value={length}
+                    onChange={handleInputChange(setLength)}
+                    step="0.01"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="height">ارتفاع دیوار (متر)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    placeholder="مثال: 2.80"
+                    value={height}
+                    onChange={handleInputChange(setHeight)}
+                    step="0.01"
+                  />
+                </div>
+              </div>
           </div>
-        )}
-      </CardContent>
+          
+          <div>
+              <h3 className="text-lg font-semibold mb-4 text-primary">۲. گزینه‌های دیوار</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card 
+                      className={cn("cursor-pointer", wallType === 'partition' && 'border-primary ring-2 ring-primary')}
+                      onClick={() => setWallType('partition')}
+                  >
+                      <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
+                          <Layers className="h-8 w-8 text-primary" />
+                          <div className="grid gap-1">
+                              <CardTitle className="text-base">دیوار جداکننده</CardTitle>
+                              <CardDescription className="text-xs">دو طرف دیوار با پنل پوشیده می‌شود.</CardDescription>
+                          </div>
+                          {wallType === 'partition' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
+                      </CardHeader>
+                  </Card>
+                  <Card 
+                      className={cn("cursor-pointer", wallType === 'lining' && 'border-primary ring-2 ring-primary')}
+                      onClick={() => setWallType('lining')}
+                  >
+                      <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
+                          <Square className="h-8 w-8 text-primary" />
+                          <div className="grid gap-1">
+                              <CardTitle className="text-base">دیوار پوششی</CardTitle>
+                              <CardDescription className="text-xs">یک طرف دیوار با پنل پوشیده می‌شود.</CardDescription>
+                          </div>
+                          {wallType === 'lining' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
+                      </CardHeader>
+                  </Card>
+              </div>
+              <Card 
+                  className={cn("cursor-pointer mt-4", includeWool && 'border-primary ring-2 ring-primary')}
+                  onClick={() => setIncludeWool(!includeWool)}
+              >
+                  <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
+                      <Waves className="h-8 w-8 text-primary" />
+                      <div className="grid gap-1">
+                          <CardTitle className="text-base">عایق صوتی (پشم سنگ)</CardTitle>
+                          <CardDescription className="text-xs">پشم سنگ برای بهبود عملکرد صوتی دیوار محاسبه شود.</CardDescription>
+                      </div>
+                      {includeWool && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
+                  </CardHeader>
+              </Card>
+          </div>
+
+
+          {results.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-primary">۳. لیست مصالح مورد نیاز</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>نوع مصالح</TableHead>
+                    <TableHead className="text-center">مقدار</TableHead>
+                    <TableHead>واحد</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {results.map((item) => (
+                    <TableRow key={item.material}>
+                      <TableCell className="font-medium">{item.material}</TableCell>
+                      <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="text-xs text-muted-foreground pt-4">
+                  توجه: مقادیر محاسبه شده تقریبی بوده و پرت مصالح در نظر گرفته نشده است. محاسبات بر اساس سازه‌های استاندارد با فاصله ۶۰ سانتی‌متر است.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       {results.length > 0 && (
-        <CardFooter className="flex-col items-stretch gap-4">
-             <p className="text-xs text-muted-foreground">
-                توجه: مقادیر محاسبه شده تقریبی بوده و پرت مصالح در نظر گرفته نشده است. محاسبات بر اساس سازه‌های استاندارد با فاصله ۶۰ سانتی‌متر است.
-            </p>
-            <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
-                <PlusCircle className="ml-2 h-5 w-5" />
-                افزودن به لیست برآورد
-            </Button>
-        </CardFooter>
-       )}
-    </Card>
+        <div 
+          className="fixed bottom-20 left-0 right-0 z-10 p-4 bg-background/90 border-t backdrop-blur-sm no-print"
+          style={{ bottom: '64px' }}
+        >
+          <div className="max-w-4xl mx-auto">
+              <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                  <PlusCircle className="ml-2 h-5 w-5" />
+                  افزودن به لیست برآورد
+              </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

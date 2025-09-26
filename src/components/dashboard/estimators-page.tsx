@@ -42,24 +42,28 @@ const estimatorTypes = [
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
         imageUrl: 'https://picsum.photos/seed/est1/600/400',
+        imageHint: 'drywall ceiling',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
         imageUrl: 'https://picsum.photos/seed/est2/600/400',
+        imageHint: 'grid ceiling',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
         imageUrl: 'https://picsum.photos/seed/est3/600/400',
+        imageHint: 'flat ceiling',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
         imageUrl: 'https://picsum.photos/seed/est4/600/400',
+        imageHint: 'drywall installation',
         component: DrywallForm,
     }
 ];
@@ -308,7 +312,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 alt={estimator.title} 
                                 fill 
                                 className="object-cover transition-transform group-hover:scale-105"
-                                data-ai-hint="construction material"
+                                data-ai-hint={estimator.imageHint}
                             />
                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 md:p-4">
                                 <CardTitle className="text-sm md:text-lg font-bold text-white">{estimator.title}</CardTitle>
@@ -320,6 +324,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         </div>
 
         <AnimatePresence>
+            {estimationList.length > 0 && isAggregatedListOpen && (
+                 <div 
+                    className="fixed inset-0 z-30" 
+                    onClick={() => setIsAggregatedListOpen(false)}
+                 />
+            )}
             {estimationList.length > 0 && (
                  <Collapsible
                     open={isAggregatedListOpen}
@@ -332,11 +342,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         exit={{ y: "100%" }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         className="w-full max-w-4xl mx-auto"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <CollapsibleContent>
                             <AggregatedListContent />
                         </CollapsibleContent>
-                        <CollapsibleTrigger asChild>
+                         <CollapsibleTrigger asChild>
                              <div className="w-full bg-green-600 text-white p-3 rounded-b-lg cursor-pointer hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg">
                                 <div className="flex items-center gap-2">
                                      <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>

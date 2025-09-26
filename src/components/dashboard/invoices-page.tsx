@@ -117,6 +117,9 @@ export default function InvoicesPage({
 
   const handleSaveSuccess = useCallback(() => {
     setView({ type: 'list' });
+    if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, []);
 
   const handleCancel = useCallback(() => {

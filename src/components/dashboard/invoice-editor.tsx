@@ -168,7 +168,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | 'all'>('all');
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
 
 
   // When customer changes, update invoice details
@@ -198,7 +198,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     if (!products) return [];
     
     let categoryFiltered = products;
-    if(selectedSubCategoryId && selectedSubCategoryId !== 'all') {
+    if (selectedSubCategoryId) {
       categoryFiltered = products.filter(p => p.subCategoryId === selectedSubCategoryId);
     }
 
@@ -212,8 +212,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   // Effect to clear category filter when search term is cleared
   useEffect(() => {
     if (productSearch === '') {
-      // Don't reset category filter automatically
-      // setSelectedSubCategoryId(null);
+      setSelectedSubCategoryId(null);
     }
   }, [productSearch]);
   
@@ -494,49 +493,61 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </Dialog>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>افزودن محصولات</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                    <div className="relative">
-                        <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                    </div>
-                     <div className="flex flex-wrap gap-2">
-                        <Button variant={selectedSubCategoryId === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setSelectedSubCategoryId('all')}>
-                            همه
-                        </Button>
+              <CardHeader>
+                  <CardTitle>افزودن محصولات</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                  <div className="relative">
+                      <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                  </div>
+                    <div className="flex flex-wrap gap-2">
                         {subCategories.map(cat => (
                             <Button key={cat.id} variant={selectedSubCategoryId === cat.id ? 'default' : 'outline'} size="sm" onClick={() => setSelectedSubCategoryId(cat.id)}>
                                 {cat.name}
                             </Button>
                         ))}
                     </div>
-                    <ScrollArea className="h-80 w-full rounded-md border">
-                        <div className="p-4 grid gap-2">
-                           {(filteredProducts || []).map(product => {
-                             const isInInvoice = invoiceProductIds.has(product.id);
-                             return (
-                                <div
-                                    key={product.id}
-                                    className="flex items-center justify-between p-2 rounded-md hover:bg-muted"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <Image src={product.imageUrl} alt={product.name} width={48} height={48} className="rounded-md object-cover" />
-                                        <div>
-                                            <p className="font-semibold">{product.name}</p>
-                                            <p className="text-sm text-muted-foreground">{formatCurrency(product.price)} / {product.unit}</p>
-                                        </div>
-                                    </div>
-                                    <Button size="sm" variant="ghost" onClick={() => handleAddProduct(product)} disabled={isInInvoice}>
-                                        {isInInvoice ? <CheckCircle className="h-5 w-5 text-green-500" /> : <PlusCircle className="h-5 w-5" />}
-                                    </Button>
-                                </div>
-                            )})}
-                            {filteredProducts.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">محصولی یافت نشد.</p>}
-                        </div>
-                    </ScrollArea>
-                </CardContent>
+                  <div
+                    ref={productsRef}
+                    className="flex w-full space-x-4 overflow-x-auto pb-4 cursor-grab"
+                    {...draggableEvents}
+                  >
+                    <div className="flex flex-row gap-4">
+                      {(filteredProducts || []).map(product => {
+                        const isInInvoice = invoiceProductIds.has(product.id);
+                        return (
+                          <div key={product.id} className="w-40 flex-shrink-0 group">
+                              <Card className="overflow-hidden">
+                                  <div className="relative aspect-square w-full">
+                                      <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 hover:text-white" onClick={() => handleAddProduct(product)} disabled={isInInvoice}>
+                                            {isInInvoice ? <CheckCircle className="h-6 w-6" /> : <PlusCircle className="h-6 w-6" />}
+                                          </Button>
+                                      </div>
+                                      {isInInvoice && (
+                                          <div className="absolute top-2 left-2 bg-green-500 text-white rounded-full p-1">
+                                              <CheckCircle className="h-4 w-4" />
+                                          </div>
+                                      )}
+                                  </div>
+                                  <div className="p-2 text-center">
+                                      <p className="font-semibold text-sm truncate">{product.name}</p>
+                                      <p className="text-xs text-muted-foreground">{formatCurrency(product.price)}</p>
+                                  </div>
+                              </Card>
+                          </div>
+                        )
+                      })}
+                      {filteredProducts.length === 0 && (
+                          <div className="w-full text-center py-10 text-muted-foreground">
+                              محصولی یافت نشد.
+                          </div>
+                      )}
+                    </div>
+                  </div>
+              </CardContent>
             </Card>
             
             <Card>

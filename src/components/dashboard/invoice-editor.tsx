@@ -726,7 +726,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         </div>
     </div>
     <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-full shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
@@ -785,5 +785,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+
 
 

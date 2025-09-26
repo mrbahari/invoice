@@ -1,23 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Box, Grid, MinusSquare, ArrowRight, Trash2, FilePlus, Square, ClipboardList } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronsUp, ChevronsDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import { FlatCeilingForm } from './estimators/flat-ceiling-form';
-import { DrywallForm } from './estimators/drywall-form';
+import { DrywallForm } from './drywall-form';
 import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStorePrefix } from '@/lib/utils';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 export interface MaterialResult {
@@ -37,30 +39,26 @@ type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall';
 const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
-        title: 'محاسبه مصالح باکس و نورمخفی',
-        description: 'طول باکس را وارد کرده و لیست مصالح مورد نیاز را دریافت کنید.',
-        icon: Box,
+        title: 'باکس و نورمخفی',
+        imageUrl: '/images/estimators/box-ceiling.jpg',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
-        title: 'محاسبه مصالح سقف مشبک',
-        description: 'مساحت سقف را وارد کرده و لیست مصالح لازم را مشاهده کنید.',
-        icon: Grid,
+        title: 'سقف مشبک',
+        imageUrl: '/images/estimators/grid-ceiling.jpg',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
-        title: 'محاسبه مصالح سقف فلت',
-        description: 'مساحت سقف را وارد کرده و برآورد مصالح لازم را دریافت کنید.',
-        icon: MinusSquare,
+        title: 'سقف فلت',
+        imageUrl: '/images/estimators/flat-ceiling.jpg',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
-        title: 'محاسبه مصالح دیوار خشک',
-        description: 'ابعاد دیوار (جداکننده یا پوششی) و عایق صوتی آن را مشخص کنید.',
-        icon: Square,
+        title: 'دیوار خشک',
+        imageUrl: '/images/estimators/drywall.jpg',
         component: DrywallForm,
     }
 ];
@@ -77,6 +75,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const { data: appData } = useData();
   const { products, invoices } = appData;
   const { toast } = useToast();
+  const [isAggregatedListOpen, setIsAggregatedListOpen] = useState(false);
 
   const handleAddToList = (description: string, results: MaterialResult[]) => {
     const newEstimation: Estimation = {
@@ -91,11 +90,18 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const handleClearList = () => {
     setEstimationList([]);
+    setIsAggregatedListOpen(false);
     toast({ title: 'لیست برآورد پاک شد' });
   };
   
   const handleRemoveFromList = (id: string) => {
-    setEstimationList(prev => prev.filter(item => item.id !== id));
+    setEstimationList(prev => {
+        const newList = prev.filter(item => item.id !== id);
+        if (newList.length === 0) {
+            setIsAggregatedListOpen(false); // Close list if it becomes empty
+        }
+        return newList;
+    });
   }
 
   const aggregatedResults: MaterialResult[] = estimationList.reduce((acc, current) => {
@@ -118,7 +124,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
     
-    // Improved mapping for more reliable product finding
     const productMap: Record<string, string[]> = {
         'پنل والیز': ['پنل والیز', 'پانل گچی', 'panel'],
         'پنل جی برد': ['پنل جی برد', 'پانل گچی', 'panel'],
@@ -163,12 +168,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let productId = product ? product.id : `mat-${item.material.replace(/\s+/g, '-')}`;
         let productName = product ? product.name : item.material;
 
-        // Convert screw count to packs if needed
         if ((materialNameLower.includes('پیچ ۲.۵') || materialNameLower.includes('پیچ سازه')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
         } else {
-            quantity = Math.ceil(quantity); // Round up quantities like panels, profiles, etc.
+            quantity = Math.ceil(quantity);
         }
 
         const existingInvoiceItemIndex = invoiceItems.findIndex(invItem => invItem.productId === productId && invItem.unit === unit);
@@ -188,7 +192,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             });
         }
     });
-
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
     const invoiceDescription = estimationList.map(est => `- ${est.description}`).join('\n');
@@ -211,42 +214,55 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     
     toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کنید.'});
     onNavigate('invoices', { invoice: newInvoice });
-    setEstimationList([]); // Clear list after invoice creation
+    setEstimationList([]);
+    setIsAggregatedListOpen(false);
   };
 
 
   const AggregatedListContent = () => (
-      <>
-        <Table>
-            <TableHeader>
-                <TableRow>
-                <TableHead>نوع مصالح</TableHead>
-                <TableHead className="text-center">مقدار</TableHead>
-                <TableHead>واحد</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {aggregatedResults.map((item) => (
-                <TableRow key={`${item.material}-${item.unit}`}>
-                    <TableCell className="font-medium">{item.material}</TableCell>
-                    <TableCell className="text-center font-mono text-lg">{Math.ceil(item.quantity).toLocaleString('fa-IR')}</TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                </TableRow>
+      <div className="bg-background border-t border-b rounded-t-lg">
+        <ScrollArea className="h-[40vh] p-4">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>نوع مصالح</TableHead>
+                    <TableHead className="text-center">مقدار</TableHead>
+                    <TableHead>واحد</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {aggregatedResults.map((item) => (
+                    <TableRow key={`${item.material}-${item.unit}`}>
+                        <TableCell className="font-medium">{item.material}</TableCell>
+                        <TableCell className="text-center font-mono text-lg">{Math.ceil(item.quantity).toLocaleString('fa-IR')}</TableCell>
+                        <TableCell>{item.unit}</TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <div className="mt-4 text-sm text-muted-foreground space-y-1">
+                <p className="font-semibold">بخش‌های محاسبه شده:</p>
+                {estimationList.map(est => (
+                    <div key={est.id} className="flex items-center justify-between">
+                        <span>- {est.description}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveFromList(est.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                    </div>
                 ))}
-            </TableBody>
-        </Table>
-        <div className="mt-4 text-sm text-muted-foreground space-y-1">
-            <p className="font-semibold">بخش‌های محاسبه شده:</p>
-            {estimationList.map(est => (
-                <div key={est.id} className="flex items-center justify-between">
-                    <span>- {est.description}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveFromList(est.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                </div>
-            ))}
+            </div>
+        </ScrollArea>
+        <div className="p-4 flex flex-col sm:flex-row gap-2 border-t">
+             <Button onClick={handleClearList} variant="outline" className="w-full sm:w-auto">
+                <Trash2 className="ml-2 h-4 w-4" />
+                پاک کردن لیست
+            </Button>
+            <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full sm:flex-1 bg-green-600 hover:bg-green-700">
+                <FilePlus className="ml-2 h-5 w-5" />
+                ایجاد فاکتور نهایی
+            </Button>
         </div>
-      </>
+      </div>
   );
 
   if (activeEstimator) {
@@ -267,108 +283,75 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }
 
   return (
-    <div className='pb-28'>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 grid gap-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>برآورد مصالح</CardTitle>
-                        <CardDescription>
-                        ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
+    <div className='pb-40'>
+        <div className="grid gap-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>برآورد مصالح</CardTitle>
+                    <CardDescription>
+                    ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {estimatorTypes.map((estimator) => (
-                        <Card 
-                            key={estimator.id}
-                            onClick={() => setActiveEstimator(estimator.id)}
-                            className="flex flex-col cursor-pointer transition-transform hover:scale-105"
-                        >
-                            <CardHeader className="flex-row gap-4 items-center">
-                                <estimator.icon className="h-10 w-10 text-primary" />
-                                <div>
-                                    <CardTitle>{estimator.title}</CardTitle>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                                <CardDescription>{estimator.description}</CardDescription>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-
-            {/* Desktop View: Sticky Card */}
-            <div className="hidden md:block md:col-span-1">
-                {estimationList.length > 0 && (
-                    <Card className="sticky top-20">
-                         <Accordion type="single" collapsible defaultValue="item-1">
-                            <AccordionItem value="item-1" className="border-b-0">
-                                <AccordionTrigger className="p-6 hover:no-underline">
-                                     <div className='text-right'>
-                                        <CardTitle>لیست تجمیعی مصالح</CardTitle>
-                                        <CardDescription className='mt-2'>
-                                            {aggregatedResults.length} آیتم در لیست
-                                        </CardDescription>
-                                     </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="px-6">
-                                    {AggregatedListContent()}
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                        <CardFooter className="flex-col gap-2">
-                            <Button onClick={handleClearList} variant="outline" size="sm" className="w-full">
-                                <Trash2 className="ml-2 h-4 w-4" />
-                                پاک کردن لیست
-                            </Button>
-                            <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                                <FilePlus className="ml-2 h-5 w-5" />
-                                ایجاد فاکتور نهایی
-                            </Button>
-                        </CardFooter>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {estimatorTypes.map((estimator) => (
+                    <Card 
+                        key={estimator.id}
+                        onClick={() => setActiveEstimator(estimator.id)}
+                        className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                    >
+                        <div className="relative aspect-video">
+                            <Image 
+                                src={estimator.imageUrl} 
+                                alt={estimator.title} 
+                                fill 
+                                className="object-cover transition-transform group-hover:scale-105"
+                            />
+                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                                <CardTitle className="text-lg font-bold text-white">{estimator.title}</CardTitle>
+                            </div>
+                        </div>
                     </Card>
-                )}
+                ))}
             </div>
         </div>
 
-        {/* Mobile View: Floating Button and Bottom Sheet */}
-        {estimationList.length > 0 && (
-             <Sheet>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="default"
-                        className="md:hidden fixed bottom-24 right-4 h-16 w-16 rounded-full shadow-lg z-40 bg-primary/90 backdrop-blur-sm text-primary-foreground hover:bg-primary"
+        <AnimatePresence>
+            {estimationList.length > 0 && (
+                 <Collapsible
+                    open={isAggregatedListOpen}
+                    onOpenChange={setIsAggregatedListOpen}
+                    className="fixed bottom-20 left-0 right-0 z-40"
+                 >
+                    <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="w-full max-w-4xl mx-auto"
                     >
-                        <ClipboardList className="h-8 w-8" />
-                        <Badge className="absolute -top-1 -right-1">{aggregatedResults.length}</Badge>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="rounded-t-lg">
-                    <SheetHeader>
-                        <SheetTitle>لیست تجمیعی مصالح</SheetTitle>
-                        <SheetDescription>
-                            این لیست بر اساس محاسبات شما ایجاد شده است.
-                        </SheetDescription>
-                    </SheetHeader>
-                    <ScrollArea className="h-[50vh] my-4 pr-4">
-                        {AggregatedListContent()}
-                    </ScrollArea>
-                    <SheetFooter className="flex-col sm:flex-col gap-2 pt-4 border-t">
-                        <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                            <FilePlus className="ml-2 h-5 w-5" />
-                            ایجاد فاکتور نهایی
-                        </Button>
-                        <Button onClick={handleClearList} variant="outline" className="w-full">
-                            <Trash2 className="ml-2 h-4 w-4" />
-                            پاک کردن لیست
-                        </Button>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
-        )}
+                        <CollapsibleContent>
+                            <AggregatedListContent />
+                        </CollapsibleContent>
+                        <CollapsibleTrigger asChild>
+                             <div className="w-full bg-green-600 text-white p-3 rounded-b-lg cursor-pointer hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg">
+                                <div className="flex items-center gap-2">
+                                     <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
+                                    <p className="font-semibold text-sm">
+                                        آخرین آیتم: {estimationList[estimationList.length - 1].description}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span>مشاهده لیست کل</span>
+                                     {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
+                                </div>
+                            </div>
+                        </CollapsibleTrigger>
+                    </motion.div>
+                </Collapsible>
+            )}
+        </AnimatePresence>
     </div>
   );
 }

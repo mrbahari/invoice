@@ -1,0 +1,64 @@
+{
+  "placeholderImages": [
+    {
+      "id": "prod-1",
+      "description": "A modern laptop on a desk",
+      "imageUrl": "https://picsum.photos/seed/101/400/300",
+      "imageHint": "laptop desk"
+    },
+    {
+      "id": "prod-2",
+      "description": "A sleek wireless mouse",
+      "imageUrl": "https://picsum.photos/seed/102/400/300",
+      "imageHint": "wireless mouse"
+    },
+    {
+      "id": "prod-3",
+      "description": "A mechanical keyboard with RGB lighting",
+      "imageUrl": "https://picsum.photos/seed/103/400/300",
+      "imageHint": "mechanical keyboard"
+    },
+    {
+      "id": "prod-4",
+      "description": "A high-resolution monitor",
+      "imageUrl": "https://picsum.photos/seed/104/400/300",
+      "imageHint": "computer monitor"
+    },
+    {
+      "id": "prod-5",
+      "description": "A comfortable office chair",
+      "imageUrl": "https://picsum.photos/seed/105/400/300",
+      "imageHint": "office chair"
+    },
+    {
+      "id": "prod-6",
+      "description": "A set of premium headphones",
+      "imageUrl": "https://picsum.photos/seed/106/400/300",
+      "imageHint": "headphones"
+    },
+    {
+      "id": "estimator-box",
+      "description": "A constructed drywall box ceiling with hidden lighting",
+      "imageUrl": "https://picsum.photos/seed/est1/600/400",
+      "imageHint": "drywall ceiling"
+    },
+    {
+      "id": "estimator-grid",
+      "description": "A grid ceiling with 60x60 tiles",
+      "imageUrl": "https://picsum.photos/seed/est2/600/400",
+      "imageHint": "grid ceiling"
+    },
+    {
+      "id": "estimator-flat",
+      "description": "A smooth, flat plasterboard ceiling",
+      "imageUrl": "https://picsum.photos/seed/est3/600/400",
+      "imageHint": "flat ceiling"
+    },
+    {
+      "id": "estimator-drywall",
+      "description": "A partition drywall being installed",
+      "imageUrl": "https://picsum.photos/seed/est4/600/400",
+      "imageHint": "drywall installation"
+    }
+  ]
+}

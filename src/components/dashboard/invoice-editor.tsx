@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle, CheckCircle, WandSparkles, LoaderCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle, CheckCircle, WandSparkles, LoaderCircle, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -145,6 +145,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
 
   // This effect initializes the form for creating a new invoice or editing an existing one
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+  
   useEffect(() => {
     let currentInvoice: Partial<Invoice>;
     if (isEditMode && invoiceToEdit) {
@@ -641,8 +647,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   >
                     <div className="flex flex-row gap-4">
                       {(filteredProducts || []).map(product => {
-                         const invoiceItem = invoice.items?.find(item => item.productId === product.id);
-                         const isInInvoice = !!invoiceItem;
+                         const isInInvoice = invoice.items?.some(item => item.productId === product.id);
                         return (
                           <div key={product.id} className="w-32 flex-shrink-0 group">
                               <Card className="overflow-hidden">
@@ -653,10 +658,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <PlusCircle className="h-6 w-6" />
                                           </motion.button>
                                       </div>
-                                      {isInInvoice && invoiceItem.quantity > 0 && (
-                                           <Badge variant="default" className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs bg-green-600 text-white">
-                                                {invoiceItem.quantity}
-                                            </Badge>
+                                      {isInInvoice && (
+                                        <div className="absolute top-1.5 right-1.5 bg-green-500/90 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                                          <CheckCircle className="w-4 h-4" />
+                                        </div>
                                       )}
                                   </div>
                                   <div className="p-2 text-center">

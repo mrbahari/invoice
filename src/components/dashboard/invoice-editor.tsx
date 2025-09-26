@@ -68,6 +68,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '../ui/badge';
 
 
 type InvoiceEditorProps = {
@@ -76,6 +78,13 @@ type InvoiceEditorProps = {
     onSaveSuccess: (invoiceId: string) => void;
     onPreview: (invoiceId: string) => void;
     onCancel: () => void;
+};
+
+type FlyingProduct = {
+  id: string;
+  x: number;
+  y: number;
+  imageUrl: string;
 };
 
 
@@ -132,6 +141,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [displayAdditions, setDisplayAdditions] = useState('');
   const [displayTax, setDisplayTax] = useState('');
   
+  const [flyingProduct, setFlyingProduct] = useState<FlyingProduct | null>(null);
+  const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
+
   // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
     let currentInvoice: Partial<Invoice>;
@@ -258,14 +270,33 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
   
-  const handleAddProduct = (product: Product) => {
+ const handleAddProduct = (product: Product, e: React.MouseEvent<HTMLButtonElement>) => {
+    const buttonEl = e.currentTarget;
+    const rect = buttonEl.getBoundingClientRect();
+    
+    const targetEl = invoiceItemsCardRef.current;
+    if (targetEl) {
+        const targetRect = targetEl.getBoundingClientRect();
+        setFlyingProduct({
+            id: product.id,
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            imageUrl: product.imageUrl
+        });
+
+        setTimeout(() => {
+            setFlyingProduct(null);
+        }, 800); // Animation duration
+    }
+
     setInvoice(prev => {
       const items = prev.items ? [...prev.items] : [];
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       if (existingItemIndex > -1) {
-        // If product already exists, maybe just give feedback or do nothing
-        toast({ title: 'محصول در فاکتور موجود است', variant: 'default' });
+        // If product already exists, increment quantity
+        items[existingItemIndex].quantity += 1;
+        items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
       } else {
         items.push({
           productId: product.id,
@@ -430,6 +461,25 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
    return (
     <TooltipProvider>
+      <AnimatePresence>
+        {flyingProduct && (
+          <motion.div
+            className="fixed z-50 rounded-lg overflow-hidden"
+            initial={{ x: flyingProduct.x, y: flyingProduct.y, width: 80, height: 80, opacity: 1 }}
+            animate={{
+              x: invoiceItemsCardRef.current ? invoiceItemsCardRef.current.getBoundingClientRect().left + 20 : 0,
+              y: invoiceItemsCardRef.current ? invoiceItemsCardRef.current.getBoundingClientRect().top + 20 : 0,
+              width: 20,
+              height: 20,
+              opacity: 0,
+              transition: { duration: 0.8, ease: "easeInOut" }
+            }}
+            onAnimationComplete={() => setFlyingProduct(null)}
+          >
+            <Image src={flyingProduct.imageUrl} alt="flying product" layout="fill" objectFit="cover" unoptimized/>
+          </motion.div>
+        )}
+      </AnimatePresence>
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
             <Button type="button" variant="outline" onClick={onCancel}>
@@ -579,21 +629,23 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   >
                     <div className="flex flex-row gap-4">
                       {(filteredProducts || []).map(product => {
-                        const isInInvoice = invoiceProductIds.has(product.id);
+                         const invoiceItem = invoice.items?.find(item => item.productId === product.id);
+                         const isInInvoice = !!invoiceItem;
+                         const quantityInInvoice = invoiceItem?.quantity || 0;
                         return (
                           <div key={product.id} className="w-32 flex-shrink-0 group">
                               <Card className="overflow-hidden">
                                   <div className="relative aspect-square w-full">
                                       <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                          <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 hover:text-white" onClick={() => handleAddProduct(product)} disabled={isInInvoice}>
-                                            {isInInvoice ? <CheckCircle className="h-6 w-6" /> : <PlusCircle className="h-6 w-6" />}
-                                          </Button>
+                                          <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
+                                            <PlusCircle className="h-6 w-6" />
+                                          </motion.button>
                                       </div>
-                                      {isInInvoice && (
-                                          <div className="absolute top-2 left-2 bg-green-500 text-white rounded-full p-1">
-                                              <CheckCircle className="h-4 w-4" />
-                                          </div>
+                                      {isInInvoice && quantityInInvoice > 0 && (
+                                           <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">
+                                                {quantityInInvoice}
+                                            </Badge>
                                       )}
                                   </div>
                                   <div className="p-2 text-center">
@@ -614,7 +666,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
               </CardContent>
             </Card>
             
-            <Card>
+            <Card ref={invoiceItemsCardRef}>
                 <CardHeader>
                     <CardTitle>آیتم‌های فاکتور</CardTitle>
                 </CardHeader>
@@ -651,9 +703,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                             <DropdownMenuSeparator />
                                                             <ScrollArea className="h-[200px]">
                                                               {similarProducts.length > 0 ? similarProducts.map(p => (
-                                                                <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p); }}>
+                                                                <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
                                                                   <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                                                                    <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" />
+                                                                    <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
                                                                   </div>
                                                                   <span className="flex-grow truncate text-xs">{p.name}</span>
                                                                 </DropdownMenuItem>
@@ -754,7 +806,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         </div>
     </div>
     <div className="fixed left-1/2 -translate-x-1/2 z-50" style={{ bottom: '90px' }}>
-        <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-full shadow-lg backdrop-blur-sm">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
@@ -813,6 +865,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+
 
 
 

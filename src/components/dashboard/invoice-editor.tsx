@@ -247,6 +247,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [products, productSearch, selectedSubCategoryId, storeId]);
   
   const subCategories = useMemo(() => {
+    if (!storeId) {
+        return categories;
+    }
     // Get all products of the selected store
     const storeProducts = products.filter(p => p.storeId === storeId);
     // Get unique subcategory IDs from those products
@@ -482,10 +485,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       </AnimatePresence>
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
-            <Button type="button" variant="outline" onClick={onCancel}>
-                <ArrowRight className="ml-2 h-4 w-4" />
-                بازگشت به لیست
-            </Button>
+            <div className="flex items-center gap-1">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    بازگشت
+                </Button>
+            </div>
             <div className="flex-1">
                 <h1 className="text-xl font-semibold tracking-tight text-center">
                     {isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}
@@ -511,7 +516,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                  <Button variant="outline" size="icon" onClick={handlePreviewClick}>
                     <Eye className="h-4 w-4" />
                 </Button>
-                 <Button onClick={handleSaveAndExit} variant="ghost" className="bg-green-600 hover:bg-green-700 text-white" size="icon" disabled={isProcessing}>
+                 <Button onClick={handleSaveAndExit} variant="default" size="icon" disabled={isProcessing}>
                     <Save className="h-4 w-4" />
                 </Button>
             </div>
@@ -643,7 +648,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                           </motion.button>
                                       </div>
                                       {isInInvoice && quantityInInvoice > 0 && (
-                                           <Badge variant="secondary" className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs">
+                                           <Badge variant="default" className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs">
                                                 {quantityInInvoice}
                                             </Badge>
                                       )}
@@ -865,6 +870,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+
 
 
 

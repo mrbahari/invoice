@@ -432,10 +432,38 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     <TooltipProvider>
     <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-4 -mx-4 px-4 md:-mx-6 md:px-6 border-b">
+            <Button type="button" variant="outline" onClick={onCancel}>
+                <ArrowRight className="ml-2 h-4 w-4" />
+                بازگشت به لیست
+            </Button>
             <div className="flex-1">
-                <h1 className="text-xl font-semibold tracking-tight">
+                <h1 className="text-xl font-semibold tracking-tight text-center">
                     {isEditMode ? `ویرایش فاکتور ${invoice.invoiceNumber}` : 'فاکتور جدید'}
                 </h1>
+            </div>
+             <div className="flex items-center gap-1">
+                 {isEditMode && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button type="button" variant="destructive" size="icon" disabled={isProcessing}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+                 <Button variant="outline" size="icon" onClick={handlePreviewClick}>
+                    <Eye className="h-4 w-4" />
+                </Button>
+                 <Button onClick={handleSaveAndExit} variant="ghost" className="bg-green-600 hover:bg-green-700 text-white" size="icon" disabled={isProcessing}>
+                    <Save className="h-4 w-4" />
+                </Button>
             </div>
         </div>
 
@@ -770,7 +798,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button onClick={handleSaveAndExit} variant="default" size="icon" className="w-12 h-12">
+                     <Button onClick={handleSaveAndExit} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 hover:bg-green-700 text-white">
                         <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
@@ -785,6 +813,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+
 
 
 

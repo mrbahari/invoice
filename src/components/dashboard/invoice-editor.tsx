@@ -647,7 +647,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   >
                     <div className="flex flex-row gap-4">
                       {(filteredProducts || []).map(product => {
-                         const isInInvoice = invoice.items?.some(item => item.productId === product.id);
+                         const invoiceItem = invoice.items?.find(item => item.productId === product.id);
+                         const isInInvoice = !!invoiceItem;
+                         const quantityInInvoice = invoiceItem?.quantity ?? 0;
+
                         return (
                           <div key={product.id} className="w-32 flex-shrink-0 group">
                               <Card className="overflow-hidden">
@@ -659,9 +662,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                           </motion.button>
                                       </div>
                                       {isInInvoice && (
-                                        <div className="absolute top-1.5 right-1.5 bg-green-500/90 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                                          <CheckCircle className="w-4 h-4" />
-                                        </div>
+                                        <Badge variant="default" className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs bg-green-600 text-white">
+                                          {quantityInInvoice}
+                                        </Badge>
                                       )}
                                   </div>
                                   <div className="p-2 text-center">
@@ -822,6 +825,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         </div>
         <div 
           className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40"
+          style={{ bottom: '90px' }}
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"

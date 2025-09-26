@@ -711,8 +711,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         </div>
     </div>
     <div className="fixed bottom-20 left-0 right-0 z-50 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-lg">
-            <div className="flex w-full sm:w-auto items-center gap-2">
+        <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2 p-2 bg-card border rounded-lg shadow-lg">
+            <div className="flex w-full sm:w-auto items-center gap-1">
                 <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
                     <ArrowRight className="ml-2 h-4 w-4" />
                     بازگشت
@@ -732,7 +732,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </AlertDialog>
                 )}
             </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button variant="outline" className="flex-1" onClick={handlePreviewClick}>
                     <Eye className="ml-2 h-4 w-4" />
                     پیش‌نمایش

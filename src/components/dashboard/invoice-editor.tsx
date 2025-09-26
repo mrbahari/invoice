@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle, CheckCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle, CheckCircle, WandSparkles, LoaderCircle } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -716,57 +716,57 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         </div>
     </div>
-    <div className="fixed bottom-20 left-0 right-0 z-50 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col-reverse sm:flex-row justify-between items-center gap-2 p-2 bg-card border rounded-lg shadow-lg">
-            <div className="flex w-full sm:w-auto items-center gap-1">
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="button" variant="outline" size="icon" onClick={onCancel}>
-                            <ArrowRight className="h-5 w-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>بازگشت</p></TooltipContent>
-                </Tooltip>
-                {isEditMode && (
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button type="button" variant="destructive" size="icon" disabled={isProcessing}>
-                                        <Trash2 className="h-5 w-5" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>حذف فاکتور</p></TooltipContent>
-                            </Tooltip>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button variant="outline" size="icon" onClick={handlePreviewClick}>
-                            <Eye className="h-5 w-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
-                </Tooltip>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button onClick={handleSaveAndExit} size="icon" className="bg-green-600 hover:bg-green-700 w-12 h-10">
-                            <Save className="h-5 w-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</p></TooltipContent>
-                </Tooltip>
-            </div>
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50">
+        <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-full shadow-lg backdrop-blur-sm">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" onClick={onCancel}>
+                        <ArrowRight className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>بازگشت</p></TooltipContent>
+            </Tooltip>
+            
+            {isEditMode && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isProcessing}>
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>حذف فاکتور</p></TooltipContent>
+                        </Tooltip>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+
+            <Separator orientation="vertical" className="h-6" />
+
+             <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" onClick={handlePreviewClick}>
+                        <Eye className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button onClick={handleSaveAndExit} size="icon" className="bg-primary text-primary-foreground hover:bg-primary/90 w-12 h-12">
+                        <Save className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد فاکتور'}</p></TooltipContent>
+            </Tooltip>
         </div>
     </div>
     </TooltipProvider>
@@ -776,3 +776,4 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+

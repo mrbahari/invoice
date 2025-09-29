@@ -521,7 +521,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
               </div>
           </div>
           <ScrollArea className="h-[calc(100vh-22rem)]">
-              <div className="grid grid-cols-3 gap-2 pr-4">
+              <div className="grid grid-cols-4 gap-2 pr-4">
                 {(filteredProducts || []).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
@@ -626,6 +626,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                             </AlertDialogContent>
                         </AlertDialog>
                       )}
+                       {isEditMode && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" onClick={handleSaveAndExit} disabled={isProcessing} className="w-12 h-12 no-drag">
+                                <Copy className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
+                        </Tooltip>
+                      )}
                   </div>
                    <Separator orientation="vertical" className="h-8" />
                    <div className="flex items-center gap-1">
@@ -643,7 +653,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 onClick={handleSaveAndExit} 
                                 variant="ghost" 
                                 size="icon"
-                                className="w-12 h-12 bg-green-600 text-white hover:bg-green-700 no-drag"
+                                className="w-14 h-14 bg-green-600 text-white hover:bg-green-700 no-drag"
                               >
                                   <Save className="h-5 w-5" />
                               </Button>
@@ -786,13 +796,15 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
                                             const isProductFound = !!product;
                                             const similarProducts = getSimilarProducts(item.productId);
+                                            const isCurrentlyDraggingThis = snapshot.isDraggingOver && provided.placeholder?. βρίσκεται;
+
 
                                             return (
                                             <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                                 {(provided, snapshot) => (
                                                    <>
-                                                    <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3", snapshot.isDragging && 'h-16')}>
-                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", (isDragging && !snapshot.isDragging) && 'h-16')}>
+                                                    <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3 transition-all duration-300", isDragging && 'h-16')}>
+                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3")}>
                                                         <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
                                                           <GripVertical className="h-6 w-6 text-muted-foreground" />
                                                         </div>
@@ -802,7 +814,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                                 <span className="font-semibold truncate">{item.productName}</span>
                                                                  <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild>
-                                                                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                                                                        <Button variant="ghost" size="icon" className={cn("h-6 w-6", isDragging && 'hidden')}>
                                                                             <Shuffle className="h-4 w-4" />
                                                                         </Button>
                                                                     </DropdownMenuTrigger>
@@ -822,10 +834,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                                     </DropdownMenuContent>
                                                                 </DropdownMenu>
                                                             </div>
-                                                            <p className={cn("text-xs text-muted-foreground", (snapshot.isDragging || (isDragging && !snapshot.isDragging)) && "hidden")}>{`واحد: ${item.unit}`}</p>
+                                                            <p className={cn("text-xs text-muted-foreground", isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
                                                         </div>
                                                 
-                                                         <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", (snapshot.isDragging || (isDragging && !snapshot.isDragging)) && "hidden")}>
+                                                         <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", isDragging && "hidden")}>
                                                             <div className="grid gap-1.5">
                                                               <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                                               <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
@@ -849,7 +861,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                             </div>
                                                         </div>
 
-                                                        <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", (snapshot.isDragging || (isDragging && !snapshot.isDragging)) && "hidden")}>
+                                                        <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", isDragging && "hidden")}>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive" onClick={() => handleRemoveItem(index)}>
                                                               <Trash2 className="h-4 w-4" />
                                                             </Button>
@@ -924,5 +936,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

@@ -85,19 +85,28 @@ const estimatorTypes = [
 ];
 
 
-const StaticImageGrid = ({ images }: { images: string[] }) => {
+const RandomImage = ({ images }: { images: string[] }) => {
+    const [randomImage, setRandomImage] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (images && images.length > 0) {
+            const randomIndex = Math.floor(Math.random() * images.length);
+            setRandomImage(images[randomIndex]);
+        }
+    }, [images]);
+    
+    if (!randomImage) {
+        return <div className="relative aspect-[4/3] w-full h-full overflow-hidden bg-muted" />;
+    }
+
     return (
-        <div className="grid grid-cols-2 grid-rows-2 gap-1 aspect-[4/3] w-full h-full overflow-hidden">
-            {images.slice(0, 4).map((src, index) => (
-                <div key={src} className="relative w-full h-full">
-                    <Image
-                        src={src}
-                        alt={`Sample image ${index + 1}`}
-                        fill
-                        className="object-cover"
-                    />
-                </div>
-            ))}
+        <div className="relative aspect-[4/3] w-full h-full overflow-hidden">
+            <Image
+                src={randomImage}
+                alt="Random sample image"
+                fill
+                className="object-cover"
+            />
         </div>
     );
 };
@@ -339,11 +348,9 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         onClick={() => setActiveEstimator(estimator.id)}
                         className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
                     >
-                        <div className="relative aspect-[4/3]">
-                            <StaticImageGrid images={estimator.images} />
-                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 md:p-4">
-                                <CardTitle className="text-sm md:text-lg font-bold text-white">{estimator.title}</CardTitle>
-                            </div>
+                        <RandomImage images={estimator.images} />
+                        <div className="p-4">
+                            <CardTitle className="text-base md:text-lg font-bold">{estimator.title}</CardTitle>
                         </div>
                     </Card>
                 ))}

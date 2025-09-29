@@ -4,13 +4,12 @@
 import type { ReactNode } from 'react';
 import React, { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { Header } from '@/components/dashboard/header';
 import { SearchProvider } from '@/components/dashboard/search-provider';
 import { BottomNav } from '@/components/dashboard/bottom-nav';
 import { useData } from '@/context/data-context';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import type { DashboardTab } from './dashboard-client';
+import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 
 export default function DashboardLayoutClient({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -22,6 +21,11 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
   const handleTabChange = (tab: DashboardTab) => {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
+  
+  // Scroll to top on tab change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
   
   if (!isInitialized) {
     return (
@@ -45,3 +49,5 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
     </SearchProvider>
   );
 }
+
+    

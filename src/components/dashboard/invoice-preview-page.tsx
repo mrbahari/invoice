@@ -6,12 +6,13 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Expand, Pencil } from 'lucide-react';
+import { ArrowRight, Pencil, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
 import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
+import html2canvas from 'html2canvas';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -132,14 +133,23 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             .catch(err => console.error('Failed to generate QR code:', err));
     }
   }, [invoice, customer]);
-  
-  const handleFullScreen = () => {
+
+  const handleDownloadImage = () => {
     const element = document.getElementById('invoice-card');
-    if (element) {
-        if (element.requestFullscreen) {
-            element.requestFullscreen();
-        }
-    }
+    if (!element) return;
+
+    html2canvas(element, {
+      scale: 2, // Increase resolution
+      useCORS: true, // For external images
+      logging: true,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
   };
 
   if (!invoice || !customer || !store) {
@@ -185,11 +195,11 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
              </Tooltip>
              <Tooltip>
                  <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleFullScreen}>
-                        <Expand className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleDownloadImage}>
+                        <Camera className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>تمام صفحه</p></TooltipContent>
+                <TooltipContent><p>دانلود به عنوان عکس</p></TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -209,7 +219,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                   </div>
               </div>
                 <div className="w-1/6 flex justify-end">
-                  {store.logoUrl && <Image src={store.logoUrl} alt="Store Logo" width={80} height={80} className="object-contain" />}
+                  {store.logoUrl && <Image src={store.logoUrl} alt="Store Logo" width={80} height={80} className="object-contain" unoptimized />}
                 </div>
           </header>
 
@@ -280,3 +290,5 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     </TooltipProvider>
   );
 }
+
+    

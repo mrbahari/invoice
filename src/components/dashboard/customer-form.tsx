@@ -58,12 +58,6 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
   const [isProcessing, setIsProcessing] = useState(false);
   
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, []);
-
   const validateForm = () => {
     if (!phone) {
       toast({
@@ -267,3 +261,5 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     </form>
   );
 }
+
+    

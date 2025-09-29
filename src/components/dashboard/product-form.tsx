@@ -89,12 +89,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     image: false,
   });
   
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }, []);
-
   const availableSubCategories = categories ? categories.filter(c => c.storeId === storeId && c.parentId) : [];
   
   const formatNumber = (num: number | ''): string => {
@@ -581,3 +575,5 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
+
+    

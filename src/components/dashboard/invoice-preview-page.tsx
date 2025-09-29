@@ -135,7 +135,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   }, [invoice, customer]);
 
   const handleDownloadImage = (story: boolean = false) => {
-    const element = document.getElementById('invoice-card');
+    let element: HTMLElement | null = document.getElementById('invoice-card');
     if (!element) return;
 
     let canvasOptions: any = {

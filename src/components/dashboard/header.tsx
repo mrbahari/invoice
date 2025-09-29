@@ -77,7 +77,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
 
         <div className="relative ml-auto flex-1 md:grow-0">
-          {showSearch && (
+          {isSearchVisible && (
             <div className="relative">
               <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input

@@ -68,9 +68,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Badge } from '../ui/badge';
-import { CustomerForm } from './customer-form';
 import DraggableToolbar from 'react-draggable';
+import { CustomerForm } from './customer-form';
 
 
 type InvoiceEditorProps = {
@@ -520,7 +519,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-          <ScrollArea className="h-[calc(100vh-22rem)]">
+          <ScrollArea className="h-[calc(100vh-28rem)]">
               <div className="grid grid-cols-4 gap-2 pr-4">
                 {(filteredProducts || []).slice(0, 12).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
@@ -578,7 +577,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           </motion.div>
         )}
       </AnimatePresence>
-    <div className={cn("mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28")}>
+    <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
         <DraggableToolbar nodeRef={draggableToolbarRef} handle=".handle" cancel=".no-drag">
             <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40">
                 <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
@@ -767,9 +766,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 
                 <Card 
                   ref={invoiceItemsCardRef}
-                  className={cn(
-                      "overflow-hidden",
-                  )}
+                  className={cn("overflow-hidden")}
                 >
                     <CardHeader>
                         <CardTitle>آیتم‌های فاکتور</CardTitle>
@@ -784,22 +781,19 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                         {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
                                             const product = products.find(p => p.id === item.productId);
                                             const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
-                                            const isProductFound = !!product;
                                             const similarProducts = getSimilarProducts(item.productId);
-                                            const isCurrentlyDraggingThis = snapshot.isDraggingOver && provided.placeholder?. βρίσκεται;
-
 
                                             return (
                                             <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                                 {(provided, snapshot) => (
                                                    <>
-                                                    <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3 transition-all duration-300", isDragging && 'h-16')}>
+                                                    <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3 transition-all duration-300", isDragging && "h-16")}>
                                                       <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3")}>
                                                         <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
                                                           <GripVertical className="h-6 w-6 text-muted-foreground" />
                                                         </div>
                                                 
-                                                        <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
+                                                        <div className={cn("col-span-11 sm:col-span-5 flex flex-col gap-2", isDragging && 'col-span-10 sm:col-span-10')}>
                                                             <div className={cn("flex items-center justify-between")}>
                                                                 <span className="font-semibold truncate">{item.productName}</span>
                                                                  <DropdownMenu>

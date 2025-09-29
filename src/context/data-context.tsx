@@ -51,6 +51,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         } else {
           // If no data in local storage, use the imported default data
           setData(defaultData);
+           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
         }
       } catch (error) {
         console.error("Could not load initial data:", error);
@@ -80,29 +81,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const resetData = useCallback(async (): Promise<void> => {
     return new Promise((resolve) => {
       setIsResetting(true);
-      fetch('/db/backup.json')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(backupData => {
-          setData(backupData);
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(backupData));
-        })
-        .catch(error => {
-          console.error("Failed to fetch backup data, falling back to default:", error);
-          // Fallback to the imported default data if fetch fails
-          setData(defaultData);
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
-        })
-        .finally(() => {
+      try {
+        setData(defaultData);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
+      } catch(error) {
+          console.error("Failed to reset data:", error);
+      } finally {
           setTimeout(() => {
             setIsResetting(false);
             resolve();
           }, 500);
-        });
+      }
     });
   }, []);
   

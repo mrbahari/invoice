@@ -36,7 +36,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
 import {
@@ -58,7 +57,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { DragDropContext, Droppable, Draggable, type DropResult, type DragStart } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, type DropResult, type DragStart, type DraggableProvided } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
 import {
@@ -312,6 +311,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         items[existingItemIndex].quantity += 1;
         items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
       } else {
+        // Add new product to the beginning of the list
         items.unshift({
           productId: product.id,
           productName: product.name,
@@ -378,7 +378,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleDragEnd = (result: DropResult) => {
     setIsDragging(false);
-    document.body.classList.remove('dragging-invoice-item');
+    if (invoiceItemsCardRef.current) {
+        invoiceItemsCardRef.current.style.transform = '';
+    }
     if (!result.destination) return;
     setInvoice(prev => {
       const items = Array.from(prev.items || []);
@@ -390,7 +392,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleDragStart = (start: DragStart) => {
     setIsDragging(true);
-    document.body.classList.add('dragging-invoice-item');
+    if (invoiceItemsCardRef.current) {
+        invoiceItemsCardRef.current.style.transform = 'scale(0.9)';
+    }
   };
   
   const handleFinancialFieldChange = (
@@ -506,10 +510,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           </motion.div>
         )}
       </AnimatePresence>
-    <div className={cn("mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28", isDragging && 'dragging-active')}>
+    <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
         <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef}>
-            <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40">
-                <div className="handle cursor-move flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+            <div ref={draggableToolbarRef} className="fixed top-[7.5rem] left-4 z-40">
+                <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                  <div className="handle cursor-move p-2 -m-2">
+                     <GripVertical className="h-5 w-5 text-muted-foreground" />
+                  </div>
                   <div className="flex items-center gap-1">
                       <Tooltip>
                           <TooltipTrigger asChild>
@@ -580,328 +587,338 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             </div>
         </DraggableToolbar>
 
-        <div className="grid gap-4 md:gap-8">
-             <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>اطلاعات مشتری</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                    {selectedCustomer ? (
-                            <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-12 w-12 border">
-                                        <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
-                                        <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{selectedCustomer.name}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+        <div className="grid lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 grid gap-4">
+                <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>اطلاعات مشتری</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                        {selectedCustomer ? (
+                                <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 border">
+                                            <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
+                                            <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{selectedCustomer.name}</p>
+                                            <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                                        </div>
                                     </div>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" onClick={() => setCustomerDialogView('select')}>
+                                            <Pencil className="ml-1 h-3 w-3" />
+                                            تغییر
+                                        </Button>
+                                    </DialogTrigger>
                                 </div>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" onClick={() => setCustomerDialogView('select')}>
-                                        <Pencil className="ml-1 h-3 w-3" />
-                                        تغییر
+                            ) : (
+                               <DialogTrigger asChild>
+                                    <Button variant="outline" className="w-full h-20 border-dashed">
+                                        <UserPlus className="ml-2 h-5 w-5" />
+                                        انتخاب مشتری از لیست
                                     </Button>
                                 </DialogTrigger>
-                            </div>
-                        ) : (
-                           <DialogTrigger asChild>
-                                <Button variant="outline" className="w-full h-20 border-dashed">
-                                    <UserPlus className="ml-2 h-5 w-5" />
-                                    انتخاب مشتری از لیست
-                                </Button>
-                            </DialogTrigger>
-                        )}
+                            )}
+                        </CardContent>
+                    </Card>
+                    <DialogContent className="max-w-3xl">
+                      {customerDialogView === 'select' ? (
+                        <>
+                          <DialogHeader>
+                              <DialogTitle>انتخاب مشتری</DialogTitle>
+                              <DialogDescription>
+                                  مشتری مورد نظر خود را جستجو و انتخاب کنید.
+                              </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4 grid gap-4">
+                              <div className="flex justify-between items-center gap-4">
+                                  <div className="relative flex-grow">
+                                      <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                      <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                                  </div>
+                                  <Button onClick={() => setCustomerDialogView('create')}>
+                                      <UserPlus className="ml-2 h-4 w-4" />
+                                      افزودن مشتری جدید
+                                  </Button>
+                              </div>
+                              <ScrollArea className="h-[60vh]">
+                                  <div className="grid gap-2 pr-4">
+                                      {(filteredCustomers || []).map(customer => {
+                                          return(
+                                              <Button
+                                                  key={customer.id}
+                                                  variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
+                                                  className="h-16 justify-start text-right"
+                                                  onClick={() => {
+                                                      setSelectedCustomer(customer);
+                                                      setIsCustomerDialogOpen(false);
+                                                  }}
+                                              >
+                                                  <div className="flex items-center gap-4 text-right w-full">
+                                                      <Avatar className="h-10 w-10 border">
+                                                          <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                          <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                      </Avatar>
+                                                      <div>
+                                                          <p className='text-base font-semibold'>{customer.name}</p>
+                                                          <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                                      </div>
+                                                  </div>
+                                              </Button>
+                                          );
+                                      })}
+                                  </div>
+                              </ScrollArea>
+                          </div>
+                        </>
+                      ) : (
+                         <div className="pt-8">
+                            <CustomerForm 
+                              onSave={() => {
+                                // Find the newly added customer (usually the last one)
+                                const newCustomer = data.customers[0];
+                                if(newCustomer){
+                                    setSelectedCustomer(newCustomer);
+                                }
+                                setIsCustomerDialogOpen(false);
+                                setCustomerDialogView('select'); // Reset view for next time
+                              }} 
+                              onCancel={() => setCustomerDialogView('select')}
+                            />
+                         </div>
+                      )}
+                  </DialogContent>
+                </Dialog>
+                
+                <Card 
+                  ref={invoiceItemsCardRef}
+                  className="overflow-hidden transition-transform duration-300"
+                >
+                    <CardHeader>
+                        <CardTitle>آیتم‌های فاکتور</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4">
+                            {isClient ? (
+                                <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                                    <Droppable droppableId="invoice-items">
+                                    {(provided, snapshot) => (
+                                        <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-3">
+                                        {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
+                                            const product = products.find(p => p.id === item.productId);
+                                            const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
+                                            const isProductFound = !!product;
+                                            const similarProducts = getSimilarProducts(item.productId);
+
+                                            return (
+                                            <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
+                                                {(provided, snapshot) => (
+                                                   <>
+                                                    <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
+                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", isDragging && !snapshot.isDragging && "h-10 overflow-hidden opacity-50")}>
+                                                        <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
+                                                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                        </div>
+                                                
+                                                        <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-semibold truncate">{item.productName}</span>
+                                                                 <div className={cn(isDragging && snapshot.isDragging ? "hidden" : "")}>
+                                                                    <DropdownMenu>
+                                                                        <DropdownMenuTrigger asChild>
+                                                                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                                                                                <Shuffle className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </DropdownMenuTrigger>
+                                                                        <DropdownMenuContent className="w-64" align="start">
+                                                                            <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
+                                                                            <DropdownMenuSeparator />
+                                                                            <ScrollArea className="h-[200px]">
+                                                                                {similarProducts.length > 0 ? similarProducts.map(p => (
+                                                                                    <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
+                                                                                        <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                                                                                            <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
+                                                                                        </div>
+                                                                                        <span className="flex-grow truncate text-xs">{p.name}</span>
+                                                                                    </DropdownMenuItem>
+                                                                                )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
+                                                                            </ScrollArea>
+                                                                        </DropdownMenuContent>
+                                                                    </DropdownMenu>
+                                                                 </div>
+                                                            </div>
+                                                            <p className={cn("text-xs text-muted-foreground", isDragging && !snapshot.isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
+                                                        </div>
+                                                
+                                                         <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", isDragging && !snapshot.isDragging && "hidden")}>
+                                                            <div className="grid gap-1.5">
+                                                              <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
+                                                              <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
+                                                            </div>
+                                                            <div className="grid gap-1.5">
+                                                                <Label htmlFor={`unit-${index}`} className="text-xs">واحد</Label>
+                                                                <Select value={item.unit} onValueChange={(value) => handleUnitChange(index, value)} disabled={availableUnits.length <= 1}>
+                                                                  <SelectTrigger id={`unit-${index}`}><SelectValue /></SelectTrigger>
+                                                                  <SelectContent>
+                                                                    {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                                                  </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="grid gap-1.5">
+                                                                <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
+                                                                <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} placeholder="مبلغ" className="font-mono" />
+                                                            </div>
+                                                            <div className="grid gap-1.5">
+                                                              <Label className="text-xs">مبلغ کل</Label>
+                                                              <p className="font-semibold font-mono text-sm flex items-center h-10">{formatCurrency(item.totalPrice)}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", isDragging && !snapshot.isDragging && "hidden")}>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive" onClick={() => handleRemoveItem(index)}>
+                                                              <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                    {snapshot.isDragging && (
+                                                      <div className="rounded-lg border-2 border-dashed bg-muted h-28"></div>
+                                                    )}
+                                                   </>
+                                                )}
+                                            </Draggable>
+                                            );
+                                        }) : (
+                                            <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
+                                        )}
+                                        {provided.placeholder}
+                                        </div>
+                                    )}
+                                    </Droppable>
+                                </DragDropContext>
+                                ) : (
+                                    <div className="text-center py-10">در حال بارگذاری...</div>
+                                )}
+                        </div>
                     </CardContent>
                 </Card>
 
-                <DialogContent className="max-w-3xl">
-                  {customerDialogView === 'select' ? (
-                    <>
-                      <DialogHeader>
-                          <DialogTitle>انتخاب مشتری</DialogTitle>
-                          <DialogDescription>
-                              مشتری مورد نظر خود را جستجو و انتخاب کنید.
-                          </DialogDescription>
-                      </DialogHeader>
-                      <div className="py-4 grid gap-4">
-                          <div className="flex justify-between items-center gap-4">
-                              <div className="relative flex-grow">
-                                  <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="جستجوی مشتری..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
-                              </div>
-                              <Button onClick={() => setCustomerDialogView('create')}>
-                                  <UserPlus className="ml-2 h-4 w-4" />
-                                  افزودن مشتری جدید
-                              </Button>
-                          </div>
-                          <ScrollArea className="h-[60vh]">
-                              <div className="grid gap-2 pr-4">
-                                  {(filteredCustomers || []).map(customer => {
-                                      return(
-                                          <Button
-                                              key={customer.id}
-                                              variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                              className="h-16 justify-start text-right"
-                                              onClick={() => {
-                                                  setSelectedCustomer(customer);
-                                                  setIsCustomerDialogOpen(false);
-                                              }}
-                                          >
-                                              <div className="flex items-center gap-4 text-right w-full">
-                                                  <Avatar className="h-10 w-10 border">
-                                                      <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                      <AvatarFallback>{customer.name[0]}</AvatarFallback>
-                                                  </Avatar>
-                                                  <div>
-                                                      <p className='text-base font-semibold'>{customer.name}</p>
-                                                      <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                                                  </div>
-                                              </div>
-                                          </Button>
-                                      );
-                                  })}
-                              </div>
-                          </ScrollArea>
-                      </div>
-                    </>
-                  ) : (
-                     <div className="pt-8">
-                        <CustomerForm 
-                          onSave={() => {
-                            // Find the newly added customer (usually the last one)
-                            const newCustomer = data.customers[0];
-                            if(newCustomer){
-                                setSelectedCustomer(newCustomer);
-                            }
-                            setIsCustomerDialogOpen(false);
-                            setCustomerDialogView('select'); // Reset view for next time
-                          }} 
-                          onCancel={() => setCustomerDialogView('select')}
-                        />
-                     </div>
-                  )}
-              </DialogContent>
-
-            </Dialog>
-
-            <Card>
-              <CardHeader>
-                  <CardTitle>افزودن محصولات</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
-                        <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
-                        <SelectContent>
-                          {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
-                        </SelectContent>
-                      </Select>
-                      <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
-                        <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">همه زیردسته‌ها</SelectItem>
-                            {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-                        </SelectContent>
-                      </Select>
-                      <div className="relative lg:col-span-1">
-                          <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                           {productSearch && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                                    onClick={() => setProductSearch('')}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            )}
-                          <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                      </div>
-                  </div>
-                  <div className="w-full">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-                        {(filteredProducts || []).map(product => {
-                           const invoiceItem = invoice.items?.find(item => item.productId === product.id);
-                           const isInInvoice = !!invoiceItem;
-
-                          return (
-                            <div key={product.id} className="w-full flex-shrink-0 group">
-                                <Card className="overflow-hidden">
-                                    <div className="relative aspect-square w-full">
-                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
-                                              <PlusCircle className="h-6 w-6" />
-                                            </motion.button>
-                                        </div>
-                                        {isInInvoice && (
-                                          <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
-                                            {invoiceItem?.quantity}
-                                          </Badge>
-                                        )}
-                                    </div>
-                                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>خلاصه مالی و توضیحات</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 md:grid-cols-2">
+                        <div className="grid gap-4">
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="discount">تخفیف (ریال)</Label>
+                                    <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="additions">اضافات (ریال)</Label>
+                                    <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                                </div>
                             </div>
-                          )
-                        })}
-                        {filteredProducts.length === 0 && (
-                            <div className="col-span-full w-full text-center py-10 text-muted-foreground">
-                                محصولی یافت نشد.
-                            </div>
-                        )}
-                      </div>
-                  </div>
-              </CardContent>
-            </Card>
-            
-            <Card ref={invoiceItemsCardRef}>
-                <CardHeader>
-                    <CardTitle>آیتم‌های فاکتور</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4">
-                        {isClient ? (
-                            <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                                <Droppable droppableId="invoice-items">
-                                {(provided) => (
-                                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-3">
-                                    {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
-                                        const product = products.find(p => p.id === item.productId);
-                                        const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
-                                        const isProductFound = !!product;
-                                        const similarProducts = getSimilarProducts(item.productId);
-
-                                        return (
-                                        <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
-                                            {(provided, snapshot) => (
-                                                <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
-                                                  <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", isDragging && !snapshot.isDragging && "h-10 overflow-hidden opacity-50")}>
-                                                    <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
-                                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                    </div>
-                                            
-                                                    <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="font-semibold truncate">{item.productName}</span>
-                                                             <div className={cn(isDragging && snapshot.isDragging ? "hidden" : "")}>
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild>
-                                                                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                                                                            <Shuffle className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent className="w-64" align="start">
-                                                                        <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
-                                                                        <DropdownMenuSeparator />
-                                                                        <ScrollArea className="h-[200px]">
-                                                                            {similarProducts.length > 0 ? similarProducts.map(p => (
-                                                                                <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
-                                                                                    <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                                                                                        <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
-                                                                                    </div>
-                                                                                    <span className="flex-grow truncate text-xs">{p.name}</span>
-                                                                                </DropdownMenuItem>
-                                                                            )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
-                                                                        </ScrollArea>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                             </div>
-                                                        </div>
-                                                        <p className={cn("text-xs text-muted-foreground", isDragging && !snapshot.isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
-                                                    </div>
-                                            
-                                                     <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", isDragging && !snapshot.isDragging && "hidden")}>
-                                                        <div className="grid gap-1.5">
-                                                          <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
-                                                          <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
-                                                        </div>
-                                                        <div className="grid gap-1.5">
-                                                            <Label htmlFor={`unit-${index}`} className="text-xs">واحد</Label>
-                                                            <Select value={item.unit} onValueChange={(value) => handleUnitChange(index, value)} disabled={availableUnits.length <= 1}>
-                                                              <SelectTrigger id={`unit-${index}`}><SelectValue /></SelectTrigger>
-                                                              <SelectContent>
-                                                                {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                                                              </SelectContent>
-                                                            </Select>
-                                                        </div>
-                                                        <div className="grid gap-1.5">
-                                                            <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                                            <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} placeholder="مبلغ" className="font-mono" />
-                                                        </div>
-                                                        <div className="grid gap-1.5">
-                                                          <Label className="text-xs">مبلغ کل</Label>
-                                                          <p className="font-semibold font-mono text-sm flex items-center h-10">{formatCurrency(item.totalPrice)}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", isDragging && !snapshot.isDragging && "hidden")}>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive" onClick={() => handleRemoveItem(index)}>
-                                                          <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                        );
-                                    }) : (
-                                        <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
-                                    )}
-                                    {provided.placeholder}
-                                    </div>
-                                )}
-                                </Droppable>
-                            </DragDropContext>
-                            ) : (
-                                <div className="text-center py-10">در حال بارگذاری...</div>
-                            )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>خلاصه مالی و توضیحات</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-6 md:grid-cols-2">
-                    <div className="grid gap-4">
-                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                                <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
+                                <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
                             </div>
-                             <div className="grid gap-2">
-                                <Label htmlFor="additions">اضافات (ریال)</Label>
-                                <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                            <Separator />
+                            <div className="grid gap-2">
+                                <Label>جمع جزء</Label>
+                                <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono h-11" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-base">جمع کل</Label>
+                                <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-xl h-14 font-bold" />
                             </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                            <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
+                         <div className="grid gap-2">
+                            <Label htmlFor="description">توضیحات</Label>
+                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} className="min-h-[240px]" />
                         </div>
-                        <Separator />
-                        <div className="grid gap-2">
-                            <Label>جمع جزء</Label>
-                            <Input value={formatCurrency(invoice.subtotal || 0)} disabled className="font-mono h-11" />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label className="text-base">جمع کل</Label>
-                            <Input value={formatCurrency(invoice.total || 0)} disabled className="font-mono text-xl h-14 font-bold" />
-                        </div>
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="description">توضیحات</Label>
-                        <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} className="min-h-[240px]" />
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
 
+            <div className="lg:col-span-1">
+                <Card className="sticky top-20">
+                  <CardHeader>
+                      <CardTitle>افزودن محصولات</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4">
+                       <div className="grid grid-cols-1 gap-4">
+                          <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
+                            <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
+                            <SelectContent>
+                              {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
+                            <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">همه زیردسته‌ها</SelectItem>
+                                {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                            </SelectContent>
+                          </Select>
+                          <div className="relative">
+                              <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                               {productSearch && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                        onClick={() => setProductSearch('')}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                              <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                          </div>
+                      </div>
+                      <ScrollArea className="h-[calc(100vh-22rem)]">
+                          <div className="grid grid-cols-5 gap-2 pr-4">
+                            {(filteredProducts || []).map(product => {
+                               const invoiceItem = invoice.items?.find(item => item.productId === product.id);
+                               const isInInvoice = !!invoiceItem;
+
+                              return (
+                                <div key={product.id} className="w-full flex-shrink-0 group">
+                                    <Card className="overflow-hidden">
+                                        <div className="relative aspect-square w-full">
+                                            <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
+                                                  <PlusCircle className="h-6 w-6" />
+                                                </motion.button>
+                                            </div>
+                                            {isInInvoice && (
+                                              <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
+                                                {invoiceItem?.quantity}
+                                              </Badge>
+                                            )}
+                                        </div>
+                                    </Card>
+                                </div>
+                              )
+                            })}
+                            {filteredProducts.length === 0 && (
+                                <div className="col-span-full w-full text-center py-10 text-muted-foreground">
+                                    محصولی یافت نشد.
+                                </div>
+                            )}
+                          </div>
+                      </ScrollArea>
+                  </CardContent>
+                </Card>
+            </div>
         </div>
     </div>
     </TooltipProvider>
   );
 }
+

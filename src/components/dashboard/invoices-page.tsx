@@ -171,26 +171,19 @@ export default function InvoicesPage({
                       <CardTitle>فاکتورها</CardTitle>
                       <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
+                     <Button
+                      size="sm"
+                      className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                      onClick={handleCreate}
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        افزودن فاکتور
+                      </span>
+                    </Button>
                   </div>
                 </CardHeader>
               </Card>
-
-               <div 
-                  className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40"
-                  style={{ bottom: '90px' }}
-                >
-                  <div className="p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button onClick={handleCreate} size="icon" className="w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                                <PlusCircle className="h-7 w-7" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>ایجاد فاکتور جدید</p></TooltipContent>
-                      </Tooltip>
-                  </div>
-              </div>
-
 
               {filteredInvoices.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

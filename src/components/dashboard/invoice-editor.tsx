@@ -37,6 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -510,14 +511,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           </motion.div>
         )}
       </AnimatePresence>
-    <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
+    <div className={cn("mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28", isDragging && 'dragging-active')}>
         <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef}>
-            <div ref={draggableToolbarRef} className="fixed top-[7.5rem] left-4 z-40">
+            <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40 handle cursor-move">
                 <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
-                  <div className="handle cursor-move p-2 -m-2">
-                     <GripVertical className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex items-center gap-1">
+                   <div className="flex items-center gap-1">
                       <Tooltip>
                           <TooltipTrigger asChild>
                              <Button 
@@ -921,4 +919,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-

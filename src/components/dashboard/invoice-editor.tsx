@@ -784,7 +784,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     </div>
                                             
                                                     <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center justify-between">
                                                             <span className="font-semibold truncate">{item.productName}</span>
                                                              <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>

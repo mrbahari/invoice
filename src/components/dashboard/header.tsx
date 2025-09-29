@@ -39,11 +39,9 @@ const showSearchTabs: DashboardTab[] = [
 interface HeaderProps {
   activeTab: DashboardTab;
   onTabChange: (tab: DashboardTab) => void;
-  onBack: () => void;
-  showBack: boolean;
 }
 
-export function Header({ activeTab, onTabChange, onBack, showBack }: HeaderProps) {
+export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
   const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -80,13 +78,7 @@ export function Header({ activeTab, onTabChange, onBack, showBack }: HeaderProps
   return (
     <>
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white bg-opacity-95 px-4 sm:px-6 no-print dark:bg-zinc-900/90">
-         {showBack ? (
-            <Button onClick={onBack} variant="ghost" size="icon" className="h-10 w-10 md:hidden">
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          ) : (
-            <div className="h-10 w-10 md:hidden" /> // Placeholder to keep alignment
-        )}
+         <div className="h-10 w-10 md:hidden" /> 
 
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>

@@ -149,12 +149,26 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
        <div 
-          className="fixed top-[7.5rem] left-4 z-40"
+          className="fixed top-24 left-4 z-40"
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
           >
             <div className="flex items-center gap-1">
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                       <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={onCancel}
+                          className="text-muted-foreground w-12 h-12"
+                       >
+                          <ArrowRight className="h-5 w-5" />
+                       </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                </Tooltip>
                  {isEditMode && (
                   <AlertDialog>
                       <AlertDialogTrigger asChild>

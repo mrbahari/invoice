@@ -33,36 +33,12 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
   const { isInitialized } = useData();
   const isMobile = useIsMobile();
   const [isExitAlertOpen, setIsExitAlertOpen] = React.useState(false);
-  const [isSubPage, setIsSubPage] = React.useState(false);
-
-  // This effect will check if the current view is a sub-page (form/detail view)
-  // It's a bit of a hack, but necessary without a more complex state management.
-  // We assume that if the main content doesn't contain a specific data-main-page attribute, it's a sub-page.
-  useEffect(() => {
-    const mainElement = document.querySelector('main');
-    if (mainElement) {
-        const mainPageIdentifier = mainElement.querySelector('[data-main-page="true"]');
-        setIsSubPage(!mainPageIdentifier);
-    }
-  }, [children]);
 
 
   const handleTabChange = (tab: DashboardTab) => {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
 
-  const handleBackNavigation = useCallback(() => {
-    if (isSubPage) {
-        // If in a sub-page, just go back to the list view of the current tab
-        router.push(`/dashboard?tab=${activeTab}`, { scroll: false });
-    } else {
-      if (isMobile) {
-        // If on a main page on mobile, show exit confirmation
-        setIsExitAlertOpen(true);
-      }
-      // On desktop, do nothing
-    }
-  }, [isSubPage, isMobile, router, activeTab]);
   
   // Scroll to top on tab change
   useEffect(() => {
@@ -96,7 +72,7 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
 
       <div className="flex min-h-screen w-full flex-col">
         <div className="flex flex-col sm:gap-4 sm:py-4">
-          <Header activeTab={activeTab} onTabChange={handleTabChange} onBack={handleBackNavigation} showBack={isSubPage || isMobile} />
+          <Header activeTab={activeTab} onTabChange={handleTabChange} />
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 pb-24 md:pb-8 overflow-x-hidden">
              {children}
           </main>

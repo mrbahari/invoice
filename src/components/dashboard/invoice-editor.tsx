@@ -378,7 +378,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleDragEnd = (result: DropResult) => {
-    document.body.classList.remove('dragging-invoice-item');
     setIsDragging(false);
     if (!result.destination) return;
     setInvoice(prev => {
@@ -390,7 +389,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleDragStart = (start: DragStart) => {
-    document.body.classList.add('dragging-invoice-item');
     setIsDragging(true);
   };
   
@@ -791,9 +789,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 {(provided, snapshot) => (
                                                    <>
                                                     <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3", snapshot.isDragging && 'h-16')}>
-                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300")}>
+                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", isDragging && !snapshot.isDragging && 'h-16')}>
                                                         <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
-                                                          <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                          <GripVertical className="h-6 w-6 text-muted-foreground" />
                                                         </div>
                                                 
                                                         <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
@@ -821,10 +819,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                                     </DropdownMenuContent>
                                                                 </DropdownMenu>
                                                             </div>
-                                                            <p className={cn("text-xs text-muted-foreground", snapshot.isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
+                                                            <p className={cn("text-xs text-muted-foreground", (snapshot.isDragging || (isDragging && !snapshot.isDragging)) && "hidden")}>{`واحد: ${item.unit}`}</p>
                                                         </div>
                                                 
-                                                         <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", snapshot.isDragging && "hidden")}>
+                                                         <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", (snapshot.isDragging || (isDragging && !snapshot.isDragging)) && "hidden")}>
                                                             <div className="grid gap-1.5">
                                                               <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                                               <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
@@ -848,7 +846,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                             </div>
                                                         </div>
 
-                                                        <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", snapshot.isDragging && "hidden")}>
+                                                        <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", (snapshot.isDragging || (isDragging && !snapshot.isDragging)) && "hidden")}>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive" onClick={() => handleRemoveItem(index)}>
                                                               <Trash2 className="h-4 w-4" />
                                                             </Button>

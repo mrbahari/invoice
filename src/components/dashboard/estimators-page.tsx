@@ -45,6 +45,7 @@ const estimatorTypes = [
             '/sample/b1.jpg',
             '/sample/b2.jpg',
             '/sample/b3.jpg',
+            '/sample/b4.jpg',
         ],
         component: BoxCeilingForm,
     },
@@ -55,6 +56,7 @@ const estimatorTypes = [
              '/sample/s1.jpg',
              '/sample/s2.jpg',
              '/sample/s3.jpg',
+             '/sample/s4.jpg',
         ],
         component: GridCeilingForm,
     },
@@ -65,6 +67,7 @@ const estimatorTypes = [
             '/sample/f1.jpg',
             '/sample/f2.jpg',
             '/sample/f3.jpg',
+            '/sample/f4.jpg',
         ],
         component: FlatCeilingForm,
     },
@@ -75,35 +78,25 @@ const estimatorTypes = [
             '/sample/d1.jpg',
             '/sample/d2.jpg',
             '/sample/d3.jpg',
+            '/sample/d4.jpg',
         ],
         component: DrywallForm,
     }
 ];
 
-const ImageSlider = ({ images }: { images: string[] }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
 
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setCurrentIndex(prevIndex => (prevIndex + 1) % images.length);
-        }, 3000 + Math.random() * 2000); // Random delay for staggered effect
-
-        return () => clearInterval(intervalId);
-    }, [images.length]);
-
+const StaticImageGrid = ({ images }: { images: string[] }) => {
     return (
-        <div className="relative aspect-[4/3] w-full h-full overflow-hidden">
-            {images.map((src, index) => (
-                <Image
-                    key={src}
-                    src={src}
-                    alt={`Slide ${index + 1}`}
-                    fill
-                    className={cn(
-                        "object-cover transition-opacity duration-1000 ease-in-out",
-                        index === currentIndex ? "opacity-100" : "opacity-0"
-                    )}
-                />
+        <div className="grid grid-cols-2 grid-rows-2 gap-1 aspect-[4/3] w-full h-full overflow-hidden">
+            {images.slice(0, 4).map((src, index) => (
+                <div key={src} className="relative w-full h-full">
+                    <Image
+                        src={src}
+                        alt={`Sample image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                    />
+                </div>
             ))}
         </div>
     );
@@ -316,7 +309,10 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         return (
             <div className="max-w-4xl mx-auto pb-28">
                  <div className="mb-4">
-                    {/* The back button is handled by the main layout */}
+                    <Button variant="ghost" onClick={() => setActiveEstimator(null)}>
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                        بازگشت به لیست برآوردها
+                    </Button>
                 </div>
                 <ActiveComponent onAddToList={handleAddToList} />
             </div>
@@ -344,7 +340,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
                     >
                         <div className="relative aspect-[4/3]">
-                            <ImageSlider images={estimator.images} />
+                            <StaticImageGrid images={estimator.images} />
                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 md:p-4">
                                 <CardTitle className="text-sm md:text-lg font-bold text-white">{estimator.title}</CardTitle>
                             </div>
@@ -387,5 +383,3 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     </div>
   );
 }
-
-    

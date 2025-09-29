@@ -119,6 +119,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
+  const draggableToolbarRef = useRef(null);
   
   const isEditMode = !!invoiceId;
 
@@ -506,9 +507,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className={cn("mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28", isDragging && 'dragging-active')}>
-        <DraggableToolbar handle=".handle">
-            <div className="fixed top-24 left-4 z-40 handle cursor-move">
-               <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+        <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef}>
+            <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40">
+                <div className="handle cursor-move flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
                   <div className="flex items-center gap-1">
                       <Tooltip>
                           <TooltipTrigger asChild>

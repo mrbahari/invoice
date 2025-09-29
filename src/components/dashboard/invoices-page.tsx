@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PlusCircle, Edit, Eye, Trash2, CheckCircle2, TriangleAlert } from 'lucide-react';
+import { PlusCircle, Edit, Eye, Trash2, CheckCircle2, TriangleAlert, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
@@ -22,6 +22,7 @@ import { Badge } from '../ui/badge';
 import { formatCurrency, cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 
 type View =
@@ -212,24 +213,55 @@ export default function InvoicesPage({
                               <CardTitle className="text-lg">{displayName}</CardTitle>
                               <CardDescription className="text-sm text-muted-foreground">{displayPhone}</CardDescription>
                             </div>
-                             <div className="flex items-center gap-2">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }} size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>مشاهده</p></TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }} size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>ویرایش</p></TooltipContent>
-                                </Tooltip>
-                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }}>
+                                        <Edit className="ml-2 h-4 w-4" />
+                                        <span>ویرایش</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }}>
+                                        <Eye className="ml-2 h-4 w-4" />
+                                        <span>مشاهده</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem
+                                                className="text-destructive"
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                <Trash2 className="ml-2 h-4 w-4" />
+                                                <span>حذف</span>
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    این عمل غیرقابل بازگشت است و فاکتور شماره {invoice.invoiceNumber} را برای همیشه حذف می‌کند.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(invoice.id);
+                                                    }}
+                                                    className="bg-destructive hover:bg-destructive/90"
+                                                >
+                                                    حذف
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </CardHeader>
                         <CardContent className="grid gap-2 text-sm"  onClick={() => handleEdit(invoice)}>

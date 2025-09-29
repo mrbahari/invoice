@@ -70,6 +70,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import DraggableToolbar from 'react-draggable';
 import { CustomerForm } from './customer-form';
+import { Badge } from '@/components/ui/badge';
 
 
 type InvoiceEditorProps = {

@@ -70,7 +70,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../ui/badge';
 import { CustomerForm } from './customer-form';
-import Draggable from 'react-draggable';
+import DraggableToolbar from 'react-draggable';
 
 
 type InvoiceEditorProps = {
@@ -506,7 +506,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className={cn("mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28", isDragging && 'dragging-active')}>
-        <Draggable handle=".handle">
+        <DraggableToolbar handle=".handle">
             <div className="fixed top-24 left-4 z-40 handle cursor-move">
                <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
                   <div className="flex items-center gap-1">
@@ -577,7 +577,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                    </div>
                 </div>
             </div>
-        </Draggable>
+        </DraggableToolbar>
 
         <div className="grid gap-4 md:gap-8">
              <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>

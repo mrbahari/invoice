@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Copy, Shuffle, CheckCircle, WandSparkles, LoaderCircle, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, CheckCircle, WandSparkles, LoaderCircle, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -522,7 +522,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           </div>
           <ScrollArea className="h-[calc(100vh-22rem)]">
               <div className="grid grid-cols-4 gap-2 pr-4">
-                {(filteredProducts || []).map(product => {
+                {(filteredProducts || []).slice(0, 12).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
 
@@ -579,7 +579,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className={cn("mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28")}>
-        <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef} cancel=".no-drag">
+        <DraggableToolbar nodeRef={draggableToolbarRef} handle=".handle" cancel=".no-drag">
             <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40">
                 <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
                    <div className="handle cursor-move p-2 -mr-2">

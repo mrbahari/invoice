@@ -626,16 +626,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                             </AlertDialogContent>
                         </AlertDialog>
                       )}
-                       {isEditMode && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button type="button" variant="ghost" size="icon" onClick={handleSaveAndExit} disabled={isProcessing} className="w-12 h-12 no-drag">
-                                <Copy className="h-5 w-5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
-                        </Tooltip>
-                      )}
                   </div>
                    <Separator orientation="vertical" className="h-8" />
                    <div className="flex items-center gap-1">

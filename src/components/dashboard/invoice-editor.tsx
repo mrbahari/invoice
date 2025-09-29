@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -58,7 +57,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { DragDropContext, Droppable, Draggable, type DropResult, type DragStart, type DraggableProvided } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable as DndDraggable, type DropResult, type DragStart, type DraggableProvided } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
 import {
@@ -68,7 +67,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
-import DraggableToolbar from 'react-draggable';
+import Draggable from 'react-draggable';
 import { CustomerForm } from './customer-form';
 import { Badge } from '@/components/ui/badge';
 
@@ -116,7 +115,7 @@ const parseFormattedNumber = (str: string): number | '' => {
 
 export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
-  const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
+  const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement, toolbarPosition } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
   const draggableToolbarRef = useRef(null);
@@ -378,6 +377,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleDragEnd = (result: DropResult) => {
+    document.body.classList.remove('dragging-invoice-item');
     setIsDragging(false);
     if (!result.destination) return;
     setInvoice(prev => {
@@ -390,6 +390,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleDragStart = (start: DragStart) => {
     setIsDragging(true);
+    document.body.classList.add('dragging-invoice-item');
   };
   
   const handleFinancialFieldChange = (
@@ -520,9 +521,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-          <ScrollArea className="h-[calc(100vh-28rem)]">
+          <ScrollArea>
               <div className="grid grid-cols-4 gap-2 pr-4">
-                {(filteredProducts || []).slice(0, 12).map(product => {
+                {(filteredProducts || []).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
 
@@ -579,7 +580,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
-        <DraggableToolbar nodeRef={draggableToolbarRef} handle=".handle" cancel=".no-drag">
+        <Draggable
+            nodeRef={draggableToolbarRef}
+            handle=".handle"
+            cancel=".no-drag"
+            defaultPosition={toolbarPosition}
+            onStop={(_, data) => { setData(prev => ({...prev, toolbarPosition: {x: data.x, y: data.y}}))}}
+        >
             <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40">
                 <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
                    <div className="handle cursor-move p-2 -mr-2">
@@ -653,7 +660,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                    </div>
                 </div>
             </div>
-        </DraggableToolbar>
+        </Draggable>
 
         <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 grid auto-rows-max gap-4">
@@ -785,7 +792,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             const similarProducts = getSimilarProducts(item.productId);
 
                                             return (
-                                            <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
+                                            <DndDraggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                                 {(provided, snapshot) => (
                                                    <>
                                                     <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3 transition-all duration-300", isDragging && "h-16")}>
@@ -794,7 +801,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                           <GripVertical className="h-6 w-6 text-muted-foreground" />
                                                         </div>
                                                 
-                                                        <div className={cn("col-span-11 sm:col-span-5 flex flex-col gap-2", isDragging && 'col-span-10 sm:col-span-10')}>
+                                                        <div className={cn("col-span-11 sm:col-span-5 flex flex-col gap-2")}>
                                                             <div className={cn("flex items-center justify-between")}>
                                                                 <span className="font-semibold truncate">{item.productName}</span>
                                                                  <DropdownMenu>
@@ -858,7 +865,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     )}
                                                    </>
                                                 )}
-                                            </Draggable>
+                                            </DndDraggable>
                                             );
                                         }) : (
                                             <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>

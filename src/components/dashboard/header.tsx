@@ -43,31 +43,8 @@ interface HeaderProps {
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
-  const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false);
-  const { toast } = useToast();
 
-  const handleSettingsClick = () => {
-    onTabChange('settings');
-  };
-
-  const copyToClipboard = () => {
-    const phoneNumber = '09125486083';
-    navigator.clipboard.writeText(phoneNumber).then(() => {
-      toast({
-        variant: 'success',
-        title: 'کپی شد',
-        description: 'شماره تماس در کلیپ‌بورد شما کپی شد.',
-      });
-    }, (err) => {
-      toast({
-        variant: 'destructive',
-        title: 'خطا',
-        description: 'امکان کپی کردن وجود ندارد.',
-      });
-    });
-  };
-
-  const showSearch = showSearchTabs.includes(activeTab) && isSearchVisible;
+  const showSearch = showSearchTabs.includes(activeTab);
 
   React.useEffect(() => {
     if (!showSearch) {

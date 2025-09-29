@@ -523,7 +523,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
               </div>
           </div>
           <ScrollArea className="h-[calc(100vh-22rem)]">
-              <div className="grid grid-cols-5 gap-2 pr-4">
+              <div className="grid grid-cols-3 gap-2 pr-4">
                 {(filteredProducts || []).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
@@ -620,7 +620,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
                                 <AlertDialogFooter className="grid grid-cols-2 gap-2">
                                     <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                    <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90 no-drag'>حذف</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
@@ -767,7 +767,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 <Card 
                   ref={invoiceItemsCardRef}
                   className={cn(
-                      "overflow-hidden transition-transform duration-300",
+                      "overflow-hidden",
                   )}
                 >
                     <CardHeader>
@@ -790,8 +790,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
                                                 {(provided, snapshot) => (
                                                    <>
-                                                    <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
-                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", snapshot.isDragging && 'h-16')}>
+                                                    <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3", snapshot.isDragging && 'h-16')}>
+                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300")}>
                                                         <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
                                                           <GripVertical className="h-5 w-5 text-muted-foreground" />
                                                         </div>
@@ -856,7 +856,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                       </div>
                                                     </div>
                                                     {snapshot.isDragging && (
-                                                      <div className="rounded-lg border-2 border-dashed bg-muted h-28"></div>
+                                                      <div className="rounded-lg border-2 border-dashed bg-muted h-16"></div>
                                                     )}
                                                    </>
                                                 )}

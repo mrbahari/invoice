@@ -61,7 +61,6 @@ import {
 import { DragDropContext, Droppable, Draggable, type DropResult, type DragStart } from '@hello-pangea/dnd';
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
-import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import {
   Tooltip,
   TooltipContent,
@@ -71,6 +70,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '../ui/badge';
 import { CustomerForm } from './customer-form';
+import Draggable from 'react-draggable';
 
 
 type InvoiceEditorProps = {
@@ -124,7 +124,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   // Draggable scroll setup
   const productsRef = useRef<HTMLDivElement>(null);
-  const { events: draggableEvents } = useDraggableScroll(productsRef);
 
   // Find the invoice to edit from the main data source if an ID is provided
   const invoiceToEdit = useMemo(() => 
@@ -312,7 +311,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         items[existingItemIndex].quantity += 1;
         items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
       } else {
-        items.push({
+        items.unshift({
           productId: product.id,
           productName: product.name,
           quantity: 1,
@@ -378,6 +377,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleDragEnd = (result: DropResult) => {
     setIsDragging(false);
+    document.body.classList.remove('dragging-invoice-item');
     if (!result.destination) return;
     setInvoice(prev => {
       const items = Array.from(prev.items || []);
@@ -389,6 +389,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleDragStart = (start: DragStart) => {
     setIsDragging(true);
+    document.body.classList.add('dragging-invoice-item');
   };
   
   const handleFinancialFieldChange = (
@@ -504,83 +505,79 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           </motion.div>
         )}
       </AnimatePresence>
-    <div className={cn("mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28 transition-transform duration-300 ease-in-out", isDragging && 'scale-95')}>
-        <div className="sticky top-24 z-40">
-           <div 
-            className="fixed top-24 left-4 z-40"
-          >
-            <div 
-              className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
-            >
-              <div className="flex items-center gap-1">
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                         <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={onCancel}
-                            className="text-muted-foreground w-12 h-12"
-                         >
-                            <ArrowRight className="h-5 w-5" />
-                         </Button>
-                      </TooltipTrigger>
-                      <TooltipContent><p>بازگشت</p></TooltipContent>
-                  </Tooltip>
-                   {isEditMode && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      disabled={isProcessing} 
-                                      className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
-                                    >
-                                        <Trash2 className="h-5 w-5" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>حذف فاکتور</p></TooltipContent>
-                            </Tooltip>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-              </div>
-               <Separator orientation="vertical" className="h-8" />
-               <div className="flex items-center gap-1">
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                           <Button variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12">
-                              <Eye className="h-5 w-5" />
-                          </Button>
-                      </TooltipTrigger>
-                      <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Button 
-                            onClick={handleSaveAndExit} 
-                            variant="ghost" 
-                            size="icon"
-                            className="w-12 h-12 bg-green-600 text-white hover:bg-green-700"
-                          >
-                              <Save className="h-5 w-5" />
-                          </Button>
-                      </TooltipTrigger>
-                      <TooltipContent><p>ذخیره تغییرات</p></TooltipContent>
-                  </Tooltip>
-               </div>
+    <div className={cn("mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28", isDragging && 'dragging-active')}>
+        <Draggable handle=".handle">
+            <div className="fixed top-24 left-4 z-40 handle cursor-move">
+               <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                  <div className="flex items-center gap-1">
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                             <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={onCancel}
+                                className="text-muted-foreground w-12 h-12"
+                             >
+                                <ArrowRight className="h-5 w-5" />
+                             </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>بازگشت</p></TooltipContent>
+                      </Tooltip>
+                       {isEditMode && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          disabled={isProcessing} 
+                                          className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
+                                        >
+                                            <Trash2 className="h-5 w-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>حذف فاکتور</p></TooltipContent>
+                                </Tooltip>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                  </div>
+                   <Separator orientation="vertical" className="h-8" />
+                   <div className="flex items-center gap-1">
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                               <Button variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12">
+                                  <Eye className="h-5 w-5" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button 
+                                onClick={handleSaveAndExit} 
+                                variant="ghost" 
+                                size="icon"
+                                className="w-12 h-12 bg-green-600 text-white hover:bg-green-700"
+                              >
+                                  <Save className="h-5 w-5" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>ذخیره تغییرات</p></TooltipContent>
+                      </Tooltip>
+                   </div>
+                </div>
             </div>
-          </div>
-        </div>
+        </Draggable>
 
         <div className="grid gap-4 md:gap-8">
              <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
@@ -710,49 +707,52 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                       </Select>
                       <div className="relative lg:col-span-1">
                           <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="جستجوی محصول..." className="pr-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                           {productSearch && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                    onClick={() => setProductSearch('')}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                          <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                       </div>
                   </div>
-                  <div
-                    ref={productsRef}
-                    className="flex w-full space-x-4 overflow-x-auto pb-4 cursor-grab"
-                    {...draggableEvents}
-                  >
-                    <div className="flex flex-row gap-4">
-                      {(filteredProducts || []).map(product => {
-                         const invoiceItem = invoice.items?.find(item => item.productId === product.id);
-                         const isInInvoice = !!invoiceItem;
+                  <div className="w-full">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                        {(filteredProducts || []).map(product => {
+                           const invoiceItem = invoice.items?.find(item => item.productId === product.id);
+                           const isInInvoice = !!invoiceItem;
 
-                        return (
-                          <div key={product.id} className="w-32 flex-shrink-0 group">
-                              <Card className="overflow-hidden">
-                                  <div className="relative aspect-square w-full">
-                                      <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                          <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
-                                            <PlusCircle className="h-6 w-6" />
-                                          </motion.button>
-                                      </div>
-                                      {isInInvoice && (
-                                        <Badge className="absolute top-2 right-2 rounded-full h-6 w-6 flex items-center justify-center text-xs bg-green-600 text-white">
-                                          {invoiceItem?.quantity}
-                                        </Badge>
-                                      )}
-                                  </div>
-                                  <div className="p-2 text-center">
-                                      <p className="font-semibold text-sm truncate">{product.name}</p>
-                                      <p className="text-xs text-muted-foreground">{formatCurrency(product.price)}</p>
-                                  </div>
-                              </Card>
-                          </div>
-                        )
-                      })}
-                      {filteredProducts.length === 0 && (
-                          <div className="w-full text-center py-10 text-muted-foreground">
-                              محصولی یافت نشد.
-                          </div>
-                      )}
-                    </div>
+                          return (
+                            <div key={product.id} className="w-full flex-shrink-0 group">
+                                <Card className="overflow-hidden">
+                                    <div className="relative aspect-square w-full">
+                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
+                                              <PlusCircle className="h-6 w-6" />
+                                            </motion.button>
+                                        </div>
+                                        {isInInvoice && (
+                                          <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
+                                            {invoiceItem?.quantity}
+                                          </Badge>
+                                        )}
+                                    </div>
+                                </Card>
+                            </div>
+                          )
+                        })}
+                        {filteredProducts.length === 0 && (
+                            <div className="col-span-full w-full text-center py-10 text-muted-foreground">
+                                محصولی یافت نشد.
+                            </div>
+                        )}
+                      </div>
                   </div>
               </CardContent>
             </Card>
@@ -776,9 +776,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
                                         return (
                                         <Draggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
-                                            {(provided) => (
+                                            {(provided, snapshot) => (
                                                 <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
-                                                  <div className="grid grid-cols-12 items-start gap-x-4 gap-y-3">
+                                                  <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", isDragging && !snapshot.isDragging && "h-10 overflow-hidden opacity-50")}>
                                                     <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
                                                       <GripVertical className="h-5 w-5 text-muted-foreground" />
                                                     </div>
@@ -786,32 +786,34 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
                                                         <div className="flex items-center justify-between">
                                                             <span className="font-semibold truncate">{item.productName}</span>
-                                                             <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                                                        <Shuffle className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent className="w-64" align="start">
-                                                                    <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
-                                                                    <DropdownMenuSeparator />
-                                                                    <ScrollArea className="h-[200px]">
-                                                                        {similarProducts.length > 0 ? similarProducts.map(p => (
-                                                                            <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
-                                                                                <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                                                                                    <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
-                                                                                </div>
-                                                                                <span className="flex-grow truncate text-xs">{p.name}</span>
-                                                                            </DropdownMenuItem>
-                                                                        )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
-                                                                    </ScrollArea>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                                             <div className={cn(isDragging && snapshot.isDragging ? "hidden" : "")}>
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                                                                            <Shuffle className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent className="w-64" align="start">
+                                                                        <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
+                                                                        <DropdownMenuSeparator />
+                                                                        <ScrollArea className="h-[200px]">
+                                                                            {similarProducts.length > 0 ? similarProducts.map(p => (
+                                                                                <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
+                                                                                    <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                                                                                        <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
+                                                                                    </div>
+                                                                                    <span className="flex-grow truncate text-xs">{p.name}</span>
+                                                                                </DropdownMenuItem>
+                                                                            )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
+                                                                        </ScrollArea>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                             </div>
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground">{`واحد: ${item.unit}`}</p>
+                                                        <p className={cn("text-xs text-muted-foreground", isDragging && !snapshot.isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
                                                     </div>
                                             
-                                                     <div className="col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                     <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", isDragging && !snapshot.isDragging && "hidden")}>
                                                         <div className="grid gap-1.5">
                                                           <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                                           <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
@@ -835,7 +837,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         </div>
                                                     </div>
 
-                                                    <div className="col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12">
+                                                    <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", isDragging && !snapshot.isDragging && "hidden")}>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive" onClick={() => handleRemoveItem(index)}>
                                                           <Trash2 className="h-4 w-4" />
                                                         </Button>

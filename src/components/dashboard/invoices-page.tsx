@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PlusCircle, Edit, Eye, Trash2, CheckCircle2, TriangleAlert, MoreVertical } from 'lucide-react';
+import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
@@ -237,7 +237,7 @@ export default function InvoicesPage({
                            <div className="flex items-center gap-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(invoice)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }}>
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -245,7 +245,7 @@ export default function InvoicesPage({
                                 </Tooltip>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(invoice)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }}>
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -255,7 +255,7 @@ export default function InvoicesPage({
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => e.stopPropagation()}>
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>
@@ -269,7 +269,7 @@ export default function InvoicesPage({
                                                 این عمل غیرقابل بازگشت است و فاکتور شماره {invoice.invoiceNumber} را برای همیشه حذف می‌کند.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
-                                        <AlertDialogFooter className="grid-cols-2 gap-2">
+                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
                                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                                             <AlertDialogAction
                                                 onClick={() => handleDelete(invoice.id)}

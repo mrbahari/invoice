@@ -378,6 +378,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleDragEnd = (result: DropResult) => {
+    document.body.classList.remove('dragging-invoice-item');
     setIsDragging(false);
     if (!result.destination) return;
     setInvoice(prev => {
@@ -389,6 +390,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleDragStart = (start: DragStart) => {
+    document.body.classList.add('dragging-invoice-item');
     setIsDragging(true);
   };
   
@@ -579,7 +581,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className={cn("mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28")}>
-        <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef}>
+        <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef} cancel=".no-drag">
             <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40 handle cursor-move">
                 <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
                    <div className="flex items-center gap-1">
@@ -590,7 +592,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 variant="ghost" 
                                 size="icon" 
                                 onClick={onCancel}
-                                className="text-muted-foreground w-12 h-12"
+                                className="text-muted-foreground w-12 h-12 no-drag"
                              >
                                 <ArrowRight className="h-5 w-5" />
                              </Button>
@@ -606,7 +608,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                           variant="ghost" 
                                           size="icon" 
                                           disabled={isProcessing} 
-                                          className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
+                                          className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12 no-drag"
                                         >
                                             <Trash2 className="h-5 w-5" />
                                         </Button>
@@ -628,7 +630,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                    <div className="flex items-center gap-1">
                       <Tooltip>
                           <TooltipTrigger asChild>
-                               <Button variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12">
+                               <Button variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12 no-drag">
                                   <Eye className="h-5 w-5" />
                               </Button>
                           </TooltipTrigger>
@@ -640,7 +642,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 onClick={handleSaveAndExit} 
                                 variant="ghost" 
                                 size="icon"
-                                className="w-12 h-12 bg-green-600 text-white hover:bg-green-700"
+                                className="w-12 h-12 bg-green-600 text-white hover:bg-green-700 no-drag"
                               >
                                   <Save className="h-5 w-5" />
                               </Button>
@@ -789,13 +791,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 {(provided, snapshot) => (
                                                    <>
                                                     <div ref={provided.innerRef} {...provided.draggableProps} className="rounded-lg border bg-card text-card-foreground shadow-sm p-3">
-                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300")}>
+                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", snapshot.isDragging && 'h-16')}>
                                                         <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
                                                           <GripVertical className="h-5 w-5 text-muted-foreground" />
                                                         </div>
                                                 
                                                         <div className="col-span-11 sm:col-span-5 flex flex-col gap-2">
-                                                            <div className={cn("flex items-center justify-between", snapshot.isDragging && "hidden")}>
+                                                            <div className={cn("flex items-center justify-between")}>
                                                                 <span className="font-semibold truncate">{item.productName}</span>
                                                                  <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild>
@@ -819,7 +821,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                                     </DropdownMenuContent>
                                                                 </DropdownMenu>
                                                             </div>
-                                                            {snapshot.isDragging && <span className="font-semibold truncate">{item.productName}</span>}
                                                             <p className={cn("text-xs text-muted-foreground", snapshot.isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
                                                         </div>
                                                 

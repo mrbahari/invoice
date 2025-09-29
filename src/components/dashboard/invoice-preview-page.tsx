@@ -6,7 +6,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Pencil, Camera, Smartphone } from 'lucide-react';
+import { ArrowRight, Pencil, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -134,53 +134,26 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     }
   }, [invoice, customer]);
 
-  const handleDownloadImage = (story: boolean = false) => {
-    let element: HTMLElement | null = document.getElementById('invoice-card');
+  const handleDownloadImage = () => {
+    const element = document.getElementById('invoice-card');
     if (!element) return;
+    
+    // For mobile, increase width for better output
+    const isMobile = window.innerWidth < 768;
+    const canvasWidth = isMobile ? 1080 : element.scrollWidth;
 
-    let canvasOptions: any = {
+    html2canvas(element, {
       scale: 2,
       useCORS: true,
       logging: true,
-      windowWidth: element.scrollWidth,
+      width: canvasWidth,
+      windowWidth: canvasWidth,
       windowHeight: element.scrollHeight,
-    };
-    
-    let tempContainer: HTMLElement | null = null;
-    
-    if (story) {
-        tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.style.top = '-9999px';
-        tempContainer.style.width = '1080px';
-        tempContainer.style.height = '1920px';
-        
-        const clone = element.cloneNode(true) as HTMLElement;
-        clone.style.height = '100%';
-        clone.style.width = '100%';
-        clone.style.margin = '0 auto';
-        
-        tempContainer.appendChild(clone);
-        document.body.appendChild(tempContainer);
-        element = tempContainer;
-
-        canvasOptions = {
-            scale: 1, // Use native resolution
-            useCORS: true,
-            width: 1080,
-            height: 1920,
-        };
-    }
-
-    html2canvas(element, canvasOptions).then(canvas => {
+    }).then(canvas => {
       const link = document.createElement('a');
-      link.download = `invoice-${invoice?.invoiceNumber || 'preview'}${story ? '-story' : ''}.png`;
+      link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      if (tempContainer) {
-        document.body.removeChild(tempContainer);
-      }
     });
   };
 
@@ -203,8 +176,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
       <div className="pb-24">
         {/* Floating Action Bar */}
         <div 
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 no-print"
-          style={{ bottom: '90px' }}
+          className="fixed top-24 left-4 z-40 no-print"
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
@@ -227,19 +199,11 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
              </Tooltip>
              <Tooltip>
                  <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => handleDownloadImage(false)}>
+                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleDownloadImage}>
                         <Camera className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>دانلود عکس</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => handleDownloadImage(true)}>
-                        <Smartphone className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>دانلود استوری (9:16)</p></TooltipContent>
             </Tooltip>
           </div>
         </div>

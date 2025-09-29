@@ -30,6 +30,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 type StoreFormProps = {
   store?: Store;
@@ -205,7 +207,55 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
 
   return (
-    <div className="max-w-4xl mx-auto grid gap-6">
+    <TooltipProvider>
+    <div className="max-w-4xl mx-auto grid gap-6 pb-28">
+        <div className="fixed top-24 left-4 z-40">
+            <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                 <div className="flex items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-12 h-12">
+                              <ArrowRight className="h-5 w-5" />
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                    </Tooltip>
+                    {isEditMode && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12">
+                                            <Trash2 className="h-5 w-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
+                                </Tooltip>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                    <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store.name}» و تمام دسته‌بندی‌های آن را برای همیشه حذف می‌کند.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
+                <Separator orientation="vertical" className="h-8" />
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-14 h-14 bg-green-600 text-white hover:bg-green-700">
+                            <Save className="h-6 w-6" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>
+                </Tooltip>
+            </div>
+        </div>
         <Card>
             <CardHeader>
                 <div className="flex flex-row items-center justify-between">
@@ -217,15 +267,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                            اطلاعات اصلی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
                         </CardDescription>
                     </div>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={onCancel}
-                      className="dark:bg-white dark:text-black"
-                    >
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                        بازگشت به لیست
-                    </Button>
                 </div>
             </CardHeader>
             <CardContent className="grid gap-6">
@@ -385,38 +426,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </div>
             </CardContent>
         </Card>
-
-        <CardFooter className="flex flex-col-reverse sm:flex-row justify-between gap-2">
-            <div>
-            {isEditMode && (
-                <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button type="button" variant="destructive" disabled={isProcessing}>
-                    <Trash2 className="ml-2 h-4 w-4" />
-                    حذف فروشگاه
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        این عمل غیرقابل بازگشت است و فروشگاه «{store.name}» و تمام دسته‌بندی‌های آن را برای همیشه حذف می‌کند.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-                </AlertDialog>
-            )}
-            </div>
-            <Button type="button" onClick={handleSaveAll} disabled={isProcessing} size="lg" className="w-full sm:w-auto">
-            {isProcessing ? 'در حال ذخیره...' : 'ذخیره کل تغییرات'}
-            </Button>
-        </CardFooter>
     </div>
+    </TooltipProvider>
   );
 }
-
-    

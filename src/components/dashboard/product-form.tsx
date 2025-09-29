@@ -345,9 +345,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
-         <div 
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40"
-          style={{ bottom: '90px' }}
+        <div 
+          className="fixed top-24 left-4 z-40"
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
@@ -575,5 +574,3 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
-
-    

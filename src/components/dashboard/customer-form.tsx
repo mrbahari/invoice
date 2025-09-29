@@ -27,8 +27,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2, ArrowRight, Copy } from 'lucide-react';
+import { Trash2, ArrowRight, Copy, Save } from 'lucide-react';
 import { useData } from '@/context/data-context';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '../ui/separator';
 
 
 type CustomerFormProps = {
@@ -144,7 +146,85 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <TooltipProvider>
+    <form onSubmit={handleSubmit} className="pb-28">
+       <div 
+          className="fixed top-24 left-4 z-40"
+        >
+          <div 
+            className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
+          >
+            <div className="flex items-center gap-1">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                       <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={onCancel}
+                          className="text-muted-foreground w-12 h-12"
+                       >
+                          <ArrowRight className="h-5 w-5" />
+                       </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                </Tooltip>
+                 {isEditMode && (
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    disabled={isProcessing} 
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
+                                  >
+                                      <Trash2 className="h-5 w-5" />
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>حذف مشتری</p></TooltipContent>
+                          </Tooltip>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و مشتری «{customer.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                              <AlertDialogCancel>انصراف</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                 {isEditMode && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-12 h-12">
+                          <Copy className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
+                  </Tooltip>
+                )}
+            </div>
+             <Separator orientation="vertical" className="h-8" />
+             <div className="flex items-center gap-1">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button 
+                          type="submit" 
+                          disabled={isProcessing}
+                          variant="ghost" 
+                          size="icon"
+                          className="w-14 h-14 bg-green-600 text-white hover:bg-green-700"
+                        >
+                            <Save className="h-6 w-6" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد مشتری'}</p></TooltipContent>
+                </Tooltip>
+             </div>
+          </div>
+        </div>
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
             <div className="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -156,15 +236,6 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                         اطلاعات مشتری را وارد کنید.
                     </CardDescription>
                 </div>
-                 <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={onCancel}
-                    className="dark:bg-white dark:text-black"
-                  >
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت به لیست
-                </Button>
             </div>
         </CardHeader>
         <CardContent className="grid gap-6">
@@ -214,52 +285,9 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col-reverse sm:flex-row justify-between gap-2">
-          <div>
-            {isEditMode && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button type="button" variant="destructive" disabled={isProcessing}>
-                    <Trash2 className="ml-2 h-4 w-4" />
-                    حذف مشتری
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        این عمل غیرقابل بازگشت است و مشتری «{customer.name}» را برای همیشه حذف می‌کند.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-           <div className='flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto'>
-              {isEditMode && (
-                  <Button type="button" variant="outline" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-full">
-                     <Copy className="ml-2 h-4 w-4" />
-                      ذخیره با عنوان جدید
-                  </Button>
-              )}
-              <Button type="submit" disabled={isProcessing} className="w-full bg-green-600 hover:bg-green-700">
-                {isProcessing
-                  ? isEditMode
-                    ? 'در حال ذخیره...'
-                    : 'در حال ایجاد...'
-                  : isEditMode
-                  ? 'ذخیره تغییرات'
-                  : 'ایجاد مشتری'}
-              </Button>
-          </div>
-        </CardFooter>
+        {/* Footer is removed as buttons are now in the floating action bar */}
       </Card>
     </form>
+    </TooltipProvider>
   );
 }
-
-    

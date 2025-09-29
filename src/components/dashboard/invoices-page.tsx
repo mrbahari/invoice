@@ -22,7 +22,6 @@ import { Badge } from '../ui/badge';
 import { formatCurrency, cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 
 
 type View =
@@ -213,58 +212,10 @@ export default function InvoicesPage({
                               <CardTitle className="text-lg">{displayName}</CardTitle>
                               <CardDescription className="text-sm text-muted-foreground">{displayPhone}</CardDescription>
                             </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                        <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }}>
-                                        <Edit className="ml-2 h-4 w-4" />
-                                        <span>ویرایش</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }}>
-                                        <Eye className="ml-2 h-4 w-4" />
-                                        <span>مشاهده</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem
-                                                className="text-destructive"
-                                                onSelect={(e) => e.preventDefault()}
-                                            >
-                                                <Trash2 className="ml-2 h-4 w-4" />
-                                                <span>حذف</span>
-                                            </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    این عمل غیرقابل بازگشت است و فاکتور شماره {invoice.invoiceNumber} را برای همیشه حذف می‌کند.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(invoice.id);
-                                                    }}
-                                                    className="bg-destructive hover:bg-destructive/90"
-                                                >
-                                                    حذف
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                           
                           </div>
                         </CardHeader>
-                        <CardContent className="grid gap-2 text-sm"  onClick={() => handleEdit(invoice)}>
+                        <CardContent className="grid gap-2 text-sm">
                            <div className="flex justify-between">
                             <span className="text-muted-foreground">شماره فاکتور</span>
                             <span>{invoice.invoiceNumber}</span>
@@ -278,10 +229,58 @@ export default function InvoicesPage({
                             <span>{formatCurrency(invoice.total)}</span>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex flex-row justify-end gap-2 pt-4" onClick={() => handleEdit(invoice)}>
-                           <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
+                        <CardFooter className="flex flex-row items-center justify-between pt-4">
+                            <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
                               {statusTranslation[invoice.status]}
                             </Badge>
+
+                           <div className="flex items-center gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(invoice)}>
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>ویرایش</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(invoice)}>
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
+                                </Tooltip>
+                                 <AlertDialog>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>حذف</p></TooltipContent>
+                                    </Tooltip>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                این عمل غیرقابل بازگشت است و فاکتور شماره {invoice.invoiceNumber} را برای همیشه حذف می‌کند.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="grid-cols-2 gap-2">
+                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => handleDelete(invoice.id)}
+                                                className="bg-destructive hover:bg-destructive/90"
+                                            >
+                                                حذف
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </CardFooter>
                       </Card>
                     );

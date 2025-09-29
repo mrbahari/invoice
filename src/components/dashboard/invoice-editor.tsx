@@ -580,8 +580,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       </AnimatePresence>
     <div className={cn("mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28")}>
         <DraggableToolbar handle=".handle" nodeRef={draggableToolbarRef} cancel=".no-drag">
-            <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40 handle cursor-move">
+            <div ref={draggableToolbarRef} className="fixed top-24 left-4 z-40">
                 <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                   <div className="handle cursor-move p-2 -mr-2">
+                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                   </div>
                    <div className="flex items-center gap-1">
                       <Tooltip>
                           <TooltipTrigger asChild>
@@ -654,6 +657,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 grid auto-rows-max gap-4">
+                 <div className="block lg:hidden">
+                    <AddProductsComponent />
+                </div>
                 <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
                     <Card>
                         <CardHeader>
@@ -758,9 +764,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   </DialogContent>
                 </Dialog>
                 
-                <div className="lg:hidden">
-                    <AddProductsComponent />
-                </div>
                 
                 <Card 
                   ref={invoiceItemsCardRef}
@@ -789,7 +792,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 {(provided, snapshot) => (
                                                    <>
                                                     <div ref={provided.innerRef} {...provided.draggableProps} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm p-3", snapshot.isDragging && 'h-16')}>
-                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", isDragging && !snapshot.isDragging && 'h-16')}>
+                                                      <div className={cn("grid grid-cols-12 items-start gap-x-4 gap-y-3 transition-all duration-300", (isDragging && !snapshot.isDragging) && 'h-16')}>
                                                         <div {...provided.dragHandleProps} className="col-span-1 flex h-full items-center justify-center cursor-grab">
                                                           <GripVertical className="h-6 w-6 text-muted-foreground" />
                                                         </div>
@@ -921,3 +924,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

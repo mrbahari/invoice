@@ -140,7 +140,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6" data-main-page="true">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

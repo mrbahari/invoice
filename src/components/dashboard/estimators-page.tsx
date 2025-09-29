@@ -316,10 +316,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         return (
             <div className="max-w-4xl mx-auto pb-28">
                  <div className="mb-4">
-                    <Button onClick={() => setActiveEstimator(null)} variant="outline">
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                        بازگشت
-                    </Button>
+                    {/* The back button is handled by the main layout */}
                 </div>
                 <ActiveComponent onAddToList={handleAddToList} />
             </div>
@@ -328,7 +325,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }
 
   return (
-    <div className='pb-40'>
+    <div className='pb-40' data-main-page="true">
         <div className="grid gap-8">
             <Card>
                 <CardHeader>

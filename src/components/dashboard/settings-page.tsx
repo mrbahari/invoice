@@ -184,7 +184,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6" data-main-page="true">
       <Card>
         <CardHeader>
           <CardTitle>تنظیمات</CardTitle>

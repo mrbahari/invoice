@@ -163,7 +163,7 @@ export default function InvoicesPage({
       default:
         return (
           <TooltipProvider>
-           <div className="grid gap-6 pb-24">
+           <div className="grid gap-6 pb-24" data-main-page="true">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -237,7 +237,7 @@ export default function InvoicesPage({
                            <div className="flex items-center gap-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleEdit(invoice); }}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(invoice)}>
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -245,7 +245,7 @@ export default function InvoicesPage({
                                 </Tooltip>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handlePreview(invoice); }}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(invoice)}>
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -255,7 +255,7 @@ export default function InvoicesPage({
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>

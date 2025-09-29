@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -88,9 +89,6 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
     <div className="grid flex-1 items-start gap-4 md:gap-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-                 <Button onClick={onBack} variant="outline" size="icon" className="h-8 w-8">
-                    <ArrowRight className="h-4 w-4" />
-                </Button>
                 <Avatar className="h-16 w-16 border">
                     <AvatarImage src={`https://picsum.photos/seed/${customer.id}/64/64`} alt={customer.name} />
                     <AvatarFallback>{nameInitials}</AvatarFallback>

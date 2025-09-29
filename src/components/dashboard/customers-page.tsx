@@ -139,6 +139,7 @@ export default function CustomersPage() {
   }
 
   return (
+    <div data-main-page="true">
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
@@ -263,5 +264,6 @@ export default function CustomersPage() {
         </div>
       </CardFooter>
     </Card>
+    </div>
   );
 }

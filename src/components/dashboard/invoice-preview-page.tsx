@@ -175,20 +175,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     <TooltipProvider>
       <div className="pb-24">
         {/* Floating Action Bar */}
-        <div 
-          className="fixed top-24 left-4 z-40 no-print"
-        >
+        <div className="fixed top-[7.5rem] left-4 z-40 no-print">
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
           >
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={onBack} className="w-12 h-12">
-                        <ArrowRight className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>بازگشت</p></TooltipContent>
-            </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
                     <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>

@@ -105,7 +105,7 @@ export default function StoresPage() {
   }
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-8" data-main-page="true">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center gap-4">

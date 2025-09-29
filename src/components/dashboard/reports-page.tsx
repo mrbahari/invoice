@@ -183,7 +183,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
   }, [allInvoices, allCustomers, allProducts, period]);
 
   return (
-    <div className="grid flex-1 items-start gap-4 md:gap-8">
+    <div className="grid flex-1 items-start gap-4 md:gap-8" data-main-page="true">
        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">گزارشات</h1>

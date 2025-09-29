@@ -41,76 +41,28 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        images: [
-            '/images/b1.jpg',
-            '/images/b2.jpg',
-            '/images/b3.jpg',
-            '/images/b4.jpg',
-        ],
+        image: '/images/b1.jpg',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        images: [
-             '/images/s1.jpg',
-             '/images/s2.jpg',
-             '/images/s3.jpg',
-             '/images/s4.jpg',
-        ],
+        image: '/images/s1.jpg',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        images: [
-            '/images/f1.jpg',
-            '/images/f2.jpg',
-            '/images/f3.jpg',
-            '/images/f4.jpg',
-        ],
+        image: '/images/f1.jpg',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        images: [
-            '/images/d1.jpg',
-            '/images/d2.jpg',
-            '/images/d3.jpg',
-            '/images/d4.jpg',
-        ],
+        image: '/images/d1.jpg',
         component: DrywallForm,
     }
 ];
-
-
-const RandomImage = ({ images }: { images: string[] }) => {
-    const [randomImage, setRandomImage] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (images && images.length > 0) {
-            const randomIndex = Math.floor(Math.random() * images.length);
-            setRandomImage(images[randomIndex]);
-        }
-    }, [images]);
-    
-    if (!randomImage) {
-        return <div className="relative aspect-[4/3] w-full h-full overflow-hidden bg-muted" />;
-    }
-
-    return (
-        <div className="relative aspect-[4/3] w-full h-full overflow-hidden">
-            <Image
-                src={randomImage}
-                alt="Random sample image"
-                fill
-                className="object-cover"
-            />
-        </div>
-    );
-};
-
 
 type EstimatorsPageProps = {
     onNavigate: (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'> }) => void;
@@ -348,7 +300,14 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         onClick={() => setActiveEstimator(estimator.id)}
                         className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
                     >
-                        <RandomImage images={estimator.images} />
+                        <div className="relative aspect-[4/3] w-full h-full overflow-hidden">
+                            <Image
+                                src={estimator.image}
+                                alt={estimator.title}
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
                         <div className="p-4">
                             <CardTitle className="text-base md:text-lg font-bold">{estimator.title}</CardTitle>
                         </div>

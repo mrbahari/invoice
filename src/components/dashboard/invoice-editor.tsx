@@ -123,7 +123,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const isClient = useIsClient();
   const draggableToolbarRef = useRef(null);
   const productsScrollRef = useRef<HTMLDivElement>(null);
-  useDraggableScroll(productsScrollRef, { direction: 'horizontal' });
   
   const isEditMode = !!invoiceId;
 
@@ -523,8 +522,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-            <ScrollArea className="h-[21rem]">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pr-4">
+            
+              <div className="grid grid-cols-4 gap-2">
                   {filteredProducts.length > 0 ? (filteredProducts).slice(0, 8).map(product => {
                       const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                       const isInInvoice = !!invoiceItem;
@@ -558,7 +557,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         </div>
                     )}
               </div>
-            </ScrollArea>
+            
       </CardContent>
     </Card>
   );
@@ -585,8 +584,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
-            <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+        <div 
+          className="fixed bottom-20 left-0 right-0 z-40 p-4 bg-background/90 border-t backdrop-blur-sm no-print"
+          style={{ bottom: '64px' }}
+        >
+          <div className="max-w-4xl mx-auto flex justify-center">
+             <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
                    <div className="flex items-center gap-1">
                       <Tooltip>
                           <TooltipTrigger asChild>
@@ -654,6 +657,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                       </Tooltip>
                    </div>
             </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-4">
@@ -927,5 +931,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

@@ -122,7 +122,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const { toast } = useToast();
   const isClient = useIsClient();
   const draggableToolbarRef = useRef(null);
-  const productsScrollRef = useRef<HTMLDivElement>(null);
+  const productsScrollRef = useDraggableScroll(useRef<HTMLDivElement>(null), { direction: 'horizontal' });
   
   const isEditMode = !!invoiceId;
 
@@ -523,40 +523,45 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
               </div>
           </div>
             
-              <div className="grid grid-cols-4 gap-2">
-                  {filteredProducts.length > 0 ? (filteredProducts).slice(0, 8).map(product => {
-                      const invoiceItem = invoice.items?.find(item => item.productId === product.id);
-                      const isInInvoice = !!invoiceItem;
+            <div
+                ref={productsScrollRef.ref}
+                className="overflow-x-auto cursor-grab"
+            >
+                <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
+                    {filteredProducts.length > 0 ? (filteredProducts).map(product => {
+                        const invoiceItem = invoice.items?.find(item => item.productId === product.id);
+                        const isInInvoice = !!invoiceItem;
 
-                      return (
-                        <div key={product.id} className="group flex flex-col">
-                            <Card className="overflow-hidden">
-                                <div className="relative aspect-square w-full">
-                                    <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
-                                          <PlusCircle className="h-6 w-6" />
-                                        </motion.button>
-                                    </div>
-                                    {isInInvoice && (
-                                      <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
-                                        {invoiceItem?.quantity}
-                                      </Badge>
-                                    )}
-                                </div>
-                            </Card>
-                            <div className="p-1.5 text-center">
-                                <p className="text-xs font-semibold truncate">{product.name}</p>
-                                <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
-                            </div>
-                        </div>
-                      )
-                    }) : (
-                        <div className="w-full text-center py-10 text-muted-foreground col-span-full">
-                            محصولی یافت نشد.
-                        </div>
-                    )}
-              </div>
+                        return (
+                          <div key={product.id} className="group flex flex-col">
+                              <Card className="overflow-hidden">
+                                  <div className="relative aspect-square w-full">
+                                      <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                          <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
+                                            <PlusCircle className="h-6 w-6" />
+                                          </motion.button>
+                                      </div>
+                                      {isInInvoice && (
+                                        <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
+                                          {invoiceItem?.quantity}
+                                        </Badge>
+                                      )}
+                                  </div>
+                              </Card>
+                              <div className="p-1.5 text-center">
+                                  <p className="text-xs font-semibold truncate">{product.name}</p>
+                                  <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
+                              </div>
+                          </div>
+                        )
+                      }) : (
+                          <div className="col-span-4 row-span-2 text-center py-10 text-muted-foreground">
+                              محصولی یافت نشد.
+                          </div>
+                      )}
+                </div>
+            </div>
             
       </CardContent>
     </Card>

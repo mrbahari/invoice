@@ -524,7 +524,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           </div>
           <ScrollArea className="h-96">
               <div className="grid grid-cols-4 gap-2 pr-4">
-                {(filteredProducts || []).map(product => {
+                {(filteredProducts || []).slice(0, 8).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
 
@@ -931,3 +931,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

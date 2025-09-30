@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -521,14 +522,14 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-          <ScrollArea>
+          <ScrollArea className="h-96">
               <div className="grid grid-cols-4 gap-2 pr-4">
                 {(filteredProducts || []).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
 
                   return (
-                    <div key={product.id} className="w-full flex-shrink-0 group">
+                    <div key={product.id} className="w-full flex-shrink-0 group flex flex-col">
                         <Card className="overflow-hidden">
                             <div className="relative aspect-square w-full">
                                 <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
@@ -544,6 +545,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                 )}
                             </div>
                         </Card>
+                         <div className="p-1.5 text-center">
+                              <p className="text-xs font-semibold truncate">{product.name}</p>
+                              <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
+                          </div>
                     </div>
                   )
                 })}
@@ -801,35 +806,39 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                           <GripVertical className="h-6 w-6 text-muted-foreground" />
                                                         </div>
                                                 
-                                                        <div className={cn("col-span-11 sm:col-span-5 flex flex-col gap-2")}>
+                                                        <div className={cn("col-span-11 sm:col-span-12 flex flex-col gap-2")}>
                                                             <div className={cn("flex items-center justify-between")}>
-                                                                <span className="font-semibold truncate">{item.productName}</span>
-                                                                 <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild>
-                                                                        <Button variant="ghost" size="icon" className={cn("h-6 w-6", isDragging && 'hidden')}>
-                                                                            <Shuffle className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent className="w-64" align="start">
-                                                                        <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
-                                                                        <DropdownMenuSeparator />
-                                                                        <ScrollArea className="h-[200px]">
-                                                                            {similarProducts.length > 0 ? similarProducts.map(p => (
-                                                                                <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
-                                                                                    <div className="relative w-16 h-16 rounded-md overflow-hidden">
-                                                                                        <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
-                                                                                    </div>
-                                                                                    <span className="flex-grow truncate text-xs">{p.name}</span>
-                                                                                </DropdownMenuItem>
-                                                                            )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
-                                                                        </ScrollArea>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
+                                                                <span className="font-semibold truncate flex items-center gap-2">
+                                                                  {item.productName}
+                                                                  <DropdownMenu>
+                                                                      <DropdownMenuTrigger asChild>
+                                                                          <Button variant="ghost" size="icon" className={cn("h-6 w-6", isDragging && 'hidden')}>
+                                                                              <Shuffle className="h-4 w-4" />
+                                                                          </Button>
+                                                                      </DropdownMenuTrigger>
+                                                                      <DropdownMenuContent className="w-64" align="start">
+                                                                          <DropdownMenuLabel>محصولات مشابه</DropdownMenuLabel>
+                                                                          <DropdownMenuSeparator />
+                                                                          <ScrollArea className="h-[200px]">
+                                                                              {similarProducts.length > 0 ? similarProducts.map(p => (
+                                                                                  <DropdownMenuItem key={p.id} className="gap-2" onSelect={(e) => { e.preventDefault(); handleAddProduct(p, e as any); }}>
+                                                                                      <div className="relative w-16 h-16 rounded-md overflow-hidden">
+                                                                                          <Image src={p.imageUrl} alt={p.name} layout="fill" objectFit="cover" unoptimized/>
+                                                                                      </div>
+                                                                                      <span className="flex-grow truncate text-xs">{p.name}</span>
+                                                                                  </DropdownMenuItem>
+                                                                              )) : <p className="text-xs text-muted-foreground p-4 text-center">محصول مشابهی یافت نشد.</p>}
+                                                                          </ScrollArea>
+                                                                      </DropdownMenuContent>
+                                                                  </DropdownMenu>
+                                                                </span>
+                                                                <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={() => handleRemoveItem(index)}>
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
                                                             </div>
-                                                            <p className={cn("text-xs text-muted-foreground", isDragging && "hidden")}>{`واحد: ${item.unit}`}</p>
                                                         </div>
                                                 
-                                                         <div className={cn("col-start-2 col-span-11 sm:col-start-auto sm:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3", isDragging && "hidden")}>
+                                                         <div className={cn("col-start-2 col-span-11 sm:col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3", isDragging && "hidden")}>
                                                             <div className="grid gap-1.5">
                                                               <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                                               <Input type="number" id={`quantity-${index}`} value={item.quantity || ''} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="مقدار" />
@@ -851,12 +860,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                               <Label className="text-xs">مبلغ کل</Label>
                                                               <p className="font-semibold font-mono text-sm flex items-center h-10">{formatCurrency(item.totalPrice)}</p>
                                                             </div>
-                                                        </div>
-
-                                                        <div className={cn("col-span-12 flex justify-end -mt-10 sm:mt-0 sm:col-span-1 sm:col-start-12", isDragging && "hidden")}>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-destructive" onClick={() => handleRemoveItem(index)}>
-                                                              <Trash2 className="h-4 w-4" />
-                                                            </Button>
                                                         </div>
                                                       </div>
                                                     </div>

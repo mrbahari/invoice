@@ -29,6 +29,7 @@ const tabToNameMapping: Record<DashboardTab, string> = {
   settings: 'تنظیمات',
 };
 
+// Only show search bar on these specific tabs
 const showSearchTabs: DashboardTab[] = [
   'products',
   'categories',
@@ -42,15 +43,17 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
-  const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
+  const { searchTerm, setSearchTerm } = useSearch();
 
-  const showSearch = showSearchTabs.includes(activeTab);
+  // Determine if the search bar should be visible on the current tab
+  const isSearchVisible = showSearchTabs.includes(activeTab);
 
   React.useEffect(() => {
-    if (!showSearch) {
+    // Clear search term when navigating away from a searchable tab
+    if (!isSearchVisible) {
       setSearchTerm('');
     }
-  }, [activeTab, showSearch, setSearchTerm]);
+  }, [activeTab, isSearchVisible, setSearchTerm]);
 
   return (
     <>

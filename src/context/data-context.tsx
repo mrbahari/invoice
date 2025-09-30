@@ -36,7 +36,7 @@ export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
 const defaultData = {
     ...Defaultdb,
-    toolbarPosition: { x: 20, y: 120 } // Default top-left position
+    toolbarPosition: { x: 20, y: 80 } // Default top-left position
 } as AppData;
 
 

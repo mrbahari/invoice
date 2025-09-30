@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
+import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Defaultdb from '@/database/defaultdb.json';
 
@@ -14,6 +15,7 @@ interface AppData {
   invoices: Invoice[];
   units: UnitOfMeasurement[];
   stores: Store[];
+  toolbarPosition: ToolbarPosition;
 }
 
 // Define the context type
@@ -32,7 +34,10 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
-const defaultData = Defaultdb as AppData;
+const defaultData = {
+    ...Defaultdb,
+    toolbarPosition: { x: 20, y: 120 } // Default top-left position
+} as AppData;
 
 
 // Create the provider component
@@ -47,7 +52,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
-          setData(JSON.parse(storedData));
+          const parsedData = JSON.parse(storedData);
+           // Ensure toolbarPosition exists
+          if (!parsedData.toolbarPosition) {
+            parsedData.toolbarPosition = defaultData.toolbarPosition;
+          }
+          setData(parsedData);
         } else {
           // If no data in local storage, use the imported default data
           setData(defaultData);
@@ -102,7 +112,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         try {
             localStorage.removeItem(LOCAL_STORAGE_KEY);
             // Setting to an empty object structure to avoid errors on reload before useEffect runs
-            setData({ customers: [], products: [], invoices: [], stores: [], categories: [], units: [] });
+            setData({ ...defaultData, customers: [], products: [], invoices: [], stores: [], categories: [], units: [] });
             // Reload the page to ensure the app state is fully reset
             setTimeout(() => {
                 window.location.reload();

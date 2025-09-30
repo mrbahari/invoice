@@ -589,81 +589,93 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         )}
       </AnimatePresence>
     <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
+      <Draggable
+        handle=".drag-handle"
+        defaultPosition={toolbarPosition}
+        nodeRef={draggableToolbarRef}
+        onStop={(e, dragData) => {
+            setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+        }}
+      >
         <div 
-          className="fixed bottom-20 left-0 right-0 z-40 p-4 bg-background/90 border-t backdrop-blur-sm no-print"
-          style={{ bottom: '64px' }}
+          ref={draggableToolbarRef}
+          className="fixed z-40"
         >
-          <div className="max-w-4xl mx-auto flex justify-center">
-             <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
-                   <div className="flex items-center gap-1">
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                             <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={onCancel}
-                                className="text-muted-foreground w-12 h-12 no-drag"
-                             >
-                                <ArrowRight className="h-5 w-5" />
-                             </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>بازگشت</p></TooltipContent>
-                      </Tooltip>
-                       {isEditMode && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
-                                          size="icon" 
-                                          disabled={isProcessing} 
-                                          className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12 no-drag"
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>حذف فاکتور</p></TooltipContent>
-                                </Tooltip>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90 no-drag'>حذف</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                  </div>
-                   <Separator orientation="vertical" className="h-8" />
-                   <div className="flex items-center gap-1">
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                               <Button variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12 no-drag">
-                                  <Eye className="h-5 w-5" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button 
-                                onClick={handleSaveAndExit} 
-                                variant="ghost" 
-                                size="icon"
-                                className="w-14 h-14 bg-green-600 text-white hover:bg-green-700 no-drag"
-                              >
-                                  <Save className="h-5 w-5" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>ذخیره تغییرات</p></TooltipContent>
-                      </Tooltip>
-                   </div>
+          <div 
+            className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
+          >
+             <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
             </div>
+            <div className="flex items-center gap-1">
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                       <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={onCancel}
+                          className="text-muted-foreground w-12 h-12"
+                       >
+                          <ArrowRight className="h-5 w-5" />
+                       </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>بازگشت</p></TooltipContent>
+                </Tooltip>
+                 {isEditMode && (
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    disabled={isProcessing} 
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
+                                  >
+                                      <Trash2 className="h-5 w-5" />
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>حذف فاکتور</p></TooltipContent>
+                          </Tooltip>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                              <AlertDialogCancel>انصراف</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                )}
+            </div>
+             <Separator orientation="vertical" className="h-8" />
+             <div className="flex items-center gap-1">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12">
+                            <Eye className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button 
+                          onClick={handleSaveAndExit} 
+                          variant="ghost" 
+                          size="icon"
+                          className="w-14 h-14 bg-green-600 text-white hover:bg-green-700"
+                        >
+                            <Save className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>ذخیره تغییرات</p></TooltipContent>
+                </Tooltip>
+             </div>
           </div>
         </div>
+        </Draggable>
 
         <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 grid auto-rows-max gap-4">

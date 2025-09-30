@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Draggable from 'react-draggable';
 
 
 type StoreFormProps = {
@@ -45,7 +46,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const isEditMode = !!store;
 
   const { data, setData } = useData();
-  const { stores, categories, products } = data;
+  const { stores, categories, products, toolbarPosition } = data;
+  const draggableToolbarRef = useRef(null);
   
   const [name, setName] = useState(store?.name || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -209,8 +211,19 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   return (
     <TooltipProvider>
     <div className="max-w-4xl mx-auto grid gap-6 pb-28">
-        <div className="fixed top-24 left-4 z-40">
+        <Draggable
+            handle=".drag-handle"
+            defaultPosition={toolbarPosition}
+            nodeRef={draggableToolbarRef}
+            onStop={(e, dragData) => {
+                setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+            }}
+        >
+        <div ref={draggableToolbarRef} className="fixed z-40">
             <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                 <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                </div>
                  <div className="flex items-center gap-1">
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -256,6 +269,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </Tooltip>
             </div>
         </div>
+        </Draggable>
         <Card>
             <CardHeader>
                 <div className="flex flex-row items-center justify-between">

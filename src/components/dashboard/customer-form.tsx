@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -27,10 +27,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2, ArrowRight, Copy, Save } from 'lucide-react';
+import { Trash2, ArrowRight, Copy, Save, GripVertical } from 'lucide-react';
 import { useData } from '@/context/data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '../ui/separator';
+import Draggable from 'react-draggable';
 
 
 type CustomerFormProps = {
@@ -43,7 +44,8 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   const { toast } = useToast();
   const isEditMode = !!customer;
   const { data, setData } = useData();
-
+  const draggableToolbarRef = useRef(null);
+  const { toolbarPosition } = data;
 
   const [name, setName] = useState(
     isEditMode && customer?.name === 'مشتری بدون نام' ? '' : customer?.name || ''
@@ -148,12 +150,24 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
-       <div 
-          className="fixed top-24 left-4 z-40"
+      <Draggable
+          handle=".drag-handle"
+          defaultPosition={toolbarPosition}
+          nodeRef={draggableToolbarRef}
+          onStop={(e, dragData) => {
+              setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+          }}
+      >
+        <div 
+          ref={draggableToolbarRef}
+          className="fixed z-40"
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
           >
+             <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+             </div>
             <div className="flex items-center gap-1">
                  <Tooltip>
                     <TooltipTrigger asChild>
@@ -225,6 +239,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
              </div>
           </div>
         </div>
+      </Draggable>
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
             <div className="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-4">

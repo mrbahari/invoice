@@ -95,4 +95,4 @@ export type DailySales = {
 
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
 
-    
+export type ToolbarPosition = { x: number, y: number };

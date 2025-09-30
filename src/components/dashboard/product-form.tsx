@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -47,6 +47,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import Draggable from 'react-draggable';
 
 
 type ProductFormProps = {
@@ -62,7 +63,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
 
   const { data, setData } = useData();
-  const { products, stores, categories, units: unitsOfMeasurement } = data;
+  const { products, stores, categories, units: unitsOfMeasurement, toolbarPosition } = data;
+  const draggableToolbarRef = useRef(null);
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');
@@ -345,12 +347,24 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
+      <Draggable
+          handle=".drag-handle"
+          defaultPosition={toolbarPosition}
+          nodeRef={draggableToolbarRef}
+          onStop={(e, dragData) => {
+              setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+          }}
+      >
         <div 
-          className="fixed top-24 left-4 z-40"
+          ref={draggableToolbarRef}
+          className="fixed z-40"
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
           >
+             <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+             </div>
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -422,6 +436,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
              </div>
           </div>
         </div>
+        </Draggable>
         <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28">
              <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">

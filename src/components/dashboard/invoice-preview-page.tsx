@@ -6,16 +6,17 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Pencil, Camera } from 'lucide-react';
+import { ArrowRight, Pencil, Camera, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import QRCode from 'qrcode';
 import html2canvas from 'html2canvas';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Draggable from 'react-draggable';
 
 
 function toWords(num: number): string {
@@ -86,9 +87,10 @@ type InvoicePreviewPageProps = {
 }
 export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
   
-  const { data } = useData();
+  const { data, setData } = useData();
   const { toast } = useToast();
-  const { invoices, products, stores, customers } = data;
+  const { invoices, products, stores, customers, toolbarPosition } = data;
+  const draggableToolbarRef = useRef(null);
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -175,10 +177,21 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     <TooltipProvider>
       <div className="pb-24">
         {/* Floating Action Bar */}
-        <div className="fixed top-24 left-4 z-40 no-print">
+         <Draggable
+            handle=".drag-handle"
+            defaultPosition={toolbarPosition}
+            nodeRef={draggableToolbarRef}
+            onStop={(e, dragData) => {
+                setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+            }}
+        >
+        <div ref={draggableToolbarRef} className="fixed z-40 no-print">
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
           >
+             <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+                <GripVertical className="h-5 w-5 text-muted-foreground" />
+             </div>
              <Tooltip>
                 <TooltipTrigger asChild>
                     <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={onBack}>
@@ -205,6 +218,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </Tooltip>
           </div>
         </div>
+        </Draggable>
 
 
         <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">

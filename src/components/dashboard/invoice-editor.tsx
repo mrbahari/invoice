@@ -71,6 +71,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Draggable from 'react-draggable';
 import { CustomerForm } from './customer-form';
 import { Badge } from '@/components/ui/badge';
+import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 
 
 type InvoiceEditorProps = {
@@ -125,6 +126,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   // Draggable scroll setup
   const productsRef = useRef<HTMLDivElement>(null);
+  const { events: draggableScrollEvents } = useDraggableScroll(productsRef);
 
   // Find the invoice to edit from the main data source if an ID is provided
   const invoiceToEdit = useMemo(() => 
@@ -522,14 +524,17 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-          <ScrollArea>
-              <div className="grid grid-cols-4 gap-2 pr-4">
+          <ScrollArea
+            className="w-full whitespace-nowrap"
+            {...draggableScrollEvents}
+            >
+              <div className="flex w-max space-x-2 space-x-reverse p-4" ref={productsRef}>
                 {(filteredProducts || []).slice(0, 8).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                    const isInInvoice = !!invoiceItem;
 
                   return (
-                    <div key={product.id} className="w-full flex-shrink-0 group flex flex-col">
+                    <div key={product.id} className="w-32 flex-shrink-0 group flex flex-col">
                         <Card className="overflow-hidden">
                             <div className="relative aspect-square w-full">
                                 <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
@@ -553,7 +558,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   )
                 })}
                 {filteredProducts.length === 0 && (
-                    <div className="col-span-full w-full text-center py-10 text-muted-foreground">
+                    <div className="w-full text-center py-10 text-muted-foreground">
                         محصولی یافت نشد.
                     </div>
                 )}
@@ -931,4 +936,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-

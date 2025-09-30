@@ -14,7 +14,7 @@ export function useDraggableScroll(
   const scrollPos = useRef(0);
 
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+    (e: MouseEvent) => {
       if (!ref.current) return;
       isDragging.current = true;
       ref.current.style.cursor = 'grabbing';
@@ -44,7 +44,7 @@ export function useDraggableScroll(
   }, [ref]);
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+    (e: MouseEvent) => {
       if (!isDragging.current || !ref.current) return;
       e.preventDefault();
       if (options.direction === 'horizontal') {
@@ -63,19 +63,22 @@ export function useDraggableScroll(
     // Add effect to clean up cursor on unmount
     useEffect(() => {
         const currentRef = ref.current;
+        if (currentRef) {
+          currentRef.addEventListener('mousedown', handleMouseDown as EventListener);
+          currentRef.addEventListener('mouseleave', handleMouseLeave);
+          currentRef.addEventListener('mouseup', handleMouseUp);
+          currentRef.addEventListener('mousemove', handleMouseMove as EventListener);
+        }
+
         return () => {
-            if (currentRef) {
-                currentRef.style.cursor = 'auto';
+             if (currentRef) {
+                currentRef.removeEventListener('mousedown', handleMouseDown as EventListener);
+                currentRef.removeEventListener('mouseleave', handleMouseLeave);
+                currentRef.removeEventListener('mouseup', handleMouseUp);
+                currentRef.removeEventListener('mousemove', handleMouseMove as EventListener);
             }
         };
-    }, [ref]);
+    }, [ref, handleMouseDown, handleMouseLeave, handleMouseUp, handleMouseMove]);
 
-  return {
-    events: {
-      onMouseDown: handleMouseDown,
-      onMouseLeave: handleMouseLeave,
-      onMouseUp: handleMouseUp,
-      onMouseMove: handleMouseMove,
-    },
-  };
+  return { ref };
 }

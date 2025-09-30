@@ -71,6 +71,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Draggable from 'react-draggable';
 import { CustomerForm } from './customer-form';
 import { Badge } from '@/components/ui/badge';
+import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 
 
 type InvoiceEditorProps = {
@@ -120,6 +121,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const { toast } = useToast();
   const isClient = useIsClient();
   const draggableToolbarRef = useRef(null);
+  const productsScrollRef = useRef<HTMLDivElement>(null);
+  useDraggableScroll(productsScrollRef, { direction: 'horizontal' });
   
   const isEditMode = !!invoiceId;
 
@@ -519,8 +522,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-          <div className="grid grid-cols-4 gap-2 pr-4">
-              {(filteredProducts || []).slice(0, 8).map(product => {
+            <div
+                ref={productsScrollRef}
+                className="grid grid-rows-2 grid-flow-col gap-2 overflow-x-auto cursor-grab h-[21rem]"
+            >
+              {filteredProducts.length > 0 ? (filteredProducts).map(product => {
                   const invoiceItem = invoice.items?.find(item => item.productId === product.id);
                   const isInInvoice = !!invoiceItem;
 
@@ -547,8 +553,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                           </div>
                     </div>
                   )
-                })}
-                {filteredProducts.length === 0 && (
+                }) : (
                     <div className="w-full text-center py-10 text-muted-foreground col-span-4">
                         محصولی یافت نشد.
                     </div>
@@ -926,5 +931,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

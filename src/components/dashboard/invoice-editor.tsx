@@ -590,12 +590,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       </AnimatePresence>
     <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
       <Draggable
-        handle=".drag-handle"
-        defaultPosition={toolbarPosition}
-        nodeRef={draggableToolbarRef}
-        onStop={(e, dragData) => {
-            setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
-        }}
+          handle=".drag-handle"
+          defaultPosition={toolbarPosition}
+          nodeRef={draggableToolbarRef}
+          onStop={(e, dragData) => {
+              setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+          }}
       >
         <div 
           ref={draggableToolbarRef}
@@ -606,7 +606,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           >
              <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
                 <GripVertical className="h-5 w-5 text-muted-foreground" />
-            </div>
+             </div>
             <div className="flex items-center gap-1">
                  <Tooltip>
                     <TooltipTrigger asChild>

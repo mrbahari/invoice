@@ -522,7 +522,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                   <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
               </div>
           </div>
-          <ScrollArea className="h-96">
+          <ScrollArea>
               <div className="grid grid-cols-4 gap-2 pr-4">
                 {(filteredProducts || []).slice(0, 8).map(product => {
                    const invoiceItem = invoice.items?.find(item => item.productId === product.id);
@@ -932,4 +932,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   );
 }
 
-    

@@ -941,4 +941,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-

@@ -44,28 +44,28 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-box')?.imageUrl || "https://picsum.photos/seed/est1/600/400",
+        image: '/images/estimator-box.jpg',
         imageHint: "drywall ceiling",
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-grid')?.imageUrl || "https://picsum.photos/seed/est2/600/400",
+        image: '/images/estimator-grid.jpg',
         imageHint: "grid ceiling",
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-flat')?.imageUrl || "https://picsum.photos/seed/est3/600/400",
+        image: '/images/estimator-flat.jpg',
         imageHint: "flat ceiling",
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-drywall')?.imageUrl || "https://picsum.photos/seed/est4/600/400",
+        image: '/images/estimator-drywall.jpg',
         imageHint: "drywall installation",
         component: DrywallForm,
     }
@@ -152,7 +152,6 @@ const AggregatedListContent = ({ estimationList, aggregatedResults, onClear, onC
 export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [activeEstimator, setActiveEstimator] = useState<EstimatorType | null>(null);
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
-  const [isAggregatedListOpen, setIsAggregatedListOpen] = useState(false);
   const { data: appData } = useData();
   const { products, invoices } = appData;
   const { toast } = useToast();
@@ -295,7 +294,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کنید.'});
     onNavigate('invoices', { invoice: newInvoice });
     setEstimationList([]);
-    setIsAggregatedListOpen(false);
   };
 
   if (activeEstimator) {
@@ -354,34 +352,20 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         
         {estimationList.length > 0 && (
             <div className="fixed bottom-20 left-0 right-0 z-40" style={{ bottom: '64px' }}>
-                <Collapsible open={isAggregatedListOpen} onOpenChange={setIsAggregatedListOpen}>
+                <Collapsible>
                     <div className="w-full max-w-4xl mx-auto">
-                        <AnimatePresence>
-                            {isAggregatedListOpen && (
-                                <CollapsibleContent asChild>
-                                    <motion.div
-                                        initial={{ y: "100%", opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        exit={{ y: "100%", opacity: 0 }}
-                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                    >
-                                    <AggregatedListContent 
-                                        estimationList={estimationList} 
-                                        aggregatedResults={aggregatedResults}
-                                        onClear={handleClearList}
-                                        onCreateInvoice={handleCreateFinalInvoice}
-                                        onRemove={handleRemoveFromList}
-                                    />
-                                    </motion.div>
-                                </CollapsibleContent>
-                            )}
-                        </AnimatePresence>
+                        <CollapsibleContent>
+                            <AggregatedListContent 
+                                estimationList={estimationList} 
+                                aggregatedResults={aggregatedResults}
+                                onClear={handleClearList}
+                                onCreateInvoice={handleCreateFinalInvoice}
+                                onRemove={handleRemoveFromList}
+                            />
+                        </CollapsibleContent>
                         <CollapsibleTrigger asChild>
                              <Button
-                                className={cn(
-                                    "w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg",
-                                    isAggregatedListOpen ? "rounded-b-lg" : "rounded-lg"
-                                )}
+                                className="w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
                             >
                                 <div className="flex items-center gap-2">
                                     <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
@@ -391,7 +375,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <span>مشاهده لیست کل</span>
-                                    <ChevronsUp className={cn("h-5 w-5 transition-transform duration-300", !isAggregatedListOpen && "rotate-180")} />
+                                    <ChevronsUp className="h-5 w-5 transition-transform duration-300 data-[state=open]:rotate-0 data-[state=closed]:rotate-180" />
                                 </div>
                             </Button>
                         </CollapsibleTrigger>

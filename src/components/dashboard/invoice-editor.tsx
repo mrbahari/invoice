@@ -116,13 +116,18 @@ const parseFormattedNumber = (str: string): number | '' => {
   };
 
 
-function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, products, isDragging }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, products: Product[], isDragging: boolean }) {
+function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, products: Product[], isDragging: boolean }) {
     
     const [displayPrice, setDisplayPrice] = useState(() => formatNumber(item.unitPrice));
     const [displayQuantity, setDisplayQuantity] = useState(() => formatNumber(item.quantity));
     
     const product = products.find(p => p.id === item.productId);
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
+
+    const similarProducts = useMemo(() => {
+        if (!product) return [];
+        return products.filter(p => p.subCategoryId === product.subCategoryId && p.id !== product.id);
+    }, [product, products]);
 
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
@@ -154,6 +159,26 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, product
                                 <GripVertical className="h-6 w-6 text-muted-foreground" />
                             </div>
                             <span className="font-semibold truncate">{item.productName}</span>
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+                                        <Shuffle className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {similarProducts.length > 0 ? (
+                                        similarProducts.map(p => (
+                                            <DropdownMenuItem key={p.id} onClick={() => onReplace(index, p)}>
+                                                {p.name}
+                                            </DropdownMenuItem>
+                                        ))
+                                    ) : (
+                                        <DropdownMenuItem disabled>محصول مشابهی یافت نشد.</DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                         <div className="flex items-center gap-1">
                              <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={() => onRemove(index)}>
@@ -422,6 +447,23 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     });
   }, []);
 
+  const handleReplaceItem = useCallback((index: number, newProduct: Product) => {
+    setInvoice(prev => {
+        const newItems = prev.items ? [...prev.items] : [];
+        if (newItems[index]) {
+            const oldItem = newItems[index];
+            newItems[index] = {
+                ...oldItem,
+                productId: newProduct.id,
+                productName: newProduct.name,
+                unit: newProduct.unit,
+                unitPrice: newProduct.price,
+                totalPrice: oldItem.quantity * newProduct.price,
+            };
+        }
+        return { ...prev, items: newItems };
+    });
+  }, []);
   
   const handleUnitChange = useCallback((index: number, newUnit: string) => {
     setInvoice(prev => {
@@ -838,6 +880,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                             onRemove={handleRemoveItem}
                                                             onUpdate={handleItemChange}
                                                             onUnitChange={handleUnitChange}
+                                                            onReplace={handleReplaceItem}
                                                             products={products}
                                                             isDragging={snapshot.isDragging}
                                                         />
@@ -905,3 +948,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

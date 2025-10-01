@@ -814,18 +814,26 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                         </>
                       ) : (
                          <div className="pt-8">
-                            <CustomerForm 
-                              onSave={() => {
-                                // Find the newly added customer (usually the last one)
-                                const newCustomer = data.customers[0];
-                                if(newCustomer){
-                                    setSelectedCustomer(newCustomer);
-                                }
-                                setIsCustomerDialogOpen(false);
-                                setCustomerDialogView('select'); // Reset view for next time
-                              }} 
-                              onCancel={() => setCustomerDialogView('select')}
-                            />
+                             <DialogHeader>
+                                <DialogTitle>افزودن مشتری جدید</DialogTitle>
+                                <DialogDescription>
+                                    اطلاعات مشتری جدید را وارد کرده و ذخیره کنید.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="pt-4">
+                                <CustomerForm 
+                                onSave={() => {
+                                    // Find the newly added customer (usually the last one)
+                                    const newCustomer = data.customers[0];
+                                    if(newCustomer){
+                                        setSelectedCustomer(newCustomer);
+                                    }
+                                    setIsCustomerDialogOpen(false);
+                                    setCustomerDialogView('select'); // Reset view for next time
+                                }} 
+                                onCancel={() => setCustomerDialogView('select')}
+                                />
+                            </div>
                          </div>
                       )}
                   </DialogContent>
@@ -926,4 +934,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-

@@ -348,7 +348,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     <form onSubmit={handleSubmit}>
       <Draggable
           handle=".drag-handle"
-          defaultPosition={toolbarPosition}
+          position={toolbarPosition}
           nodeRef={draggableToolbarRef}
           onStop={(e, dragData) => {
               setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
@@ -356,12 +356,12 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       >
         <div 
           ref={draggableToolbarRef}
-          className="fixed z-40"
+          style={{position: 'fixed', zIndex: 40}}
         >
           <div 
             className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
           >
-             <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+             <div className="drag-handle cursor-move p-2 -ml-2 -my-2 rounded-l-md hover:bg-muted">
                 <GripVertical className="h-5 w-5 text-muted-foreground" />
              </div>
             <div className="flex items-center gap-1">

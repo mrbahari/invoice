@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -141,15 +140,14 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     if (!element) return;
     
     const isMobile = window.innerWidth < 768;
-    // For mobile, use a fixed width for better quality. For desktop, use the element's scrollWidth.
     const canvasWidth = isMobile ? 1080 : element.scrollWidth;
 
     html2canvas(element, {
-      scale: 2, // Increase scale for higher resolution
+      scale: 3, 
       useCORS: true,
-      logging: true,
+      logging: false,
       width: canvasWidth,
-      windowWidth: canvasWidth, // Ensure the canvas "sees" the full width
+      windowWidth: canvasWidth, 
     }).then(canvas => {
       const link = document.createElement('a');
       link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;

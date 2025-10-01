@@ -1,7 +1,6 @@
-
 'use client';
 
-import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert } from 'lucide-react';
+import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
@@ -22,6 +21,7 @@ import { Badge } from '../ui/badge';
 import { formatCurrency, cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Draggable from 'react-draggable';
 
 
 type View =
@@ -55,10 +55,11 @@ export default function InvoicesPage({
   setInitialInvoice,
 }: InvoicesPageProps) {
   const { data, setData } = useData();
-  const { customers, invoices: allInvoices } = data;
+  const { customers, invoices: allInvoices, toolbarPosition } = data;
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
-
+  const draggableToolbarRef = useRef(null);
+  
   const [view, setView] = useState<View>({ type: 'list' });
 
   useEffect(() => {
@@ -164,6 +165,35 @@ export default function InvoicesPage({
         return (
           <TooltipProvider>
            <div className="grid gap-6 pb-24" data-main-page="true">
+              <Draggable
+                handle=".drag-handle"
+                defaultPosition={toolbarPosition}
+                nodeRef={draggableToolbarRef}
+                onStop={(e, dragData) => {
+                    setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
+                }}
+            >
+                <div ref={draggableToolbarRef} className="fixed z-40">
+                    <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
+                        <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
+                            <GripVertical className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    className="h-12 w-12 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                                    onClick={handleCreate}
+                                >
+                                    <PlusCircle className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>افزودن فاکتور</p></TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
+              </Draggable>
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -171,24 +201,13 @@ export default function InvoicesPage({
                       <CardTitle>فاکتورها</CardTitle>
                       <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
-                     <Button
-                      size="sm"
-                      className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                      onClick={handleCreate}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        افزودن فاکتور
-                      </span>
-                    </Button>
                   </div>
                 </CardHeader>
               </Card>
 
               {filteredInvoices.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredInvoices.map((invoice, index) => {
-                    const StatusIcon = statusIcons[invoice.status];
+                  {filteredInvoices.map((invoice) => {
                     const customer = customers.find(c => c.id === invoice.customerId);
                     const hasValidName = customer && customer.name && customer.name !== 'مشتری بدون نام';
                     const displayName = hasValidName ? customer!.name : (invoice.customerName && invoice.customerName !== 'مشتری بدون نام' ? invoice.customerName : 'بی نام');

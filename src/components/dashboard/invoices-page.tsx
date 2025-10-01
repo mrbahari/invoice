@@ -166,38 +166,6 @@ export default function InvoicesPage({
         return (
           <TooltipProvider>
            <div className="grid gap-6 pb-24" data-main-page="true">
-               <Draggable
-                handle=".drag-handle"
-                position={toolbarPosition}
-                nodeRef={draggableToolbarRef}
-                onStop={(e, dragData) => {
-                    setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
-                }}
-            >
-                <div 
-                    ref={draggableToolbarRef} 
-                    style={{ position: 'fixed', zIndex: 40 }}
-                >
-                    <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
-                        <div className="drag-handle cursor-move p-2 -ml-2 -my-2 rounded-l-md hover:bg-muted">
-                            <GripVertical className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    size="icon"
-                                    className="h-12 w-12 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                                    onClick={handleCreate}
-                                >
-                                    <PlusCircle className="h-5 w-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>افزودن فاکتور</p></TooltipContent>
-                        </Tooltip>
-                    </div>
-                </div>
-              </Draggable>
-
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -205,6 +173,16 @@ export default function InvoicesPage({
                       <CardTitle>فاکتورها</CardTitle>
                       <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
+                     <Button
+                        size="sm"
+                        className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                        onClick={handleCreate}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          افزودن فاکتور
+                        </span>
+                      </Button>
                   </div>
                 </CardHeader>
               </Card>

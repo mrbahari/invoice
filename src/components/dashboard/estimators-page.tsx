@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronsUp, ChevronsDown, Separator } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronsUp, ChevronsDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
@@ -15,13 +15,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getStorePrefix } from '@/lib/utils';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
-import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import type { DashboardTab } from '@/app/dashboard/page';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Separator } from '@/components/ui/separator';
 
 
 export interface MaterialResult {

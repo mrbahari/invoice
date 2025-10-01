@@ -140,17 +140,16 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     const element = document.getElementById('invoice-card');
     if (!element) return;
     
-    // For mobile, increase width for better output
     const isMobile = window.innerWidth < 768;
+    // For mobile, use a fixed width for better quality. For desktop, use the element's scrollWidth.
     const canvasWidth = isMobile ? 1080 : element.scrollWidth;
 
     html2canvas(element, {
-      scale: 2,
+      scale: 2, // Increase scale for higher resolution
       useCORS: true,
       logging: true,
       width: canvasWidth,
-      windowWidth: canvasWidth,
-      windowHeight: element.scrollHeight,
+      windowWidth: canvasWidth, // Ensure the canvas "sees" the full width
     }).then(canvas => {
       const link = document.createElement('a');
       link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
@@ -306,3 +305,5 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     </TooltipProvider>
   );
 }
+
+    

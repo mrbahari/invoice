@@ -22,7 +22,7 @@ import { Badge } from '../ui/badge';
 import { formatCurrency, cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Draggable from 'react-draggable';
+import { FloatingToolbar } from './floating-toolbar';
 
 
 type View =
@@ -56,10 +56,10 @@ export default function InvoicesPage({
   setInitialInvoice,
 }: InvoicesPageProps) {
   const { data, setData } = useData();
-  const { customers, invoices: allInvoices, toolbarPosition } = data;
+  const { customers, invoices: allInvoices } = data;
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
-  const draggableToolbarRef = useRef(null);
+
   
   const [view, setView] = useState<View>({ type: 'list' });
 
@@ -166,24 +166,27 @@ export default function InvoicesPage({
         return (
           <TooltipProvider>
            <div className="grid gap-6 pb-24" data-main-page="true">
+                <FloatingToolbar>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                            size="icon"
+                            className="h-12 w-12 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                            onClick={handleCreate}
+                            >
+                            <PlusCircle className="h-6 w-6" />
+                            <span className="sr-only">افزودن فاکتور</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>افزودن فاکتور</p></TooltipContent>
+                    </Tooltip>
+                </FloatingToolbar>
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
                     <div>
                       <CardTitle>فاکتورها</CardTitle>
                       <CardDescription>فاکتورهای اخیر فروشگاه شما.</CardDescription>
                     </div>
-                     <Button
-                        size="sm"
-                        className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                        onClick={handleCreate}
-                      >
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          افزودن فاکتور
-                        </span>
-                      </Button>
-                  </div>
                 </CardHeader>
               </Card>
 

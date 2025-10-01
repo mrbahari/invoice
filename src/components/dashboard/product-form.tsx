@@ -47,7 +47,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import Draggable from 'react-draggable';
+import { FloatingToolbar } from './floating-toolbar';
 
 
 type ProductFormProps = {
@@ -63,8 +63,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
 
   const { data, setData } = useData();
-  const { products, stores, categories, units: unitsOfMeasurement, toolbarPosition } = data;
-  const draggableToolbarRef = useRef(null);
+  const { products, stores, categories, units: unitsOfMeasurement } = data;
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');
@@ -347,96 +346,77 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
-      <Draggable
-          handle=".drag-handle"
-          position={toolbarPosition}
-          nodeRef={draggableToolbarRef}
-          onStop={(e, dragData) => {
-              setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
-          }}
-      >
-        <div 
-          ref={draggableToolbarRef}
-          style={{position: 'fixed', zIndex: 40}}
-        >
-          <div 
-            className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
-          >
-             <div className="drag-handle cursor-move p-2 -ml-2 -my-2 rounded-l-md hover:bg-muted">
-                <GripVertical className="h-5 w-5 text-muted-foreground" />
-             </div>
-            <div className="flex items-center gap-1">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                       <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={onCancel}
-                          className="text-muted-foreground w-12 h-12"
-                       >
-                          <ArrowRight className="h-5 w-5" />
-                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
-                </Tooltip>
-                 {isEditMode && (
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                          <Tooltip>
-                              <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    disabled={isProcessing} 
-                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
-                                  >
-                                      <Trash2 className="h-5 w-5" />
-                                  </Button>
-                              </TooltipTrigger>
-                              <TooltipContent><p>حذف محصول</p></TooltipContent>
-                          </Tooltip>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                              <AlertDialogCancel>انصراف</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-                )}
-                 {isEditMode && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-12 h-12">
-                          <Copy className="h-5 w-5" />
+       <FloatingToolbar>
+          <div className="flex items-center gap-1">
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={onCancel}
+                        className="text-muted-foreground w-12 h-12"
+                      >
+                        <ArrowRight className="h-5 w-5" />
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
-                  </Tooltip>
-                )}
-            </div>
-             <Separator orientation="vertical" className="h-8" />
-             <div className="flex items-center gap-1">
+                  </TooltipTrigger>
+                  <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+              </Tooltip>
+              {isEditMode && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  disabled={isProcessing} 
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>حذف محصول</p></TooltipContent>
+                        </Tooltip>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+              )}
+              {isEditMode && (
                 <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button 
-                          type="submit" 
-                          disabled={isProcessing}
-                          variant="ghost" 
-                          size="icon"
-                          className="w-14 h-14 bg-green-600 text-white hover:bg-green-700"
-                        >
-                            <Save className="h-6 w-6" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}</p></TooltipContent>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-12 h-12">
+                        <Copy className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
                 </Tooltip>
-             </div>
+              )}
           </div>
-        </div>
-        </Draggable>
+          <Separator orientation="vertical" className="h-8" />
+          <div className="flex items-center gap-1">
+              <Tooltip>
+                  <TooltipTrigger asChild>
+                      <Button 
+                        type="submit" 
+                        disabled={isProcessing}
+                        variant="ghost" 
+                        size="icon"
+                        className="w-14 h-14 bg-green-600 text-white hover:bg-green-700"
+                      >
+                          <Save className="h-6 w-6" />
+                      </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}</p></TooltipContent>
+              </Tooltip>
+          </div>
+      </FloatingToolbar>
         <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28">
              <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">

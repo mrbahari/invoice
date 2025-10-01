@@ -16,7 +16,7 @@ import html2canvas from 'html2canvas';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Draggable from 'react-draggable';
+import { FloatingToolbar } from './floating-toolbar';
 
 
 function toWords(num: number): string {
@@ -87,10 +87,9 @@ type InvoicePreviewPageProps = {
 }
 export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
   
-  const { data, setData } = useData();
+  const { data } = useData();
   const { toast } = useToast();
-  const { invoices, products, stores, customers, toolbarPosition } = data;
-  const draggableToolbarRef = useRef(null);
+  const { invoices, products, stores, customers } = data;
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -175,49 +174,32 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     <TooltipProvider>
       <div className="pb-24">
         {/* Floating Action Bar */}
-         <Draggable
-            handle=".drag-handle"
-            position={toolbarPosition}
-            nodeRef={draggableToolbarRef}
-            onStop={(e, dragData) => {
-                setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
-            }}
-        >
-        <div ref={draggableToolbarRef} className="fixed z-40 no-print" style={{ position: 'fixed', zIndex: 40 }}>
-          <div 
-            className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
-          >
-             <div className="drag-handle cursor-move p-2 -ml-2 -my-2 rounded-l-md hover:bg-muted">
-                <GripVertical className="h-5 w-5 text-muted-foreground" />
-             </div>
-             <Tooltip>
+         <FloatingToolbar>
+            <Tooltip>
                 <TooltipTrigger asChild>
                     <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={onBack}>
                         <ArrowRight className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>بازگشت</p></TooltipContent>
-             </Tooltip>
-             <Tooltip>
+            </Tooltip>
+            <Tooltip>
                 <TooltipTrigger asChild>
                     <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>
                         <Pencil className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ویرایش</p></TooltipContent>
-             </Tooltip>
-             <Tooltip>
-                 <TooltipTrigger asChild>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
                     <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleDownloadImage}>
                         <Camera className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>دانلود عکس</p></TooltipContent>
             </Tooltip>
-          </div>
-        </div>
-        </Draggable>
-
+        </FloatingToolbar>
 
         <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">
           <header className="flex justify-between items-start gap-4 mb-4">
@@ -304,5 +286,3 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     </TooltipProvider>
   );
 }
-
-    

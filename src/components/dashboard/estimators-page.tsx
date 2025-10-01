@@ -327,6 +327,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         );
     }
   }
+  
+  const variants = {
+    open: { y: 0, opacity: 1 },
+    closed: { y: "100%", opacity: 0 },
+  };
 
   return (
     <div className='pb-40' data-main-page="true">
@@ -364,23 +369,19 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         </div>
 
         
-        <AnimatePresence>
         {estimationList.length > 0 && (
             <div className="fixed bottom-20 left-0 right-0 z-40">
                 <div className="w-full max-w-4xl mx-auto">
-                    {isAggregatedListOpen && (
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%", transition: { duration: 0.3 } }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        >
-                            <AggregatedListContent />
-                        </motion.div>
-                    )}
+                    <motion.div
+                        initial={false}
+                        animate={isAggregatedListOpen ? "open" : "closed"}
+                        variants={variants}
+                        transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                    >
+                        {isAggregatedListOpen && <AggregatedListContent />}
+                    </motion.div>
                     <Button
                         onClick={() => setIsAggregatedListOpen(prev => !prev)}
-                        variant="default"
                         className="w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
                         data-state={isAggregatedListOpen ? 'open' : 'closed'}
                     >
@@ -398,9 +399,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                 </div>
             </div>
         )}
-        </AnimatePresence>
     </div>
   );
 }
-
-    

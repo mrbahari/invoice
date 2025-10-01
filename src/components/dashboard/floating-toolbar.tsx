@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Draggable from 'react-draggable';
 import { useData } from '@/context/data-context';
 import { GripVertical } from 'lucide-react';
@@ -14,7 +14,51 @@ type FloatingToolbarProps = {
 export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
   const { data, setData } = useData();
   const { toolbarPosition } = data;
-  const draggableToolbarRef = useRef(null);
+  const draggableToolbarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!draggableToolbarRef.current) return;
+
+      const { innerWidth, innerHeight } = window;
+      const { width: toolbarWidth, height: toolbarHeight } = draggableToolbarRef.current.getBoundingClientRect();
+
+      setData(currentData => {
+        let { x, y } = currentData.toolbarPosition;
+        let positionChanged = false;
+
+        // Check and adjust X position
+        if (x < 0) {
+          x = 0;
+          positionChanged = true;
+        } else if (x + toolbarWidth > innerWidth) {
+          x = innerWidth - toolbarWidth;
+          positionChanged = true;
+        }
+
+        // Check and adjust Y position
+        if (y < 0) {
+          y = 0;
+          positionChanged = true;
+        } else if (y + toolbarHeight > innerHeight) {
+          y = innerHeight - toolbarHeight;
+          positionChanged = true;
+        }
+
+        if (positionChanged) {
+          return { ...currentData, toolbarPosition: { x, y } };
+        }
+        
+        return currentData;
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    // Initial check in case it's already off-screen
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setData]);
 
   if (!children) {
     return null;

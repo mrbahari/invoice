@@ -59,9 +59,14 @@ export default function SettingsPage() {
     document.documentElement.style.setProperty('--primary-hsl', colorValue);
     document.documentElement.style.setProperty('--ring-hsl', colorValue);
     
-    // Set Background color (a very light version of the primary color)
-    const backgroundLightness = theme === 'dark' ? 8 : 97;
-    document.documentElement.style.setProperty('--background-hsl', `${h} ${s}% ${backgroundLightness}%`);
+    // Set Background color
+    if (theme === 'dark') {
+        const backgroundLightness = 8;
+        document.documentElement.style.setProperty('--background-hsl', `${h} ${s}% ${backgroundLightness}%`);
+    } else {
+        // Keep background white in light mode
+        document.documentElement.style.setProperty('--background-hsl', '0 0% 100%');
+    }
 
     // Set Foreground color for readability
     const foregroundLightness = theme === 'dark' ? 98 : 8;
@@ -154,6 +159,7 @@ export default function SettingsPage() {
               stores: restoredData.stores || [],
               categories: restoredData.categories || [],
               units: restoredData.units || [],
+              toolbarPosition: restoredData.toolbarPosition || { x: 20, y: 80 }
           });
           
           toast({

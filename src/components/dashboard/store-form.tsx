@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Draggable from 'react-draggable';
+import { FloatingToolbar } from './floating-toolbar';
 
 
 type StoreFormProps = {
@@ -45,8 +45,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const isEditMode = !!store;
 
   const { data, setData } = useData();
-  const { stores, categories, products, toolbarPosition } = data;
-  const draggableToolbarRef = useRef(null);
+  const { stores, categories, products } = data;
   
   const [name, setName] = useState(store?.name || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -210,65 +209,51 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   return (
     <TooltipProvider>
     <div className="max-w-4xl mx-auto grid gap-6 pb-28">
-        <Draggable
-            handle=".drag-handle"
-            defaultPosition={toolbarPosition}
-            nodeRef={draggableToolbarRef}
-            onStop={(e, dragData) => {
-                setData(prev => ({...prev, toolbarPosition: { x: dragData.x, y: dragData.y }}));
-            }}
-        >
-        <div ref={draggableToolbarRef} className="fixed z-40">
-            <div className="flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm">
-                 <div className="drag-handle cursor-move p-2 -mr-2 -my-2 rounded-l-md hover:bg-muted">
-                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                </div>
-                 <div className="flex items-center gap-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-12 h-12">
-                              <ArrowRight className="h-5 w-5" />
-                           </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
-                    </Tooltip>
-                    {isEditMode && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12">
-                                            <Trash2 className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
-                                </Tooltip>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                    <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store.name}» و تمام دسته‌بندی‌های آن را برای همیشه حذف می‌کند.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                </div>
-                <Separator orientation="vertical" className="h-8" />
+        <FloatingToolbar>
+            <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-14 h-14 bg-green-600 text-white hover:bg-green-700">
-                            <Save className="h-6 w-6" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-12 h-12">
+                            <ArrowRight className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>
+                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
                 </Tooltip>
+                {isEditMode && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12">
+                                        <Trash2 className="h-5 w-5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
+                            </Tooltip>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store.name}» و تمام دسته‌بندی‌های آن را برای همیشه حذف می‌کند.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
             </div>
-        </div>
-        </Draggable>
+            <Separator orientation="vertical" className="h-8" />
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-14 h-14 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-6 w-6" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>
+            </Tooltip>
+        </FloatingToolbar>
         <Card>
             <CardHeader>
                 <div className="flex flex-row items-center justify-between">

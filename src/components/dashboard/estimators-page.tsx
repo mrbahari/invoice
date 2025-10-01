@@ -19,7 +19,6 @@ import type { DashboardTab } from '@/app/dashboard/page';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
@@ -367,45 +366,41 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         
         <AnimatePresence>
         {estimationList.length > 0 && (
-              <Collapsible
-                open={isAggregatedListOpen}
-                onOpenChange={setIsAggregatedListOpen}
-                className="fixed bottom-20 left-0 right-0 z-40"
-             >
-                <div
-                    className="w-full max-w-4xl mx-auto"
-                >
-                    <CollapsibleContent asChild>
-                         <motion.div
+            <div className="fixed bottom-20 left-0 right-0 z-40">
+                <div className="w-full max-w-4xl mx-auto">
+                    {isAggregatedListOpen && (
+                        <motion.div
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
                             exit={{ y: "100%", transition: { duration: 0.3 } }}
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                         >
+                        >
                             <AggregatedListContent />
                         </motion.div>
-                    </CollapsibleContent>
-                    <CollapsibleTrigger asChild>
-                        <Button
-                            variant="default"
-                            className="w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
-                        >
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
-                                <p className="font-semibold text-sm">
-                                    آخرین آیتم: {estimationList[estimationList.length - 1].description}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span>مشاهده لیست کل</span>
-                                {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
-                            </div>
-                        </Button>
-                    </CollapsibleTrigger>
+                    )}
+                    <Button
+                        onClick={() => setIsAggregatedListOpen(prev => !prev)}
+                        variant="default"
+                        className="w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
+                        data-state={isAggregatedListOpen ? 'open' : 'closed'}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
+                            <p className="font-semibold text-sm">
+                                آخرین آیتم: {estimationList[estimationList.length - 1].description}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span>مشاهده لیست کل</span>
+                            {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
+                        </div>
+                    </Button>
                 </div>
-            </Collapsible>
+            </div>
         )}
         </AnimatePresence>
     </div>
   );
 }
+
+    

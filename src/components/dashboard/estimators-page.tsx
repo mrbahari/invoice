@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
+import placeholderData from '@/app/lib/placeholder-images.json';
 
 
 export interface MaterialResult {
@@ -43,28 +44,28 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        image: 'https://picsum.photos/seed/est1/600/400',
+        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-box')?.imageUrl || "https://picsum.photos/seed/est1/600/400",
         imageHint: "drywall ceiling",
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        image: 'https://picsum.photos/seed/est2/600/400',
+        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-grid')?.imageUrl || "https://picsum.photos/seed/est2/600/400",
         imageHint: "grid ceiling",
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        image: 'https://picsum.photos/seed/est3/600/400',
+        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-flat')?.imageUrl || "https://picsum.photos/seed/est3/600/400",
         imageHint: "flat ceiling",
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        image: 'https://picsum.photos/seed/est4/600/400',
+        image: placeholderData.placeholderImages.find(p => p.id === 'estimator-drywall')?.imageUrl || "https://picsum.photos/seed/est4/600/400",
         imageHint: "drywall installation",
         component: DrywallForm,
     }
@@ -353,46 +354,49 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         
         {estimationList.length > 0 && (
             <div className="fixed bottom-20 left-0 right-0 z-40" style={{ bottom: '64px' }}>
-                <div className="w-full max-w-4xl mx-auto">
-                    <AnimatePresence>
-                        {isAggregatedListOpen && (
-                             <motion.div
-                                initial={{ y: "100%", opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: "100%", opacity: 0 }}
-                                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                             >
-                                <AggregatedListContent 
-                                    estimationList={estimationList} 
-                                    aggregatedResults={aggregatedResults}
-                                    onClear={handleClearList}
-                                    onCreateInvoice={handleCreateFinalInvoice}
-                                    onRemove={handleRemoveFromList}
-                                />
-                             </motion.div>
-                        )}
-                    </AnimatePresence>
+                <Collapsible open={isAggregatedListOpen} onOpenChange={setIsAggregatedListOpen}>
                     <div className="w-full max-w-4xl mx-auto">
-                        <Button
-                            onClick={() => setIsAggregatedListOpen(prev => !prev)}
-                            className={cn(
-                                "w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg",
-                                !isAggregatedListOpen ? "rounded-lg" : "rounded-b-lg"
+                        <AnimatePresence>
+                            {isAggregatedListOpen && (
+                                <CollapsibleContent asChild>
+                                    <motion.div
+                                        initial={{ y: "100%", opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        exit={{ y: "100%", opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    >
+                                    <AggregatedListContent 
+                                        estimationList={estimationList} 
+                                        aggregatedResults={aggregatedResults}
+                                        onClear={handleClearList}
+                                        onCreateInvoice={handleCreateFinalInvoice}
+                                        onRemove={handleRemoveFromList}
+                                    />
+                                    </motion.div>
+                                </CollapsibleContent>
                             )}
-                        >
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
-                                <p className="font-semibold text-sm">
-                                    آخرین آیتم: {estimationList[estimationList.length - 1].description}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span>مشاهده لیست کل</span>
-                                <ChevronsUp className={cn("h-5 w-5 transition-transform duration-300", !isAggregatedListOpen && "rotate-180")} />
-                            </div>
-                        </Button>
+                        </AnimatePresence>
+                        <CollapsibleTrigger asChild>
+                             <Button
+                                className={cn(
+                                    "w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg",
+                                    isAggregatedListOpen ? "rounded-b-lg" : "rounded-lg"
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
+                                    <p className="font-semibold text-sm">
+                                        آخرین آیتم: {estimationList[estimationList.length - 1].description}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span>مشاهده لیست کل</span>
+                                    <ChevronsUp className={cn("h-5 w-5 transition-transform duration-300", !isAggregatedListOpen && "rotate-180")} />
+                                </div>
+                            </Button>
+                        </CollapsibleTrigger>
                     </div>
-                </div>
+                </Collapsible>
             </div>
         )}
     </div>

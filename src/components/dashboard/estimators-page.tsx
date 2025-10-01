@@ -20,7 +20,6 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
 
 
@@ -245,7 +244,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }, [isAggregatedListOpen]);
 
   const AggregatedListContent = () => (
-    <div ref={listRef} className="bg-card border-t border-b rounded-t-lg shadow-2xl">
+    <div className="bg-card border-t border-b rounded-t-lg shadow-2xl">
       <CardHeader>
         <CardTitle>لیست مصالح تجمیعی</CardTitle>
         <CardDescription>مجموع مصالح مورد نیاز برای بخش‌های انتخاب شده.</CardDescription>
@@ -327,11 +326,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         );
     }
   }
-  
-  const variants = {
-    open: { y: 0, opacity: 1 },
-    closed: { y: "100%", opacity: 0 },
-  };
 
   return (
     <div className='pb-40' data-main-page="true">
@@ -372,18 +366,18 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         {estimationList.length > 0 && (
             <div className="fixed bottom-20 left-0 right-0 z-40">
                 <div className="w-full max-w-4xl mx-auto">
-                    <motion.div
-                        initial={false}
-                        animate={isAggregatedListOpen ? "open" : "closed"}
-                        variants={variants}
-                        transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                    <div 
+                        ref={listRef}
+                        className={cn(
+                            "transition-all duration-500 ease-in-out",
+                            isAggregatedListOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
+                        )}
                     >
-                        {isAggregatedListOpen && <AggregatedListContent />}
-                    </motion.div>
+                        <AggregatedListContent />
+                    </div>
                     <Button
                         onClick={() => setIsAggregatedListOpen(prev => !prev)}
-                        className="w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
-                        data-state={isAggregatedListOpen ? 'open' : 'closed'}
+                        className={cn("w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg", isAggregatedListOpen ? "rounded-b-lg" : "rounded-lg" )}
                     >
                         <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
@@ -402,3 +396,4 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     </div>
   );
 }
+

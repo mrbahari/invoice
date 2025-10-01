@@ -32,7 +32,13 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const defaultData = {
     ...Defaultdb,
-    toolbarPosition: { x: 50, y: 16 } // Default top-center position
+    toolbarPosition: { 
+      'default': { x: 50, y: 16 },
+      'invoice-editor': { x: 50, y: 16 },
+      'invoice-list': { x: 50, y: 16 },
+      'product-form': { x: 50, y: 16 },
+      'customer-form': { x: 50, y: 16 },
+    }
 } as AppData;
 
 // Create the provider component
@@ -55,10 +61,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
         const serverData = await response.json();
         
-        // Ensure toolbarPosition exists, if not, use default
+        // Ensure toolbarPosition exists and has default values, if not, use default
         if (!serverData.toolbarPosition) {
             serverData.toolbarPosition = defaultData.toolbarPosition;
+        } else {
+            // Ensure all required keys exist
+            Object.keys(defaultData.toolbarPosition).forEach(key => {
+                if (!serverData.toolbarPosition[key]) {
+                    serverData.toolbarPosition[key] = defaultData.toolbarPosition[key];
+                }
+            });
         }
+        
         setInternalData(serverData);
       } catch (error) {
         console.error("Could not load initial data from server, falling back to default:", error);

@@ -575,6 +575,32 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         }
     }
   };
+  
+  const handleAddNewCustomer = () => {
+    const newCustomer: Customer = {
+      id: `cust-${Math.random().toString(36).substr(2, 9)}`,
+      name: 'مشتری بدون نام',
+      email: 'ایمیل ثبت نشده',
+      phone: customerSearch,
+      address: 'آدرس ثبت نشده',
+      purchaseHistory: 'مشتری جدید',
+    };
+    
+    setData(prev => ({
+      ...prev,
+      customers: [newCustomer, ...prev.customers]
+    }));
+    
+    setSelectedCustomer(newCustomer);
+    setIsCustomerDialogOpen(false);
+    setCustomerSearch('');
+    
+    toast({
+      variant: 'success',
+      title: 'مشتری جدید اضافه شد',
+      description: `مشتری با شماره ${newCustomer.phone} ایجاد و انتخاب شد.`
+    });
+  };
 
 
     const AddProductsComponent = React.memo(() => (
@@ -684,7 +710,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       </AnimatePresence>
     <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
       
-       <FloatingToolbar>
+       <FloatingToolbar toolbarId="invoice-editor">
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -786,9 +812,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                     <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input placeholder="جستجوی مشتری با نام یا شماره..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
                                     {customerSearch && filteredCustomers.length === 0 && (
-                                        <Button size="sm" className="absolute left-1.5 h-7 bg-green-600 hover:bg-green-700" onClick={() => {
-                                            setCustomerDialogView('create');
-                                        }}>
+                                        <Button size="sm" className="absolute left-1.5 h-7 bg-green-600 hover:bg-green-700" onClick={handleAddNewCustomer}>
                                             <UserPlus className="ml-1 h-4 w-4" />
                                             افزودن
                                         </Button>

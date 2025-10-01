@@ -166,7 +166,7 @@ export default function InvoicesPage({
         return (
           <TooltipProvider>
            <div className="grid gap-6 pb-24" data-main-page="true">
-                <FloatingToolbar>
+                <FloatingToolbar toolbarId="invoice-list">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button

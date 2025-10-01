@@ -174,10 +174,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     <TooltipProvider>
       <div className="pb-24">
         {/* Floating Action Bar */}
-         <FloatingToolbar>
+         <FloatingToolbar toolbarId="invoice-preview">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={onBack}>
+                    <Button size="sm" variant="ghost" className="w-12 h-12" onClick={onBack}>
                         <ArrowRight className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
@@ -185,7 +185,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>
+                    <Button size="sm" variant="ghost" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>
                         <Pencil className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
@@ -193,7 +193,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleDownloadImage}>
+                    <Button size="sm" variant="ghost" className="w-12 h-12" onClick={handleDownloadImage}>
                         <Camera className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>

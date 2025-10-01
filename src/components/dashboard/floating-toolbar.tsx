@@ -9,12 +9,14 @@ import { cn } from '@/lib/utils';
 type FloatingToolbarProps = {
   children?: React.ReactNode;
   className?: string;
+  toolbarId: string;
 };
 
-export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
+export function FloatingToolbar({ children, className, toolbarId }: FloatingToolbarProps) {
   const { data, setData } = useData();
-  const { toolbarPosition } = data;
   const draggableToolbarRef = useRef<HTMLDivElement>(null);
+  
+  const toolbarPosition = data.toolbarPosition[toolbarId] || { x: 50, y: 16 };
 
   useEffect(() => {
     const handleResize = () => {
@@ -24,10 +26,10 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
       const { width: toolbarWidth, height: toolbarHeight } = draggableToolbarRef.current.getBoundingClientRect();
 
       setData(currentData => {
-        let { x, y } = currentData.toolbarPosition;
+        let currentPosition = currentData.toolbarPosition[toolbarId] || { x: 50, y: 16 };
+        let { x, y } = currentPosition;
         let positionChanged = false;
 
-        // Check and adjust X position
         if (x < 0) {
           x = 0;
           positionChanged = true;
@@ -36,7 +38,6 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
           positionChanged = true;
         }
 
-        // Check and adjust Y position
         if (y < 0) {
           y = 0;
           positionChanged = true;
@@ -44,9 +45,15 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
           y = innerHeight - toolbarHeight;
           positionChanged = true;
         }
-
+        
         if (positionChanged) {
-          return { ...currentData, toolbarPosition: { x, y } };
+          return { 
+            ...currentData, 
+            toolbarPosition: { 
+              ...currentData.toolbarPosition,
+              [toolbarId]: { x, y } 
+            } 
+          };
         }
         
         return currentData;
@@ -54,11 +61,10 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
     };
 
     window.addEventListener('resize', handleResize);
-    // Initial check in case it's already off-screen
     handleResize();
 
     return () => window.removeEventListener('resize', handleResize);
-  }, [setData]);
+  }, [setData, toolbarId]);
 
   if (!children) {
     return null;
@@ -70,7 +76,13 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
       position={toolbarPosition}
       nodeRef={draggableToolbarRef}
       onStop={(e, dragData) => {
-        setData(prev => ({ ...prev, toolbarPosition: { x: dragData.x, y: dragData.y } }));
+        setData(prev => ({ 
+          ...prev, 
+          toolbarPosition: {
+            ...prev.toolbarPosition,
+            [toolbarId]: { x: dragData.x, y: dragData.y }
+          } 
+        }));
       }}
     >
       <div

@@ -148,7 +148,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
-      <FloatingToolbar>
+      <FloatingToolbar toolbarId="customer-form">
         <div className="flex items-center gap-1">
             <Tooltip>
                 <TooltipTrigger asChild>

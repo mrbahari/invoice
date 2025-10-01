@@ -21,6 +21,7 @@ import { Badge } from '../ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 export interface MaterialResult {
@@ -74,8 +75,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const { data: appData } = useData();
   const { products, invoices } = appData;
   const { toast } = useToast();
-  const [isAggregatedListOpen, setIsAggregatedListOpen] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
 
   const handleAddToList = (description: string, results: MaterialResult[]) => {
     const newEstimation: Estimation = {
@@ -90,18 +89,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const handleClearList = () => {
     setEstimationList([]);
-    setIsAggregatedListOpen(false);
     toast({ title: 'لیست برآورد پاک شد' });
   };
   
   const handleRemoveFromList = (id: string) => {
-    setEstimationList(prev => {
-        const newList = prev.filter(item => item.id !== id);
-        if (newList.length === 0) {
-            setIsAggregatedListOpen(false); // Close list if it becomes empty
-        }
-        return newList;
-    });
+    setEstimationList(prev => prev.filter(item => item.id !== id));
   }
 
   const aggregatedResults: MaterialResult[] = useMemo(() => {
@@ -222,93 +214,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کنید.'});
     onNavigate('invoices', { invoice: newInvoice });
     setEstimationList([]);
-    setIsAggregatedListOpen(false);
   };
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (listRef.current && !listRef.current.contains(event.target as Node)) {
-        setIsAggregatedListOpen(false);
-      }
-    };
-
-    if (isAggregatedListOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isAggregatedListOpen]);
-
-  const AggregatedListContent = () => (
-    <div className="bg-card border-t border-b rounded-t-lg shadow-2xl">
-      <CardHeader>
-        <CardTitle>لیست مصالح تجمیعی</CardTitle>
-        <CardDescription>مجموع مصالح مورد نیاز برای بخش‌های انتخاب شده.</CardDescription>
-      </CardHeader>
-      <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            {estimationList.map((est, index) => (
-                <div key={est.id} className="p-2 border rounded-md">
-                    <div className="flex justify-between items-center">
-                        <p className="font-semibold text-xs truncate">{est.description}</p>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(est.id)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                    </div>
-                    <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                        {est.results.map(res => (
-                            <li key={res.material} className="flex justify-between">
-                                <span>{res.material}</span>
-                                <span className="font-mono">{Math.ceil(res.quantity).toLocaleString('fa-IR')} {res.unit}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            ))}
-          </div>
-        
-          <Separator className="my-4" />
-
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-8">
-                <h3 className="font-bold mb-2">جمع کل مصالح:</h3>
-                <ScrollArea className="h-[25vh]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>نوع مصالح</TableHead>
-                            <TableHead className="text-center">مقدار</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {aggregatedResults.map((item) => (
-                            <TableRow key={`${item.material}-${item.unit}`}>
-                                <TableCell className="font-medium">{item.material}</TableCell>
-                                <TableCell className="text-center font-mono text-lg">{`${Math.ceil(item.quantity).toLocaleString('fa-IR')} ${item.unit}`}</TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
-            </div>
-            <div className="col-span-4 flex flex-col justify-end gap-2 p-4 border rounded-lg bg-muted/50">
-                 <Button onClick={handleClearList} variant="outline" className="w-full">
-                    <Trash2 className="ml-2 h-4 w-4" />
-                    پاک کردن لیست
-                </Button>
-                <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                    <FilePlus className="ml-2 h-5 w-5" />
-                    ایجاد فاکتور
-                </Button>
-            </div>
-          </div>
-      </CardContent>
-    </div>
-  );
 
   if (activeEstimator) {
     const ActiveComponent = estimatorTypes.find(e => e.id === activeEstimator)?.component;
@@ -366,34 +272,95 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         {estimationList.length > 0 && (
             <div className="fixed bottom-20 left-0 right-0 z-40">
                 <div className="w-full max-w-4xl mx-auto">
-                    <div 
-                        ref={listRef}
-                        className={cn(
-                            "transition-all duration-500 ease-in-out",
-                            isAggregatedListOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
-                        )}
-                    >
-                        <AggregatedListContent />
-                    </div>
-                    <Button
-                        onClick={() => setIsAggregatedListOpen(prev => !prev)}
-                        className={cn("w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg", isAggregatedListOpen ? "rounded-b-lg" : "rounded-lg" )}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
-                            <p className="font-semibold text-sm">
-                                آخرین آیتم: {estimationList[estimationList.length - 1].description}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <span>مشاهده لیست کل</span>
-                            {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
-                        </div>
-                    </Button>
+                    <Collapsible>
+                         <CollapsibleContent>
+                            <div className="bg-card border-t border-b rounded-t-lg shadow-2xl">
+                                <CardHeader>
+                                    <CardTitle>لیست مصالح تجمیعی</CardTitle>
+                                    <CardDescription>مجموع مصالح مورد نیاز برای بخش‌های انتخاب شده.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                                        {estimationList.map((est, index) => (
+                                            <div key={est.id} className="p-2 border rounded-md">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="font-semibold text-xs truncate">{est.description}</p>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(est.id)}>
+                                                        <Trash2 className="h-3 w-3 text-destructive" />
+                                                    </Button>
+                                                </div>
+                                                <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                                    {est.results.map(res => (
+                                                        <li key={res.material} className="flex justify-between">
+                                                            <span>{res.material}</span>
+                                                            <span className="font-mono">{Math.ceil(res.quantity).toLocaleString('fa-IR')} {res.unit}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    <Separator className="my-4" />
+
+                                    <div className="grid grid-cols-12 gap-4">
+                                        <div className="col-span-8">
+                                            <h3 className="font-bold mb-2">جمع کل مصالح:</h3>
+                                            <ScrollArea className="h-[25vh]">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                        <TableHead>نوع مصالح</TableHead>
+                                                        <TableHead className="text-center">مقدار</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {aggregatedResults.map((item) => (
+                                                        <TableRow key={`${item.material}-${item.unit}`}>
+                                                            <TableCell className="font-medium">{item.material}</TableCell>
+                                                            <TableCell className="text-center font-mono text-lg">{`${Math.ceil(item.quantity).toLocaleString('fa-IR')} ${item.unit}`}</TableCell>
+                                                        </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </ScrollArea>
+                                        </div>
+                                        <div className="col-span-4 flex flex-col justify-end gap-2 p-4 border rounded-lg bg-muted/50">
+                                            <Button onClick={handleClearList} variant="outline" className="w-full">
+                                                <Trash2 className="ml-2 h-4 w-4" />
+                                                پاک کردن لیست
+                                            </Button>
+                                            <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
+                                                <FilePlus className="ml-2 h-5 w-5" />
+                                                ایجاد فاکتور
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </div>
+                        </CollapsibleContent>
+                        <CollapsibleTrigger asChild>
+                             <Button
+                                className={cn("w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg",
+                                    "data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
+                                    <p className="font-semibold text-sm">
+                                        آخرین آیتم: {estimationList[estimationList.length - 1].description}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span>مشاهده لیست کل</span>
+                                    <ChevronsUp className="h-5 w-5 transition-transform duration-300 data-[state=closed]:rotate-180" />
+                                </div>
+                            </Button>
+                        </CollapsibleTrigger>
+                    </Collapsible>
                 </div>
             </div>
         )}
     </div>
   );
 }
-

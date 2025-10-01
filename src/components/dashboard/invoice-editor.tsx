@@ -159,6 +159,11 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <GripVertical className="h-6 w-6 text-muted-foreground" />
                             </div>
                             <span className="font-semibold truncate">{item.productName}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                             <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={() => onRemove(index)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
@@ -179,11 +184,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        </div>
-                        <div className="flex items-center gap-1">
-                             <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={() => onRemove(index)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
                             <CollapsibleTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
                                     <ChevronsUpDown className="h-4 w-4" />
@@ -948,5 +948,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

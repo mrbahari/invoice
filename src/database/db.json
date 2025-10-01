@@ -207,5 +207,8 @@
     }
   ],
   "invoices": [],
-  "toolbarPosition": { "x": 50, "y": 16 }
+  "toolbarPosition": {
+    "x": 50,
+    "y": 16
+  }
 }

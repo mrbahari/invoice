@@ -379,25 +379,28 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                          <motion.div
                             initial={{ y: "100%" }}
                             animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
+                            exit={{ y: "100%", transition: { duration: 0.3 } }}
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
                          >
                             <AggregatedListContent />
                         </motion.div>
                     </CollapsibleContent>
-                     <CollapsibleTrigger asChild>
-                         <div className="w-full bg-green-600 text-white p-3 rounded-b-lg cursor-pointer hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg">
+                    <CollapsibleTrigger asChild>
+                        <Button
+                            variant="default"
+                            className="w-full h-auto p-3 bg-green-600 text-white hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg data-[state=closed]:rounded-lg data-[state=open]:rounded-b-lg"
+                        >
                             <div className="flex items-center gap-2">
-                                 <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
+                                <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
                                 <p className="font-semibold text-sm">
                                     آخرین آیتم: {estimationList[estimationList.length - 1].description}
                                 </p>
                             </div>
                             <div className="flex items-center gap-1">
                                 <span>مشاهده لیست کل</span>
-                                 {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
+                                {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
                             </div>
-                        </div>
+                        </Button>
                     </CollapsibleTrigger>
                 </div>
             </Collapsible>

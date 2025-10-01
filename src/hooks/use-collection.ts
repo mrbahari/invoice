@@ -1,7 +1,6 @@
 
 'use client';
 
-import { initialData } from '@/lib/data';
 import type { Category, Customer, Invoice, Product, Store, UnitOfMeasurement } from '@/lib/definitions';
 import { useState, useEffect, useCallback } from 'react';
 import { useData } from '@/context/data-context';

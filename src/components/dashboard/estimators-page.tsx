@@ -44,28 +44,28 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        image: '/images/estimator-box.jpg',
+        image: '/images/b2.jpg',
         imageHint: "drywall ceiling",
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        image: '/images/estimator-grid.jpg',
+        image: '/images/s3.jpg',
         imageHint: "grid ceiling",
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        image: '/images/estimator-flat.jpg',
+        image: '/images/f2.jpg',
         imageHint: "flat ceiling",
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        image: '/images/estimator-drywall.jpg',
+        image: '/images/d2.jpg',
         imageHint: "drywall installation",
         component: DrywallForm,
     }

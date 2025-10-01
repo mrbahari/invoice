@@ -1,16 +1,70 @@
+'use client';
 
-import { Suspense } from 'react';
-import DashboardClientComponent from './dashboard-client';
-import { redirect } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type { Invoice } from '@/lib/definitions';
 
-// A simple loading component to show while the client component is loading
-function Loading() {
-  return null; // Removed the loading text as DataProvider handles the main spinner
-}
+// Define types for dynamic components and props
+type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
+
+const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
+  dashboard: dynamic(() => import('@/components/dashboard/reports-page'), { loading: () => <LoadingSpinner /> }),
+  invoices: dynamic(() => import('@/components/dashboard/invoices-page'), { loading: () => <LoadingSpinner /> }),
+  products: dynamic(() => import('@/components/dashboard/products-page'), { loading: () => <LoadingSpinner /> }),
+  customers: dynamic(() => import('@/components/dashboard/customers-page'), { loading: () => <LoadingSpinner /> }),
+  categories: dynamic(() => import('@/components/dashboard/stores-page'), { loading: () => <LoadingSpinner /> }),
+  estimators: dynamic(() => import('@/components/dashboard/estimators-page'), { loading: () => <LoadingSpinner /> }),
+  settings: dynamic(() => import('@/components/dashboard/settings-page'), { loading: () => <LoadingSpinner /> }),
+};
+
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
   
+  const [initialInvoice, setInitialInvoice] = useState<Omit<Invoice, 'id'> | null>(null);
+
+  useEffect(() => {
+    if (!searchParams.get('tab')) {
+        router.replace('/dashboard?tab=dashboard', { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  const handleNavigation = (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'>}) => {
+    if (tab === 'invoices' && data?.invoice) {
+        setInitialInvoice(data.invoice);
+    } else {
+        setInitialInvoice(null);
+    }
+    // We need to push to trigger a re-render that shows the correct tab
+    router.push(`/dashboard?tab=${tab}`, { scroll: false });
+  };
+  
+  // Get the component for the active tab
+  const ActiveComponent = componentMap[activeTab] || componentMap.dashboard;
+
+  // Prepare props for the active component
+  const componentProps: any = {
+    onNavigate: handleNavigation,
+    initialInvoice: initialInvoice,
+    setInitialInvoice: setInitialInvoice,
+  };
+
+
   return (
-      <DashboardClientComponent />
+    <>
+      {Object.keys(componentMap).map(tabKey => {
+        const tab = tabKey as DashboardTab;
+        const Component = componentMap[tab];
+        return (
+          <div key={tab} className={activeTab === tab ? '' : 'hidden'}>
+            {activeTab === tab && <Component {...componentProps} />}
+          </div>
+        );
+      })}
+    </>
   );
 }

@@ -5,9 +5,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { Invoice } from '@/lib/definitions';
+import { useData } from '@/context/data-context';
+import type { DashboardTab } from './dashboard-client';
+import { Header } from '@/components/dashboard/header';
+import { BottomNav } from '@/components/dashboard/bottom-nav';
 
-// Define types for dynamic components and props
-type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
 
 const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
   dashboard: dynamic(() => import('@/components/dashboard/reports-page'), { loading: () => <LoadingSpinner /> }),
@@ -19,19 +21,30 @@ const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
   settings: dynamic(() => import('@/components/dashboard/settings-page'), { loading: () => <LoadingSpinner /> }),
 };
 
-
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
   
   const [initialInvoice, setInitialInvoice] = useState<Omit<Invoice, 'id'> | null>(null);
+  const { isInitialized } = useData();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!searchParams.get('tab')) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !searchParams.get('tab')) {
         router.replace('/dashboard?tab=dashboard', { scroll: false });
     }
-  }, [searchParams, router]);
+  }, [isClient, searchParams, router]);
+
+  useEffect(() => {
+    if (isClient) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activeTab, isClient]);
 
   const handleNavigation = (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'>}) => {
     if (tab === 'invoices' && data?.invoice) {
@@ -39,32 +52,34 @@ export default function DashboardPage() {
     } else {
         setInitialInvoice(null);
     }
-    // We need to push to trigger a re-render that shows the correct tab
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
-  // Get the component for the active tab
+  if (!isClient || !isInitialized) {
+    return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
+            <LoadingSpinner />
+        </div>
+    );
+  }
+  
   const ActiveComponent = componentMap[activeTab] || componentMap.dashboard;
 
-  // Prepare props for the active component
   const componentProps: any = {
     onNavigate: handleNavigation,
     initialInvoice: initialInvoice,
     setInitialInvoice: setInitialInvoice,
   };
 
-
   return (
-    <>
-      {Object.keys(componentMap).map(tabKey => {
-        const tab = tabKey as DashboardTab;
-        const Component = componentMap[tab];
-        return (
-          <div key={tab} className={activeTab === tab ? '' : 'hidden'}>
-            {activeTab === tab && <Component {...componentProps} />}
-          </div>
-        );
-      })}
-    </>
+      <div className="flex min-h-screen w-full flex-col">
+        <div className="flex flex-col sm:gap-4 sm:py-4">
+          <Header activeTab={activeTab} onTabChange={handleNavigation} />
+          <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 pb-24 md:pb-8 overflow-x-hidden">
+             <ActiveComponent {...componentProps} />
+          </main>
+        </div>
+        <BottomNav activeTab={activeTab} onTabChange={handleNavigation} />
+      </div>
   );
 }

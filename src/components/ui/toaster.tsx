@@ -28,7 +28,7 @@ export function Toaster() {
         const Icon = variant ? (ICONS[variant] || ICONS.default) : ICONS.default;
 
         return (
-          <Toast key={id} variant={variant} {...props} duration={1500}>
+          <Toast key={id} variant={variant} {...props} duration={2500}>
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                   {Icon}

@@ -209,7 +209,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   return (
     <TooltipProvider>
     <div className="max-w-4xl mx-auto grid gap-6 pb-28">
-        <FloatingToolbar>
+        <FloatingToolbar pageKey="store-form">
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>

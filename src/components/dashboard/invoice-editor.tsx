@@ -725,7 +725,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       </AnimatePresence>
     <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
       
-       <FloatingToolbar>
+       <FloatingToolbar pageKey="invoice-editor">
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>

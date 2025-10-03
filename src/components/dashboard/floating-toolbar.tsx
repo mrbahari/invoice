@@ -5,16 +5,22 @@ import Draggable from 'react-draggable';
 import { useData } from '@/context/data-context';
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { ToolbarPosition } from '@/lib/definitions';
 
 type FloatingToolbarProps = {
   children?: React.ReactNode;
   className?: string;
+  pageKey: string;
 };
 
-export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
+const defaultPosition = { x: 20, y: 80 };
+
+export function FloatingToolbar({ children, className, pageKey }: FloatingToolbarProps) {
   const { data, setData } = useData();
-  const { toolbarPosition } = data;
+  const { toolbarPositions } = data;
   const draggableToolbarRef = useRef<HTMLDivElement>(null);
+  
+  const currentPosition = toolbarPositions?.[pageKey] || defaultPosition;
 
   useEffect(() => {
     const handleResize = () => {
@@ -22,43 +28,43 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
 
       const { innerWidth, innerHeight } = window;
       const { width: toolbarWidth, height: toolbarHeight } = draggableToolbarRef.current.getBoundingClientRect();
+      const position = data.toolbarPositions?.[pageKey] || defaultPosition;
+      
+      let { x, y } = position;
+      let positionChanged = false;
 
-      setData(currentData => {
-        let { x, y } = currentData.toolbarPosition;
-        let positionChanged = false;
+      if (x < 0) {
+        x = 0;
+        positionChanged = true;
+      } else if (x + toolbarWidth > innerWidth) {
+        x = innerWidth - toolbarWidth;
+        positionChanged = true;
+      }
 
-        // Check and adjust X position
-        if (x < 0) {
-          x = 0;
-          positionChanged = true;
-        } else if (x + toolbarWidth > innerWidth) {
-          x = innerWidth - toolbarWidth;
-          positionChanged = true;
-        }
-
-        // Check and adjust Y position
-        if (y < 0) {
-          y = 0;
-          positionChanged = true;
-        } else if (y + toolbarHeight > innerHeight) {
-          y = innerHeight - toolbarHeight;
-          positionChanged = true;
-        }
-
-        if (positionChanged) {
-          return { ...currentData, toolbarPosition: { x, y } };
-        }
-        
-        return currentData;
-      });
+      if (y < 0) {
+        y = 0;
+        positionChanged = true;
+      } else if (y + toolbarHeight > innerHeight) {
+        y = innerHeight - toolbarHeight;
+        positionChanged = true;
+      }
+      
+      if (positionChanged) {
+        setData(currentData => ({
+          ...currentData,
+          toolbarPositions: {
+            ...currentData.toolbarPositions,
+            [pageKey]: { x, y }
+          }
+        }));
+      }
     };
 
     window.addEventListener('resize', handleResize);
-    // Initial check in case it's already off-screen
-    handleResize();
+    handleResize(); // Initial check
 
     return () => window.removeEventListener('resize', handleResize);
-  }, [setData]);
+  }, [data.toolbarPositions, pageKey, setData]);
 
   if (!children) {
     return null;
@@ -67,10 +73,16 @@ export function FloatingToolbar({ children, className }: FloatingToolbarProps) {
   return (
     <Draggable
       handle=".drag-handle"
-      position={toolbarPosition}
+      position={currentPosition}
       nodeRef={draggableToolbarRef}
       onStop={(e, dragData) => {
-        setData(prev => ({ ...prev, toolbarPosition: { x: dragData.x, y: dragData.y } }));
+        setData(prev => ({
+          ...prev,
+          toolbarPositions: {
+            ...prev.toolbarPositions,
+            [pageKey]: { x: dragData.x, y: dragData.y }
+          }
+        }));
       }}
     >
       <div

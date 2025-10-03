@@ -164,7 +164,7 @@ export default function InvoicesPage({
         return (
           <TooltipProvider>
            <div className="grid gap-6 pb-24" data-main-page="true">
-                <FloatingToolbar>
+                <FloatingToolbar pageKey="invoices-list">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
@@ -204,8 +204,8 @@ export default function InvoicesPage({
                         <CardHeader className="pb-4">
                           <div className="flex justify-between items-start">
                             <div className="grid gap-1">
-                              <CardTitle className="text-lg">{displayName}</CardTitle>
-                              <CardDescription className="text-sm text-muted-foreground">{displayPhone}</CardDescription>
+                              <CardTitle className="text-lg">{displayPhone}</CardTitle>
+                              <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
                             </div>
                            
                           </div>

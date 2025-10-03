@@ -14,7 +14,7 @@ import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStorePrefix } from '@/lib/utils';
 import { useData } from '@/context/data-context';
-import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import type { DashboardTab } from '@/app/dashboard/page';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Collapsible,
@@ -250,7 +250,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         transition={{ duration: 0.3 }}
                     >
                          <TooltipProvider>
-                            <FloatingToolbar>
+                            <FloatingToolbar pageKey={`estimator-${selectedEstimator}`}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" onClick={handleBackToList} className="flex items-center gap-2 w-12 h-12 text-muted-foreground">

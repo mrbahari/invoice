@@ -14,7 +14,7 @@ interface AppData {
   invoices: Invoice[];
   units: UnitOfMeasurement[];
   stores: Store[];
-  toolbarPosition: ToolbarPosition;
+  toolbarPositions: { [key: string]: ToolbarPosition };
 }
 
 // Define the context type
@@ -48,9 +48,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
           const parsedData = JSON.parse(storedData);
-          // Ensure toolbarPosition exists
-          if (!parsedData.toolbarPosition) {
-            parsedData.toolbarPosition = defaultData.toolbarPosition;
+          // Ensure toolbarPositions exists and is an object
+          if (typeof parsedData.toolbarPositions !== 'object' || parsedData.toolbarPositions === null) {
+            parsedData.toolbarPositions = defaultData.toolbarPositions || {};
           }
           setData(parsedData);
         } else {

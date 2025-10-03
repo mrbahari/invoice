@@ -174,7 +174,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     <TooltipProvider>
       <div className="pb-24">
         {/* Floating Action Bar */}
-         <FloatingToolbar>
+         <FloatingToolbar pageKey="invoice-preview">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={onBack}>
@@ -228,8 +228,8 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               </div>
               <div className="border rounded-md p-2">
                 <h3 className="font-bold border-b pb-1 mb-1">خریدار</h3>
-                <p><strong>نام:</strong> {customer.name}</p>
                 <p><strong>تلفن:</strong> {customer.phone}</p>
+                <p><strong>نام:</strong> {customer.name}</p>
                 <p><strong>آدرس:</strong> {customer.address}</p>
               </div>
           </section>

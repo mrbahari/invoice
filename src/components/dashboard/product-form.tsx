@@ -298,7 +298,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
-       <FloatingToolbar>
+       <FloatingToolbar pageKey="product-form">
           <div className="flex items-center gap-1">
               <Tooltip>
                   <TooltipTrigger asChild>

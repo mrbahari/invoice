@@ -62,12 +62,12 @@ export default function InvoicesPage({
   const [view, setView] = useState<View>({ type: 'list' });
 
   useEffect(() => {
-    if (view.type === 'list') {
-      setSearchVisible(true);
-    } else {
-      setSearchVisible(false);
-    }
-  }, [view, setSearchVisible]);
+    // Invoices page (list or editor) should not show the main search bar
+    setSearchVisible(false);
+    // Restore visibility when component unmounts
+    return () => setSearchVisible(true);
+  }, [setSearchVisible]);
+
 
   // Effect to handle the initial invoice prop from estimators or other pages
   useEffect(() => {
@@ -129,6 +129,7 @@ export default function InvoicesPage({
 
   const filteredInvoices = useMemo(() => {
     if (!allInvoices) return [];
+    // Search is handled internally for invoices now, not by global search
     return allInvoices.filter(
       (invoice) =>
         invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||

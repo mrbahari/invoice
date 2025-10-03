@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { subDays, format, parseISO, isValid } from 'date-fns-jalali';
 import {
   Card,
@@ -32,6 +32,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { useData } from '@/context/data-context';
+import { useSearch } from './search-provider';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -43,8 +44,14 @@ type ReportsPageProps = {
 export default function ReportsPage({ onNavigate }: ReportsPageProps) {
   const { data } = useData();
   const { invoices: allInvoices, customers: allCustomers, products: allProducts } = data;
+  const { setSearchVisible } = useSearch();
 
   const [period, setPeriod] = useState<Period>('all');
+
+  useEffect(() => {
+    setSearchVisible(false);
+    return () => setSearchVisible(true);
+  }, [setSearchVisible]);
 
   const { 
     totalRevenue, 

@@ -31,6 +31,7 @@ import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useData } from '@/context/data-context'; // Import useData
 import { cn } from '@/lib/utils';
+import { useSearch } from './search-provider';
 
 const colorThemes = [
     { name: 'Blue', value: '248 82% 50%'},
@@ -44,6 +45,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const { data, setData, resetData, isResetting, LOCAL_STORAGE_KEY, clearAllData } = useData();
+  const { setSearchVisible } = useSearch();
   const { units = [] } = data; // Use default empty array to prevent error
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
@@ -52,6 +54,11 @@ export default function SettingsPage() {
   
   const isDuplicate = newUnitName.trim() !== '' && units.some(u => u.name === newUnitName.trim());
   const isInputEmpty = newUnitName.trim() === '';
+
+  useEffect(() => {
+    setSearchVisible(false);
+    return () => setSearchVisible(true);
+  }, [setSearchVisible]);
 
 
   const handleThemeColorChange = (colorValue: string) => {

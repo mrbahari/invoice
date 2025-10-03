@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/collapsible"
 import { FloatingToolbar } from './floating-toolbar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useSearch } from './search-provider';
 
 
 export interface MaterialResult {
@@ -79,6 +80,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
   const { data: appData } = useData();
   const { products, invoices } = appData;
+  const { setSearchVisible } = useSearch();
+
+  useEffect(() => {
+    setSearchVisible(false);
+    return () => setSearchVisible(true);
+  }, [setSearchVisible]);
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
     setSelectedEstimator(estimatorId);

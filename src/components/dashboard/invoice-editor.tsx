@@ -63,6 +63,7 @@ import { FloatingToolbar } from './floating-toolbar';
 import { CustomerForm } from './customer-form';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { useCollection } from '@/hooks/use-collection';
 
 
 type InvoiceEditorProps = {
@@ -218,6 +219,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const { data, setData } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const isClient = useIsClient();
+  const { add: addCustomer } = useCollection<Customer>('customers');
+
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
   
@@ -559,6 +562,25 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     }
   };
 
+  const handleAddNewCustomer = async () => {
+    if (!customerSearch.trim()) return;
+
+    const newCustomerData: Omit<Customer, 'id'> = {
+      name: `مشتری جدید`,
+      phone: customerSearch.trim(),
+      email: 'ایمیل ثبت نشده',
+      address: 'آدرس ثبت نشده',
+      purchaseHistory: 'مشتری جدید',
+    };
+
+    const newCustomer = await addCustomer(newCustomerData);
+    if (newCustomer) {
+      setSelectedCustomer(newCustomer);
+      setIsCustomerSelectorOpen(false);
+      setCustomerSearch('');
+    }
+  };
+
 
     const AddProductsComponent = React.memo(() => (
         <Card className="sticky top-20">
@@ -795,7 +817,15 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         </div>
                                                     </Button>
                                                 )) : (
-                                                    <div className="text-center py-10 text-sm text-muted-foreground">مشتری‌ای یافت نشد.</div>
+                                                    <div className="text-center py-10 text-sm text-muted-foreground">
+                                                        <p>مشتری‌ای یافت نشد.</p>
+                                                         {customerSearch.trim().length > 5 && !isNaN(Number(customerSearch.trim())) && (
+                                                            <Button variant="link" onClick={handleAddNewCustomer} className="mt-2">
+                                                                <PlusCircle className='ml-2 h-4 w-4' />
+                                                                افزودن مشتری با شماره {customerSearch}
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </ScrollArea>
@@ -920,3 +950,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

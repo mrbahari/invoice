@@ -69,14 +69,14 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
             </AlertDialogContent>
         </AlertDialog>
 
-      <div className="flex min-h-screen w-full flex-col">
-        <div className="flex flex-col sm:gap-4 sm:py-4">
-          <Header activeTab={activeTab} onTabChange={handleTabChange} />
-          <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 pb-24 md:pb-8 overflow-x-hidden">
-             {children}
-          </main>
-        </div>
-        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      <div className="flex min-h-screen w-full flex-col pb-20">
+        <Header activeTab={activeTab} onTabChange={handleTabChange} />
+        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+            {children}
+        </main>
+      </div>
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+          <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </SearchProvider>
   );

@@ -22,15 +22,8 @@ const createParticle = (i: number): Particle => ({
   duration: Math.random() * 10 + 20,
 });
 
-
-export function LoadingSpinner() {
-  const [particles, setParticles] = useState<Particle[]>([]);
-
-  useEffect(() => {
-    // Generate particles only on the client side to prevent hydration mismatch
-    const initialParticles = Array.from({ length: 50 }).map((_, i) => createParticle(i));
-    setParticles(initialParticles);
-  }, []);
+function LoadingSpinnerContent() {
+  const particles = Array.from({ length: 50 }).map((_, i) => createParticle(i));
 
   return (
     <div
@@ -47,11 +40,11 @@ export function LoadingSpinner() {
           <motion.div
             key={particle.id}
             className="absolute rounded-full bg-cyan-400/30"
-            initial={{ 
-              x: particle.x, 
+            initial={{
+              x: particle.x,
               y: particle.y,
               scale: particle.scale,
-              opacity: particle.opacity
+              opacity: particle.opacity,
             }}
             animate={{
               x: `${Math.random() * 100}vw`,
@@ -61,11 +54,11 @@ export function LoadingSpinner() {
               duration: particle.duration,
               repeat: Infinity,
               repeatType: 'mirror',
-              ease: 'easeInOut'
+              ease: 'easeInOut',
             }}
             style={{
-                width: `${Math.random() * 3 + 1}px`,
-                height: `${Math.random() * 3 + 1}px`,
+              width: `${Math.random() * 3 + 1}px`,
+              height: `${Math.random() * 3 + 1}px`,
             }}
           />
         ))}
@@ -153,4 +146,20 @@ export function LoadingSpinner() {
       </div>
     </div>
   );
+}
+
+export function LoadingSpinner() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    // Render nothing or a static placeholder on the server and initial client render
+    return null;
+  }
+
+  // Render the full animated component only on the client
+  return <LoadingSpinnerContent />;
 }

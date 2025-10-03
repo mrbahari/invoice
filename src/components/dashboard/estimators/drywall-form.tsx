@@ -15,12 +15,13 @@ import { cn } from '@/lib/utils';
 
 type DrywallFormProps = {
     onAddToList: (description: string, results: MaterialResult[]) => void;
+    onBack: () => void;
 };
 
 type WallType = 'partition' | 'lining';
 
 
-export function DrywallForm({ onAddToList }: DrywallFormProps) {
+export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [height, setHeight] = useState<number | ''>('');
   const [wallType, setWallType] = useState<WallType>('partition');

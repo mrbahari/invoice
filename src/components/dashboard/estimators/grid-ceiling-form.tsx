@@ -13,10 +13,11 @@ import type { MaterialResult } from '../estimators-page';
 
 type GridCeilingFormProps = {
     onAddToList: (description: string, results: MaterialResult[]) => void;
+    onBack: () => void;
 };
 
 
-export function GridCeilingForm({ onAddToList }: GridCeilingFormProps) {
+export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
   const { toast } = useToast();

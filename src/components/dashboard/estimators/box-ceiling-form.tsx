@@ -13,10 +13,11 @@ import type { MaterialResult } from '../estimators-page';
 
 type BoxCeilingFormProps = {
     onAddToList: (description: string, results: MaterialResult[]) => void;
+    onBack: () => void;
 };
 
 
-export function BoxCeilingForm({ onAddToList }: BoxCeilingFormProps) {
+export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const { toast } = useToast();
 

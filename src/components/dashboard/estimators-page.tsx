@@ -4,9 +4,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, Trash2, FilePlus, ClipboardList } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import { FlatCeilingForm } from './estimators/flat-ceiling-form';
@@ -38,28 +37,28 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        imageUrl: '/images/estimator-box.jpg',
+        imageUrl: '/images/b2.jpg',
         imageHint: 'drywall ceiling',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        imageUrl: '/images/estimator-grid.jpg',
+        imageUrl: '/images/s2.jpg',
         imageHint: 'grid ceiling',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        imageUrl: '/images/estimator-flat.jpg',
+        imageUrl: '/images/f2.jpg',
         imageHint: 'flat ceiling',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        imageUrl: '/images/estimator-drywall.jpg',
+        imageUrl: '/images/d2.jpg',
         imageHint: 'drywall installation',
         component: DrywallForm,
     }
@@ -71,7 +70,6 @@ type EstimatorsPageProps = {
 
 export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [selectedEstimator, setSelectedEstimator] = useState<EstimatorType | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
   const { data: appData } = useData();
   const { products, invoices } = appData;
@@ -79,14 +77,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
     setSelectedEstimator(estimatorId);
-    setIsDialogOpen(true);
   };
   
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    // A slight delay to allow the dialog to close before resetting the content
-    setTimeout(() => setSelectedEstimator(null), 300);
-  };
+  const handleBackToList = () => {
+    setSelectedEstimator(null);
+  }
 
   const handleAddToList = (description: string, results: MaterialResult[]) => {
     const newEstimation: Estimation = {
@@ -96,7 +91,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     };
     setEstimationList(prev => [...prev, newEstimation]);
     toast({ variant: 'success', title: 'به لیست برآورد اضافه شد' });
-    handleDialogClose();
+    handleBackToList();
   };
 
   const handleClearList = () => {
@@ -228,58 +223,70 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     setEstimationList([]);
   };
 
-  const ActiveForm = estimatorTypes.find(e => e.id === selectedEstimator)?.component;
+  const ActiveForm = selectedEstimator ? estimatorTypes.find(e => e.id === selectedEstimator)?.component : null;
 
   return (
     <div className='pb-40' data-main-page="true">
         <div className="grid gap-8">
-            <Card>
-                <CardHeader className="items-center">
-                    <CardTitle>برآورد مصالح</CardTitle>
-                    <CardDescription>
-                    ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {estimatorTypes.map((estimator) => (
-                        <Card 
-                            key={estimator.id}
-                            onClick={() => handleEstimatorSelect(estimator.id)}
-                            className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                        >
-                            <div className="relative w-full h-[120px] overflow-hidden">
-                                <Image
-                                    src={estimator.imageUrl}
-                                    alt={estimator.title}
-                                    fill
-                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={estimator.imageHint}
-                                />
-                            </div>
-                            <div className="p-3 text-center">
-                                <CardTitle className="text-sm font-bold">{estimator.title}</CardTitle>
-                            </div>
-                        </Card>
-                    ))}
-                </div>
-                 {ActiveForm && (
-                    <DialogContent className="sm:max-w-[625px]">
-                        <DialogHeader>
-                            <DialogTitle>{estimatorTypes.find(e => e.id === selectedEstimator)?.title}</DialogTitle>
-                            <DialogDescription>
-                                ابعاد را وارد کنید تا لیست مصالح مورد نیاز محاسبه شود.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="pt-4">
-                            <ActiveForm onAddToList={handleAddToList} />
+            <AnimatePresence mode="wait">
+                {selectedEstimator && ActiveForm ? (
+                    <motion.div
+                        key={selectedEstimator}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="flex items-center mb-4">
+                            <Button variant="ghost" size="sm" onClick={handleBackToList} className="flex items-center gap-2">
+                                <ArrowRight className="h-4 w-4" />
+                                <span>بازگشت</span>
+                            </Button>
                         </div>
-                    </DialogContent>
+                        <ActiveForm onAddToList={handleAddToList} onBack={handleBackToList} />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="list"
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 50 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                         <Card>
+                            <CardHeader className="items-center">
+                                <CardTitle>برآورد مصالح</CardTitle>
+                                <CardDescription>
+                                ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
+                                </CardDescription>
+                            </CardHeader>
+                        </Card>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                            {estimatorTypes.map((estimator) => (
+                                <Card 
+                                    key={estimator.id}
+                                    onClick={() => handleEstimatorSelect(estimator.id)}
+                                    className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                                >
+                                    <div className="relative w-full h-[120px] overflow-hidden">
+                                        <Image
+                                            src={estimator.imageUrl}
+                                            alt={estimator.title}
+                                            fill
+                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                            data-ai-hint={estimator.imageHint}
+                                        />
+                                    </div>
+                                    <div className="p-3 text-center">
+                                        <CardTitle className="text-base font-bold">{estimator.title}</CardTitle>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    </motion.div>
                 )}
-            </Dialog>
-
+            </AnimatePresence>
+            
             {estimationList.length > 0 && (
                 <AnimatePresence>
                      <motion.div
@@ -348,5 +355,3 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     </div>
   );
 }
-
-    

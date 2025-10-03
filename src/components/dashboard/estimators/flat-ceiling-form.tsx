@@ -13,9 +13,10 @@ import type { MaterialResult } from '../estimators-page';
 
 type FlatCeilingFormProps = {
     onAddToList: (description: string, results: MaterialResult[]) => void;
+    onBack: () => void;
 };
 
-export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
+export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
   const { toast } = useToast();

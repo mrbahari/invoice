@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package, Check } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -109,116 +109,160 @@ const parseFormattedNumber = (str: string): number | '' => {
   };
 
 
-function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, products: Product[], isDragging: boolean }) {
+function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
     
-    const [displayPrice, setDisplayPrice] = useState(() => formatNumber(item.unitPrice));
-    const [displayQuantity, setDisplayQuantity] = useState(() => formatNumber(item.quantity));
+    // Internal state for input fields to allow for debounced updates
+    const [localQuantity, setLocalQuantity] = useState<string>(() => formatNumber(item.quantity));
+    const [localPrice, setLocalPrice] = useState<string>(() => formatNumber(item.unitPrice));
     
+    // Track if local changes have been made
+    const hasLocalChanges = useMemo(() => {
+        const numQuantity = parseFormattedNumber(localQuantity);
+        const numPrice = parseFormattedNumber(localPrice);
+        return numQuantity !== item.quantity || numPrice !== item.unitPrice;
+    }, [localQuantity, localPrice, item.quantity, item.unitPrice]);
+
     const product = products.find(p => p.id === item.productId);
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
+
+    // Click vs Drag detection state
+    const isDraggingRef = useRef(false);
+    const mouseDownPos = useRef({ x: 0, y: 0 });
+
 
     const similarProducts = useMemo(() => {
         if (!product) return [];
         return products.filter(p => p.subCategoryId === product.subCategoryId && p.id !== product.id);
     }, [product, products]);
 
-    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        const num = parseFormattedNumber(val);
-        onUpdate(index, 'quantity', num === '' ? 0 : num);
-        setDisplayQuantity(formatNumber(num));
+    // When the real item data changes (e.g. from parent), update local state
+    useEffect(() => {
+        setLocalQuantity(formatNumber(item.quantity));
+        setLocalPrice(formatNumber(item.unitPrice));
+    }, [item.quantity, item.unitPrice]);
+    
+    const handleUpdateClick = () => {
+        const newQuantity = parseFormattedNumber(localQuantity);
+        const newPrice = parseFormattedNumber(localPrice);
+        if (newQuantity !== item.quantity) {
+            onUpdate(index, 'quantity', newQuantity === '' ? 0 : newQuantity);
+        }
+        if (newPrice !== item.unitPrice) {
+            onUpdate(index, 'unitPrice', newPrice === '' ? 0 : newPrice);
+        }
     };
 
-    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        const num = parseFormattedNumber(val);
-        onUpdate(index, 'unitPrice', num === '' ? 0 : num);
-        setDisplayPrice(formatNumber(num));
+    const handleHeaderMouseDown = (e: React.MouseEvent) => {
+        isDraggingRef.current = false;
+        mouseDownPos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleHeaderMouseMove = (e: React.MouseEvent) => {
+        const dx = Math.abs(e.clientX - mouseDownPos.current.x);
+        const dy = Math.abs(e.clientY - mouseDownPos.current.y);
+        if (dx > 5 || dy > 5) {
+            isDraggingRef.current = true;
+        }
     };
     
-    useEffect(() => {
-        setDisplayPrice(formatNumber(item.unitPrice));
-        setDisplayQuantity(formatNumber(item.quantity));
-    }, [item.unitPrice, item.quantity]);
+    const handleHeaderMouseUp = () => {
+        if (!isDraggingRef.current) {
+            onToggleOpen();
+        }
+        isDraggingRef.current = false;
+    };
 
 
     return (
-        <Collapsible defaultOpen={false}>
+        <Collapsible open={isOpen}>
             <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300", isDragging && "h-16")}>
-                <div className="p-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                             <div className="cursor-grab">
-                                <GripVertical className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                            <div className="relative h-12 w-12 flex-shrink-0">
-                                {product?.imageUrl ? (
-                                    <Image src={product.imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
-                                ) : (
-                                    <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center">
-                                        <Package className="h-6 w-6 text-muted-foreground" />
-                                    </div>
-                                )}
-                            </div>
-                            <span className="font-semibold truncate">{item.productName}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                             <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={() => onRemove(index)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
-                                        <Shuffle className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {similarProducts.length > 0 ? (
-                                        similarProducts.map(p => (
-                                            <DropdownMenuItem key={p.id} onClick={() => onReplace(index, p)}>
-                                                {p.name}
-                                            </DropdownMenuItem>
-                                        ))
+                 <CollapsibleTrigger asChild>
+                    <div
+                        className="p-3 cursor-pointer"
+                        onMouseDown={handleHeaderMouseDown}
+                        onMouseMove={handleHeaderMouseMove}
+                        onMouseUp={handleHeaderMouseUp}
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="cursor-grab">
+                                    <GripVertical className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                                <div className="relative h-12 w-12 flex-shrink-0">
+                                    {product?.imageUrl ? (
+                                        <Image src={product.imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
                                     ) : (
-                                        <DropdownMenuItem disabled>محصول مشابهی یافت نشد.</DropdownMenuItem>
+                                        <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center">
+                                            <Package className="h-6 w-6 text-muted-foreground" />
+                                        </div>
                                     )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <ChevronsUpDown className="h-4 w-4" />
+                                </div>
+                                <span className="font-semibold truncate">{item.productName}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={(e) => { e.stopPropagation(); onRemove(index); }}>
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
-                            </CollapsibleTrigger>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                            <Shuffle className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {similarProducts.length > 0 ? (
+                                            similarProducts.map(p => (
+                                                <DropdownMenuItem key={p.id} onClick={() => onReplace(index, p)}>
+                                                    {p.name}
+                                                </DropdownMenuItem>
+                                            ))
+                                        ) : (
+                                            <DropdownMenuItem disabled>محصول مشابهی یافت نشد.</DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <div className="h-8 w-8 flex items-center justify-center">
+                                    <ChevronsUpDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </CollapsibleTrigger>
                 <CollapsibleContent>
                     <div className="p-3 pt-0">
-                        <div className={cn("pl-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3", isDragging && "hidden")}>
+                        <div className={cn("pl-12 grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
-                                <Input type="text" id={`quantity-${index}`} value={displayQuantity} onChange={handleQuantityChange} placeholder="مقدار" className="font-mono" />
+                                <Input type="text" id={`quantity-${index}`} value={localQuantity} onChange={(e) => setLocalQuantity(e.target.value)} placeholder="مقدار" className="h-9 font-mono" />
+                            </div>
+                             <div className="grid gap-1.5">
+                                <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
+                                <Input id={`price-${index}`} value={localPrice} onChange={(e) => setLocalPrice(e.target.value)} placeholder="مبلغ" className="h-9 font-mono" />
                             </div>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`unit-${index}`} className="text-xs">واحد</Label>
                                 <Select value={item.unit} onValueChange={(value) => onUnitChange(index, value)} disabled={availableUnits.length <= 1}>
-                                    <SelectTrigger id={`unit-${index}`}><SelectValue /></SelectTrigger>
+                                    <SelectTrigger id={`unit-${index}`} className="h-9"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         {availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid gap-1.5">
-                                <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                <Input id={`price-${index}`} value={displayPrice} onChange={handlePriceChange} placeholder="مبلغ" className="font-mono" />
-                            </div>
-                            <div className="grid gap-1.5">
+                             <div className="grid gap-1.5">
                                 <Label className="text-xs">مبلغ کل</Label>
-                                <p className="font-semibold font-mono text-sm flex items-center h-10">{formatCurrency(item.totalPrice)}</p>
+                                <p className="font-semibold font-mono text-sm flex items-center h-9">{formatCurrency(item.totalPrice)}</p>
                             </div>
                         </div>
+                         {hasLocalChanges && (
+                            <div className="pl-12 pt-3">
+                                <Button size="sm" className="w-full h-8 bg-green-600 hover:bg-green-700" onClick={handleUpdateClick}>
+                                    <Check className="ml-2 h-4 w-4" />
+                                    به‌روزرسانی آیتم
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </CollapsibleContent>
             </div>
@@ -359,6 +403,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [invoice, setInvoice] = useState<Partial<Invoice>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [storeId, setStoreId] = useState<string>('');
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
+
 
 
   // Display state for formatted numbers
@@ -559,7 +605,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         const newItems = prev.items ? [...prev.items] : [];
         if (newItems[index]) {
             const updatedItem = { ...newItems[index], [field]: value };
-            updatedItem.totalPrice = (updatedItem.quantity || 0) * (updatedItem.unitPrice || 0);
+            if (field === 'quantity' || field === 'unitPrice') {
+              updatedItem.totalPrice = (updatedItem.quantity || 0) * (updatedItem.unitPrice || 0);
+            }
             newItems[index] = updatedItem;
         }
         return { ...prev, items: newItems };
@@ -622,6 +670,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleDragStart = (start: DragStart) => {
     setIsDragging(true);
+    setOpenItemId(null); // Close any open item when dragging starts
     document.body.classList.add('dragging-invoice-item');
   };
   
@@ -938,24 +987,29 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                     <Droppable droppableId="invoice-items">
                                     {(provided) => (
                                         <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-3">
-                                        {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => (
-                                            <DndDraggable key={item.productId + item.unit + index} draggableId={item.productId + item.unit + index} index={index}>
-                                                {(provided, snapshot) => (
-                                                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                                                        <InvoiceItemRow
-                                                            item={item}
-                                                            index={index}
-                                                            onRemove={handleRemoveItem}
-                                                            onUpdate={handleItemChange}
-                                                            onUnitChange={handleUnitChange}
-                                                            onReplace={handleReplaceItem}
-                                                            products={products}
-                                                            isDragging={snapshot.isDragging}
-                                                        />
-                                                     </div>
-                                                )}
-                                            </DndDraggable>
-                                            )) : (
+                                        {(invoice.items || []).length > 0 ? (invoice.items || []).map((item, index) => {
+                                            const uniqueId = item.productId + index;
+                                            return (
+                                                <DndDraggable key={uniqueId} draggableId={uniqueId} index={index}>
+                                                    {(provided, snapshot) => (
+                                                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                                            <InvoiceItemRow
+                                                                item={item}
+                                                                index={index}
+                                                                onRemove={handleRemoveItem}
+                                                                onUpdate={handleItemChange}
+                                                                onUnitChange={handleUnitChange}
+                                                                onReplace={handleReplaceItem}
+                                                                products={products}
+                                                                isDragging={snapshot.isDragging}
+                                                                isOpen={openItemId === uniqueId}
+                                                                onToggleOpen={() => setOpenItemId(prev => prev === uniqueId ? null : uniqueId)}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </DndDraggable>
+                                            )
+                                        }) : (
                                             <div className="text-center py-10 text-muted-foreground">محصولی اضافه نشده است.</div>
                                         )}
                                         {provided.placeholder}
@@ -1028,4 +1082,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
 

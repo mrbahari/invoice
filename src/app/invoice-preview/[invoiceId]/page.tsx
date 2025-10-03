@@ -13,7 +13,7 @@ import { useData } from '@/context/data-context';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 function toWords(num: number): string {
     if (num === 0) return "صفر";
@@ -75,11 +75,12 @@ function toWords(num: number): string {
     return words;
   }
 
-export default function PublicInvoicePreviewPage({ params }: { params: { invoiceId: string } }) {
+export default function PublicInvoicePreviewPage() {
   const router = useRouter();
+  const params = useParams();
   const { data, isInitialized } = useData();
   const { invoices, stores, customers } = data;
-  const { invoiceId } = params;
+  const invoiceId = params.invoiceId as string;
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -229,5 +230,3 @@ export default function PublicInvoicePreviewPage({ params }: { params: { invoice
       </div>
   );
 }
-
-    

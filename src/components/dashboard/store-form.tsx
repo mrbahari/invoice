@@ -35,6 +35,7 @@ import { Textarea } from '../ui/textarea';
 import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-flow';
 import { generateLogoPrompts, type GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts';
 import { cn } from '@/lib/utils';
+import { generateCategories, type GenerateCategoriesInput, type GenerateCategoriesOutput } from '@/ai/flows/generate-categories-flow';
 
 
 type StoreFormProps = {
@@ -73,6 +74,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLogoGenerating, setIsLogoGenerating] = useState(false);
+  const [isCategoryGenerating, setIsCategoryGenerating] = useState(false);
   
   // State for AI logo prompts
   const [logoPrompts, setLogoPrompts] = useState<string[]>([]);
@@ -147,6 +149,55 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           setIsLogoGenerating(false);
       }
   };
+
+  const handleGenerateCategories = async () => {
+    if (!name || !description) {
+        toast({
+            variant: 'destructive',
+            title: 'نام و توضیحات الزامی است',
+            description: 'برای تولید دسته‌بندی، نام و توضیحات فروشگاه را وارد کنید.',
+        });
+        return;
+    }
+    setIsCategoryGenerating(true);
+    try {
+      const input: GenerateCategoriesInput = { storeName: name, description };
+      const result = await generateCategories(input);
+
+      if (result && result.categories) {
+        const newCats: Category[] = [];
+        result.categories.forEach(catData => {
+          const parentId = `cat-${Math.random().toString(36).substr(2, 9)}`;
+          const parentCat: Category = {
+            id: parentId,
+            name: catData.name,
+            storeId: store?.id || 'temp',
+          };
+          newCats.push(parentCat);
+          catData.subCategories.forEach(subCatName => {
+            const subCat: Category = {
+              id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+              name: subCatName,
+              storeId: store?.id || 'temp',
+              parentId: parentId,
+            };
+            newCats.push(subCat);
+          });
+        });
+        
+        // Replace existing categories for this store with the new ones
+        setStoreCategories(newCats);
+
+        toast({ variant: 'success', title: 'دسته‌بندی‌ها با موفقیت تولید شدند' });
+      }
+    } catch (error) {
+      console.error("Error generating categories:", error);
+      toast({ variant: 'destructive', title: 'خطا در تولید دسته‌بندی', description: 'لطفاً دوباره تلاش کنید.' });
+    } finally {
+      setIsCategoryGenerating(false);
+    }
+  };
+
 
   const handleSaveAll = () => {
     if (!name) {
@@ -400,7 +451,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 <CardDescription>این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-3">
                         <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
                         <Input id="bank-account-holder" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="مثال: اسماعیل بهاری" />
@@ -426,9 +477,25 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         </Card>
 
         <Card>
-            <CardHeader>
-                <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
-                <CardDescription>دسته‌ها و زیردسته‌های محصولات این فروشگاه را تعریف کنید.</CardDescription>
+            <CardHeader className="flex flex-row justify-between items-start">
+                 <div>
+                    <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
+                    <CardDescription>دسته‌ها و زیردسته‌های محصولات این فروشگاه را تعریف کنید.</CardDescription>
+                 </div>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={handleGenerateCategories}
+                            disabled={isCategoryGenerating}
+                        >
+                            {isCategoryGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>تولید دسته‌بندی با هوش مصنوعی</p></TooltipContent>
+                  </Tooltip>
             </CardHeader>
             <CardContent className="grid gap-6">
                 <div className="relative">

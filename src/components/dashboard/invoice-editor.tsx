@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -772,8 +773,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-semibold">{selectedCustomer.name}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                                            <p className="font-semibold">{selectedCustomer.phone}</p>
+                                            <p className="text-sm text-muted-foreground">{selectedCustomer.name}</p>
                                         </div>
                                     </div>
                                     <CollapsibleTrigger asChild>
@@ -824,8 +825,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={handleAddNewCustomer}
-                                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-20 bg-green-500 text-white hover:bg-green-600"
+                                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-20 bg-green-500 text-white hover:bg-green-600 flex items-center gap-1"
                                                 >
+                                                   <PlusCircle className="h-4 w-4" />
                                                     افزودن
                                                 </Button>
                                             )}
@@ -849,8 +851,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                                 <AvatarFallback>{customer.name[0]}</AvatarFallback>
                                                             </Avatar>
                                                             <div>
-                                                                <p className='text-base font-semibold'>{customer.name}</p>
-                                                                <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                                                <p className='text-base font-semibold'>{customer.phone}</p>
+                                                                <p className="text-xs text-muted-foreground">{customer.name}</p>
                                                             </div>
                                                         </div>
                                                     </Button>

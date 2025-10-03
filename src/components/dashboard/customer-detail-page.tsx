@@ -94,8 +94,8 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
                     <AvatarFallback>{nameInitials}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{customer.name}</h1>
-                    <p className="text-muted-foreground">{customer.phone}</p>
+                    <h1 className="text-2xl font-bold tracking-tight">{customer.phone}</h1>
+                    <p className="text-muted-foreground">{customer.name}</p>
                 </div>
             </div>
             <Button variant="outline" onClick={() => onEdit(customer)}>

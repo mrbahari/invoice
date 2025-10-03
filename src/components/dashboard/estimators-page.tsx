@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -238,7 +239,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
                     {estimatorTypes.map((estimator) => {
                         const image = placeholderImages.find(img => img.id === estimator.imageKey);
                         return(
@@ -247,7 +248,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 onClick={() => handleEstimatorSelect(estimator.id)}
                                 className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
                             >
-                                <div className="relative w-full h-[150px] overflow-hidden">
+                                <div className="relative w-full h-[120px] overflow-hidden">
                                     <Image
                                         src={image?.imageUrl || `https://placehold.co/600x400`}
                                         alt={estimator.title}

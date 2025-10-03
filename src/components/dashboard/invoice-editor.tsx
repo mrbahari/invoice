@@ -116,15 +116,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     const [localPrice, setLocalPrice] = useState<string>(() => formatNumber(item.unitPrice));
     const [localTotalPrice, setLocalTotalPrice] = useState<string>(() => formatNumber(item.totalPrice));
 
-    
-    // Track if local changes have been made
-    const hasLocalChanges = useMemo(() => {
-        const numQuantity = parseFormattedNumber(localQuantity);
-        const numPrice = parseFormattedNumber(localPrice);
-        const numTotalPrice = parseFormattedNumber(localTotalPrice);
-        return numQuantity !== item.quantity || numPrice !== item.unitPrice || numTotalPrice !== item.totalPrice;
-    }, [localQuantity, localPrice, localTotalPrice, item.quantity, item.unitPrice, item.totalPrice]);
-
     const product = products.find(p => p.id === item.productId);
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
 
@@ -138,44 +129,62 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
         return products.filter(p => p.subCategoryId === product.subCategoryId && p.id !== product.id);
     }, [product, products]);
 
-    // When the real item data changes (e.g. from parent), update local state
+    // When the real item data from the parent changes, update the local state
     useEffect(() => {
         setLocalQuantity(formatNumber(item.quantity));
         setLocalPrice(formatNumber(item.unitPrice));
         setLocalTotalPrice(formatNumber(item.totalPrice));
     }, [item.quantity, item.unitPrice, item.totalPrice]);
-    
-    const handleUpdateClick = () => {
-        const newQuantity = parseFormattedNumber(localQuantity);
-        const newPrice = parseFormattedNumber(localPrice);
-        const newTotalPrice = parseFormattedNumber(localTotalPrice);
 
-        // Determine which field was the primary source of change
-        const quantityChanged = newQuantity !== '' && newQuantity !== item.quantity;
-        const priceChanged = newPrice !== '' && newPrice !== item.unitPrice;
-        const totalPriceChanged = newTotalPrice !== '' && newTotalPrice !== item.totalPrice;
-
-        let finalQuantity = item.quantity;
-        let finalUnitPrice = item.unitPrice;
-
-        if (totalPriceChanged && newTotalPrice !== '') {
-            finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
-            if (finalQuantity > 0) {
-                finalUnitPrice = Math.round(newTotalPrice / finalQuantity);
-            }
-            onUpdate(index, 'totalPrice', newTotalPrice);
-            onUpdate(index, 'unitPrice', finalUnitPrice);
-            if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
-        } else if (quantityChanged || priceChanged) {
-            finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
-            finalUnitPrice = priceChanged && newPrice !== '' ? newPrice : item.unitPrice;
-            const finalTotalPrice = finalQuantity * finalUnitPrice;
-            
-            if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
-            if (priceChanged) onUpdate(index, 'unitPrice', finalUnitPrice);
-            onUpdate(index, 'totalPrice', finalTotalPrice);
+    // Debounce effect for auto-updating
+    useEffect(() => {
+        // Only run if there are actual changes
+        const numQuantity = parseFormattedNumber(localQuantity);
+        const numPrice = parseFormattedNumber(localPrice);
+        const numTotalPrice = parseFormattedNumber(localTotalPrice);
+        
+        if (numQuantity === item.quantity && numPrice === item.unitPrice && numTotalPrice === item.totalPrice) {
+            return;
         }
-    };
+
+        const handler = setTimeout(() => {
+            const newQuantity = parseFormattedNumber(localQuantity);
+            const newPrice = parseFormattedNumber(localPrice);
+            const newTotalPrice = parseFormattedNumber(localTotalPrice);
+            
+            const quantityChanged = newQuantity !== '' && newQuantity !== item.quantity;
+            const priceChanged = newPrice !== '' && newPrice !== item.unitPrice;
+            const totalPriceChanged = newTotalPrice !== '' && newTotalPrice !== item.totalPrice;
+    
+            let finalQuantity = item.quantity;
+            let finalUnitPrice = item.unitPrice;
+    
+            if (totalPriceChanged && newTotalPrice !== '') {
+                finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
+                if (finalQuantity > 0) {
+                    finalUnitPrice = Math.round(newTotalPrice / finalQuantity);
+                }
+                onUpdate(index, 'totalPrice', newTotalPrice);
+                onUpdate(index, 'unitPrice', finalUnitPrice);
+                if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
+            } else if (quantityChanged || priceChanged) {
+                finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
+                finalUnitPrice = priceChanged && newPrice !== '' ? newPrice : item.unitPrice;
+                const finalTotalPrice = finalQuantity * finalUnitPrice;
+                
+                if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
+                if (priceChanged) onUpdate(index, 'unitPrice', finalUnitPrice);
+                onUpdate(index, 'totalPrice', finalTotalPrice);
+            }
+        }, 2000); // 2-second delay
+
+        // Cleanup function to cancel the timeout if the user keeps typing
+        return () => {
+            clearTimeout(handler);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [localQuantity, localPrice, localTotalPrice]);
+    
 
     const handleHeaderMouseDown = (e: React.MouseEvent) => {
         isDraggingRef.current = false;
@@ -262,28 +271,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <div className="p-3 pt-0 relative">
-                        <AnimatePresence>
-                         {hasLocalChanges && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                className="absolute top-2 left-2 z-10"
-                            >
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button size="icon" className="h-9 w-9 rounded-full bg-green-600 hover:bg-green-700 shadow-lg" onClick={handleUpdateClick}>
-                                            <Check className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>به‌روزرسانی آیتم</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </motion.div>
-                        )}
-                        </AnimatePresence>
-                        <div className={cn("pl-12 grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
+                        <div className={cn("grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                 <Input type="text" id={`quantity-${index}`} value={localQuantity} onChange={(e) => setLocalQuantity(e.target.value)} placeholder="مقدار" className="h-9 font-mono" />
@@ -312,118 +300,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
         </Collapsible>
     );
 }
-
-const AddProductsComponent = React.memo(({
-    storeId,
-    setStoreId,
-    stores,
-    subCategories,
-    selectedSubCategoryId,
-    setSelectedSubCategoryId,
-    productSearch,
-    setProductSearch,
-    filteredProducts,
-    invoiceItems,
-    handleAddProduct,
-}: {
-    storeId: string;
-    setStoreId: (id: string) => void;
-    stores: Store[];
-    subCategories: Category[];
-    selectedSubCategoryId: string;
-    setSelectedSubCategoryId: (id: string) => void;
-    productSearch: string;
-    setProductSearch: (term: string) => void;
-    filteredProducts: Product[];
-    invoiceItems: InvoiceItem[];
-    handleAddProduct: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
-}) => {
-    const draggableScrollRef = useRef<HTMLDivElement>(null);
-    useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
-
-    return (
-        <Card className="sticky top-20">
-            <CardHeader>
-                <CardTitle>افزودن محصولات</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-            <div className="grid grid-cols-1 gap-4">
-                <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
-                    <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
-                    <SelectContent>
-                    {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
-                    </SelectContent>
-                </Select>
-                <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
-                    <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">همه زیردسته‌ها</SelectItem>
-                        {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-                    </SelectContent>
-                </Select>
-                <div className="relative">
-                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    {productSearch && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                                onClick={() => setProductSearch('')}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        )}
-                    <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                </div>
-            </div>
-                
-                <div
-                    ref={draggableScrollRef}
-                    className="overflow-x-auto cursor-grab active:cursor-grabbing"
-                >
-                    <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
-                        {filteredProducts.length > 0 ? (filteredProducts).map(product => {
-                            const invoiceItem = invoiceItems?.find(item => item.productId === product.id);
-                            const isInInvoice = !!invoiceItem;
-
-                            return (
-                            <div key={product.id} className="group flex flex-col">
-                                <Card className="overflow-hidden">
-                                    <div className="relative aspect-square w-full">
-                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
-                                                <PlusCircle className="h-6 w-6" />
-                                            </motion.button>
-                                        </div>
-                                        {isInInvoice && (
-                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
-                                            {invoiceItem?.quantity}
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </Card>
-                                <div className="p-1.5 text-center">
-                                    <p className="text-xs font-semibold truncate">{product.name}</p>
-                                    <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
-                                </div>
-                            </div>
-                            )
-                        }) : (
-                            <div className="col-span-full row-span-2 text-center py-10 text-muted-foreground flex items-center justify-center w-full">
-                                محصولی یافت نشد.
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-        </CardContent>
-        </Card>
-    );
-});
-AddProductsComponent.displayName = 'AddProductsComponent';
-
 
 export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
@@ -622,15 +498,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
     setInvoice(currentInvoice => {
       const items = currentInvoice.items ? [...currentInvoice.items] : [];
-      // Find item with same product ID AND same unit
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       if (existingItemIndex > -1) {
-        // If product already exists, increment quantity
         items[existingItemIndex].quantity += 1;
         items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
       } else {
-        // Add new product to the beginning of the list
         items.unshift({
           productId: product.id,
           productName: product.name,
@@ -798,6 +671,117 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       setCustomerSearch('');
     }
   };
+
+  const AddProductsComponent = React.memo(({
+      storeId,
+      setStoreId,
+      stores,
+      subCategories,
+      selectedSubCategoryId,
+      setSelectedSubCategoryId,
+      productSearch,
+      setProductSearch,
+      filteredProducts,
+      invoiceItems,
+      handleAddProduct,
+  }: {
+      storeId: string;
+      setStoreId: (id: string) => void;
+      stores: Store[];
+      subCategories: Category[];
+      selectedSubCategoryId: string;
+      setSelectedSubCategoryId: (id: string) => void;
+      productSearch: string;
+      setProductSearch: (term: string) => void;
+      filteredProducts: Product[];
+      invoiceItems: InvoiceItem[];
+      handleAddProduct: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
+  }) => {
+      const draggableScrollRef = useRef<HTMLDivElement>(null);
+      useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
+  
+      return (
+          <Card className="sticky top-20">
+              <CardHeader>
+                  <CardTitle>افزودن محصولات</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+              <div className="grid grid-cols-1 gap-4">
+                  <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
+                      <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
+                      <SelectContent>
+                      {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                      </SelectContent>
+                  </Select>
+                  <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
+                      <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">همه زیردسته‌ها</SelectItem>
+                          {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                      </SelectContent>
+                  </Select>
+                  <div className="relative">
+                      <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      {productSearch && (
+                              <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                  onClick={() => setProductSearch('')}
+                              >
+                                  <X className="h-4 w-4" />
+                              </Button>
+                          )}
+                      <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                  </div>
+              </div>
+                  
+                  <div
+                      ref={draggableScrollRef}
+                      className="overflow-x-auto cursor-grab active:cursor-grabbing"
+                  >
+                      <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
+                          {filteredProducts.length > 0 ? (filteredProducts).map(product => {
+                              const invoiceItem = invoiceItems?.find(item => item.productId === product.id);
+                              const isInInvoice = !!invoiceItem;
+  
+                              return (
+                              <div key={product.id} className="group flex flex-col">
+                                  <Card className="overflow-hidden">
+                                      <div className="relative aspect-square w-full">
+                                          <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                              <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
+                                                  <PlusCircle className="h-6 w-6" />
+                                              </motion.button>
+                                          </div>
+                                          {isInInvoice && (
+                                              <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
+                                              {invoiceItem?.quantity}
+                                              </Badge>
+                                          )}
+                                      </div>
+                                  </Card>
+                                  <div className="p-1.5 text-center">
+                                      <p className="text-xs font-semibold truncate">{product.name}</p>
+                                      <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
+                                  </div>
+                              </div>
+                              )
+                          }) : (
+                              <div className="col-span-full row-span-2 text-center py-10 text-muted-foreground flex items-center justify-center w-full">
+                                  محصولی یافت نشد.
+                              </div>
+                          )}
+                      </div>
+                  </div>
+                  
+          </CardContent>
+          </Card>
+      );
+  });
+  AddProductsComponent.displayName = 'AddProductsComponent';
 
 
    return (
@@ -1123,15 +1107,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-
-
-    
-    
-
-    
-
-
-
-
-    

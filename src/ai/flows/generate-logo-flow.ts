@@ -36,24 +36,16 @@ const generateLogoFlow = ai.defineFlow(
   },
   async (input) => {
     
-    try {
-      // Append strict logo-specific keywords to the incoming prompt
-      const finalPrompt = `${input.prompt}, logo, minimalist, vector, flat icon, 2d, isolated on white background, simple. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.`;
+    // Append strict logo-specific keywords to the incoming prompt
+    const finalPrompt = `${input.prompt}, logo, minimalist, vector, flat icon, 2d, isolated on white background, simple. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.`;
 
-      const { media } = await ai.generate({
-          model: 'googleai/imagen-4.0-fast-generate-001',
-          prompt: finalPrompt,
-      });
+    const { media } = await ai.generate({
+        model: 'googleai/imagen-4.0-fast-generate-001',
+        prompt: finalPrompt,
+    });
 
-      if (media && media.url) {
-          return { imageUrl: media.url };
-      }
-
-    } catch (error) {
-      console.warn("AI logo generation failed, falling back to placeholder.", error);
-      // Fallback to a unique picsum placeholder if AI generation fails
-      const seed = encodeURIComponent(`${input.storeName}-${Date.now()}`);
-      return { imageUrl: `https://picsum.photos/seed/${seed}/110/110` };
+    if (media && media.url) {
+        return { imageUrl: media.url };
     }
 
     return {};

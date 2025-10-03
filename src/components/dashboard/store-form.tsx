@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -31,6 +31,9 @@ import {
 import { useData } from '@/context/data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { FloatingToolbar } from './floating-toolbar';
+import { Textarea } from '../ui/textarea';
+import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-flow';
+import { cn } from '@/lib/utils';
 
 
 type StoreFormProps = {
@@ -48,6 +51,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const { stores, categories, products } = data;
   
   const [name, setName] = useState(store?.name || '');
+  const [description, setDescription] = useState(store?.description || '');
   const [address, setAddress] = useState(store?.address || '');
   const [phone, setPhone] = useState(store?.phone || '');
   const [logoUrl, setLogoUrl] = useState<string | null>(store?.logoUrl || null);
@@ -67,6 +71,15 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLogoGenerating, setIsLogoGenerating] = useState(false);
+  
+  const isDuplicateCategory = useMemo(() => {
+    if (!newCategoryName.trim()) return false;
+    return storeCategories.some(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && !c.parentId);
+  }, [newCategoryName, storeCategories]);
+
+  const isCategoryInputEmpty = newCategoryName.trim() === '';
+
 
   useEffect(() => {
     if (store) {
@@ -85,6 +98,34 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     }
   };
 
+  const handleGenerateLogo = async () => {
+      if (!name || !description) {
+          toast({
+              variant: 'destructive',
+              title: 'نام و توضیحات الزامی است',
+              description: 'لطفاً نام و توضیحات فروشگاه را برای تولید لوگو وارد کنید.',
+          });
+          return;
+      }
+
+      setIsLogoGenerating(true);
+      try {
+          const input: GenerateLogoInput = { storeName: name, description };
+          const result = await generateLogo(input);
+          if (result.imageUrl) {
+              setLogoUrl(result.imageUrl);
+              toast({ variant: 'success', title: 'لوگو با موفقیت تولید شد' });
+          } else {
+              throw new Error('Image URL not returned from AI flow.');
+          }
+      } catch (error) {
+          console.error("Error generating logo:", error);
+          toast({ variant: 'destructive', title: 'خطا در تولید لوگو', description: 'لطفاً دوباره تلاش کنید.' });
+      } finally {
+          setIsLogoGenerating(false);
+      }
+  };
+
   const handleSaveAll = () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
@@ -98,6 +139,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     const newOrUpdatedStore: Store = {
       id: storeId,
       name,
+      description,
       address,
       phone,
       logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
@@ -144,7 +186,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   
   // Category Handlers
   const handleAddCategory = () => {
-    if (!newCategoryName.trim()) return;
+    if (!newCategoryName.trim() || isDuplicateCategory) return;
     const newCat: Category = {
       id: `cat-${Math.random().toString(36).substr(2, 9)}`,
       name: newCategoryName.trim(),
@@ -279,6 +321,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     </div>
                 </div>
                 <div className="grid gap-3">
+                    <Label htmlFor="store-description">توضیحات فروشگاه</Label>
+                    <Textarea id="store-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="توضیح مختصری درباره زمینه فعالیت فروشگاه..." />
+                </div>
+                <div className="grid gap-3">
                     <Label htmlFor="store-address">آدرس</Label>
                     <Input id="store-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="مثال: میدان ولیعصر، برج فناوری" />
                 </div>
@@ -286,13 +332,28 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     <div className="grid gap-4">
                         <Label>لوگوی فروشگاه</Label>
                         <div className='flex items-start gap-6'>
-                          {logoUrl ? (
-                            <div className="relative w-24 h-24">
-                              <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2" key={logoUrl} unoptimized />
-                            </div>
-                          ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                                  <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
-                              </div>}
+                          <div className="relative w-24 h-24">
+                              {logoUrl ? (
+                                <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2 bg-white" key={logoUrl} unoptimized />
+                              ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                                      <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                                  </div>}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        className="absolute -bottom-2 -left-2 h-8 w-8 rounded-full bg-background"
+                                        onClick={handleGenerateLogo}
+                                        disabled={isLogoGenerating}
+                                    >
+                                        {isLogoGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>تولید لوگو با هوش مصنوعی</p></TooltipContent>
+                              </Tooltip>
+                          </div>
 
                           <div className='flex-1 grid gap-4'>
                               <div className="flex items-center justify-center w-full">
@@ -326,8 +387,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <Label htmlFor="bank-name">نام بانک</Label>
                         <Input id="bank-name" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="مثال: بانک سامان" />
                     </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-3">
                         <Label htmlFor="bank-account-number">شماره حساب</Label>
                         <Input id="bank-account-number" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} placeholder="اختیاری" />
@@ -350,9 +409,25 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 <CardDescription>دسته‌ها و زیردسته‌های محصولات این فروشگاه را تعریف کنید.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-                <div className="flex gap-2">
-                    <Input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="نام دسته اصلی جدید..." />
-                    <Button onClick={handleAddCategory}><PlusCircle className="ml-2 h-4 w-4" /> افزودن دسته</Button>
+                <div className="relative">
+                    <Input 
+                        value={newCategoryName} 
+                        onChange={(e) => setNewCategoryName(e.target.value)} 
+                        placeholder="نام دسته اصلی جدید..."
+                        className="pl-24"
+                    />
+                    <Button 
+                        onClick={handleAddCategory}
+                        disabled={isCategoryInputEmpty || isDuplicateCategory}
+                        className={cn(
+                            "absolute left-1 top-1/2 -translate-y-1/2 h-8 w-20",
+                            isCategoryInputEmpty && "bg-muted-foreground",
+                            !isCategoryInputEmpty && !isDuplicateCategory && "bg-green-600 hover:bg-green-700",
+                            isDuplicateCategory && "bg-red-600 hover:bg-red-700"
+                        )}
+                    >
+                        {isCategoryInputEmpty ? 'افزودن' : (isDuplicateCategory ? 'تکراری' : 'افزودن')}
+                    </Button>
                 </div>
                 <Separator />
                 <div className="grid gap-4">

@@ -12,6 +12,7 @@ export type Customer = {
 export type Store = {
   id: string;
   name: string;
+  description?: string;
   address?: string;
   phone?: string;
   logoUrl?: string;

@@ -226,54 +226,6 @@ export default function SettingsPage() {
             </CardContent>
         </Card>
         
-        <Card>
-            <CardHeader>
-            <CardTitle>مدیریت واحدها</CardTitle>
-            <CardDescription>
-                واحدهای اندازه‌گیری قابل استفاده در فاکتورها را مدیریت کنید.
-            </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-1.5 mb-4">
-                  <Label htmlFor="new-unit-name">نام واحد جدید</Label>
-                  <div className="relative">
-                       <Input
-                          id="new-unit-name"
-                          placeholder="مثال: کارتن"
-                          value={newUnitName}
-                          onChange={(e) => setNewUnitName(e.target.value)}
-                          onKeyDown={handleUnitKeyDown}
-                          className="pl-24"
-                      />
-                      <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleAddUnit}
-                          disabled={isInputEmpty || isDuplicate}
-                          className={cn(
-                              "absolute left-1 top-1/2 -translate-y-1/2 h-7 w-20 text-white",
-                              isInputEmpty && "bg-gray-400 opacity-50",
-                              !isInputEmpty && !isDuplicate && "bg-green-500 hover:bg-green-600",
-                              isDuplicate && "bg-red-500 hover:bg-red-600"
-                          )}
-                      >
-                          {isDuplicate ? 'تکراری' : 'افزودن'}
-                      </Button>
-                  </div>
-              </div>
-            <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
-                {units.length > 0 ? units.map(unit => (
-                    <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
-                        <span>{unit.name}</span>
-                        <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
-                            <X className="h-3 w-3" />
-                        </button>
-                    </Badge>
-                )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
-            </div>
-            </CardContent>
-        </Card>
       </div>
       
       <Card>

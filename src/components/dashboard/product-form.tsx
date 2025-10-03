@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -47,6 +47,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { FloatingToolbar } from './floating-toolbar';
+import { Badge } from '../ui/badge';
 
 
 type ProductFormProps = {
@@ -109,6 +110,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const availableSubCategories = categories ? categories.filter(c => c.storeId === storeId && c.parentId) : [];
   
+  const [newUnitName, setNewUnitName] = useState('');
+  const isDuplicate = newUnitName.trim() !== '' && unitsOfMeasurement.some(u => u.name === newUnitName.trim());
   
   // Calculate sub-unit price from main price
   useEffect(() => {
@@ -293,6 +296,25 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     onSave();
   };
 
+  const handleAddUnit = () => {
+    const name = newUnitName.trim();
+    if (name === '' || isDuplicate) {
+        return;
+    }
+    setData({...data, units: [...unitsOfMeasurement, { name, defaultQuantity: 1 }]});
+    setNewUnitName('');
+  };
+
+  const handleUnitKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleAddUnit();
+    }
+  };
+
+  const handleDeleteUnit = (unitNameToDelete: string) => {
+    setData({...data, units: unitsOfMeasurement.filter(u => u.name !== unitNameToDelete)});
+  };
 
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
 
@@ -515,6 +537,50 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>مدیریت واحدها</CardTitle>
+                            <CardDescription>
+                                واحدهای اندازه‌گیری جدید اضافه کنید.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid gap-1.5 mb-4">
+                              <Label htmlFor="new-unit-name">نام واحد جدید</Label>
+                              <div className="flex items-center gap-2">
+                                   <Input
+                                      id="new-unit-name"
+                                      placeholder="مثال: کارتن"
+                                      value={newUnitName}
+                                      onChange={(e) => setNewUnitName(e.target.value)}
+                                      onKeyDown={handleUnitKeyDown}
+                                  />
+                                  <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={handleAddUnit}
+                                      disabled={newUnitName.trim() === '' || isDuplicate}
+                                  >
+                                      <PlusCircle className="h-4 w-4" />
+                                  </Button>
+                              </div>
+                               {isDuplicate && <p className="text-xs text-destructive">این واحد قبلاً اضافه شده است.</p>}
+                          </div>
+                        <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
+                            {unitsOfMeasurement.length > 0 ? unitsOfMeasurement.map(unit => (
+                                <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
+                                    <span>{unit.name}</span>
+                                    <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
+                        </div>
+                        </CardContent>
+                    </Card>
+
                 </div>
             </div>
         </div>

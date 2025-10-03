@@ -197,7 +197,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </Tooltip>
         </FloatingToolbar>
 
-        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black" id="invoice-card">
+        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card">
           <header className="flex justify-between items-start gap-4 mb-4">
               <div className="flex items-center justify-center w-1/6">
                   {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}

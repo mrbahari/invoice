@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Waves, Square, Layers, CheckCircle2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { MaterialResult } from '../estimators-page';
 import { cn } from '@/lib/utils';
 
@@ -26,8 +25,6 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
   const [height, setHeight] = useState<number | ''>('');
   const [wallType, setWallType] = useState<WallType>('partition');
   const [includeWool, setIncludeWool] = useState(true);
-
-  const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -93,7 +90,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) {
-      toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا ابعاد دیوار را وارد کرده و مصالح را محاسبه کنید.'});
+      // You can show a toast or message here
       return;
     }
     const typeText = wallType === 'partition' ? 'جداکننده' : 'پوششی';

@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { MaterialResult } from '../estimators-page';
 
 type GridCeilingFormProps = {
@@ -20,7 +19,6 @@ type GridCeilingFormProps = {
 export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
-  const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -69,7 +67,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) {
-      toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا ابعاد را وارد کرده و مصالح را محاسبه کنید.'});
+      // You can add a toast message here
       return;
     }
     const description = `سقف مشبک: ${length} * ${width} متر`;

@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { MaterialResult } from '../estimators-page';
 
 type BoxCeilingFormProps = {
@@ -19,7 +18,6 @@ type BoxCeilingFormProps = {
 
 export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
-  const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -52,7 +50,8 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) {
-      toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا طول باکس را وارد کرده و مصالح را محاسبه کنید.'});
+      // You can show a toast or message here if you have a toast system
+      console.error("No results to add.");
       return;
     }
     const description = `باکس و نورمخفی: ${length} متر`;

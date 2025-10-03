@@ -21,6 +21,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { FloatingToolbar } from './floating-toolbar';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
 export interface MaterialResult {
@@ -240,12 +242,18 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         exit={{ opacity: 0, x: -50 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <div className="flex items-center mb-4">
-                            <Button variant="ghost" size="sm" onClick={handleBackToList} className="flex items-center gap-2">
-                                <ArrowRight className="h-4 w-4" />
-                                <span>بازگشت</span>
-                            </Button>
-                        </div>
+                         <TooltipProvider>
+                            <FloatingToolbar>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={handleBackToList} className="flex items-center gap-2 w-12 h-12 text-muted-foreground">
+                                            <ArrowRight className="h-5 w-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                                </Tooltip>
+                            </FloatingToolbar>
+                         </TooltipProvider>
                         <ActiveForm onAddToList={handleAddToList} onBack={handleBackToList} />
                     </motion.div>
                 ) : (

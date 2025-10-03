@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import type { MaterialResult } from '../estimators-page';
 
 type FlatCeilingFormProps = {
@@ -19,7 +18,6 @@ type FlatCeilingFormProps = {
 export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
-  const { toast } = useToast();
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -78,7 +76,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) {
-      toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا ابعاد را وارد کرده و مصالح را محاسبه کنید.'});
+      // You can show a toast or message here
       return;
     }
     const description = `سقف فلت: ${length} * ${width} متر`;

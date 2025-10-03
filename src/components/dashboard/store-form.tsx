@@ -33,6 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FloatingToolbar } from './floating-toolbar';
 import { Textarea } from '../ui/textarea';
 import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-flow';
+import { generateLogoPrompts, type GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts';
 import { cn } from '@/lib/utils';
 
 
@@ -73,6 +74,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLogoGenerating, setIsLogoGenerating] = useState(false);
   
+  // State for AI logo prompts
+  const [logoPrompts, setLogoPrompts] = useState<string[]>([]);
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+
   const isDuplicateCategory = useMemo(() => {
     if (!newCategoryName.trim()) return false;
     return storeCategories.some(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && !c.parentId);
@@ -110,16 +115,33 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
       setIsLogoGenerating(true);
       try {
-          const input: GenerateLogoInput = { storeName: name, description };
-          const result = await generateLogo(input);
+          let promptsToUse = logoPrompts;
+          // Step 1: Generate prompts if they don't exist
+          if (promptsToUse.length === 0) {
+              const promptsInput: GenerateLogoPromptsInput = { storeName: name, description };
+              const promptsResult = await generateLogoPrompts(promptsInput);
+              promptsToUse = promptsResult.prompts;
+              setLogoPrompts(promptsToUse);
+              setCurrentPromptIndex(0); // Reset index
+          }
+          
+          // Step 2: Use the current prompt to generate the logo
+          const prompt = promptsToUse[currentPromptIndex];
+          const logoInput: GenerateLogoInput = { prompt, storeName: name };
+          const result = await generateLogo(logoInput);
+
           if (result.imageUrl) {
               setLogoUrl(result.imageUrl);
-              toast({ variant: 'success', title: 'لوگو با موفقیت تولید شد' });
+              toast({ variant: 'success', title: `لوگو با ایده شماره ${currentPromptIndex + 1} تولید شد` });
           } else {
               throw new Error('Image URL not returned from AI flow.');
           }
+
+          // Step 3: Cycle to the next prompt for the next click
+          setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % promptsToUse.length);
+
       } catch (error) {
-          console.error("Error generating logo:", error);
+          console.error("Error during logo generation process:", error);
           toast({ variant: 'destructive', title: 'خطا در تولید لوگو', description: 'لطفاً دوباره تلاش کنید.' });
       } finally {
           setIsLogoGenerating(false);

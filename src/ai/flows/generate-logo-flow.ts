@@ -2,7 +2,7 @@
 /**
  * @fileOverview Generates a logo for a store using AI.
  *
- * - generateLogo - A function that generates a logo based on store name and description.
+ * - generateLogo - A function that generates a logo based on a given prompt.
  * - GenerateLogoInput - The input type for the generateLogo function.
  * - GenerateLogoOutput - The return type for the generateLogo function.
  */
@@ -11,8 +11,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const GenerateLogoInputSchema = z.object({
-  storeName: z.string().describe('The name of the store or company.'),
-  description: z.string().describe('A brief description of what the store sells or does.'),
+  prompt: z.string().describe('The detailed prompt to use for generating the logo.'),
+  storeName: z.string().describe('The name of the store (for fallback).'),
 });
 export type GenerateLogoInput = z.infer<typeof GenerateLogoInputSchema>;
 
@@ -39,7 +39,7 @@ const generateLogoFlow = ai.defineFlow(
     try {
       const { media } = await ai.generate({
           model: 'googleai/imagen-4.0-fast-generate-001',
-          prompt: `یک لوگوی مدرن، ساده و مینیمال برای یک فروشگاه با نام «${input.storeName}» طراحی کن. توضیحات فروشگاه: «${input.description}». لوگو باید حرفه‌ای، تمیز و مناسب برای استفاده در وب‌سایت باشد. از پس‌زمینه سفید استفاده کن و هیچ متنی به لوگو اضافه نکن.`,
+          prompt: input.prompt,
       });
       if (media && media.url) {
           return { imageUrl: media.url };
@@ -47,7 +47,7 @@ const generateLogoFlow = ai.defineFlow(
     } catch (error) {
       console.warn("AI logo generation failed.", error);
       // Fallback to picsum if AI generation fails
-      const seed = encodeURIComponent(`${input.storeName} ${input.description}`);
+      const seed = encodeURIComponent(input.storeName);
       return { imageUrl: `https://picsum.photos/seed/${seed}/110/110` };
     }
 

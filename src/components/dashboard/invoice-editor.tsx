@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -310,6 +309,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | 'all'>('all');
+  const [showAddCustomerButton, setShowAddCustomerButton] = useState(false);
 
 
   // When customer changes, update invoice details
@@ -384,6 +384,17 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     if (!customerList) return [];
     return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
+
+  // Logic for showing the "Add Customer" button
+  useEffect(() => {
+    const isPhoneNumber = /^\d{11}$/.test(customerSearch);
+    if (isPhoneNumber && filteredCustomers.length === 0) {
+      setShowAddCustomerButton(true);
+    } else {
+      setShowAddCustomerButton(false);
+    }
+  }, [customerSearch, filteredCustomers]);
+
   
  const handleAddProduct = (product: Product, e: React.MouseEvent<HTMLButtonElement>) => {
     const buttonEl = e.currentTarget;
@@ -450,7 +461,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 productName: newProduct.name,
                 unit: newProduct.unit,
                 unitPrice: newProduct.price,
-                totalPrice: oldItem.quantity * newProduct.price,
+                totalPrice: oldItem.quantity * oldItem.unitPrice,
             };
         }
         return { ...prev, items: newItems };
@@ -564,7 +575,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   };
 
   const handleAddNewCustomer = async () => {
-    if (!customerSearch.trim()) return;
+    if (!/^\d{11}$/.test(customerSearch)) return;
 
     const newCustomerData: Omit<Customer, 'id'> = {
       name: `مشتری جدید`,
@@ -796,7 +807,28 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                     <div className="grid gap-4">
                                         <div className="relative flex items-center">
                                             <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                            <Input placeholder="جستجوی مشتری با نام یا شماره..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                                            <Input
+                                                placeholder="جستجوی مشتری با نام یا شماره..."
+                                                className="pr-8"
+                                                value={customerSearch}
+                                                onChange={e => {
+                                                    const value = e.target.value.replace(/[^0-9]/g, '');
+                                                    if (value.length <= 11) {
+                                                        setCustomerSearch(value);
+                                                    }
+                                                }}
+                                                maxLength={11}
+                                            />
+                                            {showAddCustomerButton && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleAddNewCustomer}
+                                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-20 bg-green-500 text-white hover:bg-green-600"
+                                                >
+                                                    افزودن
+                                                </Button>
+                                            )}
                                         </div>
                                         <ScrollArea className="h-[40vh] border rounded-md">
                                             <div className="p-2 grid gap-1">
@@ -825,12 +857,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 )) : (
                                                     <div className="text-center py-10 text-sm text-muted-foreground">
                                                         <p>مشتری‌ای یافت نشد.</p>
-                                                         {customerSearch.trim().length > 5 && !isNaN(Number(customerSearch.trim())) && (
-                                                            <Button variant="ghost" onClick={handleAddNewCustomer} className="mt-2 text-white bg-green-600 hover:bg-green-700">
-                                                                <PlusCircle className='ml-2 h-4 w-4' />
-                                                                افزودن مشتری با شماره {customerSearch}
-                                                            </Button>
-                                                        )}
                                                     </div>
                                                 )}
                                             </div>

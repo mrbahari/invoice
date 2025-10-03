@@ -47,7 +47,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-white bg-opacity-95 px-4 sm:px-6 no-print dark:bg-zinc-900/90">
+      <header className="sticky top-0 z-30 flex items-center gap-4 border-b bg-white bg-opacity-95 px-4 py-1 sm:px-6 no-print dark:bg-zinc-900/90">
         
          <div className="ml-auto flex items-center justify-center">
           <LiveClock />

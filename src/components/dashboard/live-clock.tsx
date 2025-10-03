@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,13 +23,13 @@ export function LiveClock() {
   }, []);
 
   return (
-    <div className="flex items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
+    <div className="flex items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
             <span>{currentDateTime.date}</span>
         </div>
-         <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
+         <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
             <span>{currentDateTime.time}</span>
         </div>
     </div>

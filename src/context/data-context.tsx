@@ -52,19 +52,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
           const parsedData = JSON.parse(storedData);
-           // Ensure toolbarPosition exists
+           // Ensure toolbarPosition exists for older data formats
           if (!parsedData.toolbarPosition) {
             parsedData.toolbarPosition = defaultData.toolbarPosition;
           }
           setData(parsedData);
         } else {
-          // If no data in local storage, use the imported default data
+          // If no data is in local storage (first run on a device),
+          // use the imported default data and save it.
           setData(defaultData);
-           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
         }
       } catch (error) {
         console.error("Could not load initial data:", error);
-        // Fallback to imported default data on error
+        // Fallback to imported default data on any error
         setData(defaultData);
       } finally {
         setIsInitialized(true);
@@ -80,6 +81,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
       } catch (error) {
         console.error("Failed to save data to localStorage:", error);
+        // This might happen if storage is full. Consider notifying the user.
         console.error("Failed to save data, not enough space.");
       }
     }

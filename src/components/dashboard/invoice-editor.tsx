@@ -609,7 +609,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [customerSearch, filteredCustomers]);
 
   
- const handleAddProduct = useCallback((product: Product, e: React.MouseEvent<HTMLButtonElement>) => {
+ const handleAddProduct = (product: Product, e: React.MouseEvent<HTMLButtonElement>) => {
     const buttonEl = e.currentTarget;
     const rect = buttonEl.getBoundingClientRect();
     
@@ -620,8 +620,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         imageUrl: product.imageUrl
     });
 
-    setInvoice(prev => {
-      const items = prev.items ? [...prev.items] : [];
+    setInvoice(currentInvoice => {
+      const items = currentInvoice.items ? [...currentInvoice.items] : [];
       // Find item with same product ID AND same unit
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
@@ -640,9 +640,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           totalPrice: product.price,
         });
       }
-      return {...prev, items};
+      return {...currentInvoice, items};
     });
-  }, []);
+  };
 
   const handleItemChange = useCallback((index: number, field: keyof InvoiceItem, value: any) => {
     setInvoice(prev => {
@@ -1132,3 +1132,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
 
+
+
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -193,32 +194,32 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
          <FloatingToolbar pageKey="invoice-preview">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={onBack}>
-                        <ArrowRight className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={onBack}>
+                        <ArrowRight className="h-4 w-4" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>بازگشت</p></TooltipContent>
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>
-                        <Pencil className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={() => onEdit(invoiceId)}>
+                        <Pencil className="h-4 w-4" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ویرایش</p></TooltipContent>
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleCopyLink}>
-                        <Copy className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={handleCopyLink}>
+                        <Copy className="h-4 w-4" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>کپی لینک</p></TooltipContent>
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleDownloadImage}>
-                        <Camera className="h-5 w-5" />
+                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={handleDownloadImage}>
+                        <Camera className="h-4 w-4" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>دانلود عکس</p></TooltipContent>
@@ -323,5 +324,3 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     </TooltipProvider>
   );
 }
-
-    

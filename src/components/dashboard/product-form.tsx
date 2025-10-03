@@ -307,9 +307,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         variant="ghost" 
                         size="icon" 
                         onClick={onCancel}
-                        className="text-muted-foreground w-12 h-12"
+                        className="text-muted-foreground w-8 h-8"
                       >
-                        <ArrowRight className="h-5 w-5" />
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -323,9 +323,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                   variant="ghost" 
                                   size="icon" 
                                   disabled={isProcessing} 
-                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12"
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
                                 >
-                                    <Trash2 className="h-5 w-5" />
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>حذف محصول</p></TooltipContent>
@@ -343,15 +343,15 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               {isEditMode && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-12 h-12">
-                        <Copy className="h-5 w-5" />
+                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
+                        <Copy className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
                 </Tooltip>
               )}
           </div>
-          <Separator orientation="vertical" className="h-8" />
+          <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center gap-1">
               <Tooltip>
                   <TooltipTrigger asChild>
@@ -360,9 +360,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         disabled={isProcessing}
                         variant="ghost" 
                         size="icon"
-                        className="w-14 h-14 bg-green-600 text-white hover:bg-green-700"
+                        className="w-10 h-10 bg-green-600 text-white hover:bg-green-700"
                       >
-                          <Save className="h-6 w-6" />
+                          <Save className="h-5 w-5" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}</p></TooltipContent>

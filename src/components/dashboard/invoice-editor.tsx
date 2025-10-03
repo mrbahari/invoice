@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -896,8 +897,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-12 h-12">
-                        <ArrowRight className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                        <ArrowRight className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت</p></TooltipContent>
@@ -907,8 +908,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     <AlertDialogTrigger asChild>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12">
-                                    <Trash2 className="h-5 w-5" />
+                                <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>حذف فاکتور</p></TooltipContent>
@@ -925,18 +926,18 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 )}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={handlePreviewClick} className="w-12 h-12">
-                        <Eye className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={handlePreviewClick} className="w-8 h-8">
+                        <Eye className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
                 </Tooltip>
             </div>
-            <Separator orientation="vertical" className="h-8" />
+            <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAndExit} disabled={isProcessing} variant="ghost" size="icon" className="w-14 h-14 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-6 w-6" />
+                    <Button onClick={handleSaveAndExit} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره تغییرات</p></TooltipContent>

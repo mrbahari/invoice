@@ -169,10 +169,10 @@ export default function InvoicesPage({
                         <TooltipTrigger asChild>
                             <Button
                             size="icon"
-                            className="h-12 w-12 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                            className="h-10 w-10 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
                             onClick={handleCreate}
                             >
-                            <PlusCircle className="h-6 w-6" />
+                            <PlusCircle className="h-5 w-5" />
                             <span className="sr-only">افزودن فاکتور</span>
                             </Button>
                         </TooltipTrigger>

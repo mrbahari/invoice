@@ -277,8 +277,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-12 h-12">
-                            <ArrowRight className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -288,8 +288,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-12 h-12">
-                                        <Trash2 className="h-5 w-5" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
@@ -308,11 +308,11 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     </AlertDialog>
                 )}
             </div>
-            <Separator orientation="vertical" className="h-8" />
+            <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-14 h-14 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-6 w-6" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>
@@ -400,7 +400,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 <CardDescription>این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-3">
                         <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
                         <Input id="bank-account-holder" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="مثال: اسماعیل بهاری" />

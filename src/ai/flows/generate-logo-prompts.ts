@@ -19,8 +19,8 @@ export type GenerateLogoPromptsInput = z.infer<typeof GenerateLogoPromptsInputSc
 const GenerateLogoPromptsOutputSchema = z.object({
   prompts: z
     .array(z.string())
-    .length(4)
-    .describe('An array of exactly 4 creative and distinct prompts for generating a logo.'),
+    .length(5)
+    .describe('An array of exactly 5 creative and distinct prompts for generating a logo.'),
 });
 export type GenerateLogoPromptsOutput = z.infer<typeof GenerateLogoPromptsOutputSchema>;
 
@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
     input: { schema: GenerateLogoPromptsInputSchema },
     output: { schema: GenerateLogoPromptsOutputSchema },
     prompt: `
-    Based on the following store name and description, generate 4 distinct and creative prompts for an AI image generator to create a logo.
+    Based on the following store name and description, generate 5 distinct and creative prompts for an AI image generator to create a logo.
     The prompts should be in English.
     The logo should be modern, symbolic, minimal, and use a vector style. It must NOT contain any text.
     The background must be a solid white color.
@@ -48,6 +48,7 @@ const prompt = ai.definePrompt({
     2. An abstract logo representing [concept from description], with clean lines and a simple, modern design, on a solid white background. No text.
     3. A simple, iconic mark combining [element 1] and [element 2], flat vector style, on a solid white background. No text.
     4. A negative space logo featuring a [main subject] within a [shape], clean and clever design, on a solid white background. No text.
+    5. A geometric logo made of interlocking shapes that form a [symbol related to the store], using a limited color palette, on a solid white background. No text.
     `,
 });
 

@@ -92,12 +92,12 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
       >
         <div
           className={cn(
-            "flex items-center gap-2 p-2 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm",
+            "flex items-center gap-1 p-1 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm",
             className
           )}
         >
-          <div className="drag-handle cursor-move p-2 -ml-2 -my-2 rounded-l-md hover:bg-muted">
-            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          <div className="drag-handle cursor-move p-1 -ml-1 -my-1 rounded-l-md hover:bg-muted">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
           {children}
         </div>

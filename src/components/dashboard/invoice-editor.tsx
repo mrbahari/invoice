@@ -197,7 +197,13 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                         </div>
                                     )}
                                 </div>
-                                <span className="font-semibold truncate">{item.productName}</span>
+                                <div className="flex items-center gap-4">
+                                  <span className="font-semibold truncate">{item.productName}</span>
+                                  <div className="text-right">
+                                      <p className="text-xs font-mono text-muted-foreground">x {item.quantity.toLocaleString('fa-IR')}</p>
+                                      <p className="text-xs font-mono text-muted-foreground">{formatCurrency(item.totalPrice)}</p>
+                                  </div>
+                                </div>
                             </div>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={(e) => { e.stopPropagation(); onRemove(index); }}>
@@ -1084,3 +1090,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 }
 
 
+
+    

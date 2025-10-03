@@ -832,37 +832,35 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 </Button>
                                             )}
                                         </div>
-                                        <ScrollArea className="h-[40vh] border rounded-md">
-                                            <div className="p-2 grid grid-cols-2 gap-1">
-                                                {filteredCustomers.length > 0 ? (filteredCustomers || []).map(customer => (
-                                                    <Button
-                                                        key={customer.id}
-                                                        variant={'ghost'}
-                                                        className="h-16 justify-start text-right"
-                                                        onClick={() => {
-                                                            setSelectedCustomer(customer);
-                                                            setIsCustomerSelectorOpen(false);
-                                                            setCustomerSearch('');
-                                                        }}
-                                                    >
-                                                        <div className="flex items-center gap-4 text-right w-full">
-                                                            <Avatar className="h-10 w-10 border">
-                                                                <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                                <AvatarFallback>{customer.name[0]}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <p className='text-base font-semibold'>{customer.phone}</p>
-                                                                <p className="text-xs text-muted-foreground">{customer.name}</p>
-                                                            </div>
+                                        <div className="border rounded-md p-2 grid grid-cols-2 md:grid-cols-4 gap-1">
+                                            {filteredCustomers.length > 0 ? (filteredCustomers || []).slice(0, 8).map(customer => (
+                                                <Button
+                                                    key={customer.id}
+                                                    variant={'ghost'}
+                                                    className="h-16 justify-start text-right"
+                                                    onClick={() => {
+                                                        setSelectedCustomer(customer);
+                                                        setIsCustomerSelectorOpen(false);
+                                                        setCustomerSearch('');
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-4 text-right w-full overflow-hidden">
+                                                        <Avatar className="h-10 w-10 border flex-shrink-0">
+                                                            <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                            <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="overflow-hidden">
+                                                            <p className='text-base font-semibold truncate'>{customer.phone}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{customer.name}</p>
                                                         </div>
-                                                    </Button>
-                                                )) : (
-                                                    <div className="col-span-full text-center py-10 text-sm text-muted-foreground">
-                                                        <p>مشتری‌ای یافت نشد.</p>
                                                     </div>
-                                                )}
-                                            </div>
-                                        </ScrollArea>
+                                                </Button>
+                                            )) : (
+                                                <div className="col-span-full text-center py-10 text-sm text-muted-foreground">
+                                                    <p>مشتری‌ای یافت نشد.</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="pt-4">

@@ -605,12 +605,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       
       let newItems;
       if (existingItemIndex > -1) {
-        // Item exists, update quantity
+        // Item exists, update quantity and ensure all properties are preserved
         newItems = currentItems.map((item, index) => {
           if (index === existingItemIndex) {
             const newQuantity = item.quantity + 1;
             return {
-              ...item, // This preserves all properties, including imageUrl
+              ...item, // Preserve all properties from the existing item
+              imageUrl: item.imageUrl || product.imageUrl, // Ensure imageUrl is kept
               quantity: newQuantity,
               totalPrice: newQuantity * item.unitPrice,
             };
@@ -626,7 +627,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           unit: product.unit,
           unitPrice: product.price,
           totalPrice: product.price,
-          imageUrl: product.imageUrl, // <-- Ensure imageUrl is copied
+          imageUrl: product.imageUrl,
         };
         newItems = [newItem, ...currentItems];
       }

@@ -36,18 +36,25 @@ const generateLogoFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Append strict logo-specific keywords to the incoming prompt
-    const finalPrompt = `${input.prompt}, logo, minimalist, vector, flat icon, 2d, isolated on white background, simple. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.`;
+    try {
+      const finalPrompt = `${input.prompt}, logo, minimalist, vector, flat icon, 2d, isolated on white background, simple. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.`;
 
-    const { media } = await ai.generate({
-        model: 'googleai/imagen-4.0-fast-generate-001',
-        prompt: finalPrompt,
-    });
+      const { media } = await ai.generate({
+          model: 'googleai/imagen-4.0-fast-generate-001',
+          prompt: finalPrompt,
+      });
 
-    if (media && media.url) {
-        return { imageUrl: media.url };
+      if (media && media.url) {
+          return { imageUrl: media.url };
+      }
+      
+    } catch (error) {
+        // This will catch API errors (like billing errors) and prevent the app from crashing.
+        // We return an empty object, and the client will handle the fallback.
+        console.warn("AI logo generation failed:", error);
     }
-
+    
+    // Return empty if generation fails or returns no media
     return {};
   }
 );

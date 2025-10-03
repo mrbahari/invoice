@@ -773,7 +773,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-semibold">{selectedCustomer.phone}</p>
+                                            <p className="font-semibold text-lg">{selectedCustomer.phone}</p>
                                             <p className="text-sm text-muted-foreground">{selectedCustomer.name}</p>
                                         </div>
                                     </div>
@@ -833,7 +833,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             )}
                                         </div>
                                         <ScrollArea className="h-[40vh] border rounded-md">
-                                            <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                                            <div className="p-2 grid grid-cols-2 gap-1">
                                                 {filteredCustomers.length > 0 ? (filteredCustomers || []).map(customer => (
                                                     <Button
                                                         key={customer.id}

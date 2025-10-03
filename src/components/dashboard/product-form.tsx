@@ -57,6 +57,25 @@ type ProductFormProps = {
 
 type AIFeature = 'description' | 'price' | 'image';
 
+const formatNumber = (num: number | ''): string => {
+    if (num === '' || num === null || isNaN(Number(num))) return '';
+    return new Intl.NumberFormat('fa-IR').format(Number(num));
+};
+  
+const parseFormattedNumber = (str: string): number | '' => {
+    if (!str) return '';
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    const englishDigits = '0123456789';
+    let numericString = str;
+    for (let i = 0; i < 10; i++) {
+        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
+    }
+    numericString = numericString.replace(/[^0-9.]/g, ''); // Allow dots for decimals
+    const number = parseFloat(numericString);
+    return isNaN(number) ? '' : number;
+};
+
+
 export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
 
@@ -70,8 +89,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [price, setPrice] = useState<number | ''>(product?.price ?? '');
   const [subUnitPrice, setSubUnitPrice] = useState<number | ''>(product?.subUnitPrice ?? '');
 
-  const [displayPrice, setDisplayPrice] = useState(product?.price ? new Intl.NumberFormat('fa-IR').format(product.price) : '');
-  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(product?.subUnitPrice ? new Intl.NumberFormat('fa-IR').format(product.subUnitPrice) : '');
+  const [displayPrice, setDisplayPrice] = useState(product?.price ? formatNumber(product.price) : '');
+  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(product?.subUnitPrice ? formatNumber(product.subUnitPrice) : '');
   
   const [storeId, setStoreId] = useState(product?.storeId || '');
   const [subCategoryId, setSubCategoryId] = useState(product?.subCategoryId || '');
@@ -90,23 +109,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const availableSubCategories = categories ? categories.filter(c => c.storeId === storeId && c.parentId) : [];
   
-  const formatNumber = (num: number | ''): string => {
-    if (num === '' || num === null || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR').format(Number(num));
-  };
-  
-  const parseFormattedNumber = (str: string): number | '' => {
-    if (!str) return '';
-    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-    const englishDigits = '0123456789';
-    let numericString = str;
-    for (let i = 0; i < 10; i++) {
-        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
-    }
-    numericString = numericString.replace(/[^0-9]/g, '');
-    const number = parseInt(numericString, 10);
-    return isNaN(number) ? '' : number;
-  };
   
   // Calculate sub-unit price from main price
   useEffect(() => {
@@ -126,7 +128,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   // Calculate main price from sub-unit price
   useEffect(() => {
     // This effect should only run if the user changes the sub-unit price directly.
-    // It is commented out to prevent loops but can be re-enabled with guards.
     /*
     const subPriceNum = Number(subUnitPrice);
     const subUnitQtyNum = Number(subUnitQuantity);
@@ -146,14 +147,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setPrice(numericValue);
-    setDisplayPrice(formatNumber(numericValue));
+    setDisplayPrice(value === '' ? '' : formatNumber(numericValue));
   };
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setSubUnitPrice(numericValue);
-    setDisplaySubUnitPrice(formatNumber(numericValue));
+    setDisplaySubUnitPrice(value === '' ? '' : formatNumber(numericValue));
 
     // Also update main price when sub unit price changes
     const subUnitQtyNum = Number(subUnitQuantity);
@@ -166,8 +167,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      const num = parseFloat(value);
-      setSubUnitQuantity(isNaN(num) ? '' : num);
+      const numericValue = parseFormattedNumber(value);
+      setSubUnitQuantity(numericValue);
   };
   
   const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -307,9 +308,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         variant="ghost" 
                         size="icon" 
                         onClick={onCancel}
-                        className="text-muted-foreground w-8 h-8"
+                        className="text-muted-foreground w-10 h-10"
                       >
-                        <ArrowRight className="h-4 w-4" />
+                        <ArrowRight className="h-5 w-5" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -323,9 +324,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                   variant="ghost" 
                                   size="icon" 
                                   disabled={isProcessing} 
-                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10"
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>حذف محصول</p></TooltipContent>
@@ -343,8 +344,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               {isEditMode && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
-                        <Copy className="h-4 w-4" />
+                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-10 h-10">
+                        <Copy className="h-5 w-5" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
@@ -360,9 +361,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         disabled={isProcessing}
                         variant="ghost" 
                         size="icon"
-                        className="w-10 h-10 bg-green-600 text-white hover:bg-green-700"
+                        className="w-12 h-12 bg-green-600 text-white hover:bg-green-700"
                       >
-                          <Save className="h-5 w-5" />
+                          <Save className="h-6 w-6" />
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد محصول'}</p></TooltipContent>
@@ -457,7 +458,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="sub-unit-quantity" className="text-right">مقدار تبدیل</Label>
-                                    <Input id="sub-unit-quantity" type="number" value={subUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} step="0.01" className="col-span-2" />
+                                    <Input id="sub-unit-quantity" type="text" value={formatNumber(subUnitQuantity)} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} className="col-span-2 font-mono" />
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="price" className="text-right">

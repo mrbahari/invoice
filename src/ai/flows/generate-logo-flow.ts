@@ -48,8 +48,8 @@ const generateLogoFlow = ai.defineFlow(
       }
     } catch (error) {
       console.warn("AI logo generation failed.", error);
-      // Fallback to picsum if AI generation fails
-      const seed = encodeURIComponent(input.storeName);
+      // Fallback to picsum if AI generation fails, using a unique seed
+      const seed = encodeURIComponent(`${input.storeName}-${Date.now()}`);
       return { imageUrl: `https://picsum.photos/seed/${seed}/110/110` };
     }
 

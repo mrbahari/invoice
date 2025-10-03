@@ -122,10 +122,10 @@ const parseFormattedNumber = (str: string): number | '' => {
     for (let i = 0; i < 10; i++) {
         numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
     }
-    numericString = numericString.replace(/[^0-9]/g, '');
-    const number = parseInt(numericString, 10);
+    numericString = numericString.replace(/[^0-9.]/g, ''); // Allow decimal points
+    const number = parseFloat(numericString);
     return isNaN(number) ? '' : number;
-  };
+};
 
 
 function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
@@ -244,7 +244,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <div className="grid gap-0.5 overflow-hidden">
                                   <p className="font-semibold truncate">{item.productName}</p>
                                   <p className="text-xs text-muted-foreground font-mono truncate">
-                                    {item.quantity.toLocaleString('fa-IR')} {item.unit} &times; {formatCurrency(item.unitPrice)}
+                                    {formatNumber(item.quantity)} {item.unit} &times; {formatCurrency(item.unitPrice)}
                                   </p>
                                   <p className="text-sm font-semibold font-mono truncate">{formatCurrency(item.totalPrice)}</p>
                                 </div>
@@ -795,7 +795,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   ) => {
     const numericValue = parseFormattedNumber(value);
     setInvoice(prev => ({...prev, [field]: numericValue === '' ? 0 : numericValue}));
-    setter(formatNumber(numericValue));
+    setter(value === '' ? '' : formatNumber(numericValue));
   };
 
   const handleProcessInvoice = (): string | null => {
@@ -897,8 +897,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
-                        <ArrowRight className="h-4 w-4" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
+                        <ArrowRight className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت</p></TooltipContent>
@@ -908,8 +908,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     <AlertDialogTrigger asChild>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
-                                    <Trash2 className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
+                                    <Trash2 className="h-5 w-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>حذف فاکتور</p></TooltipContent>
@@ -926,8 +926,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 )}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={handlePreviewClick} className="w-8 h-8">
-                        <Eye className="h-4 w-4" />
+                        <Button type="button" variant="ghost" size="icon" onClick={handlePreviewClick} className="w-10 h-10">
+                        <Eye className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
@@ -936,8 +936,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
             <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAndExit} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-5 w-5" />
+                    <Button onClick={handleSaveAndExit} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-6 w-6" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره تغییرات</p></TooltipContent>

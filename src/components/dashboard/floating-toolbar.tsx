@@ -96,8 +96,8 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
             className
           )}
         >
-          <div className="drag-handle cursor-move p-1 -ml-1 -my-1 rounded-l-md hover:bg-muted">
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <div className="drag-handle cursor-move p-2 -ml-1 -my-1 rounded-l-md hover:bg-muted">
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
           </div>
           {children}
         </div>

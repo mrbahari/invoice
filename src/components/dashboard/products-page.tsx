@@ -209,9 +209,6 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden w-[100px] sm:table-cell">
-                  <span className="sr-only">تصویر</span>
-                </TableHead>
                 <TableHead>نام</TableHead>
                 <TableHead>زیردسته</TableHead>
                 <TableHead className="hidden md:table-cell">توضیحات</TableHead>
@@ -231,17 +228,19 @@ export default function ProductsPage() {
                         : 'hover:bg-muted/50'
                     )}
                   >
-                    <TableCell className="hidden sm:table-cell">
-                      <Image
-                        alt={product.name}
-                        className="aspect-square rounded-md object-cover"
-                        height="64"
-                        src={product.imageUrl}
-                        width="64"
-                        data-ai-hint="product image"
-                      />
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Image
+                          alt={product.name}
+                          className="aspect-square rounded-md object-cover"
+                          height="40"
+                          src={product.imageUrl}
+                          width="40"
+                          data-ai-hint="product image"
+                        />
+                        <span>{product.name}</span>
+                      </div>
                     </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
                         {getCategoryName(product.subCategoryId)}
@@ -257,7 +256,7 @@ export default function ProductsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     هیچ محصولی یافت نشد.
                   </TableCell>
                 </TableRow>

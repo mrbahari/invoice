@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft, ChevronsUpDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
@@ -17,6 +17,11 @@ import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 
 export interface MaterialResult {
@@ -261,7 +266,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 </CardDescription>
                             </CardHeader>
                         </Card>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                             {estimatorTypes.map((estimator) => (
                                 <Card 
                                     key={estimator.id}
@@ -314,19 +319,48 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                             <CardContent>
                                 <div className='mb-4 space-y-2'>
                                 {estimationList.map(item => (
-                                    <div key={item.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                                        <p className="text-sm font-medium">{item.description}</p>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveFromList(item.id)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    </div>
+                                    <Collapsible key={item.id} className="border-b">
+                                        <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
+                                            <CollapsibleTrigger className="flex-1 text-right">
+                                                <div className="flex items-center justify-between w-full">
+                                                    <p className="text-sm font-medium">{item.description}</p>
+                                                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                                                </div>
+                                            </CollapsibleTrigger>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 mr-2" onClick={() => handleRemoveFromList(item.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </div>
+                                        <CollapsibleContent>
+                                            <div className="p-4 pt-0">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow>
+                                                            <TableHead>مصالح</TableHead>
+                                                            <TableHead className="text-center">مقدار</TableHead>
+                                                            <TableHead>واحد</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {item.results.map(res => (
+                                                            <TableRow key={res.material}>
+                                                                <TableCell className="text-xs">{res.material}</TableCell>
+                                                                <TableCell className="text-center text-xs font-mono">{res.quantity.toLocaleString('fa-IR')}</TableCell>
+                                                                <TableCell className="text-xs">{res.unit}</TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </CollapsibleContent>
+                                    </Collapsible>
                                 ))}
                                 </div>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
                                         <TableHead>نوع مصالح</TableHead>
-                                        <TableHead className="text-center">مقدار</TableHead>
+                                        <TableHead className="text-center">مقدار کل</TableHead>
                                         <TableHead>واحد</TableHead>
                                         </TableRow>
                                     </TableHeader>

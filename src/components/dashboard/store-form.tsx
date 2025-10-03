@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2 } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2, Copy } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -140,7 +140,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           if (result.imageUrl) {
               setLogoUrl(result.imageUrl);
           } else {
-              throw new Error('Image URL not returned from AI flow.');
+              // Fallback if the AI fails (e.g. billing error)
+              console.warn('AI logo generation failed, falling back to placeholder.');
+              const seed = encodeURIComponent(`${name}-${Date.now()}`);
+              setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
           }
 
           // Step 3: Cycle to the next prompt for the next click
@@ -350,8 +353,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
-                            <ArrowRight className="h-4 w-4" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
+                            <ArrowRight className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -361,8 +364,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
-                                        <Trash2 className="h-4 w-4" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
+                                        <Trash2 className="h-5 w-5" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
@@ -384,8 +387,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-5 w-5" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-6 w-6" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>

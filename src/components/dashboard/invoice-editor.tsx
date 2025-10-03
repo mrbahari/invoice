@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -616,8 +615,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 
                 <div
                     ref={productsScrollRef}
-                    className="overflow-x-auto cursor-grab"
-                    style={{ cursor: isProductListDragging ? 'grabbing' : 'grab' }}
+                    className={cn(
+                        "overflow-x-auto cursor-grab",
+                        isProductListDragging && "cursor-grabbing"
+                    )}
                 >
                     <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
                         {filteredProducts.length > 0 ? (filteredProducts).map(product => {
@@ -948,5 +949,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

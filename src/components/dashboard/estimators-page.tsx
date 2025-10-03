@@ -239,7 +239,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {estimatorTypes.map((estimator) => {
                         const image = placeholderImages.find(img => img.id === estimator.imageKey);
                         return(
@@ -248,7 +248,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 onClick={() => handleEstimatorSelect(estimator.id)}
                                 className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
                             >
-                                <div className="relative w-full h-[100px] overflow-hidden">
+                                <div className="relative w-full h-[120px] overflow-hidden">
                                     <Image
                                         src={image?.imageUrl || `https://placehold.co/600x400`}
                                         alt={estimator.title}
@@ -257,8 +257,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                         data-ai-hint={image?.imageHint}
                                     />
                                 </div>
-                                <div className="p-4 text-center">
-                                    <CardTitle className="text-base font-bold">{estimator.title}</CardTitle>
+                                <div className="p-3 text-center">
+                                    <CardTitle className="text-sm font-bold">{estimator.title}</CardTitle>
                                 </div>
                             </Card>
                         );

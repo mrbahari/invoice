@@ -2,35 +2,126 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 export function LoadingSpinner() {
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 flex flex-col items-center justify-center bg-background',
-        'bg-gradient-to-br from-blue-50/20 via-white to-green-50/20 dark:from-blue-950/10 dark:via-background dark:to-green-950/10'
+        'fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden',
+        'bg-gradient-to-br from-gray-900 via-cyan-900 to-gray-900 text-white'
       )}
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="relative flex h-40 w-40 items-center justify-center">
-        {/* Outer Ring */}
-        <div className="absolute h-full w-full animate-spin rounded-full [animation-duration:3s]">
-          <div
-            className={cn(
-              'absolute -top-1/2 left-1/2 h-full w-full rounded-full',
-              'bg-gradient-to-tr from-green-500/50 to-blue-500/50'
-            )}
-            style={{ clipPath: 'polygon(50% 50%, 0% 0%, 100% 0%)' }}
-          ></div>
+      {/* Particle Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {Array.from({ length: 50 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-cyan-400/30"
+            initial={{ 
+              x: Math.random() * 100 + 'vw', 
+              y: Math.random() * 100 + 'vh',
+              scale: Math.random() * 0.5 + 0.5,
+              opacity: Math.random() * 0.5
+            }}
+            animate={{
+              x: Math.random() * 100 + 'vw',
+              y: Math.random() * 100 + 'vh',
+            }}
+            transition={{
+              duration: Math.random() * 10 + 20,
+              repeat: Infinity,
+              repeatType: 'mirror',
+              ease: 'easeInOut'
+            }}
+            style={{
+                width: `${Math.random() * 3 + 1}px`,
+                height: `${Math.random() * 3 + 1}px`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center justify-center gap-8">
+        {/* Main animated element */}
+        <div className="relative h-48 w-48" style={{ perspective: '1000px' }}>
+          {/* Orbiting Numbers */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+          >
+            {Array.from({ length: 10 }).map((_, i) => (
+              <motion.span
+                key={i}
+                className="absolute text-cyan-400/80 font-mono text-lg"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: `translate(-50%, -50%) rotate(${i * 36}deg) translateY(-80px)`,
+                }}
+              >
+                {i}
+              </motion.span>
+            ))}
+          </motion.div>
+          
+           <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: -360 }}
+            transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
+          >
+            {Array.from({ length: 10 }).map((_, i) => (
+              <motion.span
+                key={i}
+                className="absolute text-green-400/60 font-mono text-sm"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: `translate(-50%, -50%) rotate(${i * 36}deg) translateY(-60px)`,
+                }}
+              >
+                {i}
+              </motion.span>
+            ))}
+          </motion.div>
+
+
+          {/* Central Logo */}
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center rounded-full"
+            style={{ transformStyle: 'preserve-3d' }}
+             animate={{ rotateY: 360 }}
+             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          >
+            <div className="flex h-32 w-32 items-center justify-center rounded-full bg-gray-900/50 shadow-[0_0_25px_theme(colors.cyan.500),inset_0_0_15px_theme(colors.green.900)] backdrop-blur-sm">
+              <span className="text-3xl font-bold tracking-tight text-cyan-300" style={{ textShadow: '0 0 10px hsl(var(--primary))' }}>
+                حسابگر
+              </span>
+            </div>
+          </motion.div>
         </div>
-        {/* Inner Pulsing Circle */}
-        <div className="absolute h-28 w-28 rounded-full bg-background opacity-75"></div>
-        <div className="absolute h-24 w-24 animate-pulse rounded-full bg-primary/10"></div>
-        <div className="absolute flex h-20 w-20 items-center justify-center rounded-full bg-background shadow-inner">
-          <span className="text-xl font-bold tracking-tight text-primary">
-            حسابگر
-          </span>
+
+        {/* Text and Progress Bar */}
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-lg font-medium tracking-wider text-cyan-200/80" style={{ textShadow: '0 0 5px hsl(var(--primary)/0.5)' }}>
+            سیستم حسابداری هوشمند
+          </p>
+          <div className="h-1 w-40 overflow-hidden rounded-full bg-cyan-900/50">
+            <motion.div
+              className="h-full bg-gradient-to-r from-green-500 to-cyan-400"
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: 'loop',
+                ease: 'linear',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

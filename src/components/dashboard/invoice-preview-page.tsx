@@ -5,7 +5,7 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Pencil, Camera, GripVertical } from 'lucide-react';
+import { ArrowRight, Pencil, Camera, GripVertical, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
@@ -152,6 +152,26 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     });
   };
 
+  const handleCopyLink = () => {
+    if (!invoiceId) return;
+    const url = `${window.location.origin}/invoice-preview/${invoiceId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast({
+        title: 'لینک کپی شد',
+        description: 'لینک پیش‌نمایش فاکتور در کلیپ‌بورد شما ذخیره شد.',
+        variant: 'success',
+      });
+    }).catch(err => {
+      console.error('Failed to copy link: ', err);
+      toast({
+        title: 'خطا در کپی کردن',
+        description: 'امکان کپی کردن لینک وجود نداشت.',
+        variant: 'destructive',
+      });
+    });
+  };
+
+
   if (!invoice || !customer || !store) {
     return (
         <Card>
@@ -186,6 +206,14 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ویرایش</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleCopyLink}>
+                        <Copy className="h-5 w-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>کپی لینک</p></TooltipContent>
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>

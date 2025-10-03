@@ -209,13 +209,7 @@ export default function CustomersPage() {
                     className="cursor-pointer"
                   >
                     <TableCell>
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="font-medium">{customer.phone}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {hasValidName ? customer.name : 'بی نام'}
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-3">
                         <Avatar className="flex h-9 w-9">
                           <AvatarImage
                             src={`https://picsum.photos/seed/${customer.id}/36/36`}
@@ -224,6 +218,12 @@ export default function CustomersPage() {
                           />
                           <AvatarFallback>{nameInitials}</AvatarFallback>
                         </Avatar>
+                        <div>
+                          <div className="font-medium">{customer.phone}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {hasValidName ? customer.name : 'بی نام'}
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-center">

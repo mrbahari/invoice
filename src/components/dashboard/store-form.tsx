@@ -122,6 +122,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           if (promptsToUse.length === 0) {
               const promptsInput: GenerateLogoPromptsInput = { storeName: name, description };
               const promptsResult = await generateLogoPrompts(promptsInput);
+              if (!promptsResult || !promptsResult.prompts || promptsResult.prompts.length === 0) {
+                throw new Error("Failed to generate prompts.");
+              }
               promptsToUse = promptsResult.prompts;
               setLogoPrompts(promptsToUse);
               setCurrentPromptIndex(0); // Reset index
@@ -134,7 +137,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
           if (result.imageUrl) {
               setLogoUrl(result.imageUrl);
-              toast({ variant: 'success', title: `لوگو با ایده شماره ${currentPromptIndex + 1} تولید شد` });
           } else {
               throw new Error('Image URL not returned from AI flow.');
           }
@@ -144,7 +146,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
       } catch (error) {
           console.error("Error during logo generation process:", error);
-          toast({ variant: 'destructive', title: 'خطا در تولید لوگو', description: 'لطفاً دوباره تلاش کنید.' });
+          // Fallback to a unique placeholder on any failure.
+          const seed = encodeURIComponent(`${name}-${Date.now()}`);
+          setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
       } finally {
           setIsLogoGenerating(false);
       }
@@ -345,8 +349,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
-                            <ArrowRight className="h-4 w-4" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
+                            <ArrowRight className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -356,8 +360,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
-                                        <Trash2 className="h-4 w-4" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
+                                        <Trash2 className="h-5 w-5" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
@@ -379,8 +383,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-5 w-5" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-6 w-6" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>

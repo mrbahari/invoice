@@ -1018,20 +1018,20 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 <Button
                                                     key={customer.id}
                                                     variant={'ghost'}
-                                                    className="h-16 justify-start text-right"
+                                                    className="h-auto justify-start text-right p-2"
                                                     onClick={() => {
                                                         setSelectedCustomer(customer);
                                                         setIsCustomerSelectorOpen(false);
                                                         setCustomerSearch('');
                                                     }}
                                                 >
-                                                    <div className="flex items-center gap-4 text-right w-full overflow-hidden">
-                                                        <Avatar className="h-10 w-10 border flex-shrink-0">
-                                                            <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                    <div className="flex items-center gap-2 text-right w-full overflow-hidden">
+                                                        <Avatar className="h-9 w-9 border flex-shrink-0">
+                                                            <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} />
                                                             <AvatarFallback>{customer.phone[0]}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="overflow-hidden">
-                                                            <p className='text-base font-semibold truncate'>{customer.phone}</p>
+                                                            <p className='text-sm font-semibold truncate'>{customer.phone}</p>
                                                             <p className="text-xs text-muted-foreground truncate">{customer.name}</p>
                                                         </div>
                                                     </div>

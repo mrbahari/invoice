@@ -236,7 +236,28 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                     </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <div className="p-3 pt-0">
+                    <div className="p-3 pt-0 relative">
+                        <AnimatePresence>
+                         {hasLocalChanges && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="absolute top-2 left-2 z-10"
+                            >
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button size="icon" className="h-9 w-9 rounded-full bg-green-600 hover:bg-green-700 shadow-lg" onClick={handleUpdateClick}>
+                                            <Check className="h-5 w-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>به‌روزرسانی آیتم</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </motion.div>
+                        )}
+                        </AnimatePresence>
                         <div className={cn("pl-12 grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
@@ -260,14 +281,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <p className="font-semibold font-mono text-sm flex items-center h-9">{formatCurrency(item.totalPrice)}</p>
                             </div>
                         </div>
-                         {hasLocalChanges && (
-                            <div className="pl-12 pt-3">
-                                <Button size="sm" className="w-full h-8 bg-green-600 hover:bg-green-700" onClick={handleUpdateClick}>
-                                    <Check className="ml-2 h-4 w-4" />
-                                    به‌روزرسانی آیتم
-                                </Button>
-                            </div>
-                        )}
                     </div>
                 </CollapsibleContent>
             </div>

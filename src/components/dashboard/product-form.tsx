@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
@@ -48,6 +47,7 @@ import {
 } from '@/components/ui/tooltip';
 import { FloatingToolbar } from './floating-toolbar';
 import { Badge } from '../ui/badge';
+import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 
 
 type ProductFormProps = {
@@ -57,24 +57,6 @@ type ProductFormProps = {
 };
 
 type AIFeature = 'description' | 'price' | 'image';
-
-const formatNumber = (num: number | ''): string => {
-    if (num === '' || num === null || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR').format(Number(num));
-};
-  
-const parseFormattedNumber = (str: string): number | '' => {
-    if (!str) return '';
-    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-    const englishDigits = '0123456789';
-    let numericString = str;
-    for (let i = 0; i < 10; i++) {
-        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
-    }
-    numericString = numericString.replace(/[^0-9.]/g, ''); // Allow dots for decimals
-    const number = parseFloat(numericString);
-    return isNaN(number) ? '' : number;
-};
 
 
 export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {

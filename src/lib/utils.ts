@@ -68,3 +68,21 @@ export function getStorePrefix(storeName: string): string {
   // Fallback for names with no english letters
   return 'INV';
 }
+
+export const formatNumber = (num: number | ''): string => {
+    if (num === '' || num === null || isNaN(Number(num))) return '';
+    return new Intl.NumberFormat('fa-IR').format(Number(num));
+};
+  
+export const parseFormattedNumber = (str: string): number | '' => {
+    if (!str) return '';
+    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+    const englishDigits = '0123456789';
+    let numericString = str;
+    for (let i = 0; i < 10; i++) {
+        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
+    }
+    numericString = numericString.replace(/[^0-9.]/g, ''); // Allow dots for decimals
+    const number = parseFloat(numericString);
+    return isNaN(number) ? '' : number;
+};

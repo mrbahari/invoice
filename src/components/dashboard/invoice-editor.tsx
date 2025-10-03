@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Minus, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package, Check } from 'lucide-react';
-import { formatCurrency, getStorePrefix } from '@/lib/utils';
+import { formatCurrency, getStorePrefix, formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
@@ -108,24 +108,6 @@ const useInterval = (callback: () => void, delay: number | null) => {
   }, [delay]);
 };
 
-
-const formatNumber = (num: number | ''): string => {
-    if (num === '' || num === null || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR').format(Number(num));
-};
-
-const parseFormattedNumber = (str: string): number | '' => {
-    if (!str) return '';
-    const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-    const englishDigits = '0123456789';
-    let numericString = str;
-    for (let i = 0; i < 10; i++) {
-        numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
-    }
-    numericString = numericString.replace(/[^0-9.]/g, ''); // Allow decimal points
-    const number = parseFloat(numericString);
-    return isNaN(number) ? '' : number;
-};
 
 
 function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {

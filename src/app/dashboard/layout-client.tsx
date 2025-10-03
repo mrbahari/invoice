@@ -76,7 +76,7 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
              {children}
           </main>
         </div>
-        { isMobile && <BottomNav activeTab={activeTab} onTabChange={handleTabChange} /> }
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </SearchProvider>
   );

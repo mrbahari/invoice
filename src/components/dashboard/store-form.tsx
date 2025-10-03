@@ -33,9 +33,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FloatingToolbar } from './floating-toolbar';
 import { Textarea } from '../ui/textarea';
 import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-flow';
-import { generateLogoPrompts, type GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts';
+import { generateLogoPrompts } from '@/ai/flows/generate-logo-prompts';
+import type { GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts';
 import { cn } from '@/lib/utils';
 import { generateCategories, type GenerateCategoriesInput, type GenerateCategoriesOutput } from '@/ai/flows/generate-categories-flow';
+import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 
 
 type StoreFormProps = {
@@ -118,14 +120,14 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       setIsLogoGenerating(true);
       try {
           let promptsToUse = logoPrompts;
-          // Step 1: Generate prompts if they don't exist or if store name/desc changed
+          // Step 1: Generate prompts if they don't exist yet
           if (promptsToUse.length === 0) {
               const promptsInput: GenerateLogoPromptsInput = { storeName: name, description };
-              const promptsResult = await generateLogoPrompts(promptsInput);
-              if (!promptsResult || !promptsResult.prompts || promptsResult.prompts.length === 0) {
+              const result = await generateLogoPrompts(promptsInput);
+              if (!result || !result.prompts || result.prompts.length === 0) {
                 throw new Error("Failed to generate prompts.");
               }
-              promptsToUse = promptsResult.prompts;
+              promptsToUse = result.prompts;
               setLogoPrompts(promptsToUse);
               setCurrentPromptIndex(0); // Reset index
           }
@@ -146,7 +148,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
       } catch (error) {
           console.error("Error during logo generation process:", error);
-          // Fallback to a unique placeholder on any failure.
           const seed = encodeURIComponent(`${name}-${Date.now()}`);
           setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
       } finally {
@@ -349,8 +350,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
-                            <ArrowRight className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -360,8 +361,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
-                                        <Trash2 className="h-5 w-5" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
@@ -383,8 +384,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-6 w-6" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>

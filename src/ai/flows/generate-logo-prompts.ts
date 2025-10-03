@@ -16,38 +16,42 @@ const GenerateLogoPromptsInputSchema = z.object({
 });
 export type GenerateLogoPromptsInput = z.infer<typeof GenerateLogoPromptsInputSchema>;
 
+// The AI will now only generate the key visual elements, not the full prompt.
 const GenerateLogoPromptsOutputSchema = z.object({
-  prompts: z
+  elements: z
     .array(z.string())
     .length(5)
-    .describe('An array of exactly 5 creative and distinct prompts for generating a logo.'),
+    .describe('An array of exactly 5 distinct, simple, one-or-two-word visual elements for a logo. Examples: "a trowel", "a house outline", "a smiling tooth", "a drywall panel".'),
 });
 export type GenerateLogoPromptsOutput = z.infer<typeof GenerateLogoPromptsOutputSchema>;
 
+
+// This is the strict template we will enforce.
+const PROMPT_TEMPLATE = "A simple, modern, minimalist vector logo of [ELEMENT]. Flat 2d icon. Isolated on a solid plain white background. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.";
+
+
 // Exported wrapper function
-export async function generateLogoPrompts(input: GenerateLogoPromptsInput): Promise<GenerateLogoPromptsOutput> {
+export async function generateLogoPrompts(input: GenerateLogoPromptsInput): Promise<{ prompts: string[] }> {
   return generateLogoPromptsFlow(input);
 }
 
 const prompt = ai.definePrompt({
-    name: 'generateLogoPromptsPrompt',
+    name: 'generateLogoElementsPrompt', // Renamed for clarity
     input: { schema: GenerateLogoPromptsInputSchema },
     output: { schema: GenerateLogoPromptsOutputSchema },
     prompt: `
-    Based on the following store name and description, generate 5 distinct and creative prompts for an AI image generator to create a logo.
-    The prompts must be in English.
-    Each prompt MUST strictly follow this template:
-    "A simple, modern, minimalist vector logo of a [key visual element from the store description]. Flat 2d icon. Isolated on a solid plain white background. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering."
-
-    Focus on abstract concepts or key visual elements from the description. Do NOT describe a scene or a landscape. Describe ONLY the icon.
+    Based on the following store name and description (in Persian), generate 5 distinct, simple, one-or-two-word visual elements that could be used in a logo.
+    The elements must be in English.
+    Focus on abstract concepts or key physical items from the description. Do NOT describe a scene or a landscape. Just the object/concept.
 
     Store Name: "{{storeName}}"
     Description (in Persian): "{{description}}"
 
     Example output for a store that sells "drywall and ceiling materials":
-    1. A simple, modern, minimalist vector logo of a stylized wall corner with a ceiling line. Flat 2d icon. Isolated on a solid plain white background. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.
-    2. A simple, modern, minimalist vector logo of a stack of panels with a trowel. Flat 2d icon. Isolated on a solid plain white background. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.
-    3. A simple, modern, minimalist vector logo of an abstract house outline made from a single line. Flat 2d icon. Isolated on a solid plain white background. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.
+    { "elements": ["a stylized wall corner", "a stack of panels with a trowel", "an abstract house outline", "a single drywall screw", "a measuring tape"] }
+
+    Example output for a dental clinic:
+    { "elements": ["a smiling tooth", "an abstract molar shape", "a dental mirror icon", "a sparkling star on a tooth", "a heart with a tooth inside"] }
     `,
 });
 
@@ -56,13 +60,21 @@ const generateLogoPromptsFlow = ai.defineFlow(
   {
     name: 'generateLogoPromptsFlow',
     inputSchema: GenerateLogoPromptsInputSchema,
-    outputSchema: GenerateLogoPromptsOutputSchema,
+    // The final output of the flow is an array of full prompts
+    outputSchema: z.object({ prompts: z.array(z.string()) }), 
   },
   async (input) => {
+    // 1. Get the key visual elements from the AI
     const { output } = await prompt(input);
-    if (!output) {
-      throw new Error("Failed to generate logo prompts.");
+    if (!output || !output.elements) {
+      throw new Error("Failed to generate logo elements.");
     }
-    return output;
+    
+    // 2. Build the full, strict prompts using our template
+    const finalPrompts = output.elements.map(element => 
+      PROMPT_TEMPLATE.replace('[ELEMENT]', element)
+    );
+
+    return { prompts: finalPrompts };
   }
 );

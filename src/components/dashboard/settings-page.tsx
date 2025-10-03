@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useData } from '@/context/data-context'; // Import useData
+import { cn } from '@/lib/utils';
 
 const colorThemes = [
     { name: 'Blue', value: '248 82% 50%'},
@@ -49,6 +50,10 @@ export default function SettingsPage() {
   
   const [newUnitName, setNewUnitName] = useState('');
   
+  const isDuplicate = newUnitName.trim() !== '' && units.some(u => u.name === newUnitName.trim());
+  const isInputEmpty = newUnitName.trim() === '';
+
+
   const handleThemeColorChange = (colorValue: string) => {
     setActiveColor(colorValue);
     const [h, s, l] = colorValue.split(' ').map(val => parseFloat(val.replace('%', '')));
@@ -82,10 +87,7 @@ export default function SettingsPage() {
   const handleAddUnit = () => {
     const name = newUnitName.trim();
 
-    if (name === '') {
-        return;
-    }
-    if (units.some(u => u.name === name)) {
+    if (name === '' || isDuplicate) {
         return;
     }
     
@@ -228,7 +230,7 @@ export default function SettingsPage() {
               <div className="grid gap-1.5 mb-4">
                   <Label htmlFor="new-unit-name">نام واحد جدید</Label>
                   <div className="relative">
-                      <Input
+                       <Input
                           id="new-unit-name"
                           placeholder="مثال: کارتن"
                           value={newUnitName}
@@ -236,18 +238,21 @@ export default function SettingsPage() {
                           onKeyDown={handleUnitKeyDown}
                           className="pl-24"
                       />
-                      {newUnitName.trim() !== '' && (
-                          <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleAddUnit}
-                              className="absolute left-1 top-1/2 -translate-y-1/2 h-7"
-                          >
-                              <PlusCircle className="ml-1 h-4 w-4" />
-                              افزودن
-                          </Button>
-                      )}
+                      <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleAddUnit}
+                          disabled={isInputEmpty || isDuplicate}
+                          className={cn(
+                              "absolute left-1 top-1/2 -translate-y-1/2 h-7 w-20 text-white",
+                              isInputEmpty && "bg-gray-400 opacity-50",
+                              !isInputEmpty && !isDuplicate && "bg-green-500 hover:bg-green-600",
+                              isDuplicate && "bg-red-500 hover:bg-red-600"
+                          )}
+                      >
+                          {isDuplicate ? 'تکراری' : 'افزودن'}
+                      </Button>
                   </div>
               </div>
             <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">

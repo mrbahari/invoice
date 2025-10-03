@@ -184,7 +184,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                         onMouseUp={handleHeaderMouseUp}
                     >
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-1 overflow-hidden">
                                 <div className="cursor-grab">
                                     <GripVertical className="h-6 w-6 text-muted-foreground" />
                                 </div>
@@ -197,12 +197,11 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-4">
+                                <div className="grid gap-0.5 overflow-hidden">
                                   <span className="font-semibold truncate">{item.productName}</span>
-                                  <div className="text-right">
-                                      <p className="text-xs font-mono text-muted-foreground">x {item.quantity.toLocaleString('fa-IR')}</p>
-                                      <p className="text-xs font-mono text-muted-foreground">{formatCurrency(item.totalPrice)}</p>
-                                  </div>
+                                  <p className="text-xs text-muted-foreground font-mono truncate">
+                                    {item.quantity.toLocaleString('fa-IR')} {item.unit} قیمت {formatCurrency(item.totalPrice)}
+                                  </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">

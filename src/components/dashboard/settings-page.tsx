@@ -225,24 +225,31 @@ export default function SettingsPage() {
             </CardDescription>
             </CardHeader>
             <CardContent>
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                <div className="grid gap-1.5 flex-grow">
-                    <Label htmlFor="new-unit-name">نام واحد جدید</Label>
-                    <Input
-                        id="new-unit-name"
-                        placeholder="مثال: کارتن"
-                        value={newUnitName}
-                        onChange={(e) => setNewUnitName(e.target.value)}
-                        onKeyDown={handleUnitKeyDown}
-                    />
-                </div>
-                {newUnitName.trim() !== '' && (
-                  <Button onClick={handleAddUnit} className="self-end">
-                      <PlusCircle className="ml-2 h-4 w-4" />
-                      افزودن
-                  </Button>
-                )}
-            </div>
+              <div className="grid gap-1.5 mb-4">
+                  <Label htmlFor="new-unit-name">نام واحد جدید</Label>
+                  <div className="relative">
+                      <Input
+                          id="new-unit-name"
+                          placeholder="مثال: کارتن"
+                          value={newUnitName}
+                          onChange={(e) => setNewUnitName(e.target.value)}
+                          onKeyDown={handleUnitKeyDown}
+                          className="pl-24"
+                      />
+                      {newUnitName.trim() !== '' && (
+                          <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleAddUnit}
+                              className="absolute left-1 top-1/2 -translate-y-1/2 h-7"
+                          >
+                              <PlusCircle className="ml-1 h-4 w-4" />
+                              افزودن
+                          </Button>
+                      )}
+                  </div>
+              </div>
             <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
                 {units.length > 0 ? units.map(unit => (
                     <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">

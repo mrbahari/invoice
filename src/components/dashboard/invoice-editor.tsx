@@ -231,7 +231,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const isClient = useIsClient();
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
-  useDraggableScroll(productsScrollRef, { direction: 'horizontal' });
+  const { isDragging: isProductListDragging } = useDraggableScroll(productsScrollRef, { direction: 'horizontal' });
   
   const isEditMode = !!invoiceId;
 
@@ -617,7 +617,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 <div
                     ref={productsScrollRef}
                     className="overflow-x-auto cursor-grab"
-                    style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                    style={{ cursor: isProductListDragging ? 'grabbing' : 'grab' }}
                 >
                     <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
                         {filteredProducts.length > 0 ? (filteredProducts).map(product => {
@@ -948,3 +948,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

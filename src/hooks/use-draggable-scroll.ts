@@ -18,6 +18,7 @@ export function useDraggableScroll(
       if (!ref.current) return;
       isDragging.current = true;
       ref.current.style.cursor = 'grabbing';
+      ref.current.style.userSelect = 'none'; // Prevent text selection
       if (options.direction === 'horizontal') {
         startPos.current = e.pageX - ref.current.offsetLeft;
         scrollPos.current = ref.current.scrollLeft;
@@ -30,9 +31,12 @@ export function useDraggableScroll(
   );
 
   const handleMouseLeave = useCallback(() => {
-    isDragging.current = false;
-    if (ref.current) {
-        ref.current.style.cursor = 'grab';
+    if (isDragging.current) {
+        isDragging.current = false;
+        if (ref.current) {
+            ref.current.style.cursor = 'grab';
+            ref.current.style.userSelect = 'auto';
+        }
     }
   }, [ref]);
 
@@ -40,6 +44,7 @@ export function useDraggableScroll(
     isDragging.current = false;
      if (ref.current) {
         ref.current.style.cursor = 'grab';
+        ref.current.style.userSelect = 'auto';
     }
   }, [ref]);
 
@@ -64,21 +69,25 @@ export function useDraggableScroll(
     useEffect(() => {
         const currentRef = ref.current;
         if (currentRef) {
+          currentRef.style.cursor = 'grab';
           currentRef.addEventListener('mousedown', handleMouseDown as EventListener);
+          // Use document/window for mouseup/mouseleave to handle cases where the cursor leaves the element while dragging
+          document.addEventListener('mouseup', handleMouseUp);
+          document.addEventListener('mousemove', handleMouseMove as EventListener);
           currentRef.addEventListener('mouseleave', handleMouseLeave);
-          currentRef.addEventListener('mouseup', handleMouseUp);
-          currentRef.addEventListener('mousemove', handleMouseMove as EventListener);
         }
 
         return () => {
              if (currentRef) {
                 currentRef.removeEventListener('mousedown', handleMouseDown as EventListener);
+                document.removeEventListener('mouseup', handleMouseUp);
+                document.removeEventListener('mousemove', handleMouseMove as EventListener);
                 currentRef.removeEventListener('mouseleave', handleMouseLeave);
-                currentRef.removeEventListener('mouseup', handleMouseUp);
-                currentRef.removeEventListener('mousemove', handleMouseMove as EventListener);
             }
         };
     }, [ref, handleMouseDown, handleMouseLeave, handleMouseUp, handleMouseMove]);
 
-  return { ref };
+  return { ref, isDragging: isDragging.current };
 }
+
+    

@@ -515,15 +515,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     const buttonEl = e.currentTarget;
     const rect = buttonEl.getBoundingClientRect();
     
-    const targetEl = invoiceItemsCardRef.current;
-    if (targetEl) {
-        setFlyingProduct({
-            id: `${product.id}-${Date.now()}`, // Make ID unique for each click
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-            imageUrl: product.imageUrl
-        });
-    }
+    setFlyingProduct({
+        id: `${product.id}-${Date.now()}`,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        imageUrl: product.imageUrl
+    });
 
     setInvoice(prev => {
       const items = prev.items ? [...prev.items] : [];
@@ -835,6 +832,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 className="pr-8"
                                                 value={customerSearch}
                                                 onChange={e => setCustomerSearch(e.target.value)}
+                                                maxLength={11}
                                             />
                                             {showAddCustomerButton && (
                                                 <Button

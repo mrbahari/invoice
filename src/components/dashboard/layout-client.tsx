@@ -8,7 +8,7 @@ import { SearchProvider } from '@/components/dashboard/search-provider';
 import { BottomNav } from '@/components/dashboard/bottom-nav';
 import { useData } from '@/context/data-context';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import type { DashboardTab } from '@/app/dashboard/page';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   AlertDialog,

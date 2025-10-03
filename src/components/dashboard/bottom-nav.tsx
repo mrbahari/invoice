@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -12,7 +11,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import type { DashboardTab } from '@/app/dashboard/page';
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },
@@ -35,8 +34,8 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   };
 
   return (
-    <footer className="left-0 right-0 z-40 border-b bg-white bg-opacity-95 no-print dark:bg-zinc-900/90">
-      <div className="grid grid-cols-7 items-center justify-items-center">
+    <footer className="sticky top-0 left-0 right-0 z-40 border-b bg-white bg-opacity-95 no-print dark:bg-zinc-900/90">
+      <div className="grid h-16 grid-cols-7 items-center justify-items-center">
         {navItems.slice(0, 3).map((item) => (
           <button
             key={item.tab}
@@ -58,7 +57,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         <div className="flex h-full w-full items-center justify-center">
             <button 
               onClick={() => handleTabClick('invoices')}
-              className="group flex h-16 w-16 translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
+              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
             >
               <FileText className="h-8 w-8" />
               <span className="sr-only">ایجاد فاکتور</span>

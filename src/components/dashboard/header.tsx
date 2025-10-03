@@ -4,7 +4,7 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useSearch } from './search-provider';
-import type { DashboardTab } from '@/app/dashboard/dashboard-client';
+import type { DashboardTab } from '@/app/dashboard/page';
 import { LiveClock } from './live-clock';
 
 const tabToNameMapping: Record<DashboardTab, string> = {
@@ -47,7 +47,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-white bg-opacity-95 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print dark:bg-zinc-900/90">
+      <header className="flex h-14 items-center gap-4 border-b bg-white bg-opacity-95 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print dark:bg-zinc-900/90">
         
          <div className="ml-auto flex items-center justify-center">
           <LiveClock />

@@ -518,7 +518,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     const targetEl = invoiceItemsCardRef.current;
     if (targetEl) {
         setFlyingProduct({
-            id: product.id,
+            id: product.id + Date.now(), // Make ID unique for each click
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2,
             imageUrl: product.imageUrl
@@ -713,6 +713,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       <AnimatePresence>
         {flyingProduct && (
           <motion.div
+            key={flyingProduct.id}
             className="fixed z-50 rounded-lg overflow-hidden"
             initial={{ x: flyingProduct.x, y: flyingProduct.y, width: 80, height: 80, opacity: 1 }}
             animate={{

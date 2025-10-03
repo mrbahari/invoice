@@ -1,4 +1,3 @@
-
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -28,7 +27,7 @@ export function LoadingSpinner() {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
-    // Generate particles only on the client side
+    // Generate particles only on the client side to prevent hydration mismatch
     const initialParticles = Array.from({ length: 50 }).map((_, i) => createParticle(i));
     setParticles(initialParticles);
   }, []);

@@ -1,11 +1,11 @@
-
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronsUp, ChevronsDown } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import { FlatCeilingForm } from './estimators/flat-ceiling-form';
@@ -16,13 +16,6 @@ import { getStorePrefix } from '@/lib/utils';
 import { useData } from '@/context/data-context';
 import { useToast } from '@/hooks/use-toast';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
-import { ScrollArea } from '../ui/scroll-area';
-import { Badge } from '../ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Separator } from '../ui/separator';
 
 
 export interface MaterialResult {
@@ -43,25 +36,25 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        image: '/images/b1.jpg',
+        imageKey: 'estimator-box',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        image: '/images/s1.jpg',
+        imageKey: 'estimator-grid',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        image: '/images/f1.jpg',
+        imageKey: 'estimator-flat',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        image: '/images/d1.jpg',
+        imageKey: 'estimator-drywall',
         component: DrywallForm,
     }
 ];
@@ -71,13 +64,23 @@ type EstimatorsPageProps = {
 };
 
 export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
-  const [activeEstimator, setActiveEstimator] = useState<EstimatorType | null>(null);
+  const [selectedEstimator, setSelectedEstimator] = useState<EstimatorType | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
   const { data: appData } = useData();
-  const { products, invoices } = appData;
+  const { products, invoices, placeholderImages } = appData;
   const { toast } = useToast();
-  const [isAggregatedListOpen, setIsAggregatedListOpen] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
+
+  const handleEstimatorSelect = (estimatorId: EstimatorType) => {
+    setSelectedEstimator(estimatorId);
+    setIsDialogOpen(true);
+  };
+  
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    // A slight delay to allow the dialog to close before resetting the content
+    setTimeout(() => setSelectedEstimator(null), 300);
+  };
 
   const handleAddToList = (description: string, results: MaterialResult[]) => {
     const newEstimation: Estimation = {
@@ -87,23 +90,16 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     };
     setEstimationList(prev => [...prev, newEstimation]);
     toast({ variant: 'success', title: 'به لیست برآورد اضافه شد' });
-    setActiveEstimator(null); // Return to main page after adding
+    handleDialogClose();
   };
 
   const handleClearList = () => {
     setEstimationList([]);
-    setIsAggregatedListOpen(false);
     toast({ title: 'لیست برآورد پاک شد' });
   };
   
   const handleRemoveFromList = (id: string) => {
-    setEstimationList(prev => {
-        const newList = prev.filter(item => item.id !== id);
-        if (newList.length === 0) {
-            setIsAggregatedListOpen(false); // Close list if it becomes empty
-        }
-        return newList;
-    });
+    setEstimationList(prev => prev.filter(item => item.id !== id));
   }
 
   const aggregatedResults: MaterialResult[] = useMemo(() => {
@@ -224,116 +220,15 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کنید.'});
     onNavigate('invoices', { invoice: newInvoice });
     setEstimationList([]);
-    setIsAggregatedListOpen(false);
   };
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (listRef.current && !listRef.current.contains(event.target as Node)) {
-        setIsAggregatedListOpen(false);
-      }
-    };
 
-    if (isAggregatedListOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isAggregatedListOpen]);
-
-  const AggregatedListContent = () => (
-    <div ref={listRef} className="bg-card border-t border-b rounded-t-lg shadow-2xl">
-      <CardHeader>
-        <CardTitle>لیست مصالح تجمیعی</CardTitle>
-        <CardDescription>مجموع مصالح مورد نیاز برای بخش‌های انتخاب شده.</CardDescription>
-      </CardHeader>
-      <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            {estimationList.map((est, index) => (
-                <div key={est.id} className="p-2 border rounded-md">
-                    <div className="flex justify-between items-center">
-                        <p className="font-semibold text-xs truncate">{est.description}</p>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(est.id)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                    </div>
-                    <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                        {est.results.map(res => (
-                            <li key={res.material} className="flex justify-between">
-                                <span>{res.material}</span>
-                                <span className="font-mono">{Math.ceil(res.quantity).toLocaleString('fa-IR')} {res.unit}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            ))}
-          </div>
-        
-          <Separator className="my-4" />
-
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-8">
-                <h3 className="font-bold mb-2">جمع کل مصالح:</h3>
-                <ScrollArea className="h-[25vh]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>نوع مصالح</TableHead>
-                            <TableHead className="text-center">مقدار</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {aggregatedResults.map((item) => (
-                            <TableRow key={`${item.material}-${item.unit}`}>
-                                <TableCell className="font-medium">{item.material}</TableCell>
-                                <TableCell className="text-center font-mono text-lg">{`${Math.ceil(item.quantity).toLocaleString('fa-IR')} ${item.unit}`}</TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
-            </div>
-            <div className="col-span-4 flex flex-col justify-end gap-2 p-4 border rounded-lg bg-muted/50">
-                 <Button onClick={handleClearList} variant="outline" className="w-full">
-                    <Trash2 className="ml-2 h-4 w-4" />
-                    پاک کردن لیست
-                </Button>
-                <Button onClick={handleCreateFinalInvoice} size="lg" className="w-full bg-green-600 hover:bg-green-700">
-                    <FilePlus className="ml-2 h-5 w-5" />
-                    ایجاد فاکتور
-                </Button>
-            </div>
-          </div>
-      </CardContent>
-    </div>
-  );
-
-  if (activeEstimator) {
-    const ActiveComponent = estimatorTypes.find(e => e.id === activeEstimator)?.component;
-    if (ActiveComponent) {
-        return (
-            <div className="max-w-4xl mx-auto pb-28">
-                 <div className="mb-4">
-                    <Button variant="ghost" onClick={() => setActiveEstimator(null)}>
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                        بازگشت به لیست برآوردها
-                    </Button>
-                </div>
-                <ActiveComponent onAddToList={handleAddToList} />
-            </div>
-        );
-    }
-  }
+  const ActiveForm = estimatorTypes.find(e => e.id === selectedEstimator)?.component;
 
   return (
     <div className='pb-40' data-main-page="true">
         <div className="grid gap-8">
             <Card>
-                <CardHeader>
+                <CardHeader className="items-center">
                     <CardTitle>برآورد مصالح</CardTitle>
                     <CardDescription>
                     ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
@@ -341,68 +236,95 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                 </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-4 gap-4 md:gap-6">
-                {estimatorTypes.map((estimator) => (
-                    <Card 
-                        key={estimator.id}
-                        onClick={() => setActiveEstimator(estimator.id)}
-                        className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                    >
-                        <div className="relative aspect-[4/3] w-full h-full overflow-hidden">
-                            <Image
-                                src={estimator.image}
-                                alt={estimator.title}
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                        <div className="p-4">
-                            <CardTitle className="text-base md:text-lg font-bold">{estimator.title}</CardTitle>
-                        </div>
-                    </Card>
-                ))}
-            </div>
-        </div>
-
-        
-        <AnimatePresence>
-        {estimationList.length > 0 && (
-              <Collapsible
-                open={isAggregatedListOpen}
-                onOpenChange={setIsAggregatedListOpen}
-                className="fixed bottom-20 left-0 right-0 z-40"
-             >
-                <div
-                    className="w-full max-w-4xl mx-auto"
-                >
-                    <CollapsibleContent asChild>
-                         <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                         >
-                            <AggregatedListContent />
-                        </motion.div>
-                    </CollapsibleContent>
-                     <CollapsibleTrigger asChild>
-                         <div className="w-full bg-green-600 text-white p-3 rounded-b-lg cursor-pointer hover:bg-green-700 transition-colors flex justify-between items-center shadow-lg">
-                            <div className="flex items-center gap-2">
-                                 <Badge variant="secondary" className="text-green-700">{estimationList.length}</Badge>
-                                <p className="font-semibold text-sm">
-                                    آخرین آیتم: {estimationList[estimationList.length - 1].description}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span>مشاهده لیست کل</span>
-                                 {isAggregatedListOpen ? <ChevronsDown className="h-5 w-5" /> : <ChevronsUp className="h-5 w-5" />}
-                            </div>
-                        </div>
-                    </CollapsibleTrigger>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    {estimatorTypes.map((estimator) => {
+                        const image = placeholderImages.find(img => img.id === estimator.imageKey);
+                        return(
+                            <Card 
+                                key={estimator.id}
+                                onClick={() => handleEstimatorSelect(estimator.id)}
+                                className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                            >
+                                <div className="relative aspect-[4/3] w-full h-full overflow-hidden">
+                                    <Image
+                                        src={image?.imageUrl || `https://placehold.co/600x400`}
+                                        alt={estimator.title}
+                                        fill
+                                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint={image?.imageHint}
+                                    />
+                                </div>
+                                <div className="p-4 text-center">
+                                    <CardTitle className="text-base md:text-lg font-bold">{estimator.title}</CardTitle>
+                                </div>
+                            </Card>
+                        );
+                    })}
                 </div>
-            </Collapsible>
-        )}
-        </AnimatePresence>
+                {ActiveForm && (
+                     <DialogContent className="sm:max-w-[625px]">
+                        <ActiveForm onAddToList={handleAddToList} />
+                    </DialogContent>
+                )}
+            </Dialog>
+
+            {estimationList.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle>
+                                    <ClipboardList className="inline-block ml-2" />
+                                    لیست برآورد تجمیعی
+                                </CardTitle>
+                                <CardDescription>مجموع مصالح مورد نیاز برای بخش‌های انتخاب شده.</CardDescription>
+                            </div>
+                            <Button onClick={handleClearList} variant="outline" size="sm">
+                                <Trash2 className="ml-2 h-4 w-4" />
+                                پاک کردن لیست
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className='mb-4 space-y-2'>
+                           {estimationList.map(item => (
+                               <div key={item.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                                   <p className="text-sm font-medium">{item.description}</p>
+                                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveFromList(item.id)}>
+                                       <Trash2 className="h-4 w-4 text-destructive" />
+                                   </Button>
+                               </div>
+                           ))}
+                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead>نوع مصالح</TableHead>
+                                <TableHead className="text-center">مقدار</TableHead>
+                                <TableHead>واحد</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {aggregatedResults.map((item) => (
+                                <TableRow key={`${item.material}-${item.unit}`}>
+                                    <TableCell className="font-medium">{item.material}</TableCell>
+                                    <TableCell className="text-center font-mono text-lg">{`${Math.ceil(item.quantity).toLocaleString('fa-IR')}`}</TableCell>
+                                    <TableCell>{item.unit}</TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                    <CardFooter>
+                         <Button onClick={handleCreateFinalInvoice} className="w-full bg-green-600 hover:bg-green-700">
+                            <FilePlus className="ml-2 h-5 w-5" />
+                            ایجاد فاکتور نهایی
+                        </Button>
+                    </CardFooter>
+                </Card>
+            )}
+        </div>
     </div>
   );
 }

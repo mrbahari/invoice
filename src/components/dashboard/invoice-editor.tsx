@@ -640,7 +640,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [customerSearch, filteredCustomers]);
 
   
- const handleAddProduct = useCallback((product: Product) => {
+ const handleAddProduct = (product: Product) => {
     setInvoice(prevInvoice => {
       const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
       const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
@@ -676,7 +676,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       
       return {...prevInvoice, items: newItems};
     });
-  }, []);
+  };
 
   const handleRemoveProduct = useCallback((product: Product) => {
     setInvoice(prevInvoice => {

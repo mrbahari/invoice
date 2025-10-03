@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
+import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import Defaultdb from '@/database/defaultdb.json';
 
@@ -14,7 +14,6 @@ interface AppData {
   invoices: Invoice[];
   units: UnitOfMeasurement[];
   stores: Store[];
-  toolbarPosition: ToolbarPosition;
 }
 
 // Define the context type
@@ -33,11 +32,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
-const defaultData = {
-    ...Defaultdb,
-    toolbarPosition: { x: 50, y: 16 } // Default top-center position
-} as AppData;
-
+const defaultData = Defaultdb as AppData;
 
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -51,12 +46,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
-          const parsedData = JSON.parse(storedData);
-           // Ensure toolbarPosition exists for older data formats
-          if (!parsedData.toolbarPosition) {
-            parsedData.toolbarPosition = defaultData.toolbarPosition;
-          }
-          setData(parsedData);
+          setData(JSON.parse(storedData));
         } else {
           // If no data is in local storage (first run on a device),
           // use the imported default data and save it.

@@ -415,7 +415,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                                 ))}
                                 <div className="flex gap-2 pt-2">
                                     <Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder="نام زیردسته جدید..." />
-                                    <Button variant="outline" size="sm" onClick={() => handleAddSubCategory(cat.id)}><PlusCircle className="ml-2 h-4 w-4" /> افزودن</Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleAddSubCategory(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button>
                                 </div>
                             </div>
                         </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { initialData } from '@/lib/data';

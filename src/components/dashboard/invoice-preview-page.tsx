@@ -137,16 +137,13 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   const handleDownloadImage = () => {
     const element = document.getElementById('invoice-card');
     if (!element) return;
-    
-    const isMobile = window.innerWidth < 768;
-    const canvasWidth = isMobile ? 1080 : element.scrollWidth;
 
     html2canvas(element, {
-      scale: 3, 
+      scale: 1, // Set scale to 1 to avoid unwanted scaling
       useCORS: true,
       logging: false,
-      width: canvasWidth,
-      windowWidth: canvasWidth, 
+      width: 800, // Set a fixed width
+      windowWidth: 800, // Match windowWidth to the fixed width
     }).then(canvas => {
       const link = document.createElement('a');
       link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;

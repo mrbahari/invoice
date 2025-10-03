@@ -640,7 +640,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [customerSearch, filteredCustomers]);
 
   
- const handleAddProduct = (product: Product) => {
+  const handleAddProduct = (product: Product) => {
     setInvoice(prevInvoice => {
       const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
       const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
@@ -653,7 +653,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           if (index === existingItemIndex) {
             const newQuantity = item.quantity + 1;
             return {
-              ...item,
+              ...item, // Keep all existing properties, including imageUrl
               quantity: newQuantity,
               totalPrice: newQuantity * item.unitPrice,
             };
@@ -669,7 +669,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           unit: product.unit,
           unitPrice: product.price,
           totalPrice: product.price,
-          imageUrl: product.imageUrl,
+          imageUrl: product.imageUrl, // Make sure to add the imageUrl
         };
         newItems = [newItem, ...currentItems];
       }
@@ -678,21 +678,22 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     });
   };
 
-  const handleRemoveProduct = useCallback((product: Product) => {
+  const handleRemoveProduct = (product: Product) => {
     setInvoice(prevInvoice => {
-      const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
-      const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
+      if (!prevInvoice.items) return prevInvoice;
+
+      const existingItemIndex = prevInvoice.items.findIndex(item => item.productId === product.id);
 
       if (existingItemIndex === -1) {
         return prevInvoice; // Product not in invoice, do nothing
       }
 
-      const itemToUpdate = currentItems[existingItemIndex];
+      const itemToUpdate = prevInvoice.items[existingItemIndex];
       let newItems;
 
       if (itemToUpdate.quantity > 1) {
         // Decrease quantity
-        newItems = currentItems.map((item, index) => {
+        newItems = prevInvoice.items.map((item, index) => {
           if (index === existingItemIndex) {
             const newQuantity = item.quantity - 1;
             return {
@@ -705,12 +706,12 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         });
       } else {
         // Remove item if quantity is 1
-        newItems = currentItems.filter((_, index) => index !== existingItemIndex);
+        newItems = prevInvoice.items.filter((_, index) => index !== existingItemIndex);
       }
 
       return { ...prevInvoice, items: newItems };
     });
-  }, []);
+  };
 
 
   const handleItemChange = useCallback((index: number, field: keyof InvoiceItem, value: any) => {

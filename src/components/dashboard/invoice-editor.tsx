@@ -653,7 +653,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           if (index === existingItemIndex) {
             const newQuantity = item.quantity + 1;
             return {
-              ...item, // Keep all existing properties, including imageUrl
+              ...item,
+              imageUrl: product.imageUrl, // Ensure image is preserved
               quantity: newQuantity,
               totalPrice: newQuantity * item.unitPrice,
             };
@@ -1195,3 +1196,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

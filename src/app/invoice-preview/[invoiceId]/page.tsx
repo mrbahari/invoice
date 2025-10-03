@@ -5,90 +5,81 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowRight, Pencil, Camera, GripVertical } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
-import html2canvas from 'html2canvas';
 import { useData } from '@/context/data-context';
-import { useToast } from '@/hooks/use-toast';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { FloatingToolbar } from './floating-toolbar';
-
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 function toWords(num: number): string {
-  if (num === 0) return "صفر";
-  const absNum = Math.abs(num);
-  let words = "";
-
-  const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
-  const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
-  const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
-  const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
-  const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
-
-  function convertThreeDigits(n: number): string {
-    let result = "";
-    const h = Math.floor(n / 100);
-    const t = Math.floor((n % 100) / 10);
-    const u = n % 10;
-
-    if (h > 0) {
-      result += hundreds[h];
-      if (t > 0 || u > 0) result += " و ";
+    if (num === 0) return "صفر";
+    const absNum = Math.abs(num);
+    let words = "";
+  
+    const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
+    const teens = ["ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
+    const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+    const hundreds = ["", "یکصد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد"];
+    const thousands = ["", " هزار", " میلیون", " میلیارد", " تریلیون"];
+  
+    function convertThreeDigits(n: number): string {
+      let result = "";
+      const h = Math.floor(n / 100);
+      const t = Math.floor((n % 100) / 10);
+      const u = n % 10;
+  
+      if (h > 0) {
+        result += hundreds[h];
+        if (t > 0 || u > 0) result += " و ";
+      }
+  
+      if (t > 1) {
+        result += tens[t];
+        if (u > 0) result += " و ";
+      } else if (t === 1) {
+        result += teens[u];
+      } else if (u > 0) {
+        result += units[u];
+      }
+      
+      return result;
     }
-
-    if (t > 1) {
-      result += tens[t];
-      if (u > 0) result += " و ";
-    } else if (t === 1) {
-      result += teens[u];
-    } else if (u > 0) {
-      result += units[u];
+  
+    if (absNum === 0) {
+      return "صفر";
+    }
+  
+    let tempNum = absNum;
+    let i = 0;
+    let parts: string[] = [];
+  
+    while (tempNum > 0) {
+      let chunk = tempNum % 1000;
+      if (chunk > 0) {
+        parts.push(convertThreeDigits(chunk) + thousands[i]);
+      }
+      tempNum = Math.floor(tempNum / 1000);
+      i++;
+    }
+  
+    words = parts.reverse().join(" و ");
+  
+    if (num < 0) {
+        return "منفی " + words;
     }
     
-    return result;
+    return words;
   }
 
-  if (absNum === 0) {
-    return "صفر";
-  }
-
-  let tempNum = absNum;
-  let i = 0;
-  let parts: string[] = [];
-
-  while (tempNum > 0) {
-    let chunk = tempNum % 1000;
-    if (chunk > 0) {
-      parts.push(convertThreeDigits(chunk) + thousands[i]);
-    }
-    tempNum = Math.floor(tempNum / 1000);
-    i++;
-  }
-
-  words = parts.reverse().join(" و ");
-
-  if (num < 0) {
-      return "منفی " + words;
-  }
-  
-  return words;
-}
-
-
-type InvoicePreviewPageProps = {
-    invoiceId: string;
-    onBack: () => void;
-    onEdit: (invoiceId: string) => void;
-}
-export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
-  
-  const { data } = useData();
-  const { toast } = useToast();
-  const { invoices, products, stores, customers } = data;
+export default function PublicInvoicePreviewPage({ params }: { params: { invoiceId: string } }) {
+  const router = useRouter();
+  const { data, isInitialized } = useData();
+  const { invoices, stores, customers } = data;
+  const { invoiceId } = params;
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -96,10 +87,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   
   const customer: Customer | undefined = useMemo(() => {
     if (!invoice) return undefined;
-    const foundCustomer = customers.find((c) => c.id === invoice.customerId);
-    if (foundCustomer) return foundCustomer;
-    // Fallback to a temporary customer object if no customer is found by ID
-    return {
+    return customers.find((c) => c.id === invoice.customerId) || {
       id: invoice.customerId,
       name: invoice.customerName,
       phone: (invoice as any).customerPhone || 'شماره ثبت نشده',
@@ -110,94 +98,43 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   }, [customers, invoice]);
   
   const store = useMemo(() => {
-    if (!invoice) return stores[0] || undefined;
-    
-    // Find store from the first product, if items exist
-    if (invoice.items && invoice.items.length > 0) {
-        const firstItem = invoice.items[0];
-        const productInfo = products.find(p => p.id === firstItem?.productId);
-        if (productInfo && productInfo.storeId) {
-            const foundStore = stores.find(s => s.id === productInfo.storeId);
-            if (foundStore) return foundStore;
-        }
-    }
-    // Fallback to the first store if no items or store not found
-    return stores[0] || undefined;
-  }, [invoice, products, stores]);
+    if (!invoice || !invoice.items || invoice.items.length === 0) return stores[0] || undefined;
+    const firstItem = invoice.items[0];
+    return stores.find(s => s.id === data.products.find(p => p.id === firstItem.productId)?.storeId) || stores[0] || undefined;
+  }, [invoice, data.products, stores]);
 
   useEffect(() => {
     if (invoice && typeof window !== 'undefined') {
-        const url = `${window.location.origin}/invoice-preview/${invoice.id}`;
+        const url = window.location.href;
         QRCode.toDataURL(url, { width: 96, margin: 1, errorCorrectionLevel: 'low' })
             .then(url => setQrCodeUrl(url))
             .catch(err => console.error('Failed to generate QR code:', err));
     }
   }, [invoice]);
 
-  const handleDownloadImage = () => {
-    const element = document.getElementById('invoice-card');
-    if (!element) return;
-
-    html2canvas(element, {
-      scale: 1, // Set scale to 1 to avoid unwanted scaling
-      useCORS: true,
-      logging: false,
-      width: 800, // Set a fixed width
-      windowWidth: 800, // Match windowWidth to the fixed width
-    }).then(canvas => {
-      const link = document.createElement('a');
-      link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
-  };
+  if (!isInitialized) {
+    return <LoadingSpinner />;
+  }
 
   if (!invoice || !customer || !store) {
     return (
-        <Card>
-            <CardContent className="py-16 text-center">
-                <p className="text-muted-foreground mb-4">فاکتور یافت نشد یا داده‌های آن ناقص است.</p>
-                 <Button onClick={onBack}>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    بازگشت
-                </Button>
-            </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-muted">
+            <Card className="w-full max-w-md mx-4">
+                <CardContent className="py-16 text-center">
+                    <p className="text-muted-foreground mb-4">فاکتور مورد نظر یافت نشد.</p>
+                     <Button onClick={() => router.push('/')}>
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                        بازگشت به صفحه اصلی
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
     );
   }
 
   return (
-    <TooltipProvider>
-      <div className="pb-24">
-        {/* Floating Action Bar */}
-         <FloatingToolbar pageKey="invoice-preview">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={onBack}>
-                        <ArrowRight className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>بازگشت</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={() => onEdit(invoiceId)}>
-                        <Pencil className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>ویرایش</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-12 h-12" onClick={handleDownloadImage}>
-                        <Camera className="h-5 w-5" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>دانلود عکس</p></TooltipContent>
-            </Tooltip>
-        </FloatingToolbar>
-
-        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card">
+      <div className="min-h-screen bg-muted p-4 sm:p-8 flex items-center justify-center">
+        <div className="max-w-4xl w-full mx-auto bg-white p-4 sm:p-8 border text-black shadow-2xl rounded-lg" id="invoice-card">
           <header className="flex justify-between items-start gap-4 mb-4">
               <div className="flex items-center justify-center w-1/6">
                   {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
@@ -244,12 +181,11 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.map((item, index) => {
-                   return (
+                {invoice.items.map((item, index) => (
                   <tr key={index}>
                     <td className="border p-1 text-center">{index + 1}</td>
                      <td className="border p-1">
-                        {item?.imageUrl && (
+                        {item.imageUrl && (
                             <Image 
                                 src={item.imageUrl} 
                                 alt={item.productName} 
@@ -265,7 +201,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.totalPrice)}</td>
                   </tr>
-                )})}
+                ))}
               </tbody>
             </table>
           </section>
@@ -289,10 +225,8 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               <p>۱. اعتبار پیش فاکتور ۲۴ ساعت می‌باشد.</p>
               {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder} <span className="font-mono mx-2">{store.bankCardNumber}</span> {store.bankName}</p>}
             </footer>
-
         </div>
-    </div>
-    </TooltipProvider>
+      </div>
   );
 }
 

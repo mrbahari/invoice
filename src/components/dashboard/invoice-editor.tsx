@@ -648,13 +648,13 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       let newItems;
 
       if (existingItemIndex > -1) {
-        // Item exists, update quantity
+        // Item exists, update quantity and ensure image is preserved
         newItems = currentItems.map((item, index) => {
           if (index === existingItemIndex) {
             const newQuantity = item.quantity + 1;
             return {
               ...item,
-              imageUrl: product.imageUrl, // Ensure image is preserved
+              imageUrl: product.imageUrl, // IMPORTANT: Ensure image is preserved
               quantity: newQuantity,
               totalPrice: newQuantity * item.unitPrice,
             };
@@ -662,7 +662,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           return item;
         });
       } else {
-        // Item doesn't exist, add it
+        // Item doesn't exist, add it with full details
         const newItem: InvoiceItem = {
           productId: product.id,
           productName: product.name,
@@ -800,9 +800,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer) {
       setIsCustomerSelectorOpen(true);
-      return null;
-    }
-    if (!invoice.items || invoice.items.length === 0) {
       return null;
     }
     
@@ -1196,5 +1193,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

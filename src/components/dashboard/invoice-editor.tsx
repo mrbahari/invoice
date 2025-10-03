@@ -825,7 +825,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={handleAddNewCustomer}
-                                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-20 bg-green-500 text-white hover:bg-green-600 flex items-center gap-1"
+                                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-8 bg-green-500 text-white hover:bg-green-600 flex items-center gap-1 px-3"
                                                 >
                                                    <PlusCircle className="h-4 w-4" />
                                                     افزودن
@@ -833,7 +833,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             )}
                                         </div>
                                         <ScrollArea className="h-[40vh] border rounded-md">
-                                            <div className="p-2 grid gap-1">
+                                            <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
                                                 {filteredCustomers.length > 0 ? (filteredCustomers || []).map(customer => (
                                                     <Button
                                                         key={customer.id}
@@ -857,7 +857,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                         </div>
                                                     </Button>
                                                 )) : (
-                                                    <div className="text-center py-10 text-sm text-muted-foreground">
+                                                    <div className="col-span-full text-center py-10 text-sm text-muted-foreground">
                                                         <p>مشتری‌ای یافت نشد.</p>
                                                     </div>
                                                 )}

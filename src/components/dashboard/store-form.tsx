@@ -152,12 +152,12 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
   const handleGenerateCategories = async () => {
     if (!name || !description) {
-        toast({
-            variant: 'destructive',
-            title: 'نام و توضیحات الزامی است',
-            description: 'برای تولید دسته‌بندی، نام و توضیحات فروشگاه را وارد کنید.',
-        });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'نام و توضیحات الزامی است',
+        description: 'برای تولید دسته‌بندی، نام و توضیحات فروشگاه را وارد کنید.',
+      });
+      return;
     }
     setIsCategoryGenerating(true);
     try {
@@ -166,29 +166,46 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
       if (result && result.categories) {
         const newCats: Category[] = [];
+        const existingParentNames = new Set(storeCategories.filter(c => !c.parentId).map(c => c.name.toLowerCase()));
+
         result.categories.forEach(catData => {
+          let parentName = catData.name;
+          // Check for duplicate parent category name
+          if (existingParentNames.has(parentName.toLowerCase())) {
+            parentName = `_${parentName}`; // Add prefix if name exists
+          }
+          
           const parentId = `cat-${Math.random().toString(36).substr(2, 9)}`;
           const parentCat: Category = {
             id: parentId,
-            name: catData.name,
+            name: parentName,
             storeId: store?.id || 'temp',
           };
           newCats.push(parentCat);
+          existingParentNames.add(parentName.toLowerCase());
+
+          const existingSubNames = new Set(storeCategories.filter(c => c.parentId).map(c => c.name.toLowerCase()));
           catData.subCategories.forEach(subCatName => {
+            let finalSubCatName = subCatName;
+            if (existingSubNames.has(finalSubCatName.toLowerCase())) {
+                finalSubCatName = `_${finalSubCatName}`;
+            }
+
             const subCat: Category = {
               id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-              name: subCatName,
+              name: finalSubCatName,
               storeId: store?.id || 'temp',
               parentId: parentId,
             };
             newCats.push(subCat);
+            existingSubNames.add(finalSubCatName.toLowerCase());
           });
         });
         
-        // Replace existing categories for this store with the new ones
-        setStoreCategories(newCats);
+        // Append new categories to existing ones instead of replacing
+        setStoreCategories(prev => [...prev, ...newCats]);
 
-        toast({ variant: 'success', title: 'دسته‌بندی‌ها با موفقیت تولید شدند' });
+        toast({ variant: 'success', title: 'دسته‌بندی‌ها با موفقیت تولید و اضافه شدند' });
       }
     } catch (error) {
       console.error("Error generating categories:", error);
@@ -328,8 +345,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <div className="flex items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
-                            <ArrowRight className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
@@ -339,8 +356,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
-                                        <Trash2 className="h-5 w-5" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
@@ -362,8 +379,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <Separator orientation="vertical" className="h-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-6 w-6" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>

@@ -3,8 +3,36 @@
 
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+
+interface Particle {
+  id: number;
+  x: string;
+  y: string;
+  scale: number;
+  opacity: number;
+  duration: number;
+}
+
+const createParticle = (i: number): Particle => ({
+  id: i,
+  x: `${Math.random() * 100}vw`,
+  y: `${Math.random() * 100}vh`,
+  scale: Math.random() * 0.5 + 0.5,
+  opacity: Math.random() * 0.5,
+  duration: Math.random() * 10 + 20,
+});
+
 
 export function LoadingSpinner() {
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    // Generate particles only on the client side
+    const initialParticles = Array.from({ length: 50 }).map((_, i) => createParticle(i));
+    setParticles(initialParticles);
+  }, []);
+
   return (
     <div
       className={cn(
@@ -16,22 +44,22 @@ export function LoadingSpinner() {
     >
       {/* Particle Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {Array.from({ length: 50 }).map((_, i) => (
+        {particles.map((particle) => (
           <motion.div
-            key={i}
+            key={particle.id}
             className="absolute rounded-full bg-cyan-400/30"
             initial={{ 
-              x: Math.random() * 100 + 'vw', 
-              y: Math.random() * 100 + 'vh',
-              scale: Math.random() * 0.5 + 0.5,
-              opacity: Math.random() * 0.5
+              x: particle.x, 
+              y: particle.y,
+              scale: particle.scale,
+              opacity: particle.opacity
             }}
             animate={{
-              x: Math.random() * 100 + 'vw',
-              y: Math.random() * 100 + 'vh',
+              x: `${Math.random() * 100}vw`,
+              y: `${Math.random() * 100}vh`,
             }}
             transition={{
-              duration: Math.random() * 10 + 20,
+              duration: particle.duration,
               repeat: Infinity,
               repeatType: 'mirror',
               ease: 'easeInOut'

@@ -34,7 +34,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   };
 
   return (
-    <footer className="sticky top-0 left-0 right-0 z-40 border-b bg-white bg-opacity-95 no-print dark:bg-zinc-900/90">
+    <footer className="sticky bottom-0 left-0 right-0 z-40 border-b bg-white bg-opacity-95 no-print dark:bg-zinc-900/90">
       <div className="grid h-16 grid-cols-7 items-center justify-items-center">
         {navItems.slice(0, 3).map((item) => (
           <button

@@ -518,15 +518,11 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     const targetEl = invoiceItemsCardRef.current;
     if (targetEl) {
         setFlyingProduct({
-            id: product.id + Date.now(), // Make ID unique for each click
+            id: `${product.id}-${Date.now()}`, // Make ID unique for each click
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2,
             imageUrl: product.imageUrl
         });
-
-        setTimeout(() => {
-            setFlyingProduct(null);
-        }, 800); // Animation duration
     }
 
     setInvoice(prev => {
@@ -838,13 +834,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 placeholder="جستجوی مشتری با نام یا شماره..."
                                                 className="pr-8"
                                                 value={customerSearch}
-                                                onChange={e => {
-                                                    const value = e.target.value.replace(/[^0-9]/g, '');
-                                                    if (value.length <= 11) {
-                                                        setCustomerSearch(value);
-                                                    }
-                                                }}
-                                                maxLength={11}
+                                                onChange={e => setCustomerSearch(e.target.value)}
                                             />
                                             {showAddCustomerButton && (
                                                 <Button

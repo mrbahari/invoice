@@ -584,6 +584,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
     setInvoice(prev => {
       const items = prev.items ? [...prev.items] : [];
+      // Find item with same product ID AND same unit
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       if (existingItemIndex > -1) {
@@ -1091,4 +1092,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
 
     
+    
+
     

@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown } from 'lucide-react';
+import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -147,9 +147,18 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
             <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300", isDragging && "h-16")}>
                 <div className="p-3">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                              <div className="cursor-grab">
                                 <GripVertical className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <div className="relative h-12 w-12 flex-shrink-0">
+                                {product?.imageUrl ? (
+                                    <Image src={product.imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
+                                ) : (
+                                    <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center">
+                                        <Package className="h-6 w-6 text-muted-foreground" />
+                                    </div>
+                                )}
                             </div>
                             <span className="font-semibold truncate">{item.productName}</span>
                         </div>
@@ -568,7 +577,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 productName: newProduct.name,
                 unit: newProduct.unit,
                 unitPrice: newProduct.price,
-                totalPrice: oldItem.quantity * oldItem.unitPrice,
+                totalPrice: oldItem.quantity * newProduct.price,
             };
         }
         return { ...prev, items: newItems };
@@ -1019,3 +1028,4 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+

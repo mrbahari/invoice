@@ -599,27 +599,38 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         imageUrl: product.imageUrl
     });
 
-    setInvoice(currentInvoice => {
-      const items = currentInvoice.items ? [...currentInvoice.items] : [];
-      const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
+    setInvoice(prevInvoice => {
+      const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
+      const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
+      let newItems;
       if (existingItemIndex > -1) {
-        const updatedItem = { ...items[existingItemIndex] };
-        updatedItem.quantity += 1;
-        updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
-        items[existingItemIndex] = updatedItem;
+        // Item exists, update quantity
+        newItems = currentItems.map((item, index) => {
+          if (index === existingItemIndex) {
+            const newQuantity = item.quantity + 1;
+            return {
+              ...item, // This preserves all properties, including imageUrl
+              quantity: newQuantity,
+              totalPrice: newQuantity * item.unitPrice,
+            };
+          }
+          return item;
+        });
       } else {
-        items.unshift({
+        // Item doesn't exist, add it
+        const newItem: InvoiceItem = {
           productId: product.id,
           productName: product.name,
           quantity: 1,
           unit: product.unit,
           unitPrice: product.price,
           totalPrice: product.price,
-          imageUrl: product.imageUrl, // <-- This was the fix
-        });
+          imageUrl: product.imageUrl, // <-- Ensure imageUrl is copied
+        };
+        newItems = [newItem, ...currentItems];
       }
-      return {...currentInvoice, items};
+      return {...prevInvoice, items: newItems};
     });
   };
 

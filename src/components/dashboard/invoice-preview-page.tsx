@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -239,6 +238,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               <thead className="bg-gray-100">
                 <tr>
                   <th className="border p-1 font-semibold">ردیف</th>
+                  <th className="border p-1 font-semibold w-[48px]">تصویر</th>
                   <th className="border p-1 font-semibold w-2/5 text-right">شرح کالا / خدمات</th>
                   <th className="border p-1 font-semibold">مقدار</th>
                   <th className="border p-1 font-semibold">واحد</th>
@@ -247,16 +247,29 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.map((item, index) => (
+                {invoice.items.map((item, index) => {
+                   const product = products.find(p => p.id === item.productId);
+                  return (
                   <tr key={index}>
                     <td className="border p-1 text-center">{index + 1}</td>
+                     <td className="border p-1">
+                        {product?.imageUrl && (
+                            <Image 
+                                src={product.imageUrl} 
+                                alt={item.productName} 
+                                width={40} 
+                                height={40} 
+                                className="object-cover rounded-md mx-auto"
+                            />
+                        )}
+                    </td>
                     <td className="border p-1">{item.productName}</td>
                     <td className="border p-1 text-center font-mono">{item.quantity.toLocaleString('fa-IR')}</td>
                     <td className="border p-1 text-center">{item.unit}</td>
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.totalPrice)}</td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </section>

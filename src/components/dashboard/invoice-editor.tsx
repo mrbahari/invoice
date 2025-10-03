@@ -114,13 +114,16 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     // Internal state for input fields to allow for debounced updates
     const [localQuantity, setLocalQuantity] = useState<string>(() => formatNumber(item.quantity));
     const [localPrice, setLocalPrice] = useState<string>(() => formatNumber(item.unitPrice));
+    const [localTotalPrice, setLocalTotalPrice] = useState<string>(() => formatNumber(item.totalPrice));
+
     
     // Track if local changes have been made
     const hasLocalChanges = useMemo(() => {
         const numQuantity = parseFormattedNumber(localQuantity);
         const numPrice = parseFormattedNumber(localPrice);
-        return numQuantity !== item.quantity || numPrice !== item.unitPrice;
-    }, [localQuantity, localPrice, item.quantity, item.unitPrice]);
+        const numTotalPrice = parseFormattedNumber(localTotalPrice);
+        return numQuantity !== item.quantity || numPrice !== item.unitPrice || numTotalPrice !== item.totalPrice;
+    }, [localQuantity, localPrice, localTotalPrice, item.quantity, item.unitPrice, item.totalPrice]);
 
     const product = products.find(p => p.id === item.productId);
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
@@ -139,16 +142,38 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     useEffect(() => {
         setLocalQuantity(formatNumber(item.quantity));
         setLocalPrice(formatNumber(item.unitPrice));
-    }, [item.quantity, item.unitPrice]);
+        setLocalTotalPrice(formatNumber(item.totalPrice));
+    }, [item.quantity, item.unitPrice, item.totalPrice]);
     
     const handleUpdateClick = () => {
         const newQuantity = parseFormattedNumber(localQuantity);
         const newPrice = parseFormattedNumber(localPrice);
-        if (newQuantity !== item.quantity) {
-            onUpdate(index, 'quantity', newQuantity === '' ? 0 : newQuantity);
-        }
-        if (newPrice !== item.unitPrice) {
-            onUpdate(index, 'unitPrice', newPrice === '' ? 0 : newPrice);
+        const newTotalPrice = parseFormattedNumber(localTotalPrice);
+
+        // Determine which field was the primary source of change
+        const quantityChanged = newQuantity !== '' && newQuantity !== item.quantity;
+        const priceChanged = newPrice !== '' && newPrice !== item.unitPrice;
+        const totalPriceChanged = newTotalPrice !== '' && newTotalPrice !== item.totalPrice;
+
+        let finalQuantity = item.quantity;
+        let finalUnitPrice = item.unitPrice;
+
+        if (totalPriceChanged && newTotalPrice !== '') {
+            finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
+            if (finalQuantity > 0) {
+                finalUnitPrice = Math.round(newTotalPrice / finalQuantity);
+            }
+            onUpdate(index, 'totalPrice', newTotalPrice);
+            onUpdate(index, 'unitPrice', finalUnitPrice);
+            if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
+        } else if (quantityChanged || priceChanged) {
+            finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
+            finalUnitPrice = priceChanged && newPrice !== '' ? newPrice : item.unitPrice;
+            const finalTotalPrice = finalQuantity * finalUnitPrice;
+            
+            if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
+            if (priceChanged) onUpdate(index, 'unitPrice', finalUnitPrice);
+            onUpdate(index, 'totalPrice', finalTotalPrice);
         }
     };
 
@@ -263,10 +288,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                 <Input type="text" id={`quantity-${index}`} value={localQuantity} onChange={(e) => setLocalQuantity(e.target.value)} placeholder="مقدار" className="h-9 font-mono" />
                             </div>
-                             <div className="grid gap-1.5">
-                                <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                <Input id={`price-${index}`} value={localPrice} onChange={(e) => setLocalPrice(e.target.value)} placeholder="مبلغ" className="h-9 font-mono" />
-                            </div>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`unit-${index}`} className="text-xs">واحد</Label>
                                 <Select value={item.unit} onValueChange={(value) => onUnitChange(index, value)} disabled={availableUnits.length <= 1}>
@@ -277,8 +298,12 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 </Select>
                             </div>
                              <div className="grid gap-1.5">
-                                <Label className="text-xs">مبلغ کل</Label>
-                                <p className="font-semibold font-mono text-sm flex items-center h-9">{formatCurrency(item.totalPrice)}</p>
+                                <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
+                                <Input id={`price-${index}`} value={localPrice} onChange={(e) => setLocalPrice(e.target.value)} placeholder="مبلغ" className="h-9 font-mono" />
+                            </div>
+                             <div className="grid gap-1.5">
+                                <Label htmlFor={`total-price-${index}`} className="text-xs">مبلغ کل</Label>
+                                <Input id={`total-price-${index}`} value={localTotalPrice} onChange={(e) => setLocalTotalPrice(e.target.value)} placeholder="مبلغ کل" className="h-9 font-mono" />
                             </div>
                         </div>
                     </div>
@@ -624,9 +649,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         const newItems = prev.items ? [...prev.items] : [];
         if (newItems[index]) {
             const updatedItem = { ...newItems[index], [field]: value };
-            if (field === 'quantity' || field === 'unitPrice') {
-              updatedItem.totalPrice = (updatedItem.quantity || 0) * (updatedItem.unitPrice || 0);
-            }
             newItems[index] = updatedItem;
         }
         return { ...prev, items: newItems };
@@ -1108,3 +1130,4 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     
 
     
+

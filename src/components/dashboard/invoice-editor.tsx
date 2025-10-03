@@ -829,7 +829,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                 )}
                                             </div>
                                         </ScrollArea>
-                                        <Button variant="outline" onClick={() => setCustomerDialogView('create')}><PlusCircle className='ml-2 h-4 w-4' />افزودن مشتری جدید</Button>
                                     </div>
                                 ) : (
                                     <div className="pt-4">
@@ -950,5 +949,3 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
-
-    

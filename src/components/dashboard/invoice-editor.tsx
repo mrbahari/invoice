@@ -25,7 +25,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
@@ -226,7 +225,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
 export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
-  const { toast } = useToast();
   const isClient = useIsClient();
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
@@ -516,12 +514,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer) {
-      toast({ variant: 'destructive', title: 'مشتری انتخاب نشده است', description: 'لطفا یک مشتری برای فاکتور انتخاب کنید.' });
       setIsCustomerDialogOpen(true);
       return null;
     }
     if (!invoice.items || invoice.items.length === 0) {
-      toast({ variant: 'destructive', title: 'فاکتور خالی است', description: 'حداقل یک آیتم به فاکتور اضافه کنید.' });
       return null;
     }
     
@@ -532,12 +528,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         processedInvoiceId = invoiceToEdit!.id;
         const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
         setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === processedInvoiceId ? finalInvoice : inv) }));
-        toast({ variant: 'success', title: 'فاکتور ویرایش شد' });
     } else {
         processedInvoiceId = `inv-${Math.random().toString(36).substr(2, 9)}`;
         const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
         setData(prev => ({ ...prev, invoices: [finalInvoice, ...prev.invoices] }));
-        toast({ variant: 'success', title: 'فاکتور ایجاد شد' });
     }
 
     setIsProcessing(false);
@@ -547,7 +541,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const handleDeleteInvoice = () => {
     if (!isEditMode) return;
     setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== (invoiceToEdit as Invoice).id) }));
-    toast({ title: 'فاکتور حذف شد' });
     onCancel();
   };
 

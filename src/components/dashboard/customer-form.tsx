@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import type { Customer } from '@/lib/definitions';
 import {
   AlertDialog,
@@ -41,7 +40,6 @@ type CustomerFormProps = {
 };
 
 export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) {
-  const { toast } = useToast();
   const isEditMode = !!customer;
   const { data, setData } = useData();
 
@@ -62,11 +60,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
   
   const validateForm = () => {
     if (!phone) {
-      toast({
-        variant: 'destructive',
-        title: 'فیلد الزامی خالی است',
-        description: 'لطفاً شماره تماس مشتری را وارد کنید.',
-      });
+      // Form is not valid
       return false;
     }
     return true;
@@ -90,20 +84,10 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     if (isEditMode && customer) {
       const updatedData = buildCustomerData();
        setData({ ...data, customers: data.customers.map(c => c.id === customer.id ? { ...c, ...updatedData } : c) });
-      toast({
-        variant: 'success',
-        title: 'مشتری با موفقیت ویرایش شد',
-        description: `تغییرات برای مشتری "${updatedData.name}" ذخیره شد.`,
-      });
     } else {
       const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
       const newData = { ...buildCustomerData(), id: newId };
       setData({ ...data, customers: [newData, ...data.customers] });
-      toast({
-        variant: 'success',
-        title: 'مشتری جدید ایجاد شد',
-        description: `مشتری "${newData.name}" با موفقیت ایجاد شد.`,
-      });
     }
     
     setIsProcessing(false);
@@ -117,11 +101,6 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
     const newData = { ...buildCustomerData(), id: newId };
     setData({ ...data, customers: [newData, ...data.customers] });
-    toast({
-      variant: 'success',
-      title: 'مشتری جدید از روی کپی ایجاد شد',
-      description: `مشتری جدید "${newData.name}" با موفقیت ایجاد شد.`,
-    });
     
     setIsProcessing(false);
     onSave();
@@ -132,10 +111,6 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
     setIsProcessing(true);
     setData({ ...data, customers: data.customers.filter(c => c.id !== customer.id) });
-    toast({
-      title: 'مشتری حذف شد',
-      description: `مشتری "${customer.name}" با موفقیت حذف شد.`,
-    });
 
     setIsProcessing(false);
     onSave();

@@ -22,7 +22,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
 import type { UnitOfMeasurement } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -41,7 +40,6 @@ const colorThemes = [
 ];
 
 export default function SettingsPage() {
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const { data, setData, resetData, isResetting, LOCAL_STORAGE_KEY, clearAllData } = useData();
@@ -85,22 +83,18 @@ export default function SettingsPage() {
     const name = newUnitName.trim();
 
     if (name === '') {
-        toast({ variant: 'destructive', title: 'نام واحد نمی‌تواند خالی باشد.' });
         return;
     }
     if (units.some(u => u.name === name)) {
-        toast({ variant: 'destructive', title: 'این واحد قبلاً اضافه شده است.' });
         return;
     }
     
     setData({...data, units: [...units, { name, defaultQuantity: 1 }]});
     setNewUnitName('');
-    toast({ variant: 'success', title: 'واحد جدید با موفقیت اضافه شد.' });
   };
 
   const handleDeleteUnit = (unitNameToDelete: string) => {
     setData({...data, units: units.filter(u => u.name !== unitNameToDelete)});
-    toast({ title: 'واحد با موفقیت حذف شد.' });
   };
 
   const handleClearData = async () => {
@@ -128,11 +122,6 @@ export default function SettingsPage() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    toast({
-      variant: 'success',
-      title: 'پشتیبان‌گیری با موفقیت انجام شد',
-      description: 'فایل پشتیبان شما در حال دانلود است.',
-    });
   };
 
   const handleRestoreChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -162,21 +151,11 @@ export default function SettingsPage() {
               toolbarPosition: restoredData.toolbarPosition || { x: 20, y: 80 }
           });
           
-          toast({
-            variant: 'success',
-            title: 'بازیابی موفق',
-            description: 'اطلاعات با موفقیت از فایل پشتیبان بازیابی شد.',
-          });
-
         } else {
           throw new Error("فایل پشتیبان معتبر نیست.");
         }
       } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'خطا در بازیابی',
-          description: (error instanceof Error) ? error.message : 'فایل انتخاب شده معتبر نیست.',
-        });
+        console.error("Error restoring data:", error);
       }
     };
     reader.readAsText(file);

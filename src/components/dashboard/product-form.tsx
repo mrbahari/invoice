@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
 import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical } from 'lucide-react';
 import Image from 'next/image';
@@ -59,7 +58,6 @@ type ProductFormProps = {
 type AIFeature = 'description' | 'price' | 'image';
 
 export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
-  const { toast } = useToast();
   const isEditMode = !!product;
 
   const { data, setData } = useData();
@@ -178,19 +176,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   const handleAiGeneration = async (feature: AIFeature) => {
     if (!name) {
-      toast({
-        variant: 'destructive',
-        title: 'نام محصول خالی است',
-        description: 'برای استفاده از هوش مصنوعی، ابتدا نام محصول را وارد کنید.',
-      });
+      // no toast
       return;
     }
      if (!storeId || !subCategoryId) {
-      toast({
-        variant: 'destructive',
-        title: 'فروشگاه یا زیردسته انتخاب نشده',
-        description: 'برای دریافت نتیجه بهتر، ابتدا فروشگاه و زیردسته محصول را انتخاب کنید.',
-      });
+      // no toast
       return;
     }
 
@@ -212,19 +202,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         setImageUrl(result.imageUrl);
       }
       
-      toast({
-        variant: 'success',
-        title: 'هوش مصنوعی انجام شد',
-        description: `فیلد ${feature === 'description' ? 'توضیحات' : feature === 'price' ? 'قیمت' : 'تصویر'} با موفقیت تولید شد.`
-      })
 
     } catch (error) {
       console.error(`Error generating ${feature}:`, error);
-      toast({
-        variant: 'destructive',
-        title: 'خطا در تولید با هوش مصنوعی',
-        description: 'متاسفانه در ارتباط با سرویس هوش مصنوعی مشکلی پیش آمد.',
-      });
+
     } finally {
       setAiLoading(prev => ({ ...prev, [feature]: false }));
     }
@@ -232,11 +213,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   const handleImageSearch = () => {
     if (!name) {
-      toast({
-        variant: 'destructive',
-        title: 'نام محصول خالی است',
-        description: 'برای جستجوی تصویر، ابتدا نام محصول را وارد کنید.',
-      });
       return;
     }
     const categoryName = categories.find(c => c.id === subCategoryId)?.name || '';
@@ -249,11 +225,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const numericPrice = Number(price);
 
     if (!name || isNaN(numericPrice) || numericPrice <= 0 || !storeId || !subCategoryId) {
-      toast({
-        variant: 'destructive',
-        title: 'فیلدهای الزامی خالی یا نامعتبر است',
-        description: 'لطفاً نام، قیمت معتبر، فروشگاه و زیردسته محصول را وارد کنید.',
-      });
       return false;
     }
     return true;
@@ -290,19 +261,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     if (isEditMode && product) {
       const updatedProduct = buildProductData(product.id);
       setData(prev => ({...prev, products: prev.products.map(p => p.id === product.id ? updatedProduct : p)}));
-      toast({
-        variant: 'success',
-        title: 'محصول با موفقیت ویرایش شد',
-        description: `تغییرات برای محصول "${name}" ذخیره شد.`,
-      });
     } else {
       const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
       setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
-      toast({
-        variant: 'success',
-        title: 'محصول جدید ایجاد شد',
-        description: `محصول "${name}" با موفقیت ایجاد شد.`,
-      });
     }
 
     setIsProcessing(false);
@@ -316,11 +277,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
     const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
     setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
-    toast({
-      variant: 'success',
-      title: 'محصول جدید از روی کپی ایجاد شد',
-      description: `محصول جدید "${name}" با موفقیت ایجاد شد.`,
-    });
     
     setIsProcessing(false);
     onSave();
@@ -331,10 +287,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     
     setIsProcessing(true);
     setData(prev => ({...prev, products: prev.products.filter(p => p.id !== product.id)}));
-    toast({
-        title: 'محصول حذف شد',
-        description: `محصول "${product.name}" با موفقیت حذف شد.`,
-    });
 
     setIsProcessing(false);
     onSave();

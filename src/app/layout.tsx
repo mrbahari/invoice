@@ -2,7 +2,6 @@
 import type {Metadata} from 'next';
 import { DataProvider } from '@/context/data-context';
 import '@/app/globals.css';
-import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
@@ -32,12 +31,9 @@ export default function RootLayout({
               <main className="relative z-10">
                 {children}
               </main>
-              <Toaster />
           </DataProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
-    

@@ -5,7 +5,6 @@ import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVerti
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
-import { useToast } from '@/hooks/use-toast';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { InvoiceEditor } from './invoice-editor';
 import InvoicePreviewPage from './invoice-preview-page';
@@ -57,7 +56,6 @@ export default function InvoicesPage({
 }: InvoicesPageProps) {
   const { data, setData } = useData();
   const { customers, invoices: allInvoices } = data;
-  const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
 
   
@@ -113,10 +111,9 @@ export default function InvoicesPage({
         ...prev,
         invoices: prev.invoices.filter((inv) => inv.id !== invoiceId),
       }));
-      toast({ variant: 'success', title: 'فاکتور حذف شد' });
       setView({ type: 'list' });
     },
-    [setData, toast]
+    [setData]
   );
 
   const handleSaveSuccess = useCallback(() => {

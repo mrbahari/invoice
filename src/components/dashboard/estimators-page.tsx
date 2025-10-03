@@ -14,7 +14,6 @@ import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStorePrefix } from '@/lib/utils';
 import { useData } from '@/context/data-context';
-import { useToast } from '@/hooks/use-toast';
 import type { DashboardTab } from '@/app/dashboard/dashboard-client';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -78,7 +77,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
   const { data: appData } = useData();
   const { products, invoices } = appData;
-  const { toast } = useToast();
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
     setSelectedEstimator(estimatorId);
@@ -95,13 +93,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         results
     };
     setEstimationList(prev => [...prev, newEstimation]);
-    toast({ variant: 'success', title: 'به لیست برآورد اضافه شد' });
     handleBackToList();
   };
 
   const handleClearList = () => {
     setEstimationList([]);
-    toast({ title: 'لیست برآورد پاک شد' });
   };
   
   const handleRemoveFromList = (id: string) => {
@@ -129,7 +125,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const handleCreateFinalInvoice = () => {
     if (aggregatedResults.length === 0) {
-      toast({ variant: 'destructive', title: 'لیست مصالح خالی است', description: 'ابتدا حداقل یک بخش را محاسبه و اضافه کنید.'});
+      // No items to create an invoice from.
       return;
     }
 
@@ -223,7 +219,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       description: `ایجاد شده از برآورد مصالح برای بخش‌های:\n${invoiceDescription}`,
     };
     
-    toast({ variant: 'success', title: 'فاکتور با موفقیت ایجاد شد', description: 'اکنون می‌توانید فاکتور را ویرایش کنید.'});
     onNavigate('invoices', { invoice: newInvoice });
     setEstimationList([]);
   };

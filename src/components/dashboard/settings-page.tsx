@@ -93,6 +93,13 @@ export default function SettingsPage() {
     setNewUnitName('');
   };
 
+  const handleUnitKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent form submission if it's inside a form
+      handleAddUnit();
+    }
+  };
+
   const handleDeleteUnit = (unitNameToDelete: string) => {
     setData({...data, units: units.filter(u => u.name !== unitNameToDelete)});
   };
@@ -226,6 +233,7 @@ export default function SettingsPage() {
                         placeholder="مثال: کارتن"
                         value={newUnitName}
                         onChange={(e) => setNewUnitName(e.target.value)}
+                        onKeyDown={handleUnitKeyDown}
                     />
                 </div>
                 {newUnitName.trim() !== '' && (

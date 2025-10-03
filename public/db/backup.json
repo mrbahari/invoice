@@ -1,6 +1,14 @@
 {
   "customers": [
     {
+      "name": "مشتری بدون نام",
+      "email": "ایمیل ثبت نشده",
+      "phone": "09398330932",
+      "address": "آدرس ثبت نشده",
+      "purchaseHistory": "مشتری جدید",
+      "id": "cust-rumb0cf64"
+    },
+    {
       "id": "cust-t7qq0wtzl",
       "name": "09197166675",
       "email": "ایمیل ثبت نشده",
@@ -336,6 +344,79 @@
   ],
   "invoices": [
     {
+      "date": "2025-09-26T15:49:27.131Z",
+      "status": "Pending",
+      "items": [
+        {
+          "productId": "prod-03wsqgmuw",
+          "productName": "پشم سنگ دانسیته 50",
+          "quantity": 7,
+          "unit": "بسته",
+          "unitPrice": 1850000,
+          "totalPrice": 12950000
+        },
+        {
+          "productId": "prod-ioz0fpkp5",
+          "productName": "تایل پی وی سی",
+          "quantity": 3,
+          "unit": "متر مربع",
+          "unitPrice": 1800000,
+          "totalPrice": 5400000
+        },
+        {
+          "productId": "prod-1onwme7ao",
+          "productName": "نبشی L24",
+          "quantity": 3,
+          "unit": "شاخه",
+          "unitPrice": 650000,
+          "totalPrice": 1950000
+        },
+        {
+          "productId": "prod-kpki0s342",
+          "productName": "سپری T120",
+          "quantity": 1,
+          "unit": "شاخه",
+          "unitPrice": 384000,
+          "totalPrice": 384000
+        },
+        {
+          "productId": "prod-mee9e93fh",
+          "productName": "پنل باتیس",
+          "quantity": 1,
+          "unit": "برگ",
+          "unitPrice": 3500000,
+          "totalPrice": 3500000
+        },
+        {
+          "productId": "prod-8676z49k8",
+          "productName": "پیچ 2.5",
+          "quantity": 1,
+          "unit": "بسته",
+          "unitPrice": 4600000,
+          "totalPrice": 4600000
+        },
+        {
+          "productId": "prod-ok2tikiw6",
+          "productName": "L25 نبشی",
+          "quantity": 1,
+          "unit": "شاخه",
+          "unitPrice": 600000,
+          "totalPrice": 600000
+        }
+      ],
+      "subtotal": 29384000,
+      "discount": 0,
+      "additions": 0,
+      "tax": 0,
+      "total": 29384000,
+      "description": "",
+      "invoiceNumber": "INV-0007",
+      "customerId": "cust-uv6dic62a",
+      "customerName": "اصغر حسن زاده | شرکت همراه کوشا کیش",
+      "customerEmail": "ایمیل ثبت نشده",
+      "id": "inv-5yyikita9"
+    },
+    {
       "invoiceNumber": "INV-1553",
       "customerId": "cust-uv6dic62a",
       "customerName": "اصغر حسن زاده | شرکت همراه کوشا کیش",
@@ -343,14 +424,6 @@
       "date": "2025-09-24T18:43:48.520Z",
       "status": "Pending",
       "items": [
-        {
-          "productId": "mat-پیچ-۲.۵",
-          "productName": "پیچ ۲.۵",
-          "quantity": 2,
-          "unit": "بسته",
-          "unitPrice": 0,
-          "totalPrice": 0
-        },
         {
           "productId": "prod-ok2tikiw6",
           "productName": "L25 نبشی",
@@ -470,13 +543,29 @@
           "unit": "بسته",
           "unitPrice": 0,
           "totalPrice": 0
+        },
+        {
+          "productId": "prod-03wsqgmuw",
+          "productName": "پشم سنگ دانسیته 50",
+          "quantity": 3,
+          "unit": "بسته",
+          "unitPrice": 1850000,
+          "totalPrice": 5550000
+        },
+        {
+          "productId": "prod-8676z49k8",
+          "productName": "پیچ 2.5",
+          "quantity": 3,
+          "unit": "بسته",
+          "unitPrice": 4600000,
+          "totalPrice": 13800000
         }
       ],
-      "subtotal": 242660000,
+      "subtotal": 262010000,
       "discount": 0,
       "additions": 0,
       "tax": 0,
-      "total": 242660000,
+      "total": 262010000,
       "description": "ایجاد شده از برآورد مصالح برای بخش‌های:\n- باکس و نورمخفی: 10 متر\n- سقف مشبک: 4 * 4 متر\n- سقف فلت: 4 * 4 متر\n- دیوار جداکننده: 7 * 3 متر (با پشم سنگ)",
       "id": "inv-kihjh8bnn"
     },
@@ -1020,5 +1109,47 @@
       "defaultQuantity": 1
     }
   ],
-  "backupDate": "2025-09-26T08:47:14.620Z"
+  "toolbarPosition": {
+    "x": 33.235809326171875,
+    "y": 37
+  },
+  "placeholderImages": [
+    {
+      "id": "prod-1",
+      "description": "A modern laptop on a desk",
+      "imageUrl": "https://picsum.photos/seed/101/400/300",
+      "imageHint": "laptop desk"
+    },
+    {
+      "id": "prod-2",
+      "description": "A sleek wireless mouse",
+      "imageUrl": "https://picsum.photos/seed/102/400/300",
+      "imageHint": "wireless mouse"
+    },
+    {
+      "id": "prod-3",
+      "description": "A mechanical keyboard with RGB lighting",
+      "imageUrl": "https://picsum.photos/seed/103/400/300",
+      "imageHint": "mechanical keyboard"
+    },
+    {
+      "id": "prod-4",
+      "description": "A high-resolution monitor",
+      "imageUrl": "https://picsum.photos/seed/104/400/300",
+      "imageHint": "computer monitor"
+    },
+    {
+      "id": "prod-5",
+      "description": "A comfortable office chair",
+      "imageUrl": "https://picsum.photos/seed/105/400/300",
+      "imageHint": "office chair"
+    },
+    {
+      "id": "prod-6",
+      "description": "A set of premium headphones",
+      "imageUrl": "https://picsum.photos/seed/106/400/300",
+      "imageHint": "headphones"
+    }
+  ],
+  "backupDate": "2025-10-03T08:31:59.167Z"
 }

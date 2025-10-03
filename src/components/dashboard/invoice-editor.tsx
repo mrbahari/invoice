@@ -234,8 +234,9 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <div className="grid gap-0.5 overflow-hidden">
                                   <span className="font-semibold truncate">{item.productName}</span>
                                   <p className="text-xs text-muted-foreground font-mono truncate">
-                                    {item.quantity.toLocaleString('fa-IR')} {item.unit} قیمت {formatCurrency(item.totalPrice)}
+                                    {item.quantity.toLocaleString('fa-IR')} {item.unit} x {formatCurrency(item.unitPrice)}
                                   </p>
+                                  <p className="text-sm font-semibold font-mono truncate">{formatCurrency(item.totalPrice)}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">

@@ -228,10 +228,12 @@ export default function SettingsPage() {
                         onChange={(e) => setNewUnitName(e.target.value)}
                     />
                 </div>
-                <Button onClick={handleAddUnit} className="self-end">
-                    <PlusCircle className="ml-2 h-4 w-4" />
-                    افزودن
-                </Button>
+                {newUnitName.trim() !== '' && (
+                  <Button onClick={handleAddUnit} className="self-end">
+                      <PlusCircle className="ml-2 h-4 w-4" />
+                      افزودن
+                  </Button>
+                )}
             </div>
             <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
                 {units.length > 0 ? units.map(unit => (

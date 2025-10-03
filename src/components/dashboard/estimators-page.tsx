@@ -80,6 +80,9 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
     setSelectedEstimator(estimatorId);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
   
   const handleBackToList = () => {

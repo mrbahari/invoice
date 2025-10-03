@@ -186,6 +186,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let unitPrice = product ? product.price : 0;
         let productId = product ? product.id : `mat-${item.material.replace(/\s+/g, '-')}`;
         let productName = product ? product.name : item.material;
+        const imageUrl = product ? product.imageUrl : `https://picsum.photos/seed/${productName}/400/300`;
 
         if ((materialNameLower.includes('پیچ ۲.۵') || materialNameLower.includes('پیچ سازه')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
@@ -208,6 +209,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                 unit: unit,
                 unitPrice: unitPrice,
                 totalPrice: quantity * unitPrice,
+                imageUrl: imageUrl,
             });
         }
     });

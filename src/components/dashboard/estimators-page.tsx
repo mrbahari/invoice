@@ -238,7 +238,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
                     {estimatorTypes.map((estimator) => {
                         const image = placeholderImages.find(img => img.id === estimator.imageKey);
                         return(

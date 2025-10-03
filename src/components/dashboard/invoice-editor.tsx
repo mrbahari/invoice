@@ -70,7 +70,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FloatingToolbar } from './floating-toolbar';
 import { CustomerForm } from './customer-form';
 import { Badge } from '@/components/ui/badge';
-import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 
@@ -230,7 +229,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const isClient = useIsClient();
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
-  const { isDragging: isProductListDragging } = useDraggableScroll(productsScrollRef, { direction: 'horizontal' });
   
   const isEditMode = !!invoiceId;
 
@@ -615,10 +613,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 
                 <div
                     ref={productsScrollRef}
-                    className={cn(
-                        "overflow-x-auto cursor-grab",
-                        isProductListDragging && "cursor-grabbing"
-                    )}
+                    className="overflow-x-auto"
                 >
                     <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
                         {filteredProducts.length > 0 ? (filteredProducts).map(product => {

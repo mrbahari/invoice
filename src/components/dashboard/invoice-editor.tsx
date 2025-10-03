@@ -826,7 +826,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     <div className="text-center py-10 text-sm text-muted-foreground">
                                                         <p>مشتری‌ای یافت نشد.</p>
                                                          {customerSearch.trim().length > 5 && !isNaN(Number(customerSearch.trim())) && (
-                                                            <Button variant="link" onClick={handleAddNewCustomer} className="mt-2">
+                                                            <Button variant="ghost" onClick={handleAddNewCustomer} className="mt-2 text-white bg-green-600 hover:bg-green-700">
                                                                 <PlusCircle className='ml-2 h-4 w-4' />
                                                                 افزودن مشتری با شماره {customerSearch}
                                                             </Button>

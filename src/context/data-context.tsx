@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import Defaultdb from '@/database/defaultdb.json';
 
 
 // Define the shape of our data
@@ -33,36 +32,52 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
 
-const defaultData = Defaultdb as AppData;
+// Create an empty default structure. We will load the actual default from a fetch.
+const emptyData: AppData = {
+  products: [],
+  categories: [],
+  customers: [],
+  invoices: [],
+  units: [],
+  stores: [],
+  toolbarPositions: {},
+};
+
 
 // Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(defaultData);
+  const [data, setData] = useState<AppData>(emptyData);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   // Load initial data from localStorage or the default JSON file
   useEffect(() => {
-    function loadInitialData() {
+    async function loadInitialData() {
       try {
         const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedData) {
           const parsedData = JSON.parse(storedData);
-          // Ensure toolbarPositions exists and is an object
           if (typeof parsedData.toolbarPositions !== 'object' || parsedData.toolbarPositions === null) {
-            parsedData.toolbarPositions = defaultData.toolbarPositions || {};
+            parsedData.toolbarPositions = {};
           }
           setData(parsedData);
         } else {
-          // If no data is in local storage (first run on a device),
-          // use the imported default data and save it.
+          // If no data in local storage, fetch the default backup
+          const response = await fetch('/db/backup.json');
+          const defaultData = await response.json();
           setData(defaultData);
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
         }
       } catch (error) {
-        console.error("Could not load initial data:", error);
-        // Fallback to imported default data on any error
-        setData(defaultData);
+        console.error("Could not load initial data, trying to fetch default:", error);
+        try {
+            const response = await fetch('/db/backup.json');
+            const defaultData = await response.json();
+            setData(defaultData);
+        } catch (fetchError) {
+            console.error("Failed to fetch default backup data:", fetchError);
+            setData(emptyData); // Fallback to empty data structure
+        }
       } finally {
         setIsInitialized(true);
       }
@@ -77,28 +92,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
       } catch (error) {
         console.error("Failed to save data to localStorage:", error);
-        // This might happen if storage is full. Consider notifying the user.
         console.error("Failed to save data, not enough space.");
       }
     }
   }, [data, isInitialized]);
 
 
-  // This function resets the application state to the initial data from the imported JSON file.
+  // This function resets the application state by fetching the default backup file.
   const resetData = useCallback(async (): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       setIsResetting(true);
-      try {
-        setData(defaultData);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
-      } catch(error) {
-          console.error("Failed to reset data:", error);
-      } finally {
+      fetch('/db/backup.json')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(defaultData => {
+          setData(defaultData);
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
+          resolve();
+        })
+        .catch(error => {
+          console.error("Failed to fetch and reset data:", error);
+          reject(error);
+        })
+        .finally(() => {
           setTimeout(() => {
             setIsResetting(false);
-            resolve();
           }, 500);
-      }
+        });
     });
   }, []);
   
@@ -109,7 +133,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         try {
             localStorage.removeItem(LOCAL_STORAGE_KEY);
             // Setting to an empty object structure to avoid errors on reload before useEffect runs
-            setData({ ...defaultData, customers: [], products: [], invoices: [], stores: [], categories: [], units: [] });
+            setData(emptyData);
             // Reload the page to ensure the app state is fully reset
             setTimeout(() => {
                 window.location.reload();

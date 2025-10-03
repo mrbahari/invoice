@@ -65,6 +65,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { useCollection } from '@/hooks/use-collection';
 import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 type InvoiceEditorProps = {
@@ -221,6 +222,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const isClient = useIsClient();
   const { add: addCustomer } = useCollection<Customer>('customers');
+  const isMobile = useIsMobile();
 
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
@@ -770,7 +772,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-12 w-12 border">
                                             <AvatarImage src={`https://picsum.photos/seed/${selectedCustomer.id}/48/48`} />
-                                            <AvatarFallback>{selectedCustomer.name?.[0]}</AvatarFallback>
+                                            <AvatarFallback>{selectedCustomer.phone?.[0]}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-semibold text-lg">{selectedCustomer.phone}</p>
@@ -833,7 +835,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             )}
                                         </div>
                                         <div className="border rounded-md p-2 grid grid-cols-2 md:grid-cols-4 gap-1">
-                                            {filteredCustomers.length > 0 ? (filteredCustomers || []).slice(0, 8).map(customer => (
+                                            {filteredCustomers.length > 0 ? (filteredCustomers || []).slice(0, isMobile ? 4 : 8).map(customer => (
                                                 <Button
                                                     key={customer.id}
                                                     variant={'ghost'}
@@ -847,7 +849,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     <div className="flex items-center gap-4 text-right w-full overflow-hidden">
                                                         <Avatar className="h-10 w-10 border flex-shrink-0">
                                                             <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                            <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                            <AvatarFallback>{customer.phone[0]}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="overflow-hidden">
                                                             <p className='text-base font-semibold truncate'>{customer.phone}</p>
@@ -981,3 +983,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

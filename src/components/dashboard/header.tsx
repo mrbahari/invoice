@@ -43,10 +43,12 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
-  const { searchTerm, setSearchTerm } = useSearch();
+  const { searchTerm, setSearchTerm, isSearchVisible: isSearchContextVisible } = useSearch();
 
-  // Determine if the search bar should be visible on the current tab
-  const isSearchVisible = showSearchTabs.includes(activeTab);
+  // Determine if the search bar should be visible based on both tab and context
+  const isSearchAllowedOnTab = showSearchTabs.includes(activeTab);
+  const isSearchVisible = isSearchAllowedOnTab && isSearchContextVisible;
+
 
   React.useEffect(() => {
     // Clear search term when navigating away from a searchable tab

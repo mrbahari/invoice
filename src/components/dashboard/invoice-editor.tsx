@@ -31,14 +31,6 @@ import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -251,6 +243,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
   
   const [customerDialogView, setCustomerDialogView] = useState<'select' | 'create'>('select');
+  const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
 
@@ -310,7 +303,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, products, stores, invoices.length]);
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | 'all'>('all');
@@ -514,7 +506,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
   const handleProcessInvoice = (): string | null => {
     if (!selectedCustomer) {
-      setIsCustomerDialogOpen(true);
+      setIsCustomerSelectorOpen(true);
       return null;
     }
     if (!invoice.items || invoice.items.length === 0) {
@@ -727,7 +719,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
         <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 grid auto-rows-max gap-4">
-                <Dialog open={isCustomerDialogOpen} onOpenChange={setIsCustomerDialogOpen}>
+                <Collapsible open={isCustomerSelectorOpen} onOpenChange={setIsCustomerSelectorOpen}>
                     <Card>
                         <CardHeader>
                            <CardTitle>اطلاعات مشتری</CardTitle>
@@ -745,102 +737,92 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                             <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
                                         </div>
                                     </div>
-                                    <DialogTrigger asChild>
+                                    <CollapsibleTrigger asChild>
                                         <Button variant="outline" onClick={() => setCustomerDialogView('select')}>
                                             <Pencil className="ml-1 h-3 w-3" />
                                             تغییر
                                         </Button>
-                                    </DialogTrigger>
+                                    </CollapsibleTrigger>
                                 </div>
                             ) : (
-                               <DialogTrigger asChild>
+                               <CollapsibleTrigger asChild>
                                     <Button variant="outline" className="w-full h-20 border-dashed">
                                         <UserPlus className="ml-2 h-5 w-5" />
                                         انتخاب مشتری از لیست
                                     </Button>
-                                </DialogTrigger>
+                                </CollapsibleTrigger>
                             )}
                         </CardContent>
-                    </Card>
-                    <DialogContent className="max-w-md w-[90vw] bg-background">
-                      {customerDialogView === 'select' ? (
-                        <>
-                           <DialogHeader className="text-right">
-                              <DialogTitle>انتخاب مشتری</DialogTitle>
-                              <DialogDescription>
-                                  مشتری مورد نظر خود را جستجو و انتخاب کنید.
-                              </DialogDescription>
-                          </DialogHeader>
-                          <div className="py-4 grid gap-4">
-                                <div className="relative flex items-center">
-                                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input placeholder="جستجوی مشتری با نام یا شماره..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
-                                    {customerSearch && filteredCustomers.length === 0 && (
-                                        <Button size="sm" className="absolute left-1.5 h-7 bg-green-600 hover:bg-green-700" onClick={() => {
-                                            setCustomerDialogView('create');
-                                        }}>
-                                            <UserPlus className="ml-1 h-4 w-4" />
-                                            افزودن
-                                        </Button>
-                                    )}
+                        <CollapsibleContent>
+                            <AnimatePresence>
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="overflow-hidden"
+                                >
+                                <Separator />
+                                <div className="p-4">
+                                {customerDialogView === 'select' ? (
+                                    <div className="grid gap-4">
+                                        <div className="relative flex items-center">
+                                            <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input placeholder="جستجوی مشتری با نام یا شماره..." className="pr-8" value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} />
+                                        </div>
+                                        <ScrollArea className="h-[40vh] border rounded-md">
+                                            <div className="p-2 grid gap-1">
+                                                {filteredCustomers.length > 0 ? (filteredCustomers || []).map(customer => (
+                                                    <Button
+                                                        key={customer.id}
+                                                        variant={'ghost'}
+                                                        className="h-16 justify-start text-right"
+                                                        onClick={() => {
+                                                            setSelectedCustomer(customer);
+                                                            setIsCustomerSelectorOpen(false);
+                                                            setCustomerSearch('');
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-4 text-right w-full">
+                                                            <Avatar className="h-10 w-10 border">
+                                                                <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
+                                                                <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className='text-base font-semibold'>{customer.name}</p>
+                                                                <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                                            </div>
+                                                        </div>
+                                                    </Button>
+                                                )) : (
+                                                    <div className="text-center py-10 text-sm text-muted-foreground">مشتری‌ای یافت نشد.</div>
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+                                        <Button variant="outline" onClick={() => setCustomerDialogView('create')}><PlusCircle className='ml-2 h-4 w-4' />افزودن مشتری جدید</Button>
+                                    </div>
+                                ) : (
+                                    <div className="pt-4">
+                                        <CustomerForm 
+                                            onSave={() => {
+                                                const newCustomer = data.customers[0];
+                                                if(newCustomer){
+                                                    setSelectedCustomer(newCustomer);
+                                                }
+                                                setIsCustomerSelectorOpen(false);
+                                                setCustomerDialogView('select');
+                                                setCustomerSearch('');
+                                            }} 
+                                            onCancel={() => setCustomerDialogView('select')}
+                                        />
+                                    </div>
+                                )}
                                 </div>
-                              <ScrollArea className="h-[60vh]">
-                                  <div className="grid gap-2 pr-4">
-                                      {(filteredCustomers || []).map(customer => {
-                                          return(
-                                              <Button
-                                                  key={customer.id}
-                                                  variant={selectedCustomer?.id === customer.id ? 'default' : 'ghost'}
-                                                  className="h-16 justify-start text-right"
-                                                  onClick={() => {
-                                                      setSelectedCustomer(customer);
-                                                      setIsCustomerDialogOpen(false);
-                                                      setCustomerSearch('');
-                                                  }}
-                                              >
-                                                  <div className="flex items-center gap-4 text-right w-full">
-                                                      <Avatar className="h-10 w-10 border">
-                                                          <AvatarImage src={`https://picsum.photos/seed/${customer.id}/40/40`} />
-                                                          <AvatarFallback>{customer.name[0]}</AvatarFallback>
-                                                      </Avatar>
-                                                      <div>
-                                                          <p className='text-base font-semibold'>{customer.name}</p>
-                                                          <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                                                      </div>
-                                                  </div>
-                                              </Button>
-                                          );
-                                      })}
-                                  </div>
-                              </ScrollArea>
-                          </div>
-                        </>
-                      ) : (
-                         <div className="pt-8">
-                             <DialogHeader className="text-right">
-                                <DialogTitle>افزودن مشتری جدید</DialogTitle>
-                                <DialogDescription>
-                                    اطلاعات مشتری جدید را وارد کرده و ذخیره کنید.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="pt-4">
-                                <CustomerForm 
-                                    onSave={() => {
-                                        const newCustomer = data.customers[0];
-                                        if(newCustomer){
-                                            setSelectedCustomer(newCustomer);
-                                        }
-                                        setIsCustomerDialogOpen(false);
-                                        setCustomerDialogView('select');
-                                        setCustomerSearch('');
-                                    }} 
-                                    onCancel={() => setCustomerDialogView('select')}
-                                />
-                            </div>
-                         </div>
-                      )}
-                  </DialogContent>
-                </Dialog>
+                                </motion.div>
+                            </AnimatePresence>
+                        </CollapsibleContent>
+                    </Card>
+                </Collapsible>
                 
                 <div className="block lg:hidden">
                     <AddProductsComponent />

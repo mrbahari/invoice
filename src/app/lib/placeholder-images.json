@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -35,30 +36,8 @@
       "description": "A set of premium headphones",
       "imageUrl": "https://picsum.photos/seed/106/400/300",
       "imageHint": "headphones"
-    },
-    {
-      "id": "estimator-box",
-      "description": "A constructed drywall box ceiling with hidden lighting",
-      "imageUrl": "https://picsum.photos/seed/est1/600/400",
-      "imageHint": "drywall ceiling"
-    },
-    {
-      "id": "estimator-grid",
-      "description": "A grid ceiling with 60x60 tiles",
-      "imageUrl": "https://picsum.photos/seed/est2/600/400",
-      "imageHint": "grid ceiling"
-    },
-    {
-      "id": "estimator-flat",
-      "description": "A smooth, flat plasterboard ceiling",
-      "imageUrl": "https://picsum.photos/seed/est3/600/400",
-      "imageHint": "flat ceiling"
-    },
-    {
-      "id": "estimator-drywall",
-      "description": "A partition drywall being installed",
-      "imageUrl": "https://picsum.photos/seed/est4/600/400",
-      "imageHint": "drywall installation"
     }
   ]
 }
+
+    

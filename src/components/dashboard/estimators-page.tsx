@@ -38,25 +38,29 @@ const estimatorTypes = [
     {
         id: 'box' as EstimatorType,
         title: 'باکس و نورمخفی',
-        imageKey: 'estimator-box',
+        imageUrl: '/images/estimator-box.jpg',
+        imageHint: 'drywall ceiling',
         component: BoxCeilingForm,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
         title: 'سقف مشبک',
-        imageKey: 'estimator-grid',
+        imageUrl: '/images/estimator-grid.jpg',
+        imageHint: 'grid ceiling',
         component: GridCeilingForm,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
         title: 'سقف فلت',
-        imageKey: 'estimator-flat',
+        imageUrl: '/images/estimator-flat.jpg',
+        imageHint: 'flat ceiling',
         component: FlatCeilingForm,
     },
     {
         id: 'drywall' as EstimatorType,
         title: 'دیوار خشک',
-        imageKey: 'estimator-drywall',
+        imageUrl: '/images/estimator-drywall.jpg',
+        imageHint: 'drywall installation',
         component: DrywallForm,
     }
 ];
@@ -70,7 +74,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
   const { data: appData } = useData();
-  const { products, invoices, placeholderImages } = appData;
+  const { products, invoices } = appData;
   const { toast } = useToast();
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
@@ -240,29 +244,26 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {estimatorTypes.map((estimator) => {
-                        const image = placeholderImages.find(img => img.id === estimator.imageKey);
-                        return(
-                            <Card 
-                                key={estimator.id}
-                                onClick={() => handleEstimatorSelect(estimator.id)}
-                                className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                            >
-                                <div className="relative w-full h-[120px] overflow-hidden">
-                                    <Image
-                                        src={image?.imageUrl || `https://placehold.co/600x400`}
-                                        alt={estimator.title}
-                                        fill
-                                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                        data-ai-hint={image?.imageHint}
-                                    />
-                                </div>
-                                <div className="p-3 text-center">
-                                    <CardTitle className="text-sm font-bold">{estimator.title}</CardTitle>
-                                </div>
-                            </Card>
-                        );
-                    })}
+                    {estimatorTypes.map((estimator) => (
+                        <Card 
+                            key={estimator.id}
+                            onClick={() => handleEstimatorSelect(estimator.id)}
+                            className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                        >
+                            <div className="relative w-full h-[120px] overflow-hidden">
+                                <Image
+                                    src={estimator.imageUrl}
+                                    alt={estimator.title}
+                                    fill
+                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                    data-ai-hint={estimator.imageHint}
+                                />
+                            </div>
+                            <div className="p-3 text-center">
+                                <CardTitle className="text-sm font-bold">{estimator.title}</CardTitle>
+                            </div>
+                        </Card>
+                    ))}
                 </div>
                  {ActiveForm && (
                     <DialogContent className="sm:max-w-[625px]">
@@ -347,3 +348,5 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     </div>
   );
 }
+
+    

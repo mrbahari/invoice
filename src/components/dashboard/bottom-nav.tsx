@@ -58,7 +58,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         <div className="flex h-full w-full items-center justify-center">
             <button 
               onClick={() => handleTabClick('invoices')}
-              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
+              className="group flex h-16 w-16 translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
             >
               <FileText className="h-8 w-8" />
               <span className="sr-only">ایجاد فاکتور</span>
@@ -74,7 +74,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           >
             <div className="relative">
               <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
-              <span className={cn(
+               <span className={cn(
                 "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
                 activeTab === item.tab && "opacity-100"
               )} />

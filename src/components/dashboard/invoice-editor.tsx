@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package, Check } from 'lucide-react';
+import { Plus, Minus, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package, Check } from 'lucide-react';
 import { formatCurrency, getStorePrefix } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -88,6 +88,25 @@ const useIsClient = () => {
   useEffect(() => setIsClient(true), []);
   return isClient;
 };
+
+const useInterval = (callback: () => void, delay: number | null) => {
+  const savedCallback = useRef<() => void>();
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    function tick() {
+      savedCallback.current?.();
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+};
+
 
 const formatNumber = (num: number | ''): string => {
     if (num === '' || num === null || isNaN(Number(num))) return '';
@@ -222,9 +241,9 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                     )}
                                 </div>
                                 <div className="grid gap-0.5 overflow-hidden">
-                                  <span className="font-semibold truncate">{item.productName}</span>
+                                  <p className="font-semibold truncate">{item.productName}</p>
                                   <p className="text-xs text-muted-foreground font-mono truncate">
-                                    {item.quantity.toLocaleString('fa-IR')} {item.unit} x {formatCurrency(item.unitPrice)}
+                                    {item.quantity.toLocaleString('fa-IR')} {item.unit} &times; {formatCurrency(item.unitPrice)}
                                   </p>
                                   <p className="text-sm font-semibold font-mono truncate">{formatCurrency(item.totalPrice)}</p>
                                 </div>
@@ -303,7 +322,8 @@ const AddProductsComponent = React.memo(({
     setProductSearch,
     filteredProducts,
     invoiceItems,
-    handleAddProduct,
+    onAddProduct,
+    onRemoveProduct,
 }: {
     storeId: string;
     setStoreId: (id: string) => void;
@@ -315,10 +335,29 @@ const AddProductsComponent = React.memo(({
     setProductSearch: (term: string) => void;
     filteredProducts: Product[];
     invoiceItems: InvoiceItem[];
-    handleAddProduct: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
+    onAddProduct: (product: Product) => void;
+    onRemoveProduct: (product: Product) => void;
 }) => {
     const draggableScrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
+    const [isPressing, setIsPressing] = useState<null | 'add' | 'remove'>(null);
+    const [activeProduct, setActiveProduct] = useState<string | null>(null);
+
+    const handlePress = (action: 'add' | 'remove', product: Product) => {
+        setIsPressing(action);
+        setActiveProduct(product.id);
+        if (action === 'add') onAddProduct(product);
+        else onRemoveProduct(product);
+    };
+
+    useInterval(() => {
+        const product = filteredProducts.find(p => p.id === activeProduct);
+        if (isPressing && product) {
+            if (isPressing === 'add') onAddProduct(product);
+            else onRemoveProduct(product);
+        }
+    }, isPressing ? 150 : null);
+
 
     return (
         <Card className="sticky top-20">
@@ -371,13 +410,26 @@ const AddProductsComponent = React.memo(({
                                 <Card className="overflow-hidden">
                                     <div className="relative aspect-square w-full">
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
-                                                <PlusCircle className="h-6 w-6" />
-                                            </motion.button>
+                                        <div 
+                                          className="absolute inset-0 flex"
+                                          onMouseUp={() => setIsPressing(null)}
+                                          onMouseLeave={() => setIsPressing(null)}
+                                        >
+                                            <div 
+                                                className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/40"
+                                                onMouseDown={() => handlePress('remove', product)}
+                                            >
+                                                <Minus className="h-6 w-6 text-white" />
+                                            </div>
+                                            <div 
+                                                className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-green-500/20 hover:bg-green-500/40"
+                                                onMouseDown={() => handlePress('add', product)}
+                                            >
+                                                <Plus className="h-6 w-6 text-white" />
+                                            </div>
                                         </div>
                                         {isInInvoice && (
-                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
+                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-primary text-primary-foreground">
                                             {invoiceItem?.quantity}
                                             </Badge>
                                         )}
@@ -588,30 +640,20 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [customerSearch, filteredCustomers]);
 
   
- const handleAddProduct = (product: Product, e: React.MouseEvent<HTMLButtonElement>) => {
-    const buttonEl = e.currentTarget;
-    const rect = buttonEl.getBoundingClientRect();
-    
-    setFlyingProduct({
-        id: `${product.id}-${Date.now()}`,
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-        imageUrl: product.imageUrl
-    });
-
+ const handleAddProduct = useCallback((product: Product) => {
     setInvoice(prevInvoice => {
       const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
       const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       let newItems;
+
       if (existingItemIndex > -1) {
-        // Item exists, update quantity and ensure all properties are preserved
+        // Item exists, update quantity
         newItems = currentItems.map((item, index) => {
           if (index === existingItemIndex) {
             const newQuantity = item.quantity + 1;
             return {
-              ...item, // Preserve all properties from the existing item
-              imageUrl: item.imageUrl || product.imageUrl, // Ensure imageUrl is kept
+              ...item,
               quantity: newQuantity,
               totalPrice: newQuantity * item.unitPrice,
             };
@@ -631,9 +673,45 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         };
         newItems = [newItem, ...currentItems];
       }
+      
       return {...prevInvoice, items: newItems};
     });
-  };
+  }, []);
+
+  const handleRemoveProduct = useCallback((product: Product) => {
+    setInvoice(prevInvoice => {
+      const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
+      const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
+
+      if (existingItemIndex === -1) {
+        return prevInvoice; // Product not in invoice, do nothing
+      }
+
+      const itemToUpdate = currentItems[existingItemIndex];
+      let newItems;
+
+      if (itemToUpdate.quantity > 1) {
+        // Decrease quantity
+        newItems = currentItems.map((item, index) => {
+          if (index === existingItemIndex) {
+            const newQuantity = item.quantity - 1;
+            return {
+              ...item,
+              quantity: newQuantity,
+              totalPrice: newQuantity * item.unitPrice,
+            };
+          }
+          return item;
+        });
+      } else {
+        // Remove item if quantity is 1
+        newItems = currentItems.filter((_, index) => index !== existingItemIndex);
+      }
+
+      return { ...prevInvoice, items: newItems };
+    });
+  }, []);
+
 
   const handleItemChange = useCallback((index: number, field: keyof InvoiceItem, value: any) => {
     setInvoice(prev => {
@@ -931,7 +1009,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                                                     onClick={handleAddNewCustomer}
                                                     className="absolute left-1 top-1/2 -translate-y-1/2 h-8 bg-green-500 text-white hover:bg-green-600 flex items-center gap-1 px-3"
                                                 >
-                                                   <PlusCircle className="h-4 w-4" />
+                                                   <Plus className="h-4 w-4" />
                                                     افزودن
                                                 </Button>
                                             )}
@@ -1001,7 +1079,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                       setProductSearch={setProductSearch}
                       filteredProducts={filteredProducts}
                       invoiceItems={invoice.items || []}
-                      handleAddProduct={handleAddProduct}
+                      onAddProduct={handleAddProduct}
+                      onRemoveProduct={handleRemoveProduct}
                     />
                 </div>
 
@@ -1106,7 +1185,8 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     setProductSearch={setProductSearch}
                     filteredProducts={filteredProducts}
                     invoiceItems={invoice.items || []}
-                    handleAddProduct={handleAddProduct}
+                    onAddProduct={handleAddProduct}
+                    onRemoveProduct={handleRemoveProduct}
                   />
             </div>
         </div>

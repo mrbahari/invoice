@@ -35,20 +35,21 @@ const prompt = ai.definePrompt({
     output: { schema: GenerateLogoPromptsOutputSchema },
     prompt: `
     Based on the following store name and description, generate 5 distinct and creative prompts for an AI image generator to create a logo.
-    The prompts should be in English.
-    The logo should be modern, symbolic, minimal, and use a vector style. It must NOT contain any text.
-    The background must be a solid white color.
+    The prompts must be in English.
+    Each prompt must request a modern, symbolic, and minimalist vector-style logo.
+    Crucially, each prompt must explicitly forbid the use of any text, letters, shadows, gradients, or 3D rendering.
+    The background for every logo must be a solid white color.
     Focus on abstract concepts or key visual elements from the description.
 
     Store Name: "{{storeName}}"
     Description (in Persian): "{{description}}"
 
     Example Output Format:
-    1. A minimalist vector logo of a stylized [key element], using geometric shapes and a [color palette] color scheme, on a solid white background. No text.
-    2. An abstract logo representing [concept from description], with clean lines and a simple, modern design, on a solid white background. No text.
-    3. A simple, iconic mark combining [element 1] and [element 2], flat vector style, on a solid white background. No text.
-    4. A negative space logo featuring a [main subject] within a [shape], clean and clever design, on a solid white background. No text.
-    5. A geometric logo made of interlocking shapes that form a [symbol related to the store], using a limited color palette, on a solid white background. No text.
+    1. A minimalist vector logo of a stylized [key element], using geometric shapes and a [color palette] color scheme. NO text, letters, shadows, or 3d rendering.
+    2. An abstract logo representing [concept from description], with clean lines and a simple, modern design, flat icon style. NO text, letters, shadows, or 3d rendering.
+    3. A simple, iconic mark combining [element 1] and [element 2], flat 2d vector style, on a solid white background. NO text, letters, shadows, or 3d rendering.
+    4. A negative space logo featuring a [main subject] within a [shape], clean and clever design, isolated on a solid white background. NO text, letters, shadows, or 3d rendering.
+    5. A geometric logo made of interlocking shapes that form a [symbol related to the store], using a limited color palette. NO text, letters, shadows, or 3d rendering.
     `,
 });
 

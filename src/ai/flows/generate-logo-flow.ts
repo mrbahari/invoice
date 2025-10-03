@@ -37,9 +37,11 @@ const generateLogoFlow = ai.defineFlow(
   async (input) => {
     
     try {
+      const finalPrompt = `${input.prompt}, logo, minimalist, vector, flat icon, 2d, isolated on white background, simple. NO text, NO letters, NO shadows, NO gradients, NO 3d rendering.`;
+
       const { media } = await ai.generate({
           model: 'googleai/imagen-4.0-fast-generate-001',
-          prompt: input.prompt,
+          prompt: finalPrompt,
       });
       if (media && media.url) {
           return { imageUrl: media.url };

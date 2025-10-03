@@ -78,6 +78,7 @@ export type InvoiceItem = {
   unitPrice: number;
   totalPrice: number;
   unit: string;
+  imageUrl?: string;
 };
 
 export type AuthFormValues = {

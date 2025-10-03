@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import type { Customer, Product, Category, InvoiceItem, InvoiceStatus, Store } from '@/lib/definitions';
+import type { Customer, Product, Category, InvoiceItem, Invoice, InvoiceStatus, Store } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -138,15 +137,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
 
     // Debounce effect for auto-updating
     useEffect(() => {
-        // Only run if there are actual changes
-        const numQuantity = parseFormattedNumber(localQuantity);
-        const numPrice = parseFormattedNumber(localPrice);
-        const numTotalPrice = parseFormattedNumber(localTotalPrice);
-        
-        if (numQuantity === item.quantity && numPrice === item.unitPrice && numTotalPrice === item.totalPrice) {
-            return;
-        }
-
         const handler = setTimeout(() => {
             const newQuantity = parseFormattedNumber(localQuantity);
             const newPrice = parseFormattedNumber(localPrice);
@@ -223,8 +213,8 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                     <GripVertical className="h-6 w-6 text-muted-foreground" />
                                 </div>
                                 <div className="relative h-12 w-12 flex-shrink-0">
-                                    {product?.imageUrl ? (
-                                        <Image src={product.imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
+                                    {item.imageUrl ? (
+                                        <Image src={item.imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
                                     ) : (
                                         <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center">
                                             <Package className="h-6 w-6 text-muted-foreground" />
@@ -301,6 +291,118 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
         </Collapsible>
     );
 }
+
+const AddProductsComponent = React.memo(({
+    storeId,
+    setStoreId,
+    stores,
+    subCategories,
+    selectedSubCategoryId,
+    setSelectedSubCategoryId,
+    productSearch,
+    setProductSearch,
+    filteredProducts,
+    invoiceItems,
+    handleAddProduct,
+}: {
+    storeId: string;
+    setStoreId: (id: string) => void;
+    stores: Store[];
+    subCategories: Category[];
+    selectedSubCategoryId: string;
+    setSelectedSubCategoryId: (id: string) => void;
+    productSearch: string;
+    setProductSearch: (term: string) => void;
+    filteredProducts: Product[];
+    invoiceItems: InvoiceItem[];
+    handleAddProduct: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
+}) => {
+    const draggableScrollRef = useRef<HTMLDivElement>(null);
+    useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
+
+    return (
+        <Card className="sticky top-20">
+            <CardHeader>
+                <CardTitle>افزودن محصولات</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+            <div className="grid grid-cols-1 gap-4">
+                <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
+                    <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
+                    <SelectContent>
+                    {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                    </SelectContent>
+                </Select>
+                <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
+                    <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">همه زیردسته‌ها</SelectItem>
+                        {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                    </SelectContent>
+                </Select>
+                <div className="relative">
+                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    {productSearch && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                onClick={() => setProductSearch('')}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
+                    <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                </div>
+            </div>
+                
+                <div
+                    ref={draggableScrollRef}
+                    className="overflow-x-auto cursor-grab active:cursor-grabbing"
+                >
+                    <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
+                        {filteredProducts.length > 0 ? (filteredProducts).map(product => {
+                            const invoiceItem = invoiceItems?.find(item => item.productId === product.id);
+                            const isInInvoice = !!invoiceItem;
+
+                            return (
+                            <div key={product.id} className="group flex flex-col">
+                                <Card className="overflow-hidden">
+                                    <div className="relative aspect-square w-full">
+                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
+                                                <PlusCircle className="h-6 w-6" />
+                                            </motion.button>
+                                        </div>
+                                        {isInInvoice && (
+                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
+                                            {invoiceItem?.quantity}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </Card>
+                                <div className="p-1.5 text-center">
+                                    <p className="text-xs font-semibold truncate">{product.name}</p>
+                                    <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
+                                </div>
+                            </div>
+                            )
+                        }) : (
+                            <div className="col-span-full row-span-2 text-center py-10 text-muted-foreground flex items-center justify-center w-full">
+                                محصولی یافت نشد.
+                            </div>
+                        )}
+                    </div>
+                </div>
+                
+        </CardContent>
+        </Card>
+    );
+});
+AddProductsComponent.displayName = 'AddProductsComponent';
+
 
 export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
   const { data, setData } = useData();
@@ -502,8 +604,10 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       const existingItemIndex = items.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       if (existingItemIndex > -1) {
-        items[existingItemIndex].quantity += 1;
-        items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
+        const updatedItem = { ...items[existingItemIndex] };
+        updatedItem.quantity += 1;
+        updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
+        items[existingItemIndex] = updatedItem;
       } else {
         items.unshift({
           productId: product.id,
@@ -512,6 +616,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
           unit: product.unit,
           unitPrice: product.price,
           totalPrice: product.price,
+          imageUrl: product.imageUrl, // <-- This was the fix
         });
       }
       return {...currentInvoice, items};
@@ -541,6 +646,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                 unit: newProduct.unit,
                 unitPrice: newProduct.price,
                 totalPrice: oldItem.quantity * newProduct.price,
+                imageUrl: newProduct.imageUrl
             };
         }
         return { ...prev, items: newItems };
@@ -672,118 +778,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       setCustomerSearch('');
     }
   };
-
-  const AddProductsComponent = React.memo(({
-      storeId,
-      setStoreId,
-      stores,
-      subCategories,
-      selectedSubCategoryId,
-      setSelectedSubCategoryId,
-      productSearch,
-      setProductSearch,
-      filteredProducts,
-      invoiceItems,
-      handleAddProduct,
-  }: {
-      storeId: string;
-      setStoreId: (id: string) => void;
-      stores: Store[];
-      subCategories: Category[];
-      selectedSubCategoryId: string;
-      setSelectedSubCategoryId: (id: string) => void;
-      productSearch: string;
-      setProductSearch: (term: string) => void;
-      filteredProducts: Product[];
-      invoiceItems: InvoiceItem[];
-      handleAddProduct: (product: Product, e: React.MouseEvent<HTMLButtonElement>) => void;
-  }) => {
-      const draggableScrollRef = useRef<HTMLDivElement>(null);
-      useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
-  
-      return (
-          <Card className="sticky top-20">
-              <CardHeader>
-                  <CardTitle>افزودن محصولات</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4">
-              <div className="grid grid-cols-1 gap-4">
-                  <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSelectedSubCategoryId('all'); }}>
-                      <SelectTrigger><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
-                      <SelectContent>
-                      {stores?.map((s: Store) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
-                      </SelectContent>
-                  </Select>
-                  <Select value={selectedSubCategoryId} onValueChange={(val) => setSelectedSubCategoryId(val)} disabled={!storeId}>
-                      <SelectTrigger><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="all">همه زیردسته‌ها</SelectItem>
-                          {subCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-                      </SelectContent>
-                  </Select>
-                  <div className="relative">
-                      <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      {productSearch && (
-                              <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                                  onClick={() => setProductSearch('')}
-                              >
-                                  <X className="h-4 w-4" />
-                              </Button>
-                          )}
-                      <Input placeholder="جستجوی محصول..." className="pr-8 pl-8" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
-                  </div>
-              </div>
-                  
-                  <div
-                      ref={draggableScrollRef}
-                      className="overflow-x-auto cursor-grab active:cursor-grabbing"
-                  >
-                      <div className="grid grid-rows-2 grid-flow-col gap-2 auto-cols-[100px] sm:auto-cols-[120px] pb-2">
-                          {filteredProducts.length > 0 ? (filteredProducts).map(product => {
-                              const invoiceItem = invoiceItems?.find(item => item.productId === product.id);
-                              const isInInvoice = !!invoiceItem;
-  
-                              return (
-                              <div key={product.id} className="group flex flex-col">
-                                  <Card className="overflow-hidden">
-                                      <div className="relative aspect-square w-full">
-                                          <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                              <motion.button whileTap={{ scale: 0.95 }} className="text-white h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/20" onClick={(e) => handleAddProduct(product, e)}>
-                                                  <PlusCircle className="h-6 w-6" />
-                                              </motion.button>
-                                          </div>
-                                          {isInInvoice && (
-                                              <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white">
-                                              {invoiceItem?.quantity}
-                                              </Badge>
-                                          )}
-                                      </div>
-                                  </Card>
-                                  <div className="p-1.5 text-center">
-                                      <p className="text-xs font-semibold truncate">{product.name}</p>
-                                      <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
-                                  </div>
-                              </div>
-                              )
-                          }) : (
-                              <div className="col-span-full row-span-2 text-center py-10 text-muted-foreground flex items-center justify-center w-full">
-                                  محصولی یافت نشد.
-                              </div>
-                          )}
-                      </div>
-                  </div>
-                  
-          </CardContent>
-          </Card>
-      );
-  });
-  AddProductsComponent.displayName = 'AddProductsComponent';
-
 
    return (
     <TooltipProvider>

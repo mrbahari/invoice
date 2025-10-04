@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
@@ -524,29 +523,17 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 <div className="grid gap-3">
                                     <Label htmlFor="image-url">آدرس تصویر</Label>
                                     <Input id="image-url" value={imageUrl || ''} onFocus={handleImageFocus} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
-                                     <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                        accept="image/*"
-                                        className="hidden"
-                                    />
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
                                         {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
                                         تولید با AI
                                     </Button>
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}>
-                                        <Upload className="ml-2 h-4 w-4" />
-                                        آپلود
-                                    </Button>
-                                    
-                                </div>
-                                 <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
                                         <Search className="ml-2 h-4 w-4" />
                                         جستجو در گوگل
                                     </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

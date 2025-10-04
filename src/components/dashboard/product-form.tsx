@@ -524,14 +524,25 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     <Label htmlFor="image-url">آدرس تصویر</Label>
                                     <Input id="image-url" value={imageUrl || ''} onFocus={handleImageFocus} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-3 gap-2">
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}>
+                                        <Upload className="ml-2 h-4 w-4" />
+                                        آپلود
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept="image/*"
+                                    />
                                     <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
                                         {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
-                                        تولید با AI
+                                        تولید
                                     </Button>
                                     <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
                                         <Search className="ml-2 h-4 w-4" />
-                                        جستجو در گوگل
+                                        جستجو
                                     </Button>
                                 </div>
                             </div>

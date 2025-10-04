@@ -268,15 +268,23 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 }
                 setLogoPrompts(prompts);
                 setCurrentPromptIndex(0); // Reset index
-                const { imageUrl } = await generateLogo({ prompt: prompts[0], storeName: name });
-                if (imageUrl) setLogoUrl(imageUrl);
-                else throw new Error("Image URL was not returned from the flow.");
+                const result = await generateLogo({ prompt: prompts[0], storeName: name });
+                if (result.imageUrl) {
+                    setLogoUrl(result.imageUrl);
+                } else {
+                    const seed = encodeURIComponent(`${name}-${Date.now()}`);
+                    setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
+                }
                 setCurrentPromptIndex(1); // Set for next click
             } else {
                  const prompt = logoPrompts[currentPromptIndex];
-                 const { imageUrl } = await generateLogo({ prompt, storeName: name });
-                 if (imageUrl) setLogoUrl(imageUrl);
-                 else throw new Error("Image URL was not returned from the flow.");
+                 const result = await generateLogo({ prompt, storeName: name });
+                 if (result.imageUrl) {
+                     setLogoUrl(result.imageUrl);
+                 } else {
+                    const seed = encodeURIComponent(`${name}-${Date.now()}`);
+                    setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
+                 }
                  setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % logoPrompts.length);
             }
 

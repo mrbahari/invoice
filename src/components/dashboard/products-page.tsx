@@ -1,8 +1,7 @@
-
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File, Store } from 'lucide-react';
+import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,31 +21,148 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatCurrency, downloadCSV } from '@/lib/utils';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
-import type { Product } from '@/lib/definitions';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import type { Product, Category } from '@/lib/definitions';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { ProductForm } from './product-form';
-import { useData } from '@/context/data-context'; // Import useData
+import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
+import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { generateProductFromIdea, type GenerateProductFromIdeaOutput } from '@/ai/flows/generate-product-from-idea';
+
+type SortOption = 'newest' | 'name' | 'price';
+
+function AiProductDialog({ onProductGenerated }: { onProductGenerated: (product: GenerateProductFromIdeaOutput) => void }) {
+  const { data } = useData();
+  const { stores, categories } = data;
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [idea, setIdea] = useState('');
+  const [storeId, setStoreId] = useState('');
+  const [subCategoryId, setSubCategoryId] = useState('');
+
+  const availableSubCategories = useMemo(() => {
+    if (!storeId) return [];
+    return categories.filter(c => c.storeId === storeId && c.parentId);
+  }, [categories, storeId]);
+
+  const canGenerate = idea && storeId && subCategoryId;
+
+  const handleGenerate = async () => {
+    if (!canGenerate) return;
+    setIsLoading(true);
+    try {
+      const categoryName = categories.find(c => c.id === subCategoryId)?.name || '';
+      const result = await generateProductFromIdea({
+        productIdea: idea,
+        storeId,
+        subCategoryId,
+        categoryName
+      });
+      if (result) {
+        onProductGenerated(result);
+        setIsOpen(false);
+        // Reset form
+        setIdea('');
+        setStoreId('');
+        setSubCategoryId('');
+      }
+    } catch (error) {
+      console.error("Failed to generate product with AI", error);
+      // You can add a toast message here
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="h-8 gap-1">
+          <WandSparkles className="h-3.5 w-3.5" />
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            افزودن با AI
+          </span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>تولید محصول با هوش مصنوعی</DialogTitle>
+          <DialogDescription>
+            ایده خود را توصیف کنید. هوش مصنوعی نام، قیمت، توضیحات و تصویر محصول را برای شما تولید می‌کند.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="idea" className="text-right">ایده محصول</Label>
+            <Input id="idea" value={idea} onChange={e => setIdea(e.target.value)} className="col-span-3" placeholder="مثلا: پیچ گوشتی شارژی باکیفیت" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="store" className="text-right">فروشگاه</Label>
+            <Select value={storeId} onValueChange={setStoreId}>
+              <SelectTrigger id="store" className="col-span-3"><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
+              <SelectContent>
+                {stores?.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="category" className="text-right">دسته</Label>
+            <Select value={subCategoryId} onValueChange={setSubCategoryId} disabled={!storeId}>
+              <SelectTrigger id="category" className="col-span-3"><SelectValue placeholder="انتخاب زیردسته" /></SelectTrigger>
+              <SelectContent>
+                {availableSubCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleGenerate} disabled={!canGenerate || isLoading}>
+            {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+            تولید محصول
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function ProductsPage() {
-  const { data } = useData(); // Use the central data context
+  const { data } = useData();
   const { products, stores, categories } = data;
   const [activeTab, setActiveTab] = useState('all');
   const { searchTerm, setSearchVisible } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>(
-    undefined
-  );
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    null
-  );
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
+  const storesScrollRef = useRef<HTMLDivElement>(null);
+  useDraggableScroll(storesScrollRef, { direction: 'horizontal' });
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
+
 
   useEffect(() => {
-    // Control search bar visibility based on view
     if (view === 'list') {
       setSearchVisible(true);
     } else {
@@ -58,7 +174,7 @@ export default function ProductsPage() {
     if (view === 'list' && scrollPositionRef.current > 0) {
       setTimeout(() => {
         window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
-        scrollPositionRef.current = 0; // Reset after restoring
+        scrollPositionRef.current = 0;
       }, 0);
     }
   }, [view]);
@@ -68,6 +184,22 @@ export default function ProductsPage() {
     setSelectedProductId(null);
     setView('form');
   };
+
+  const handleAiProductGenerated = useCallback((aiProduct: GenerateProductFromIdeaOutput) => {
+    // Create a product object that matches the form's expectations
+    const newProduct: Product = {
+      id: '', // ID will be generated on save
+      name: aiProduct.name,
+      description: aiProduct.description,
+      price: aiProduct.price,
+      imageUrl: aiProduct.imageUrl,
+      storeId: aiProduct.storeId,
+      subCategoryId: aiProduct.subCategoryId,
+      unit: 'عدد', // Default unit, can be changed in the form
+    };
+    setEditingProduct(newProduct);
+    setView('form');
+  }, []);
 
   const handleEditClick = (product: Product) => {
     scrollPositionRef.current = window.scrollY;
@@ -91,19 +223,27 @@ export default function ProductsPage() {
     setSelectedProductId(null);
   };
 
-  const filteredProducts = useMemo(() => {
+  const sortedAndFilteredProducts = useMemo(() => {
     if (!products) return [];
-    const productFilter = (product: Product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    let filtered = products.filter((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    if (activeTab === 'all') {
-      return products.filter(productFilter);
+    if (activeTab !== 'all') {
+      filtered = filtered.filter((p) => p.storeId === activeTab);
     }
-
-    return products
-      .filter((p) => p.storeId === activeTab)
-      .filter(productFilter);
-  }, [products, activeTab, searchTerm]);
+    
+    switch (sortOption) {
+      case 'name':
+        return filtered.sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+      case 'price':
+        return filtered.sort((a, b) => b.price - a.price);
+      case 'newest':
+      default:
+        // 'newest' is default as new products are prepended
+        return filtered;
+    }
+  }, [products, activeTab, searchTerm, sortOption]);
 
   const getCategoryName = (categoryId: string) => {
     if (!categories) return 'بدون زیردسته';
@@ -111,21 +251,13 @@ export default function ProductsPage() {
   };
 
   const handleExport = () => {
-    const dataToExport = filteredProducts.map((p) => ({
+    const dataToExport = sortedAndFilteredProducts.map((p) => ({
       ...p,
       categoryName: getCategoryName(p.subCategoryId),
-      storeName:
-        stores?.find((s) => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
+      storeName: stores?.find((s) => s.id === p.storeId)?.name || 'فروشگاه حذف شده',
     }));
 
-    const headers = {
-      name: 'نام محصول',
-      description: 'توضیحات',
-      price: 'قیمت',
-      storeName: 'فروشگاه',
-      categoryName: 'زیردسته',
-    };
-
+    const headers = { name: 'نام محصول', description: 'توضیحات', price: 'قیمت', storeName: 'فروشگاه', categoryName: 'زیردسته' };
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
 
@@ -151,61 +283,59 @@ export default function ProductsPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 gap-1"
-                onClick={handleExport}
-              >
+              <AiProductDialog onProductGenerated={handleAiProductGenerated} />
+              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
                 <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  خروجی
-                </span>
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
               </Button>
-              <Button
-                size="sm"
-                className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                onClick={handleAddClick}
-              >
+              <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
                 <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  افزودن محصول
-                </span>
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-              <Card 
-                className={cn("cursor-pointer", activeTab === 'all' ? 'border-primary' : 'border-border')}
-                onClick={() => setActiveTab('all')}
+          <div
+            ref={storesScrollRef}
+            className="flex space-x-reverse space-x-2 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing"
+          >
+            <Button
+              variant={activeTab === 'all' ? 'default' : 'outline'}
+              className="flex-shrink-0"
+              onClick={() => setActiveTab('all')}
+            >
+              <Store className="ml-2 h-4 w-4" />
+              همه محصولات
+            </Button>
+            {stores?.map((store) => (
+              <Button
+                key={store.id}
+                variant={activeTab === store.id ? 'default' : 'outline'}
+                className="flex-shrink-0"
+                onClick={() => setActiveTab(store.id)}
               >
-                <CardHeader className="p-4 flex-row items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <Store className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <CardTitle className="text-base">همه محصولات</CardTitle>
-                </CardHeader>
-              </Card>
-
-              {stores?.map((store) => (
-                <Card 
-                  key={store.id} 
-                  className={cn("cursor-pointer", activeTab === store.id ? 'border-primary' : 'border-border')}
-                  onClick={() => setActiveTab(store.id)}
-                >
-                  <CardHeader className="p-4 flex-row items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      {store.logoUrl ? (
-                        <Image src={store.logoUrl} alt={store.name} width={36} height={36} className="object-contain rounded-md" unoptimized />
-                      ) : <Store className="w-5 h-5 text-muted-foreground" />}
-                    </div>
-                    <CardTitle className="text-base truncate">{store.name}</CardTitle>
-                  </CardHeader>
-                </Card>
-              ))}
+                {store.name}
+              </Button>
+            ))}
           </div>
+
+          <div className="flex items-center justify-end py-4">
+              <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+                <SelectTrigger className="w-[180px]">
+                  <div className="flex items-center gap-2">
+                    <SortAsc className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="مرتب‌سازی بر اساس..." />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">جدیدترین</SelectItem>
+                  <SelectItem value="name">نام محصول</SelectItem>
+                  <SelectItem value="price">گران‌ترین</SelectItem>
+                </SelectContent>
+              </Select>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -216,16 +346,14 @@ export default function ProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
+              {sortedAndFilteredProducts.length > 0 ? (
+                sortedAndFilteredProducts.map((product) => (
                   <TableRow
                     key={product.id}
                     onClick={() => handleEditClick(product)}
                     className={cn(
                       'cursor-pointer',
-                      selectedProductId === product.id
-                        ? 'bg-muted'
-                        : 'hover:bg-muted/50'
+                      selectedProductId === product.id ? 'bg-muted' : 'hover:bg-muted/50'
                     )}
                   >
                     <TableCell className="font-medium">
@@ -242,23 +370,15 @@ export default function ProductsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {getCategoryName(product.subCategoryId)}
-                      </Badge>
+                      <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell max-w-xs truncate">
-                      {product.description}
-                    </TableCell>
-                    <TableCell className="text-left">
-                      {formatCurrency(product.price)}
-                    </TableCell>
+                    <TableCell className="hidden md:table-cell max-w-xs truncate">{product.description}</TableCell>
+                    <TableCell className="text-left">{formatCurrency(product.price)}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    هیچ محصولی یافت نشد.
-                  </TableCell>
+                  <TableCell colSpan={4} className="h-24 text-center">هیچ محصولی یافت نشد.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -266,7 +386,7 @@ export default function ProductsPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            نمایش <strong>{filteredProducts.length}</strong> از{' '}
+            نمایش <strong>{sortedAndFilteredProducts.length}</strong> از{' '}
             <strong>{products?.length || 0}</strong> محصول
           </div>
         </CardFooter>

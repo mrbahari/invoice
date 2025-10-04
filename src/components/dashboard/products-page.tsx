@@ -302,14 +302,22 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList>
-                    <TabsTrigger value="all">
-                        <Store className="ml-2 h-4 w-4" />
-                        همه محصولات
+                <TabsList className="h-auto bg-transparent p-0">
+                    <TabsTrigger value="all" className="flex flex-col gap-1 items-center justify-center h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:bg-accent">
+                        <Store className="h-6 w-6" />
+                        <span className="text-xs">همه محصولات</span>
                     </TabsTrigger>
                     {stores?.map((store) => (
-                    <TabsTrigger key={store.id} value={store.id}>
-                        {store.name}
+                    <TabsTrigger key={store.id} value={store.id} className="flex flex-col gap-1 h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:bg-accent p-2">
+                        <Image
+                          alt={store.name}
+                          className="aspect-square rounded-md object-contain"
+                          height="40"
+                          src={store.logoUrl || '/placeholder.svg'}
+                          width="40"
+                          unoptimized
+                        />
+                        <span className="text-xs truncate w-full">{store.name}</span>
                     </TabsTrigger>
                     ))}
                 </TabsList>

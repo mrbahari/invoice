@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the request is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Categories are global and publicly readable.
+     * @path /categories/{categoryId}
+     * @allow (get, list): Any user can read category data.
+     * @deny (create, update, delete): No one can create, update, or delete categories through the client. Admin functions should be handled server-side.
+     * @principle Allows public read access for global data; restricts write access to prevent unauthorized modifications.
+     */
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Products are global and publicly readable.
+     * @path /products/{productId}
+     * @allow (get, list): Any user can read product data.
+     * @deny (create, update, delete): No one can create, update, or delete products through the client. Admin functions should be handled server-side.
+     * @principle Allows public read access for global data; restricts write access to prevent unauthorized modifications.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description User profile data is private and accessible only to the user.
+     * @path /users/{userId}
+     * @allow (create): A user can create their own profile if their UID matches the userId.
+     * @allow (get, update, delete): Only the user with the matching UID can access or modify their profile.
+     * @deny (list): Listing all users is disallowed.
+     * @deny (create): A user cannot create a document for another user.
+     * @deny (update, delete): A user cannot modify or delete another user's profile.
+     * @principle Enforces document ownership; restricts access to a user's own data.
+     */
+    match /users/{userId} {
+      allow get, update, delete: if isOwner(userId);
+      allow create: if request.auth.uid == userId;
+      allow list: if false;
+    }
+
+    /**
+     * @description Client data is private to the user and stored under their profile.
+     * @path /users/{userId}/clients/{clientId}
+     * @allow (create): Only the authenticated user can create a client document under their own userId.
+     * @allow (get, list, update, delete): Only the user with the matching UID can access or modify their client data.
+     * @deny (create): A user cannot create a client document for another user.
+     * @deny (update, delete): A user cannot modify or delete another user's client data.
+     * @principle Enforces document ownership; restricts access to a user's own data tree.
+     */
+    match /users/{userId}/clients/{clientId} {
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Invoice data is private to the user and stored under their profile.
+     * @path /users/{userId}/invoices/{invoiceId}
+     * @allow (create): Only the authenticated user can create an invoice document under their own userId.
+     * @allow (get, list, update, delete): Only the user with the matching UID can access or modify their invoice data.
+     * @deny (create): A user cannot create an invoice document for another user.
+     * @deny (update, delete): A user cannot modify or delete another user's invoice data.
+     * @principle Enforces document ownership; restricts access to a user's own data tree.
+     */
+    match /users/{userId}/invoices/{invoiceId} {
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

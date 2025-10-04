@@ -167,11 +167,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           console.error("Error during logo generation process:", error);
           const seed = encodeURIComponent(`${name}-${Date.now()}`);
           setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
-          toast({
-              title: "خطا در تولید لوگو",
-              description: `متاسفانه تولید لوگو با خطا مواجه شد. لطفا دوباره تلاش کنید. (${(error as Error).message})`,
-              variant: "destructive"
-          });
       } finally {
           setIsLogoGenerating(false);
       }
@@ -371,8 +366,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
             <div className="flex flex-col items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
-                            <ArrowRight className="h-4 w-4" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
+                            <ArrowRight className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
@@ -382,8 +377,8 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
-                                        <Trash2 className="h-4 w-4" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
+                                        <Trash2 className="h-5 w-5" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
@@ -396,21 +391,24 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                             </AlertDialogHeader>
                             <AlertDialogFooter className="grid grid-cols-2 gap-2">
                                 <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                 )}
             </div>
-            <Separator orientation="horizontal" className="w-6" />
+            <Separator orientation="horizontal" className="w-8" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-5 w-5" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-6 w-6" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
             </Tooltip>
+             <div className="drag-handle cursor-move p-2 rounded-b-md hover:bg-muted">
+                <GripVertical className="h-6 w-6 text-muted-foreground" />
+            </div>
         </FloatingToolbar>
         <Card>
             <CardHeader>
@@ -635,3 +633,5 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </TooltipProvider>
   );
 }
+
+    

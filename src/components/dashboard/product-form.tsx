@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search, WandSparkles, LoaderCircle, Copy } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -29,14 +29,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
-import { WandSparkles, LoaderCircle, Copy } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { generateProductDetails, type GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
   Tooltip,
@@ -47,6 +39,8 @@ import {
 import { FloatingToolbar } from './floating-toolbar';
 import { Badge } from '../ui/badge';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
+import { useUpload } from '@/hooks/use-upload';
+import { Progress } from '@/components/ui/progress';
 
 
 type ProductFormProps = {
@@ -90,6 +84,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     price: false,
     image: false,
   });
+  
+  const { uploadFile, progress, isUploading, error: uploadError } = useUpload();
   
   const availableSubCategories = categories ? categories.filter(c => c.storeId === storeId && c.parentId) : [];
   
@@ -209,14 +205,13 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     window.open(url, '_blank');
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const downloadedUrl = await uploadFile(file);
+      if (downloadedUrl) {
+          setImageUrl(downloadedUrl);
+      }
     }
   };
 
@@ -380,7 +375,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                   <TooltipTrigger asChild>
                       <Button 
                         type="submit" 
-                        disabled={isProcessing}
+                        disabled={isProcessing || isUploading}
                         variant="ghost" 
                         size="icon"
                         className="w-10 h-10 bg-green-600 text-white hover:bg-green-700"
@@ -514,6 +509,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         <CardContent>
                             <div className="grid gap-2">
                                 <div className="relative aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
+                                    {isUploading && <Progress value={progress} className="absolute top-0 left-0 w-full h-1" />}
                                     {imageUrl ? (
                                         <Image src={imageUrl} alt={name || "Product Image"} fill className="object-cover" key={imageUrl} />
                                     ) : (
@@ -525,7 +521,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     <Input id="image-url" value={imageUrl || ''} onFocus={handleImageFocus} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
                                 </div>
                                 <div className="grid grid-cols-3 gap-2">
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick} disabled={isUploading}>
                                         <Upload className="ml-2 h-4 w-4" />
                                         آپلود
                                     </Button>
@@ -545,6 +541,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         جستجو
                                     </Button>
                                 </div>
+                                {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
                             </div>
                         </CardContent>
                     </Card>

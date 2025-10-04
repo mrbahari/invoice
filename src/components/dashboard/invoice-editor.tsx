@@ -63,7 +63,6 @@ import { FloatingToolbar } from './floating-toolbar';
 import { CustomerForm } from './customer-form';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { useCollection } from '@/hooks/use-collection';
 import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -452,7 +451,6 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   const { data, setData } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const isClient = useIsClient();
-  const { add: addCustomer } = useCollection<Customer>('customers');
   const isMobile = useIsMobile();
 
 
@@ -841,23 +839,22 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     }
   };
 
-  const handleAddNewCustomer = async () => {
+  const handleAddNewCustomer = () => {
     if (!/^\d{11}$/.test(customerSearch)) return;
 
-    const newCustomerData: Omit<Customer, 'id'> = {
+    const newCustomerData: Omit<Customer, 'id' | 'purchaseHistory'> & { id: string, purchaseHistory: string } = {
+      id: `cust-${Math.random().toString(36).substr(2, 9)}`,
       name: `مشتری جدید`,
       phone: customerSearch.trim(),
       email: 'ایمیل ثبت نشده',
       address: 'آدرس ثبت نشده',
       purchaseHistory: 'مشتری جدید',
     };
-
-    const newCustomer = await addCustomer(newCustomerData);
-    if (newCustomer) {
-      setSelectedCustomer(newCustomer);
-      setIsCustomerSelectorOpen(false);
-      setCustomerSearch('');
-    }
+    
+    setData(prev => ({ ...prev, customers: [newCustomerData, ...prev.customers] }));
+    setSelectedCustomer(newCustomerData);
+    setIsCustomerSelectorOpen(false);
+    setCustomerSearch('');
   };
 
    return (

@@ -124,7 +124,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
       <FloatingToolbar pageKey="customer-form">
-        <div className="flex items-center gap-1">
+        <div className="flex flex-col items-center gap-1">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button 
@@ -137,7 +137,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                     <ArrowRight className="h-4 w-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
             </Tooltip>
             {isEditMode && (
               <AlertDialog>
@@ -153,7 +153,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                                   <Trash2 className="h-4 w-4" />
                               </Button>
                           </TooltipTrigger>
-                          <TooltipContent><p>حذف مشتری</p></TooltipContent>
+                          <TooltipContent side="left"><p>حذف مشتری</p></TooltipContent>
                       </Tooltip>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -172,12 +172,12 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                       <Copy className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>ذخیره با عنوان جدید</p></TooltipContent>
+                <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
               </Tooltip>
             )}
         </div>
-        <Separator orientation="vertical" className="h-6" />
-        <div className="flex items-center gap-1">
+        <Separator orientation="horizontal" className="w-6" />
+        <div className="flex flex-col items-center gap-1">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button 
@@ -190,7 +190,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                         <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد مشتری'}</p></TooltipContent>
+                <TooltipContent side="left"><p>{isEditMode ? 'ذخیره تغییرات' : 'ایجاد مشتری'}</p></TooltipContent>
             </Tooltip>
         </div>
       </FloatingToolbar>

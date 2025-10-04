@@ -192,38 +192,40 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
       <div className="pb-24">
         {/* Floating Action Bar */}
          <FloatingToolbar pageKey="invoice-preview">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={onBack}>
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>بازگشت</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={() => onEdit(invoiceId)}>
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>ویرایش</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={handleCopyLink}>
-                        <Copy className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>کپی لینک</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" size="icon" className="w-8 h-8" onClick={handleDownloadImage}>
-                        <Camera className="h-4 w-4" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>دانلود عکس</p></TooltipContent>
-            </Tooltip>
+             <div className="flex flex-col items-center gap-1">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="w-8 h-8" onClick={onBack}>
+                            <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>بازگشت</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => onEdit(invoiceId)}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>ویرایش</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="w-8 h-8" onClick={handleCopyLink}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>کپی لینک</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="w-8 h-8" onClick={handleDownloadImage}>
+                            <Camera className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>دانلود عکس</p></TooltipContent>
+                </Tooltip>
+            </div>
         </FloatingToolbar>
 
         <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card">

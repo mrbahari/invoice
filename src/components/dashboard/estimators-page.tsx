@@ -255,11 +255,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                             <FloatingToolbar pageKey={`estimator-${selectedEstimator}`}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={handleBackToList} className="flex items-center gap-2 w-12 h-12 text-muted-foreground">
+                                        <Button variant="ghost" size="icon" onClick={handleBackToList} className="flex items-center gap-2 w-10 h-10 text-muted-foreground">
                                             <ArrowRight className="h-5 w-5" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                                    <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
                                 </Tooltip>
                             </FloatingToolbar>
                          </TooltipProvider>

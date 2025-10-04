@@ -66,6 +66,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const [bankIban, setBankIban] = useState(store?.bankIban || '');
   const [bankCardNumber, setBankCardNumber] = useState(store?.bankCardNumber || '');
 
+  // Validation states
+  const [nameError, setNameError] = useState(false);
+  const [descriptionError, setDescriptionError] = useState(false);
+
   // Category Management State
   const [storeCategories, setStoreCategories] = useState<Category[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -108,13 +112,23 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   };
 
   const handleGenerateLogo = async () => {
-      if (!name || !description) {
-          toast({
-              variant: 'destructive',
-              title: 'نام و توضیحات الزامی است',
-              description: 'لطفاً نام و توضیحات فروشگاه را برای تولید لوگو وارد کنید.',
-          });
-          return;
+      let hasError = false;
+      if (!name) {
+          setNameError(true);
+          hasError = true;
+      }
+      if (!description) {
+          setDescriptionError(true);
+          hasError = true;
+      }
+
+      if(hasError) {
+        toast({
+            variant: 'destructive',
+            title: 'نام و توضیحات الزامی است',
+            description: 'برای تولید لوگو با هوش مصنوعی، هر دو فیلد نام و توضیحات فروشگاه باید پر شوند.',
+        });
+        return;
       }
 
       setIsLogoGenerating(true);
@@ -135,12 +149,12 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           // Step 2: Use the current prompt to generate the logo
           const prompt = promptsToUse[currentPromptIndex];
           const logoInput: GenerateLogoInput = { prompt, storeName: name };
-          const result = await generateLogo(logoInput);
+          const logoResult = await generateLogo(logoInput);
 
-          if (result.imageUrl) {
-              setLogoUrl(result.imageUrl);
+          if (logoResult && logoResult.imageUrl) {
+              setLogoUrl(logoResult.imageUrl);
           } else {
-              // Fallback if the AI fails (e.g. billing error)
+              // This is the fallback logic. It will now generate a unique image each time.
               console.warn('AI logo generation failed, falling back to placeholder.');
               const seed = encodeURIComponent(`${name}-${Date.now()}`);
               setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
@@ -153,6 +167,11 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           console.error("Error during logo generation process:", error);
           const seed = encodeURIComponent(`${name}-${Date.now()}`);
           setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
+          toast({
+              title: "خطا در تولید لوگو",
+              description: `متاسفانه تولید لوگو با خطا مواجه شد. لطفا دوباره تلاش کنید. (${(error as Error).message})`,
+              variant: "destructive"
+          });
       } finally {
           setIsLogoGenerating(false);
       }
@@ -259,7 +278,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     // Update categories (delete removed, update existing, add new)
     const existingStoreCategoryIds = categories.filter(c => c.storeId === storeId).map(c => c.id);
     const currentCategoryIds = storeCategories.map(c => c.id);
-    const deletedCategoryIds = existingStoreCategoryIds.filter(id => !currentCategoryIds.includes(id));
     
     const otherStoresCategories = categories.filter(c => c.storeId !== storeId);
     const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId}))];
@@ -350,25 +368,25 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     <TooltipProvider>
     <div className="max-w-4xl mx-auto grid gap-6 pb-28">
         <FloatingToolbar pageKey="store-form">
-            <div className="flex items-center gap-1">
+            <div className="flex flex-col items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
-                            <ArrowRight className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent><p>بازگشت به لیست</p></TooltipContent>
+                    <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
                 </Tooltip>
                 {isEditMode && (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
-                                        <Trash2 className="h-5 w-5" />
+                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </TooltipTrigger>
-                                <TooltipContent><p>حذف فروشگاه</p></TooltipContent>
+                                <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
                             </Tooltip>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -384,14 +402,14 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     </AlertDialog>
                 )}
             </div>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="horizontal" className="w-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-6 w-6" />
+                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                        <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>ذخیره کل تغییرات</p></TooltipContent>
+                <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
             </Tooltip>
         </FloatingToolbar>
         <Card>
@@ -411,7 +429,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-3">
                         <Label htmlFor="store-name">نام فروشگاه</Label>
-                        <Input id="store-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: دکوربند" required />
+                        <Input id="store-name" value={name} onChange={(e) => {setName(e.target.value); setNameError(false);}} placeholder="مثال: دکوربند" required className={cn(nameError && 'border-destructive')} />
                     </div>
                      <div className="grid gap-3">
                         <Label htmlFor="store-phone">تلفن</Label>
@@ -420,7 +438,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </div>
                 <div className="grid gap-3">
                     <Label htmlFor="store-description">توضیحات فروشگاه</Label>
-                    <Textarea id="store-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="توضیح مختصری درباره زمینه فعالیت فروشگاه..." />
+                    <Textarea id="store-description" value={description} onChange={(e) => {setDescription(e.target.value); setDescriptionError(false);}} placeholder="توضیح مختصری درباره زمینه فعالیت فروشگاه..." className={cn(descriptionError && 'border-destructive')} />
                 </div>
                 <div className="grid gap-3">
                     <Label htmlFor="store-address">آدرس</Label>
@@ -476,7 +494,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 <CardDescription>این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-3">
                         <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
                         <Input id="bank-account-holder" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="مثال: اسماعیل بهاری" />

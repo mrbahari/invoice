@@ -176,7 +176,7 @@ export default function InvoicesPage({
                             <span className="sr-only">افزودن فاکتور</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent><p>افزودن فاکتور</p></TooltipContent>
+                        <TooltipContent side="left"><p>افزودن فاکتور</p></TooltipContent>
                     </Tooltip>
                 </FloatingToolbar>
               <Card>

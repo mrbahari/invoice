@@ -276,12 +276,6 @@ export default function ProductsPage() {
       <Card>
         <CardHeader>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <CardTitle>محصولات</CardTitle>
-                    <CardDescription>
-                        محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                    </CardDescription>
-                </div>
                 <div className="flex shrink-0 items-center gap-2">
                     <AiProductDialog onProductGenerated={handleAiProductGenerated} />
                     <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
@@ -292,6 +286,12 @@ export default function ProductsPage() {
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
                     </Button>
+                </div>
+                <div>
+                    <CardTitle>محصولات</CardTitle>
+                    <CardDescription>
+                        محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+                    </CardDescription>
                 </div>
             </div>
         </CardHeader>

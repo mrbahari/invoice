@@ -260,43 +260,30 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
       setIsLogoGenerating(true);
        try {
-            let promptsToUse = logoPrompts;
-            // Step 1: Generate prompts if they don't exist yet
-            if (promptsToUse.length === 0) {
+            // Generate prompts if they don't exist yet
+            if (logoPrompts.length === 0) {
                 const { prompts } = await generateLogoPrompts({ storeName: name, description });
                 if (!prompts || prompts.length === 0) {
                     throw new Error("Failed to generate logo prompts.");
                 }
-                promptsToUse = prompts;
-                setLogoPrompts(promptsToUse);
+                setLogoPrompts(prompts);
                 setCurrentPromptIndex(0); // Reset index
-            }
-            
-            // Step 2: Use the current prompt to generate the logo
-            const prompt = promptsToUse[currentPromptIndex];
-            const logoInput: GenerateLogoInput = { prompt, storeName: name };
-            const { imageUrl } = await generateLogo(logoInput);
-
-            if (imageUrl) {
-                setLogoUrl(imageUrl);
+                const { imageUrl } = await generateLogo({ prompt: prompts[0], storeName: name });
+                if (imageUrl) setLogoUrl(imageUrl);
+                else throw new Error("Image URL was not returned from the flow.");
+                setCurrentPromptIndex(1); // Set for next click
             } else {
-                 throw new Error("Image URL was not returned from the flow.");
+                 const prompt = logoPrompts[currentPromptIndex];
+                 const { imageUrl } = await generateLogo({ prompt, storeName: name });
+                 if (imageUrl) setLogoUrl(imageUrl);
+                 else throw new Error("Image URL was not returned from the flow.");
+                 setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % logoPrompts.length);
             }
-
-            // Step 3: Cycle to the next prompt for the next click
-            setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % promptsToUse.length);
 
         } catch (error) {
             console.error("Error during logo generation process:", error);
-            // The catch block in generateLogoFlow now handles this. We just need to handle the empty return.
-            // If the flow returns nothing, we provide a unique fallback.
              const seed = encodeURIComponent(`${name}-${Date.now()}`);
              setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
-             toast({
-                variant: 'destructive',
-                title: 'خطا در تولید لوگو',
-                description: 'سرویس هوش مصنوعی با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
-            });
         } finally {
             setIsLogoGenerating(false);
         }
@@ -582,7 +569,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                             </AlertDialogHeader>
                             <AlertDialogFooter className="grid grid-cols-2 gap-2">
                                 <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                                <AlertDialogAction onClick={handleDelete} className="bg-green-600 hover:bg-green-700">حذف</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>

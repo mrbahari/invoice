@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -38,7 +38,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search } from 'lucide-react';
 import { generateProductDetails, type GenerateProductDetailsInput } from '@/ai/flows/generate-product-details';
 import {
   Tooltip,
@@ -62,6 +61,7 @@ type AIFeature = 'description' | 'price' | 'image';
 
 export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, setData } = useData();
   const { products, stores, categories, units: unitsOfMeasurement } = data;
@@ -209,6 +209,22 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const url = `https://www.google.com/search?q=${query}&tbm=isch`;
     window.open(url, '_blank');
   };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
 
   const validateForm = () => {
     const numericPrice = Number(price);
@@ -508,17 +524,29 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 <div className="grid gap-3">
                                     <Label htmlFor="image-url">آدرس تصویر</Label>
                                     <Input id="image-url" value={imageUrl || ''} onFocus={handleImageFocus} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
+                                     <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        accept="image/*"
+                                        className="hidden"
+                                    />
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
                                     <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
                                         {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
                                         تولید با AI
                                     </Button>
-                                    <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick}>
+                                        <Upload className="ml-2 h-4 w-4" />
+                                        آپلود
+                                    </Button>
+                                    
+                                </div>
+                                 <Button type="button" variant="outline" className="w-full" onClick={handleImageSearch}>
                                         <Search className="ml-2 h-4 w-4" />
                                         جستجو در گوگل
                                     </Button>
-                                </div>
                             </div>
                         </CardContent>
                     </Card>

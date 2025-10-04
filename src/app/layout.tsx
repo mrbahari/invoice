@@ -35,4 +35,11 @@ export default function RootLayout({
                 <main className="relative z-10">
                   {children}
                 </main>
-                
+                <Toaster />
+            </DataProvider>
+          </UserProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}

@@ -275,25 +275,23 @@ export default function ProductsPage() {
     <div className="grid gap-6" data-main-page="true">
       <Card>
         <CardHeader>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex shrink-0 items-center gap-2">
-                    <AiProductDialog onProductGenerated={handleAiProductGenerated} />
-                    <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                        <File className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
-                    </Button>
-                    <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
-                    </Button>
-                </div>
-                <div>
-                    <CardTitle>محصولات</CardTitle>
-                    <CardDescription>
-                        محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                    </CardDescription>
-                </div>
+          <div className="flex items-center justify-between">
+            <CardTitle>محصولات</CardTitle>
+            <div className="flex shrink-0 items-center gap-2">
+              <AiProductDialog onProductGenerated={handleAiProductGenerated} />
+              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
+              </Button>
+              <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
+              </Button>
             </div>
+          </div>
+          <CardDescription>
+            محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div

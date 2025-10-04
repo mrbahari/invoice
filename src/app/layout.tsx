@@ -3,6 +3,9 @@ import type {Metadata} from 'next';
 import { DataProvider } from '@/context/data-context';
 import '@/app/globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
+import { UserProvider } from '@/context/user-context';
+
 
 export const metadata: Metadata = {
   title: 'حسابگر',
@@ -27,13 +30,9 @@ export default function RootLayout({
             defaultTheme="light"
             disableTransitionOnChange
         >
-          <DataProvider>
-              <main className="relative z-10">
-                {children}
-              </main>
-          </DataProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
-}
+          <UserProvider>
+            <DataProvider>
+                <main className="relative z-10">
+                  {children}
+                </main>
+                

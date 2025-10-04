@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { useSearch } from './search-provider';
 import type { DashboardTab } from '@/app/dashboard/page';
 import { LiveClock } from './live-clock';
+import { UserNav } from './user-nav';
+
 
 const tabToNameMapping: Record<DashboardTab, string> = {
   dashboard: 'داشبورد',
@@ -21,7 +23,7 @@ const tabToNameMapping: Record<DashboardTab, string> = {
 const showSearchTabs: DashboardTab[] = [
   'products',
   'categories',
-  'customers',
+  'customers'
 ];
 
 interface HeaderProps {
@@ -30,42 +32,40 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
-  const { searchTerm, setSearchTerm, isSearchVisible: isSearchContextVisible } = useSearch();
+  const { searchTerm, setSearchTerm, isSearchVisible } = useSearch();
 
-  // Determine if the search bar should be visible based on both tab and context
-  const isSearchAllowedOnTab = showSearchTabs.includes(activeTab);
-  const isSearchVisible = isSearchAllowedOnTab && isSearchContextVisible;
-
-
-  React.useEffect(() => {
-    // Clear search term when navigating away from a searchable tab
-    if (!isSearchVisible) {
-      setSearchTerm('');
-    }
-  }, [activeTab, isSearchVisible, setSearchTerm]);
+  const showSearch = isSearchVisible && showSearchTabs.includes(activeTab);
+  const pageTitle = tabToNameMapping[activeTab] || 'داشبورد';
 
   return (
-    <>
-      <header className="flex h-14 items-center gap-4 border-b bg-white bg-opacity-95 px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 no-print dark:bg-zinc-900/90">
-        
-         <div className="ml-auto flex items-center justify-center">
-          <LiveClock />
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4 no-print">
+      <div className="flex w-full items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="hidden md:block">
+              <h1 className="text-xl font-bold">{pageTitle}</h1>
+          </div>
         </div>
-        <div className="relative ml-auto flex-1 md:grow-0">
-          {isSearchVisible && (
+        
+        <div className="relative ml-auto hidden flex-1 md:grow-0 sm:block">
+          {showSearch && (
             <>
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="جستجو..."
+                className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[320px]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
               />
             </>
           )}
         </div>
-      </header>
-    </>
+        
+         <div className="hidden sm:flex items-center gap-4 mr-4">
+          <LiveClock />
+        </div>
+        <UserNav />
+      </div>
+    </header>
   );
 }

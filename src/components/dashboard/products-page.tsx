@@ -303,7 +303,7 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
                 <TabsList className="h-auto bg-transparent p-0">
                     <TabsTrigger value="all" asChild>
                        <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">

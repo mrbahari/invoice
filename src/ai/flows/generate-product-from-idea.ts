@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const GenerateProductFromIdeaInputSchema = z.object({
+const GenerateProductFromIdeaInputSchema = z.object({
   productIdea: z.string().describe('The user\'s general idea for a product. Example: "a high quality cordless drill"'),
   storeId: z.string(),
   subCategoryId: z.string(),
@@ -18,7 +18,7 @@ export const GenerateProductFromIdeaInputSchema = z.object({
 });
 export type GenerateProductFromIdeaInput = z.infer<typeof GenerateProductFromIdeaInputSchema>;
 
-export const GenerateProductFromIdeaOutputSchema = z.object({
+const GenerateProductFromIdeaOutputSchema = z.object({
   name: z.string().describe('A professional, and marketable product name in Persian.'),
   description: z.string().describe('A compelling and professional product description in Persian (Farsi), around 2-3 sentences.'),
   price: z.number().describe('A reasonable suggested retail price in Iranian Rial (IRR) for this product, considering market value. Provide only a number.'),

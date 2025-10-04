@@ -632,7 +632,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, [customerSearch, filteredCustomers]);
 
   
-  const handleAddProduct = (product: Product) => {
+  const handleAddProduct = useCallback((product: Product) => {
     setInvoice(prevInvoice => {
       const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
       const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
@@ -669,9 +669,9 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       
       return {...prevInvoice, items: newItems};
     });
-  };
+  }, []);
 
-  const handleRemoveProduct = (product: Product) => {
+  const handleRemoveProduct = useCallback((product: Product) => {
     setInvoice(prevInvoice => {
       if (!prevInvoice.items) return prevInvoice;
 
@@ -704,7 +704,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
 
       return { ...prevInvoice, items: newItems };
     });
-  };
+  }, []);
 
 
   const handleItemChange = useCallback((index: number, field: keyof InvoiceItem, value: any) => {
@@ -1185,3 +1185,5 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     </TooltipProvider>
   );
 }
+
+    

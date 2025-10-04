@@ -33,7 +33,7 @@ export type GenerateCategoriesOutput = z.infer<typeof GenerateCategoriesOutputSc
 
 
 // Exported wrapper function
-export async function generateCategories(input: GenerateCategoriesInput): Promise<GenerateCategoriesOutput> {
+export async function generateCategories(input: GenerateCategoriesInput): Promise<GenerateCategoriesOutput | undefined> {
   return generateCategoriesFlow(input);
 }
 
@@ -62,10 +62,16 @@ const generateCategoriesFlow = ai.defineFlow(
     outputSchema: GenerateCategoriesOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    if (!output) {
-      throw new Error("Failed to generate categories.");
+    try {
+      const { output } = await prompt(input);
+      if (!output) {
+        throw new Error("Failed to generate categories.");
+      }
+      return output;
+    } catch (error) {
+      console.error("Error in generateCategoriesFlow:", error);
+      // Return undefined or an empty structure on error to prevent app crash
+      return undefined;
     }
-    return output;
   }
 );

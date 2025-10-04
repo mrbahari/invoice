@@ -62,7 +62,7 @@ const generateProductDetailsFlow = ai.defineFlow(
           price: input.feature === 'price' ? output.price : undefined,
         };
       } catch (error) {
-        console.warn("AI description/price generation failed.", error);
+        console.error("AI description/price generation failed.", error);
         return {}; // Return empty object on failure to be handled by the client
       }
     }
@@ -77,7 +77,7 @@ const generateProductDetailsFlow = ai.defineFlow(
             return { imageUrl: media.url };
         }
       } catch (error) {
-        console.warn("AI image generation failed, falling back to placeholder.", error);
+        console.error("AI image generation failed, falling back to placeholder.", error);
         // Fallback to picsum if AI generation fails
         const seed = encodeURIComponent(`${input.productName} ${input.categoryName}`);
         return { imageUrl: `https://picsum.photos/seed/${seed}/400/300` };

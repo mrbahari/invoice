@@ -32,7 +32,9 @@ const PROMPT_TEMPLATE = "A simple, modern, minimalist vector logo of [ELEMENT]. 
 
 // Exported wrapper function
 export async function generateLogoPrompts(input: GenerateLogoPromptsInput): Promise<{ prompts: string[] }> {
-  return generateLogoPromptsFlow(input);
+  const result = await generateLogoPromptsFlow(input);
+  // Return an empty array if the flow fails, to prevent crashes.
+  return result || { prompts: [] };
 }
 
 const prompt = ai.definePrompt({
@@ -64,17 +66,23 @@ const generateLogoPromptsFlow = ai.defineFlow(
     outputSchema: z.object({ prompts: z.array(z.string()) }), 
   },
   async (input) => {
-    // 1. Get the key visual elements from the AI
-    const { output } = await prompt(input);
-    if (!output || !output.elements) {
-      throw new Error("Failed to generate logo elements.");
-    }
-    
-    // 2. Build the full, strict prompts using our template
-    const finalPrompts = output.elements.map(element => 
-      PROMPT_TEMPLATE.replace('[ELEMENT]', element)
-    );
+    try {
+      // 1. Get the key visual elements from the AI
+      const { output } = await prompt(input);
+      if (!output || !output.elements) {
+        throw new Error("Failed to generate logo elements.");
+      }
+      
+      // 2. Build the full, strict prompts using our template
+      const finalPrompts = output.elements.map(element => 
+        PROMPT_TEMPLATE.replace('[ELEMENT]', element)
+      );
 
-    return { prompts: finalPrompts };
+      return { prompts: finalPrompts };
+    } catch (error) {
+      console.error("Error in generateLogoPromptsFlow:", error);
+      // Return null or an empty structure to handle the failure gracefully
+      return null;
+    }
   }
 );

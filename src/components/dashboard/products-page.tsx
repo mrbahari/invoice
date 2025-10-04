@@ -283,7 +283,12 @@ export default function ProductsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>محصولات</CardTitle>
+            <div>
+                <CardTitle>محصولات</CardTitle>
+                <CardDescription>
+                محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+                </CardDescription>
+            </div>
             <div className="flex shrink-0 items-center gap-2">
               <AiProductDialog onProductGenerated={handleAiProductGenerated} />
               <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
@@ -296,28 +301,30 @@ export default function ProductsPage() {
               </Button>
             </div>
           </div>
-          <CardDescription>
-            محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-          </CardDescription>
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="h-auto bg-transparent p-0">
-                    <TabsTrigger value="all" className="flex flex-col gap-1 items-center justify-center h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:bg-accent">
-                        <Store className="h-6 w-6" />
-                        <span className="text-xs">همه محصولات</span>
+                    <TabsTrigger value="all" asChild>
+                       <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
+                            <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
+                                <Store className="h-6 w-6" />
+                                <span className="text-xs">همه محصولات</span>
+                            </div>
+                        </div>
                     </TabsTrigger>
                     {stores?.map((store) => (
-                    <TabsTrigger key={store.id} value={store.id} className="flex flex-col gap-1 h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:bg-accent p-2">
+                    <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
                         <Image
                           alt={store.name}
-                          className="aspect-square rounded-md object-contain"
-                          height="40"
+                          className="object-cover"
+                          fill
                           src={store.logoUrl || '/placeholder.svg'}
-                          width="40"
                           unoptimized
                         />
-                        <span className="text-xs truncate w-full">{store.name}</span>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
+                            <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
+                        </div>
                     </TabsTrigger>
                     ))}
                 </TabsList>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -38,6 +38,7 @@ import type { GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts'
 import { cn } from '@/lib/utils';
 import { generateCategories, type GenerateCategoriesInput, type GenerateCategoriesOutput } from '@/ai/flows/generate-categories-flow';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 
 
 type StoreFormProps = {
@@ -46,6 +47,132 @@ type StoreFormProps = {
   onCancel: () => void;
   onDelete: (storeId: string) => void;
 };
+
+// =================================================================
+// CategoryTree Component for Recursive Rendering
+// =================================================================
+const CategoryTree = ({
+  categories,
+  parentId = undefined,
+  allCategories,
+  onAddSubCategory,
+  onDelete,
+  onStartEdit,
+  onAiGenerate,
+  editingCategoryId,
+  editingCategoryName,
+  onSaveEdit,
+  onCancelEdit,
+  setEditingCategoryName,
+  aiLoading,
+}: {
+  categories: Category[];
+  parentId?: string;
+  allCategories: Category[];
+  onAddSubCategory: (parentId: string, name: string) => void;
+  onDelete: (categoryId: string) => void;
+  onStartEdit: (category: Category) => void;
+  onAiGenerate: (parentCategory: Category) => void;
+  editingCategoryId: string | null;
+  editingCategoryName: string;
+  onSaveEdit: (categoryId: string) => void;
+  onCancelEdit: () => void;
+  setEditingCategoryName: (name: string) => void;
+  aiLoading: string | null;
+}) => {
+  const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
+  
+  if (categories.length === 0) {
+    return null;
+  }
+
+  const handleAdd = (pId: string) => {
+    const name = newSubCategoryNames[pId]?.trim();
+    if (name) {
+      onAddSubCategory(pId, name);
+      setNewSubCategoryNames(prev => ({ ...prev, [pId]: '' }));
+    }
+  };
+
+  return (
+    <div className="pl-4 space-y-2">
+      {categories.map(cat => {
+        const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
+        const isAiLoading = aiLoading === cat.id;
+
+        return (
+          <Collapsible key={cat.id} defaultOpen={true} className="p-2 border rounded-lg bg-muted/20">
+            <div className="flex justify-between items-center mb-2">
+              {editingCategoryId === cat.id ? (
+                <div className="flex-grow flex gap-2 items-center">
+                  <Input value={editingCategoryName} onChange={(e) => setEditingCategoryName(e.target.value)} />
+                  <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={onCancelEdit}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                </div>
+              ) : (
+                <CollapsibleTrigger className="flex-grow text-right">
+                  <h4 className="font-semibold">{cat.name}</h4>
+                </CollapsibleTrigger>
+              )}
+              {!editingCategoryId && (
+                <div className="flex gap-1 items-center">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onAiGenerate(cat)} disabled={isAiLoading}>
+                        {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                     <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                  </Tooltip>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStartEdit(cat)}><Pencil className="w-4 h-4" /></Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(cat.id)}>حذف</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+            </div>
+            <CollapsibleContent>
+              <div className="mt-2 space-y-2">
+                <CategoryTree
+                  categories={subCategories}
+                  parentId={cat.id}
+                  allCategories={allCategories}
+                  onAddSubCategory={onAddSubCategory}
+                  onDelete={onDelete}
+                  onStartEdit={onStartEdit}
+                  onAiGenerate={onAiGenerate}
+                  editingCategoryId={editingCategoryId}
+                  editingCategoryName={editingCategoryName}
+                  onSaveEdit={onSaveEdit}
+                  onCancelEdit={onCancelEdit}
+                  setEditingCategoryName={setEditingCategoryName}
+                  aiLoading={aiLoading}
+                />
+                 <div className="flex gap-2 pt-2">
+                  <Input 
+                    value={newSubCategoryNames[cat.id] || ''} 
+                    onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} 
+                    placeholder="نام زیردسته جدید..." 
+                    onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)}
+                  />
+                  <Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
+    </div>
+  );
+};
+
 
 export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps) {
   const { toast } = useToast();
@@ -73,7 +200,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   // Category Management State
   const [storeCategories, setStoreCategories] = useState<Category[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({}); // { parentId: 'new name' }
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
 
@@ -81,6 +207,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLogoGenerating, setIsLogoGenerating] = useState(false);
   const [isCategoryGenerating, setIsCategoryGenerating] = useState(false);
+  const [aiLoadingCategory, setAiLoadingCategory] = useState<string | null>(null);
   
   // State for AI logo prompts
   const [logoPrompts, setLogoPrompts] = useState<string[]>([]);
@@ -132,45 +259,116 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       }
 
       setIsLogoGenerating(true);
-      try {
-          let promptsToUse = logoPrompts;
-          // Step 1: Generate prompts if they don't exist yet
-          if (promptsToUse.length === 0) {
-              const promptsInput: GenerateLogoPromptsInput = { storeName: name, description };
-              const result = await generateLogoPrompts(promptsInput);
-              if (!result || !result.prompts || result.prompts.length === 0) {
-                throw new Error("Failed to generate prompts.");
-              }
-              promptsToUse = result.prompts;
-              setLogoPrompts(promptsToUse);
-              setCurrentPromptIndex(0); // Reset index
-          }
-          
-          // Step 2: Use the current prompt to generate the logo
-          const prompt = promptsToUse[currentPromptIndex];
-          const logoInput: GenerateLogoInput = { prompt, storeName: name };
-          const logoResult = await generateLogo(logoInput);
+       try {
+            let promptsToUse = logoPrompts;
+            // Step 1: Generate prompts if they don't exist yet
+            if (promptsToUse.length === 0) {
+                const { prompts } = await generateLogoPrompts({ storeName: name, description });
+                if (!prompts || prompts.length === 0) {
+                    throw new Error("Failed to generate logo prompts.");
+                }
+                promptsToUse = prompts;
+                setLogoPrompts(promptsToUse);
+                setCurrentPromptIndex(0); // Reset index
+            }
+            
+            // Step 2: Use the current prompt to generate the logo
+            const prompt = promptsToUse[currentPromptIndex];
+            const logoInput: GenerateLogoInput = { prompt, storeName: name };
+            const { imageUrl } = await generateLogo(logoInput);
 
-          if (logoResult && logoResult.imageUrl) {
-              setLogoUrl(logoResult.imageUrl);
-          } else {
-              // This is the fallback logic. It will now generate a unique image each time.
-              console.warn('AI logo generation failed, falling back to placeholder.');
-              const seed = encodeURIComponent(`${name}-${Date.now()}`);
-              setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
-          }
+            if (imageUrl) {
+                setLogoUrl(imageUrl);
+            } else {
+                 throw new Error("Image URL was not returned from the flow.");
+            }
 
-          // Step 3: Cycle to the next prompt for the next click
-          setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % promptsToUse.length);
+            // Step 3: Cycle to the next prompt for the next click
+            setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % promptsToUse.length);
 
-      } catch (error) {
-          console.error("Error during logo generation process:", error);
-          const seed = encodeURIComponent(`${name}-${Date.now()}`);
-          setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
-      } finally {
-          setIsLogoGenerating(false);
-      }
+        } catch (error) {
+            console.error("Error during logo generation process:", error);
+            // The catch block in generateLogoFlow now handles this. We just need to handle the empty return.
+            // If the flow returns nothing, we provide a unique fallback.
+             const seed = encodeURIComponent(`${name}-${Date.now()}`);
+             setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
+             toast({
+                variant: 'destructive',
+                title: 'خطا در تولید لوگو',
+                description: 'سرویس هوش مصنوعی با خطا مواجه شد. لطفاً دوباره تلاش کنید.'
+            });
+        } finally {
+            setIsLogoGenerating(false);
+        }
   };
+  
+    const getCategoryPath = useCallback((categoryId: string, allCats: Category[]): string => {
+        const cat = allCats.find(c => c.id === categoryId);
+        if (!cat) return '';
+        if (!cat.parentId) return cat.name;
+        return `${getCategoryPath(cat.parentId, allCats)} > ${cat.name}`;
+    }, []);
+
+
+    const handleAiGenerateSubCategories = async (parentCategory: Category) => {
+        if (!name || !description) {
+        toast({
+            variant: 'destructive',
+            title: 'نام و توضیحات الزامی است',
+            description: 'نام و توضیحات فروشگاه برای تولید زیردسته الزامی است.',
+        });
+        return;
+        }
+
+        setAiLoadingCategory(parentCategory.id);
+        
+        try {
+        const categoryPath = getCategoryPath(parentCategory.id, storeCategories);
+        const input: GenerateCategoriesInput = { 
+            storeName: name, 
+            description: `${description}. The parent category is: ${categoryPath}` 
+        };
+        const result = await generateCategories(input);
+
+        if (result && result.categories) {
+            // We'll take the subcategories from the first category generated, as it's the most relevant
+            const subCategoriesToAdd = result.categories[0]?.subCategories || [];
+            
+            if(subCategoriesToAdd.length === 0) {
+                 toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی زیردسته جدیدی برای این بخش پیدا نکرد.' });
+                 setAiLoadingCategory(null);
+                 return;
+            }
+
+            const newCats: Category[] = [];
+            const existingSubNames = new Set(storeCategories.filter(c => c.parentId).map(c => c.name.toLowerCase()));
+            
+            subCategoriesToAdd.forEach(subCatName => {
+                let finalSubCatName = subCatName;
+                if (existingSubNames.has(finalSubCatName.toLowerCase())) {
+                    finalSubCatName = `_${finalSubCatName}`;
+                }
+
+                const subCat: Category = {
+                    id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+                    name: finalSubCatName,
+                    storeId: store?.id || 'temp',
+                    parentId: parentCategory.id,
+                };
+                newCats.push(subCat);
+                existingSubNames.add(finalSubCatName.toLowerCase());
+            });
+            
+            setStoreCategories(prev => [...prev, ...newCats]);
+            toast({ variant: 'success', title: `${newCats.length} زیردسته جدید اضافه شد` });
+        }
+        } catch (error) {
+        console.error("Error generating sub-categories:", error);
+        toast({ variant: 'destructive', title: 'خطا در تولید زیردسته', description: 'لطفاً دوباره تلاش کنید.' });
+        } finally {
+        setAiLoadingCategory(null);
+        }
+    };
 
   const handleGenerateCategories = async () => {
     if (!name || !description) {
@@ -206,7 +404,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
           newCats.push(parentCat);
           existingParentNames.add(parentName.toLowerCase());
 
-          const existingSubNames = new Set(storeCategories.filter(c => c.parentId).map(c => c.name.toLowerCase()));
+          const existingSubNames = new Set(storeCategories.map(c => c.name.toLowerCase()));
           catData.subCategories.forEach(subCatName => {
             let finalSubCatName = subCatName;
             if (existingSubNames.has(finalSubCatName.toLowerCase())) {
@@ -304,14 +502,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       storeId: store?.id || 'temp', // temp id until store is saved
     };
     setStoreCategories(prev => [...prev, newCat]);
-    // Also update global state
-    setData(prevData => ({ ...prevData, categories: [...prevData.categories, newCat]}));
     setNewCategoryName('');
   };
 
-  const handleAddSubCategory = (parentId: string) => {
-    const name = newSubCategoryNames[parentId]?.trim();
-    if (!name) return;
+  const handleAddSubCategory = (parentId: string, name: string) => {
     const newSubCat: Category = {
       id: `cat-${Math.random().toString(36).substr(2, 9)}`,
       name,
@@ -319,9 +513,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       parentId,
     };
     setStoreCategories(prev => [...prev, newSubCat]);
-     // Also update global state
-    setData(prevData => ({ ...prevData, categories: [...prevData.categories, newSubCat]}));
-    setNewSubCategoryNames(prev => ({ ...prev, [parentId]: '' }));
   };
 
   const handleDeleteCategory = (categoryId: string) => {
@@ -335,7 +526,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         toast({ variant: 'destructive', title: 'خطا', description: 'این دسته به یک یا چند محصول اختصاص داده شده است.' });
         return;
     }
-    setStoreCategories(prev => prev.filter(c => c.id !== categoryId && c.parentId !== categoryId));
+    setStoreCategories(prev => prev.filter(c => c.id !== categoryId));
   };
   
   const handleStartEditCategory = (category: Category) => {
@@ -561,71 +752,22 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </div>
                 <Separator />
                 <div className="grid gap-4">
-                    {parentCategories.map(cat => (
-                        <div key={cat.id} className="p-4 border rounded-lg">
-                            <div className="flex justify-between items-center mb-2">
-                                {editingCategoryId === cat.id ? (
-                                    <div className="flex-grow flex gap-2 items-center">
-                                        <Input value={editingCategoryName} onChange={(e) => setEditingCategoryName(e.target.value)} />
-                                        <Button size="icon" variant="ghost" onClick={() => handleSaveCategoryEdit(cat.id)}><Save className="w-4 h-4" /></Button>
-                                        <Button size="icon" variant="ghost" onClick={handleCancelEditCategory}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                    </div>
-                                ) : (
-                                    <h4 className="font-semibold">{cat.name}</h4>
-                                )}
-                                {!editingCategoryId && (
-                                    <div className="flex gap-2">
-                                        <Button size="icon" variant="ghost" onClick={() => handleStartEditCategory(cat)}><Pencil className="w-4 h-4" /></Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                                                <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteCategory(cat.id)}>حذف</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="pl-4 mt-4 space-y-2">
-                                {storeCategories.filter(sc => sc.parentId === cat.id).map(subCat => (
-                                    <div key={subCat.id} className="flex justify-between items-center p-2 rounded-md bg-muted/50">
-                                         {editingCategoryId === subCat.id ? (
-                                            <div className="flex-grow flex gap-2 items-center">
-                                                <Input value={editingCategoryName} onChange={(e) => setEditingCategoryName(e.target.value)} />
-                                                <Button size="icon" variant="ghost" onClick={() => handleSaveCategoryEdit(subCat.id)}><Save className="w-4 h-4" /></Button>
-                                                <Button size="icon" variant="ghost" onClick={handleCancelEditCategory}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm">{subCat.name}</p>
-                                        )}
-                                        {!editingCategoryId && (
-                                            <div className="flex gap-1">
-                                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleStartEditCategory(subCat)}><Pencil className="w-4 h-4" /></Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader><AlertDialogTitle>حذف زیردسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف زیردسته «{subCat.name}» مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleDeleteCategory(subCat.id)}>حذف</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                <div className="flex gap-2 pt-2">
-                                    <Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder="نام زیردسته جدید..." />
-                                    <Button variant="outline" size="sm" onClick={() => handleAddSubCategory(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    {parentCategories.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
+                    {parentCategories.length > 0 ? (
+                        <CategoryTree 
+                            categories={parentCategories}
+                            allCategories={storeCategories}
+                            onAddSubCategory={handleAddSubCategory}
+                            onDelete={handleDeleteCategory}
+                            onStartEdit={handleStartEditCategory}
+                            onAiGenerate={handleAiGenerateSubCategories}
+                            editingCategoryId={editingCategoryId}
+                            editingCategoryName={editingCategoryName}
+                            onSaveEdit={handleSaveCategoryEdit}
+                            onCancelEdit={handleCancelEditCategory}
+                            setEditingCategoryName={setEditingCategoryName}
+                            aiLoading={aiLoadingCategory}
+                        />
+                    ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
                 </div>
             </CardContent>
         </Card>
@@ -633,5 +775,3 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </TooltipProvider>
   );
 }
-
-    

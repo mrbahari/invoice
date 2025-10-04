@@ -47,6 +47,8 @@ import {
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { generateProductFromIdea, type GenerateProductFromIdeaOutput } from '@/ai/flows/generate-product-from-idea';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 type SortOption = 'newest' | 'name' | 'price';
 
@@ -148,7 +150,7 @@ function AiProductDialog({ onProductGenerated }: { onProductGenerated: (product:
 
 
 export default function ProductsPage() {
-  const { data } = useData();
+  const { data, setData } = useData();
   const { products, stores, categories } = data;
   const [activeTab, setActiveTab] = useState('all');
   const { searchTerm, setSearchVisible } = useSearch();
@@ -197,9 +199,14 @@ export default function ProductsPage() {
       subCategoryId: aiProduct.subCategoryId,
       unit: 'عدد', // Default unit, can be changed in the form
     };
-    setEditingProduct(newProduct);
+    const newId = `prod-${Math.random().toString(36).substr(2, 9)}`;
+    const newProductWithId = { ...newProduct, id: newId };
+
+    setData(prev => ({...prev, products: [newProductWithId, ...prev.products]}));
+    
+    setEditingProduct(newProductWithId);
     setView('form');
-  }, []);
+  }, [setData]);
 
   const handleEditClick = (product: Product) => {
     scrollPositionRef.current = window.scrollY;
@@ -294,46 +301,40 @@ export default function ProductsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div
-            ref={storesScrollRef}
-            className="flex space-x-reverse space-x-2 overflow-x-auto pb-4 cursor-grab active:cursor-grabbing"
-          >
-            <Button
-              variant={activeTab === 'all' ? 'default' : 'outline'}
-              className="flex-shrink-0"
-              onClick={() => setActiveTab('all')}
-            >
-              <Store className="ml-2 h-4 w-4" />
-              همه محصولات
-            </Button>
-            {stores?.map((store) => (
-              <Button
-                key={store.id}
-                variant={activeTab === store.id ? 'default' : 'outline'}
-                className="flex-shrink-0"
-                onClick={() => setActiveTab(store.id)}
-              >
-                {store.name}
-              </Button>
-            ))}
-          </div>
+            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList>
+                    <TabsTrigger value="all">
+                        <Store className="ml-2 h-4 w-4" />
+                        همه محصولات
+                    </TabsTrigger>
+                    {stores?.map((store) => (
+                    <TabsTrigger key={store.id} value={store.id}>
+                        {store.name}
+                    </TabsTrigger>
+                    ))}
+                </TabsList>
+            </Tabs>
+        </CardContent>
+      </Card>
+      
+      <div className="flex items-center justify-end">
+          <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+            <SelectTrigger className="w-[180px]">
+              <div className="flex items-center gap-2">
+                <SortAsc className="h-4 w-4 text-muted-foreground" />
+                <SelectValue placeholder="مرتب‌سازی بر اساس..." />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">جدیدترین</SelectItem>
+              <SelectItem value="name">نام محصول</SelectItem>
+              <SelectItem value="price">گران‌ترین</SelectItem>
+            </SelectContent>
+          </Select>
+      </div>
 
-          <div className="flex items-center justify-end py-4">
-              <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-                <SelectTrigger className="w-[180px]">
-                  <div className="flex items-center gap-2">
-                    <SortAsc className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="مرتب‌سازی بر اساس..." />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">جدیدترین</SelectItem>
-                  <SelectItem value="name">نام محصول</SelectItem>
-                  <SelectItem value="price">گران‌ترین</SelectItem>
-                </SelectContent>
-              </Select>
-          </div>
-
+      <Card>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>

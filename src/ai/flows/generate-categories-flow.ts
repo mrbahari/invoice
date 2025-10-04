@@ -19,15 +19,15 @@ export type GenerateCategoriesInput = z.infer<typeof GenerateCategoriesInputSche
 
 const CategorySchema = z.object({
     name: z.string().describe('The name of the main category.'),
-    subCategories: z.array(z.string()).min(2).max(5).describe('An array of 2 to 5 relevant sub-category names.'),
+    subCategories: z.array(z.string()).min(2).max(10).describe('An array of 2 to 10 relevant sub-category names.'),
 });
 
 const GenerateCategoriesOutputSchema = z.object({
   categories: z
     .array(CategorySchema)
     .min(2)
-    .max(4)
-    .describe('An array of 2 to 4 main categories, each with its own sub-categories.'),
+    .max(10)
+    .describe('An array of 2 to 10 main categories, each with its own sub-categories.'),
 });
 export type GenerateCategoriesOutput = z.infer<typeof GenerateCategoriesOutputSchema>;
 
@@ -49,7 +49,7 @@ const prompt = ai.definePrompt({
     Store Name: "{{storeName}}"
     Description: "{{description}}"
 
-    Provide 2 to 4 main categories. For each main category, provide 2 to 5 relevant sub-categories.
+    Provide up to 10 main categories. For each main category, provide up to 10 relevant sub-categories.
     The output should be directly usable for an e-commerce or inventory management system.
     `,
 });

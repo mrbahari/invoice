@@ -115,6 +115,16 @@ export default function InvoicesPage({
     },
     [setData]
   );
+  
+  const handleStatusChange = (invoiceId: string, currentStatus: InvoiceStatus) => {
+    const newStatus = currentStatus === 'Paid' ? 'Pending' : 'Paid';
+    setData(prev => ({
+        ...prev,
+        invoices: prev.invoices.map(inv => 
+            inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+        )
+    }));
+  };
 
   const handleSaveSuccess = useCallback(() => {
     setView({ type: 'list' });
@@ -225,9 +235,11 @@ export default function InvoicesPage({
                           </div>
                         </CardContent>
                         <CardFooter className="flex flex-row items-center justify-between pt-4">
-                            <Badge variant="outline" className={cn("text-xs font-mono", statusStyles[invoice.status])}>
-                              {statusTranslation[invoice.status]}
-                            </Badge>
+                            <button onClick={() => handleStatusChange(invoice.id, invoice.status)}>
+                                <Badge variant="outline" className={cn("text-xs font-mono cursor-pointer", statusStyles[invoice.status])}>
+                                {statusTranslation[invoice.status]}
+                                </Badge>
+                            </button>
 
                            <div className="flex items-center gap-1">
                                 <Tooltip>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
@@ -82,6 +83,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
+  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(product?.subUnitQuantity ? formatNumber(product.subUnitQuantity) : '');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState({
@@ -154,6 +156,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const value = e.target.value;
       const numericValue = parseFormattedNumber(value);
       setSubUnitQuantity(numericValue);
+      setDisplaySubUnitQuantity(value === '' ? '' : formatNumber(numericValue));
   };
   
   const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -462,7 +465,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="sub-unit-quantity" className="text-right">مقدار تبدیل</Label>
-                                    <Input id="sub-unit-quantity" type="text" value={formatNumber(subUnitQuantity)} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} className="col-span-2 font-mono" />
+                                    <Input id="sub-unit-quantity" type="text" value={displaySubUnitQuantity} onChange={handleQuantityChange} placeholder="تعداد" disabled={!showSubUnitFields} className="col-span-2 font-mono" />
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="price" className="text-right">
@@ -482,7 +485,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                             </div>
                             {showSubUnitFields && subUnitQuantity && price && (
                                 <p className="text-xs text-muted-foreground mt-4">
-                                    هر {subUnitQuantity} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
+                                    هر {formatNumber(subUnitQuantity)} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
                                 </p>
                             )}
                         </CardContent>

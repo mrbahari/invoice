@@ -332,6 +332,11 @@ const AddProductsComponent = React.memo(({
         if (action === 'add') onAddProduct(product);
         else onRemoveProduct(product);
     };
+    
+    const stopPressing = () => {
+        setIsPressing(null);
+        setActiveProduct(null);
+    };
 
     useInterval(() => {
         const product = filteredProducts.find(p => p.id === activeProduct);
@@ -395,25 +400,29 @@ const AddProductsComponent = React.memo(({
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
                                         <div 
                                           className="absolute inset-0 flex"
-                                          onMouseUp={() => setIsPressing(null)}
-                                          onMouseLeave={() => setIsPressing(null)}
+                                          onMouseUp={stopPressing}
+                                          onMouseLeave={stopPressing}
+                                          onTouchEnd={stopPressing}
+                                          onTouchCancel={stopPressing}
                                         >
                                             <div 
                                                 className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/40"
                                                 onMouseDown={() => handlePress('remove', product)}
+                                                onTouchStart={() => handlePress('remove', product)}
                                             >
                                                 <Minus className="h-6 w-6 text-white" />
                                             </div>
                                             <div 
                                                 className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-green-500/20 hover:bg-green-500/40"
                                                 onMouseDown={() => handlePress('add', product)}
+                                                onTouchStart={() => handlePress('add', product)}
                                             >
                                                 <Plus className="h-6 w-6 text-white" />
                                             </div>
                                         </div>
                                         {isInInvoice && (
-                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-primary text-primary-foreground">
-                                            {invoiceItem?.quantity}
+                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white select-none pointer-events-none">
+                                                {formatNumber(invoiceItem?.quantity)}
                                             </Badge>
                                         )}
                                     </div>

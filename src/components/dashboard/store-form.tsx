@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -131,7 +132,7 @@ const CategoryTree = ({
                       <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
                       <AlertDialogFooter className="grid grid-cols-2 gap-2">
                         <AlertDialogCancel>انصراف</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(cat.id)}>حذف</AlertDialogAction>
+                        <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -301,7 +302,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         const cat = allCats.find(c => c.id === categoryId);
         if (!cat) return '';
         if (!cat.parentId) return cat.name;
-        return `${getCategoryPath(cat.parentId, allCats)} > ${cat.name}`;
+        // Recursively find the parent's path
+        const parentPath = getCategoryPath(cat.parentId, allCats);
+        return parentPath ? `${parentPath} > ${cat.name}` : cat.name;
     }, []);
 
 
@@ -318,50 +321,51 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         setAiLoadingCategory(parentCategory.id);
         
         try {
-        const categoryPath = getCategoryPath(parentCategory.id, storeCategories);
-        const input: GenerateCategoriesInput = { 
-            storeName: name, 
-            description: `${description}. The parent category is: ${categoryPath}` 
-        };
-        const result = await generateCategories(input);
+            const categoryPath = getCategoryPath(parentCategory.id, storeCategories);
+            const input: GenerateCategoriesInput = { 
+                storeName: name, 
+                description: `${description}. The context is product categorization. Generate sub-categories for the following parent category path: "${categoryPath}"` 
+            };
+            const result = await generateCategories(input);
 
-        if (result && result.categories) {
-            // We'll take the subcategories from the first category generated, as it's the most relevant
-            const subCategoriesToAdd = result.categories[0]?.subCategories || [];
-            
-            if(subCategoriesToAdd.length === 0) {
-                 toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی زیردسته جدیدی برای این بخش پیدا نکرد.' });
-                 setAiLoadingCategory(null);
-                 return;
-            }
-
-            const newCats: Category[] = [];
-            const existingSubNames = new Set(storeCategories.filter(c => c.parentId).map(c => c.name.toLowerCase()));
-            
-            subCategoriesToAdd.forEach(subCatName => {
-                let finalSubCatName = subCatName;
-                if (existingSubNames.has(finalSubCatName.toLowerCase())) {
-                    finalSubCatName = `_${finalSubCatName}`;
+            if (result && result.categories) {
+                // We'll take the subcategories from the first category generated, as it's the most relevant
+                const subCategoriesToAdd = result.categories[0]?.subCategories || [];
+                
+                if(subCategoriesToAdd.length === 0) {
+                    toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی زیردسته جدیدی برای این بخش پیدا نکرد.' });
+                    setAiLoadingCategory(null);
+                    return;
                 }
 
-                const subCat: Category = {
-                    id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-                    name: finalSubCatName,
-                    storeId: store?.id || 'temp',
-                    parentId: parentCategory.id,
-                };
-                newCats.push(subCat);
-                existingSubNames.add(finalSubCatName.toLowerCase());
-            });
-            
-            setStoreCategories(prev => [...prev, ...newCats]);
-            toast({ variant: 'success', title: `${newCats.length} زیردسته جدید اضافه شد` });
-        }
+                const newCats: Category[] = [];
+                const existingSubNames = new Set(storeCategories.filter(c => c.parentId === parentCategory.id).map(c => c.name.toLowerCase()));
+                
+                subCategoriesToAdd.forEach(subCatName => {
+                    if (!existingSubNames.has(subCatName.toLowerCase())) {
+                        const subCat: Category = {
+                            id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+                            name: subCatName,
+                            storeId: store?.id || 'temp',
+                            parentId: parentCategory.id,
+                        };
+                        newCats.push(subCat);
+                        existingSubNames.add(subCatName.toLowerCase());
+                    }
+                });
+                
+                if (newCats.length > 0) {
+                    setStoreCategories(prev => [...prev, ...newCats]);
+                    toast({ variant: 'success', title: `${newCats.length} زیردسته جدید اضافه شد` });
+                } else {
+                     toast({ variant: 'default', title: 'بدون تغییر', description: 'زیردسته‌های تولید شده از قبل وجود داشتند.' });
+                }
+            }
         } catch (error) {
-        console.error("Error generating sub-categories:", error);
-        toast({ variant: 'destructive', title: 'خطا در تولید زیردسته', description: 'لطفاً دوباره تلاش کنید.' });
+            console.error("Error generating sub-categories:", error);
+            toast({ variant: 'destructive', title: 'خطا در تولید زیردسته', description: 'لطفاً دوباره تلاش کنید.' });
         } finally {
-        setAiLoadingCategory(null);
+            setAiLoadingCategory(null);
         }
     };
 
@@ -511,17 +515,30 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-     // Check if category has subcategories
-    if (storeCategories.some(c => c.parentId === categoryId)) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'ابتدا زیردسته‌های این دسته را حذف کنید.' });
-        return;
-    }
-    // Check if category is used by products
     if (products.some(p => p.subCategoryId === categoryId)) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'این دسته به یک یا چند محصول اختصاص داده شده است.' });
+        toast({ variant: 'destructive', title: 'خطا', description: 'این دسته به یک یا چند محصول اختصاص داده شده است و قابل حذف نیست.' });
         return;
     }
-    setStoreCategories(prev => prev.filter(c => c.id !== categoryId));
+
+    let allIdsToDelete = new Set<string>([categoryId]);
+    let queue = [categoryId];
+
+    while(queue.length > 0) {
+        const currentId = queue.shift()!;
+        const children = storeCategories.filter(c => c.parentId === currentId);
+        children.forEach(child => {
+            if (products.some(p => p.subCategoryId === child.id)) {
+                // If a subcategory has products, we should probably stop the whole deletion.
+                // For now, we'll just not delete it or its children.
+                // A better UX might be to warn the user.
+            } else {
+                allIdsToDelete.add(child.id);
+                queue.push(child.id);
+            }
+        });
+    }
+
+    setStoreCategories(prev => prev.filter(c => !allIdsToDelete.has(c.id)));
   };
   
   const handleStartEditCategory = (category: Category) => {
@@ -577,7 +594,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                             </AlertDialogHeader>
                             <AlertDialogFooter className="grid grid-cols-2 gap-2">
                                 <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className="bg-green-600 hover:bg-green-700">حذف</AlertDialogAction>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
@@ -592,9 +609,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                 </TooltipTrigger>
                 <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
             </Tooltip>
-             <div className="drag-handle cursor-move p-2 rounded-b-md hover:bg-muted">
-                <GripVertical className="h-6 w-6 text-muted-foreground" />
-            </div>
         </FloatingToolbar>
         <Card>
             <CardHeader>

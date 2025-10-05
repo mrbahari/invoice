@@ -8,8 +8,6 @@ import { useUser } from '@/context/user-context';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
-import { useToast } from '@/hooks/use-toast';
-import defaultDb from '@/database/defaultdb.json';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -34,7 +32,7 @@ interface DataContextType {
   updateDocument: (collectionName: CollectionName, docId: string, data: Partial<Document>) => Promise<void>;
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
-  resetData: (dataToLoad?: any) => Promise<void>;
+  loadDataBatch: (dataToLoad: Partial<AppData>) => Promise<void>;
   clearAllData: () => Promise<void>;
 }
 
@@ -53,7 +51,6 @@ const emptyData: AppData = {
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading } = useUser();
-  const { toast } = useToast();
   const [localData, setLocalData] = useState<AppData>(emptyData);
   const [isSynced, setIsSynced] = useState(false);
   const { firestore } = useMemo(() => initializeFirebase(), []);
@@ -123,12 +120,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addDocument = useCallback(async <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => {
     const ref = collectionRefs[collectionName];
     if (!ref || !(ref instanceof CollectionReference)) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
+      console.error('Invalid collection reference or user not logged in.');
       return;
     }
     
     const tempId = `temp-${Date.now()}`;
-    const optimisticData = { ...localData };
+    // Optimistic update
     setLocalData(prev => ({
       ...prev,
       [collectionName]: [...prev[collectionName], { id: tempId, ...data }],
@@ -136,6 +133,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
       const docRef = await addDoc(ref, data);
+      // Replace tempId with real ID from Firestore
       setLocalData(prev => ({
         ...prev,
         [collectionName]: prev[collectionName].map(item =>
@@ -144,7 +142,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }));
       return docRef.id;
     } catch (error: any) {
-        setLocalData(optimisticData); // Revert
+        // Revert optimistic update on failure
+        setLocalData(prev => ({
+            ...prev,
+            [collectionName]: prev[collectionName].filter(item => item.id !== tempId)
+        }));
         const permissionError = new FirestorePermissionError({
           path: ref.path,
           operation: 'create',
@@ -152,18 +154,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, toast, localData]);
+  }, [collectionRefs]);
 
   const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, data: Partial<Document>) => {
     const ref = collectionRefs[collectionName];
      if (!ref || !(ref instanceof CollectionReference)) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
+      console.error('Invalid collection reference or user not logged in.');
       return;
     }
-    if (!docId) return; // Do not attempt to update a document without an ID
+    if (!docId || docId.startsWith('temp-')) return; 
+
     const docRef = doc(ref, docId);
     
-    const optimisticData = { ...localData };
+    const originalState = localData[collectionName];
+    const originalItem = originalState.find(item => item.id === docId);
+
+    // Optimistic update
     setLocalData(prev => ({
       ...prev,
       [collectionName]: prev[collectionName].map(item =>
@@ -174,7 +180,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       await updateDoc(docRef, data);
     } catch (error: any) {
-        setLocalData(optimisticData); // Revert
+        // Revert optimistic update
+        setLocalData(prev => ({
+            ...prev,
+            [collectionName]: prev[collectionName].map(item =>
+                item.id === docId ? originalItem! : item
+            )
+        }));
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
@@ -182,18 +194,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, toast, localData]);
+  }, [collectionRefs, localData]);
 
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
     const ref = collectionRefs[collectionName];
     if (!ref || !(ref instanceof CollectionReference)) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
+      console.error('Invalid collection reference or user not logged in.');
       return;
     }
-    if (!docId) return; // Do not attempt to delete a document without an ID
+    if (!docId || docId.startsWith('temp-')) return; 
+    
     const docRef = doc(ref, docId);
 
-    const optimisticData = { ...localData };
+    const originalItem = localData[collectionName].find(item => item.id === docId);
+    if (!originalItem) return;
+
+    // Optimistic update
     setLocalData(prev => ({
       ...prev,
       [collectionName]: prev[collectionName].filter(item => item.id !== docId),
@@ -202,16 +218,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       await deleteDoc(docRef);
     } catch (error: any) {
-        setLocalData(optimisticData); // Revert
+        // Revert optimistic update
+        setLocalData(prev => ({...prev, [collectionName]: [...prev[collectionName], originalItem]}));
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, toast, localData]);
+  }, [collectionRefs, localData]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
+    // Optimistic update for local state
     setLocalData(prev => ({
       ...prev,
       toolbarPositions: {
@@ -219,6 +237,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         [pageKey]: position,
       },
     }));
+
     if (toolbarPosRef) {
         try {
             await setDoc(toolbarPosRef, { [pageKey]: position }, { merge: true });
@@ -233,23 +252,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [toolbarPosRef]);
 
-  const clearAllUserData = useCallback(async () => {
+  const clearAllData = useCallback(async () => {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
-    // Note: We only clear user-specific data. Global data like products and categories are preserved.
-    const collectionsToDelete: (CollectionReference | null)[] = [storesRef as CollectionReference, unitsRef as CollectionReference, customersRef as CollectionReference, invoicesRef as CollectionReference];
 
-    for (const ref of collectionsToDelete) {
+    // IMPORTANT: This function will only clear USER-SPECIFIC data.
+    // Global collections like 'products' and 'categories' are NOT cleared.
+    const userCollections: (CollectionReference | null)[] = [
+        storesRef as CollectionReference,
+        unitsRef as CollectionReference,
+        customersRef as CollectionReference,
+        invoicesRef as CollectionReference,
+    ];
+
+    for (const ref of userCollections) {
         if (ref) {
             const q = query(ref);
             const snapshot = await getDocs(q);
             snapshot.docs.forEach(doc => {
-              if(doc.id) batch.delete(doc.ref)
+              if (doc.id) batch.delete(doc.ref);
             });
         }
     }
+
     try {
         await batch.commit();
+        // The onSnapshot listeners will automatically update the local state to be empty.
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({
             path: 'multiple user-specific paths',
@@ -259,22 +287,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
 
+
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
-    if (!firestore) return;
+    if (!user || !firestore) return;
     const batch = writeBatch(firestore);
     
-    // Note: Only restore user-specific collections. This avoids permission errors on global collections.
-    const collectionsToLoad: {name: CollectionName, ref: CollectionReference | null, data: any[] | undefined}[] = [
-        {name: 'stores', ref: storesRef as CollectionReference, data: dataToLoad.stores},
-        {name: 'units', ref: unitsRef as CollectionReference, data: dataToLoad.units},
-        {name: 'customers', ref: customersRef as CollectionReference, data: dataToLoad.customers},
-        {name: 'invoices', ref: invoicesRef as CollectionReference, data: dataToLoad.invoices},
+    // IMPORTANT: This function only restores USER-SPECIFIC collections.
+    // It intentionally skips 'products' and 'categories' which are global.
+    const userCollectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
+        { ref: storesRef as CollectionReference, data: dataToLoad.stores },
+        { ref: unitsRef as CollectionReference, data: dataToLoad.units },
+        { ref: customersRef as CollectionReference, data: dataToLoad.customers },
+        { ref: invoicesRef as CollectionReference, data: dataToLoad.invoices },
     ];
 
-    for (const { ref, data } of collectionsToLoad) {
+    for (const { ref, data } of userCollectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
-                // Ensure item has a valid ID before trying to write it
                 if (item.id) {
                     const docRef = doc(ref, item.id);
                     batch.set(docRef, item);
@@ -282,8 +311,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
         }
     }
+
+    // Also write toolbar positions to its specific document
+    if (toolbarPosRef && dataToLoad.toolbarPositions) {
+        batch.set(toolbarPosRef, dataToLoad.toolbarPositions);
+    }
+
     try {
         await batch.commit();
+        // The onSnapshot listeners will automatically fetch and update the local state.
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({
             path: 'multiple paths',
@@ -292,18 +328,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, storesRef, unitsRef, customersRef, invoicesRef]);
-
-  const resetData = useCallback(async (dataToLoad: any = defaultDb) => {
-    await clearAllUserData();
-    await loadDataBatch(dataToLoad);
-    toast({ variant: 'success', title: 'بازنشانی موفق', description: 'اطلاعات با موفقیت بازنشانی شد.' });
-  }, [clearAllUserData, loadDataBatch, toast]);
-
-  const clearAllData = useCallback(async () => {
-    await clearAllUserData();
-    toast({ variant: 'success', title: 'اطلاعات پاک شد', description: 'تمام داده‌های شما با موفقیت حذف شد.' });
-  }, [clearAllUserData, toast]);
+  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;
@@ -315,7 +340,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updateDocument,
     deleteDocument,
     setToolbarPosition,
-    resetData,
+    loadDataBatch,
     clearAllData,
   };
   

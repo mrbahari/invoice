@@ -33,6 +33,8 @@ import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
 import { useSearch } from './search-provider';
 import { useToast } from '@/hooks/use-toast';
+import defaultDb from '@/database/defaultdb.json';
+
 
 const colorThemes = [
     { name: 'Blue', value: '248 82% 50%'},
@@ -45,7 +47,7 @@ const colorThemes = [
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, addDocument, deleteDocument, resetData, clearAllData } = useData();
+  const { data, addDocument, deleteDocument, clearAllData, loadDataBatch } = useData();
   const { setSearchVisible } = useSearch();
   const { units = [] } = data; // Use default empty array to prevent error
   const { toast } = useToast();
@@ -121,12 +123,17 @@ export default function SettingsPage() {
     setIsProcessing(true);
     await clearAllData();
     setIsProcessing(false);
+    toast({ variant: 'success', title: 'اطلاعات پاک شد', description: 'تمام داده‌های شما با موفقیت حذف شد.' });
   };
   
   const handleLoadDefaults = async () => {
     setIsProcessing(true);
-    await resetData();
+    // First clear existing user-specific data
+    await clearAllData(); 
+    // Then load the default data
+    await loadDataBatch(defaultDb);
     setIsProcessing(false);
+    toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
   };
 
   const handleBackupData = () => {
@@ -163,27 +170,15 @@ export default function SettingsPage() {
           throw new Error("فایل پشتیبان معتبر نیست.");
         }
         const restoredData = JSON.parse(text);
-
-        // Optimistically update local state for user-specific data ONLY
-        // This prevents the product list from showing and then disappearing
-        const currentUserSpecificData = {
-            customers: restoredData.customers || [],
-            invoices: restoredData.invoices || [],
-            stores: restoredData.stores || [],
-            units: restoredData.units || [],
-            toolbarPositions: restoredData.toolbarPositions || {},
-        }
-
-        // Pass this partial data to a dedicated local update function
-        if (setData) {
-            setData({
-                ...data, // Keep existing global data like products/categories
-                ...currentUserSpecificData
-            });
-        }
         
-        // Then, proceed with the actual restore process, which only handles user data
-        await resetData(restoredData);
+        // This is the CRITICAL part. The restore process should ONLY handle user-specific data.
+        // Global data (products, categories) is managed separately and should not be overwritten by a user's backup.
+        
+        // First, clear the user's current data from Firestore.
+        await clearAllData();
+        // Then, load the user-specific data from the backup into Firestore.
+        await loadDataBatch(restoredData);
+
         toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات با موفقیت بازیابی شد.' });
           
       } catch (error: any) {

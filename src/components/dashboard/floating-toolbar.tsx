@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import Draggable from 'react-draggable';
+import Draggable, { type DraggableData, type DraggableEvent } from 'react-draggable';
 import { useData } from '@/context/data-context';
 import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,9 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
   const draggableToolbarRef = useRef<HTMLDivElement>(null);
   
   const currentPosition = toolbarPositions?.[pageKey] || defaultPosition;
+  
+  const headerHeight = 80;
+  const footerHeight = 80;
 
   useEffect(() => {
     const handleResize = () => {
@@ -34,21 +37,10 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
       let { x, y } = position;
       let positionChanged = false;
 
-      if (x < 0) {
-        x = 0;
-        positionChanged = true;
-      } else if (x + toolbarWidth > innerWidth) {
-        x = innerWidth - toolbarWidth;
-        positionChanged = true;
-      }
-
-      if (y < 0) {
-        y = 0;
-        positionChanged = true;
-      } else if (y + toolbarHeight > innerHeight) {
-        y = innerHeight - toolbarHeight;
-        positionChanged = true;
-      }
+      if (x < 0) { x = 0; positionChanged = true; }
+      if (x + toolbarWidth > innerWidth) { x = innerWidth - toolbarWidth; positionChanged = true; }
+      if (y < headerHeight) { y = headerHeight; positionChanged = true; }
+      if (y + toolbarHeight > innerHeight - footerHeight) { y = innerHeight - footerHeight - toolbarHeight; positionChanged = true; }
       
       if (positionChanged) {
         setData(currentData => ({
@@ -67,6 +59,25 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
     return () => window.removeEventListener('resize', handleResize);
   }, [data.toolbarPositions, pageKey, setData]);
 
+  const handleStop = (e: DraggableEvent, dragData: DraggableData) => {
+    const { innerHeight } = window;
+    let y = dragData.y;
+    
+    if (y < headerHeight) {
+      y = headerHeight;
+    } else if (y + dragData.node.clientHeight > innerHeight - footerHeight) {
+      y = innerHeight - footerHeight - dragData.node.clientHeight;
+    }
+
+    setData(prev => ({
+        ...prev,
+        toolbarPositions: {
+            ...prev.toolbarPositions,
+            [pageKey]: { x: dragData.x, y }
+        }
+    }));
+  };
+
   if (!children) {
     return null;
   }
@@ -76,15 +87,7 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
       handle=".drag-handle"
       position={currentPosition}
       nodeRef={draggableToolbarRef}
-      onStop={(e, dragData) => {
-        setData(prev => ({
-          ...prev,
-          toolbarPositions: {
-            ...prev.toolbarPositions,
-            [pageKey]: { x: dragData.x, y: dragData.y }
-          }
-        }));
-      }}
+      onStop={handleStop}
     >
       <div
         ref={draggableToolbarRef}

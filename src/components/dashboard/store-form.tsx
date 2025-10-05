@@ -36,7 +36,7 @@ import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-f
 import { generateLogoPrompts } from '@/ai/flows/generate-logo-prompts';
 import type { GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts';
 import { cn } from '@/lib/utils';
-import { generateCategories, type GenerateCategoriesInput } from '@/ai/flows/generate-categories-flow';
+import { generateCategories } from '@/ai/flows/generate-categories-flow';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -45,7 +45,6 @@ type StoreFormProps = {
   store?: Store;
   onSave: () => void;
   onCancel: () => void;
-  onDelete: (storeId: string) => void;
 };
 
 // =================================================================
@@ -59,6 +58,7 @@ const CategoryTree = ({
   onDelete,
   onStartEdit,
   onAiGenerate,
+  onToggle,
   editingCategoryId,
   editingCategoryName,
   onSaveEdit,
@@ -73,6 +73,7 @@ const CategoryTree = ({
   onDelete: (categoryId: string) => void;
   onStartEdit: (category: Category) => void;
   onAiGenerate: (parentCategory: Category) => void;
+  onToggle: (categoryId: string, element: HTMLDivElement) => void;
   editingCategoryId: string | null;
   editingCategoryName: string;
   onSaveEdit: (categoryId: string) => void;
@@ -82,7 +83,8 @@ const CategoryTree = ({
 }) => {
   const [addingToParentId, setAddingToParentId] = useState<string | null>(null);
   const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
-  
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   if (categories.length === 0) {
     return null;
   }
@@ -110,7 +112,7 @@ const CategoryTree = ({
         const isAdding = addingToParentId === cat.id;
 
         return (
-          <AccordionItem key={cat.id} value={cat.id} className="border-b-0 mt-2">
+          <AccordionItem key={cat.id} value={cat.id} className="border-b-0 mt-2" ref={el => itemRefs.current[cat.id] = el}>
             <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                 <div className="flex items-center gap-1">
                     <Tooltip>
@@ -121,16 +123,14 @@ const CategoryTree = ({
                         </TooltipTrigger>
                         <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
                     </Tooltip>
-                    {!hasSubCategories && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
-                                    <PlusCircle className="w-4 h-4 text-green-600" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
-                        </Tooltip>
-                    )}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
+                                <PlusCircle className="w-4 h-4 text-green-600" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
+                    </Tooltip>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
                     <AlertDialog>
                         <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
@@ -145,8 +145,8 @@ const CategoryTree = ({
                 </div>
 
                  <AccordionTrigger
-                    disabled={!hasSubCategories}
-                    className="p-2"
+                    className="p-2 flex-1 justify-end"
+                    onClick={() => onToggle(cat.id, itemRefs.current[cat.id]!)}
                 >
                     <div className="flex items-center gap-2">
                         <h4 className="font-semibold">{cat.name}</h4>
@@ -186,6 +186,7 @@ const CategoryTree = ({
                         onDelete={onDelete}
                         onStartEdit={onStartEdit}
                         onAiGenerate={onAiGenerate}
+                        onToggle={onToggle}
                         editingCategoryId={editingCategoryId}
                         editingCategoryName={editingCategoryName}
                         onSaveEdit={onSaveEdit}
@@ -203,12 +204,12 @@ const CategoryTree = ({
 };
 
 
-export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps) {
+export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
   const isEditMode = !!store;
 
   const { data, setData } = useData();
-  const { stores, categories, products } = data;
+  const { products } = data;
   
   const [name, setName] = useState(store?.name || '');
   const [description, setDescription] = useState(store?.description || '');
@@ -235,7 +236,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLogoGenerating, setIsLogoGenerating] = useState(false);
-  const [isCategoryGenerating, setIsCategoryGenerating] = useState(false);
   const [aiLoadingCategory, setAiLoadingCategory] = useState<string | null>(null);
   
   // State for AI logo prompts
@@ -252,9 +252,11 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
   useEffect(() => {
     if (store) {
-      setStoreCategories(categories.filter(c => c.storeId === store.id));
+      setStoreCategories(data.categories.filter(c => c.storeId === store.id));
+    } else {
+      setStoreCategories([]);
     }
-  }, [store, categories]);
+  }, [store, data.categories]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -289,38 +291,23 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
 
       setIsLogoGenerating(true);
        try {
-            // Generate prompts if they don't exist yet
             if (logoPrompts.length === 0) {
                 const { prompts } = await generateLogoPrompts({ storeName: name, description });
-                if (!prompts || prompts.length === 0) {
-                    throw new Error("Failed to generate logo prompts.");
-                }
+                if (!prompts || prompts.length === 0) throw new Error("Failed to generate prompts.");
                 setLogoPrompts(prompts);
-                setCurrentPromptIndex(0); // Reset index
+                setCurrentPromptIndex(0);
                 const result = await generateLogo({ prompt: prompts[0], storeName: name });
-                if (result.imageUrl) {
-                    setLogoUrl(result.imageUrl);
-                } else {
-                    const seed = encodeURIComponent(`${name}-${Date.now()}`);
-                    setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
-                }
-                setCurrentPromptIndex(1); // Set for next click
+                if (result.imageUrl) setLogoUrl(result.imageUrl);
+                setCurrentPromptIndex(1);
             } else {
                  const prompt = logoPrompts[currentPromptIndex];
                  const result = await generateLogo({ prompt, storeName: name });
-                 if (result.imageUrl) {
-                     setLogoUrl(result.imageUrl);
-                 } else {
-                    const seed = encodeURIComponent(`${name}-${Date.now()}`);
-                    setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
-                 }
+                 if (result.imageUrl) setLogoUrl(result.imageUrl);
                  setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % logoPrompts.length);
             }
 
         } catch (error) {
             console.error("Error during logo generation process:", error);
-             const seed = encodeURIComponent(`${name}-${Date.now()}`);
-             setLogoUrl(`https://picsum.photos/seed/${seed}/110/110`);
         } finally {
             setIsLogoGenerating(false);
         }
@@ -330,109 +317,67 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         const cat = allCats.find(c => c.id === categoryId);
         if (!cat) return '';
         if (!cat.parentId) return cat.name;
-        // Recursively find the parent's path
         const parentCat = allCats.find(c => c.id === cat.parentId);
-        if (!parentCat) return cat.name; // Should not happen in a valid structure
+        if (!parentCat) return cat.name;
         const parentPath = getCategoryPath(parentCat.id, allCats);
         return parentPath ? `${parentPath} > ${cat.name}` : cat.name;
     }, []);
 
-
-    const handleAiGenerateSubCategories = async (parentCategory: Category) => {
-        if (!name || !description) {
-        toast({
-            variant: 'destructive',
-            title: 'نام و توضیحات الزامی است',
-            description: 'نام و توضیحات فروشگاه برای تولید زیردسته الزامی است.',
+    interface AiCategory {
+      name: string;
+      subCategories?: AiCategory[];
+    }
+    
+    const processAiCategories = (aiCats: AiCategory[], storeId: string, parentId?: string): Category[] => {
+        let results: Category[] = [];
+        aiCats.forEach(aiCat => {
+            const newId = `cat-${Math.random().toString(36).substr(2, 9)}`;
+            results.push({
+                id: newId,
+                name: aiCat.name,
+                storeId: storeId,
+                parentId: parentId,
+            });
+            if (aiCat.subCategories && aiCat.subCategories.length > 0) {
+                results = results.concat(processAiCategories(aiCat.subCategories, storeId, newId));
+            }
         });
-        return;
+        return results;
+    };
+
+
+    const handleAiGenerateSubCategories = async (parentCategory?: Category) => {
+        if (!name || !description) {
+            toast({
+                variant: 'destructive',
+                title: 'نام و توضیحات الزامی است',
+                description: 'نام و توضیحات فروشگاه برای تولید دسته‌بندی الزامی است.',
+            });
+            return;
         }
 
-        setAiLoadingCategory(parentCategory.id);
+        const loaderId = parentCategory ? parentCategory.id : 'main';
+        setAiLoadingCategory(loaderId);
         
         try {
-            const categoryPath = getCategoryPath(parentCategory.id, storeCategories);
-            const existingSubCategories = storeCategories
-                .filter(c => c.parentId === parentCategory.id)
-                .map(c => c.name);
-
-            const input: GenerateCategoriesInput = { 
-                storeName: name, 
-                description,
-                parentCategoryPath: categoryPath,
-                existingSubCategories,
-            };
-            const result = await generateCategories(input);
+            const result = await generateCategories({ storeName: name, description });
 
             if (result && result.categories) {
-                const subCategoriesToAdd = result.categories;
-                
-                if(subCategoriesToAdd.length === 0) {
-                    toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی زیردسته جدیدی برای این بخش پیدا نکرد.' });
-                    setAiLoadingCategory(null);
-                    return;
-                }
-
-                const newCats: Category[] = subCategoriesToAdd.map(subCatName => ({
-                    id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-                    name: subCatName,
-                    storeId: store?.id || 'temp',
-                    parentId: parentCategory.id,
-                }));
-                
+                const newCats = processAiCategories(result.categories, store?.id || 'temp', parentCategory?.id);
                 if (newCats.length > 0) {
                     setStoreCategories(prev => [...prev, ...newCats]);
-                    toast({ variant: 'success', title: `${newCats.length} زیردسته جدید اضافه شد` });
+                    toast({ variant: 'success', title: `${newCats.length} دسته و زیردسته جدید اضافه شد` });
+                } else {
+                     toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد' });
                 }
             }
         } catch (error) {
-            console.error("Error generating sub-categories:", error);
-            toast({ variant: 'destructive', title: 'خطا در تولید زیردسته', description: 'لطفاً دوباره تلاش کنید.' });
+            console.error("Error generating categories:", error);
+            toast({ variant: 'destructive', title: 'خطا در تولید دسته‌بندی', description: 'لطفاً دوباره تلاش کنید.' });
         } finally {
             setAiLoadingCategory(null);
         }
     };
-
-  const handleGenerateCategories = async () => {
-    if (!name || !description) {
-      toast({
-        variant: 'destructive',
-        title: 'نام و توضیحات الزامی است',
-        description: 'برای تولید دسته‌بندی، نام و توضیحات فروشگاه را وارد کنید.',
-      });
-      return;
-    }
-    setIsCategoryGenerating(true);
-    try {
-      const input: GenerateCategoriesInput = { storeName: name, description };
-      const result = await generateCategories(input);
-
-      if (result && result.categories) {
-        const newParentCats: Category[] = [];
-        const existingParentNames = new Set(storeCategories.filter(c => !c.parentId).map(c => c.name.toLowerCase()));
-
-        result.categories.forEach(catName => {
-          if (!existingParentNames.has(catName.toLowerCase())) {
-            newParentCats.push({
-              id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-              name: catName,
-              storeId: store?.id || 'temp',
-            });
-            existingParentNames.add(catName.toLowerCase());
-          }
-        });
-        
-        setStoreCategories(prev => [...prev, ...newParentCats]);
-
-        toast({ variant: 'success', title: 'دسته‌بندی‌های اصلی با موفقیت تولید و اضافه شدند' });
-      }
-    } catch (error) {
-      console.error("Error generating categories:", error);
-      toast({ variant: 'destructive', title: 'خطا در تولید دسته‌بندی', description: 'لطفاً دوباره تلاش کنید.' });
-    } finally {
-      setIsCategoryGenerating(false);
-    }
-  };
 
 
   const handleSaveAll = () => {
@@ -443,10 +388,10 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     
     setIsProcessing(true);
 
-    const storeId = store?.id || `store-${Math.random().toString(36).substr(2, 9)}`;
+    const storeIdToSave = store?.id || `store-${Math.random().toString(36).substr(2, 9)}`;
 
     const newOrUpdatedStore: Store = {
-      id: storeId,
+      id: storeIdToSave,
       name,
       description,
       address,
@@ -462,17 +407,13 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     // Update store
     let updatedStores;
     if (isEditMode) {
-      updatedStores = stores.map(s => s.id === storeId ? newOrUpdatedStore : s);
+      updatedStores = data.stores.map(s => s.id === storeIdToSave ? newOrUpdatedStore : s);
     } else {
-      updatedStores = [newOrUpdatedStore, ...stores];
+      updatedStores = [newOrUpdatedStore, ...data.stores];
     }
-
-    // Update categories (delete removed, update existing, add new)
-    const existingStoreCategoryIds = categories.filter(c => c.storeId === storeId).map(c => c.id);
-    const currentCategoryIds = storeCategories.map(c => c.id);
     
-    const otherStoresCategories = categories.filter(c => c.storeId !== storeId);
-    const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId}))];
+    const otherStoresCategories = data.categories.filter(c => c.storeId !== storeIdToSave);
+    const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId: storeIdToSave}))];
     
     setData(prev => ({
         ...prev,
@@ -485,20 +426,26 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     onSave();
   };
 
-  const handleDelete = () => {
-    if (!store) return;
-    // Add checks for related products/invoices if needed
-    onDelete(store.id);
-    toast({ title: 'فروشگاه حذف شد' });
-  };
+  const handleDeleteAllCategories = () => {
+    setStoreCategories([]);
+  }
+
   
   // Category Handlers
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim() || isDuplicateCategory) return;
+  const handleAddCategory = (parentId?: string) => {
+    if (!newCategoryName.trim()) return;
+
+    const isDuplicate = storeCategories.some(c => 
+        c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && c.parentId === parentId
+    );
+
+    if(isDuplicate) return;
+
     const newCat: Category = {
       id: `cat-${Math.random().toString(36).substr(2, 9)}`,
       name: newCategoryName.trim(),
       storeId: store?.id || 'temp', // temp id until store is saved
+      parentId,
     };
     setStoreCategories(prev => [...prev, newCat]);
     setNewCategoryName('');
@@ -520,21 +467,16 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         return;
     }
 
-    let allIdsToDelete = new Set<string>([categoryId]);
+    let allIdsToDelete = new Set<string>();
     let queue = [categoryId];
+    allIdsToDelete.add(categoryId);
 
     while(queue.length > 0) {
         const currentId = queue.shift()!;
         const children = storeCategories.filter(c => c.parentId === currentId);
         children.forEach(child => {
-            if (products.some(p => p.subCategoryId === child.id)) {
-                // If a subcategory has products, we should probably stop the whole deletion.
-                // For now, we'll just not delete it or its children.
-                // A better UX might be to warn the user.
-            } else {
-                allIdsToDelete.add(child.id);
-                queue.push(child.id);
-            }
+            allIdsToDelete.add(child.id);
+            queue.push(child.id);
         });
     }
 
@@ -558,6 +500,14 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     ));
     handleCancelEditCategory();
   };
+  
+  const handleAccordionToggle = (categoryId: string, element: HTMLDivElement | null) => {
+    if(element) {
+        setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300); // Delay to allow accordion animation to finish
+    }
+  };
 
 
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
@@ -575,30 +525,6 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     </TooltipTrigger>
                     <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
                 </Tooltip>
-                {isEditMode && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-10 h-10">
-                                        <Trash2 className="h-5 w-5" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
-                            </Tooltip>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store.name}» و تمام دسته‌بندی‌های آن را برای همیشه حذف می‌کند.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
             </div>
             <Separator orientation="horizontal" className="w-8" />
             <Tooltip>
@@ -723,20 +649,39 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
                     <CardDescription>دسته‌ها و زیردسته‌های محصولات این فروشگاه را تعریف کنید.</CardDescription>
                  </div>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            type="button"
-                            size="icon"
-                            variant="outline"
-                            onClick={handleGenerateCategories}
-                            disabled={isCategoryGenerating}
-                        >
-                            {isCategoryGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>تولید دسته‌بندی با هوش مصنوعی</p></TooltipContent>
-                  </Tooltip>
+                 <div className='flex items-center gap-2'>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => handleAiGenerateSubCategories()}
+                                disabled={aiLoadingCategory === 'main'}
+                            >
+                                {aiLoadingCategory === 'main' ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>تولید دسته‌بندی با هوش مصنوعی</p></TooltipContent>
+                    </Tooltip>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                             <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="icon"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>حذف همه دسته‌بندی‌ها</p></TooltipContent>
+                            </Tooltip>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>حذف همه دسته‌بندی‌ها</AlertDialogTitle><AlertDialogDescription>آیا مطمئن هستید که می‌خواهید تمام دسته‌بندی‌های این فروشگاه را حذف کنید؟ این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteAllCategories} className="bg-destructive hover:bg-destructive/90">حذف همه</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                 </div>
             </CardHeader>
             <CardContent className="grid gap-6">
                 <div className="relative">
@@ -747,7 +692,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                         className="pl-24"
                     />
                     <Button 
-                        onClick={handleAddCategory}
+                        onClick={() => handleAddCategory()}
                         disabled={isCategoryInputEmpty || isDuplicateCategory}
                         className={cn(
                             "absolute left-1 top-1/2 -translate-y-1/2 h-8 w-20",
@@ -769,6 +714,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                             onDelete={handleDeleteCategory}
                             onStartEdit={handleStartEditCategory}
                             onAiGenerate={handleAiGenerateSubCategories}
+                            onToggle={handleAccordionToggle}
                             editingCategoryId={editingCategoryId}
                             editingCategoryName={editingCategoryName}
                             onSaveEdit={handleSaveCategoryEdit}

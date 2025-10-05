@@ -6,10 +6,13 @@ import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, To
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/context/user-context';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference } from 'firebase/firestore';
+import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import defaultDb from '@/database/defaultdb.json';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
 type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
@@ -94,7 +97,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading;
     
-    if (!isDataLoading) {
+    if (!isDataLoading && (user || !isUserLoading)) {
       setLocalData({
         products: productsData || [],
         categories: categoriesData || [],
@@ -124,9 +127,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Optimistic update
     const tempId = `temp-${Date.now()}`;
-    const oldData = { ...localData };
+    const optimisticData = { ...localData };
     setLocalData(prev => ({
       ...prev,
       [collectionName]: [...prev[collectionName], { id: tempId, ...data }],
@@ -134,7 +136,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
       const docRef = await addDoc(ref, data);
-      // Replace tempId with the real ID from Firestore
       setLocalData(prev => ({
         ...prev,
         [collectionName]: prev[collectionName].map(item =>
@@ -142,10 +143,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         ),
       }));
       return docRef.id;
-    } catch (error) {
-      console.error(`Failed to add document to ${collectionName}:`, error);
-      toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی' });
-      setLocalData(oldData); // Revert on failure
+    } catch (error: any) {
+        setLocalData(optimisticData); // Revert
+        const permissionError = new FirestorePermissionError({
+          path: ref.path,
+          operation: 'create',
+          requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
   }, [collectionRefs, toast, localData]);
 
@@ -158,8 +163,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     const docRef = doc(ref, docId);
     
-    // Optimistic update
-    const oldData = { ...localData };
+    const optimisticData = { ...localData };
     setLocalData(prev => ({
       ...prev,
       [collectionName]: prev[collectionName].map(item =>
@@ -169,10 +173,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
       await updateDoc(docRef, data);
-    } catch (error) {
-      console.error(`Failed to update document in ${collectionName}:`, error);
-      toast({ variant: 'destructive', title: 'خطا در به‌روزرسانی' });
-      setLocalData(oldData); // Revert on failure
+    } catch (error: any) {
+        setLocalData(optimisticData); // Revert
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
   }, [collectionRefs, toast, localData]);
 
@@ -184,8 +192,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
     const docRef = doc(ref, docId);
 
-    // Optimistic update
-    const oldData = { ...localData };
+    const optimisticData = { ...localData };
     setLocalData(prev => ({
       ...prev,
       [collectionName]: prev[collectionName].filter(item => item.id !== docId),
@@ -193,16 +200,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
       await deleteDoc(docRef);
-    } catch (error) {
-      console.error(`Failed to delete document from ${collectionName}:`, error);
-      toast({ variant: 'destructive', title: 'خطا در حذف' });
-      setLocalData(oldData); // Revert on failure
+    } catch (error: any) {
+        setLocalData(optimisticData); // Revert
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     }
   }, [collectionRefs, toast, localData]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
-    // This is a local-only operation for now to improve performance.
-    // A full implementation would debounce writes to Firestore.
     setLocalData(prev => ({
       ...prev,
       toolbarPositions: {
@@ -210,7 +218,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         [pageKey]: position,
       },
     }));
-  }, []);
+    if (toolbarPosRef) {
+        try {
+            await setDoc(toolbarPosRef, { [pageKey]: position }, { merge: true });
+        } catch (error: any) {
+            const permissionError = new FirestorePermissionError({
+                path: toolbarPosRef.path,
+                operation: 'update',
+                requestResourceData: { [pageKey]: position },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+    }
+  }, [toolbarPosRef]);
 
   const clearAllUserData = useCallback(async () => {
     if (!user || !firestore) return;
@@ -224,7 +244,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
         }
     }
-    await batch.commit();
+    try {
+        await batch.commit();
+    } catch(error: any) {
+        const permissionError = new FirestorePermissionError({
+            path: 'multiple paths',
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
   }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
 
   const loadDataBatch = useCallback(async (dataToLoad: AppData) => {
@@ -236,7 +264,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         {name: 'units', ref: unitsRef as CollectionReference, data: dataToLoad.units},
         {name: 'customers', ref: customersRef as CollectionReference, data: dataToLoad.customers},
         {name: 'invoices', ref: invoicesRef as CollectionReference, data: dataToLoad.invoices},
-        // Global collections are now included
         {name: 'products', ref: productsRef, data: dataToLoad.products},
         {name: 'categories', ref: categoriesRef, data: dataToLoad.categories},
     ];
@@ -244,14 +271,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
     for (const { ref, data } of collectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
-                if(item.id) { // Ensure item has an ID before creating a doc ref
+                if (item.id) {
                     const docRef = doc(ref, item.id);
                     batch.set(docRef, item);
                 }
             });
         }
     }
-    await batch.commit();
+    try {
+        await batch.commit();
+    } catch(error: any) {
+        const permissionError = new FirestorePermissionError({
+            path: 'multiple paths',
+            operation: 'create',
+            requestResourceData: dataToLoad,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
   }, [firestore, storesRef, unitsRef, customersRef, invoicesRef, productsRef, categoriesRef]);
 
   const resetData = useCallback(async (dataToLoad: any = defaultDb) => {
@@ -279,7 +315,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     clearAllData,
   };
   
-  if (!isInitialized && isUserLoading) {
+  if (!isInitialized && (isUserLoading || !isSynced)) {
       return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
@@ -297,5 +333,3 @@ export function useData() {
   }
   return context;
 }
-
-    

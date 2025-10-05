@@ -5,6 +5,7 @@ import '@/app/globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-context';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 
 export const metadata: Metadata = {
@@ -30,14 +31,16 @@ export default function RootLayout({
             defaultTheme="light"
             disableTransitionOnChange
         >
-          <UserProvider>
-            <DataProvider>
-                <main className="relative z-10">
-                  {children}
-                </main>
-                <Toaster />
-            </DataProvider>
-          </UserProvider>
+          <FirebaseClientProvider>
+            <UserProvider>
+              <DataProvider>
+                  <main className="relative z-10">
+                    {children}
+                  </main>
+                  <Toaster />
+              </DataProvider>
+            </UserProvider>
+          </FirebaseClientProvider>
         </ThemeProvider>
       </body>
     </html>

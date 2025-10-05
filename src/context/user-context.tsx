@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { initializeFirebase } from '@/firebase';
+import { User } from 'firebase/auth';
+import { useFirebase } from '@/firebase/provider'; // Use the central provider
 
 interface UserContextType {
   user: User | null;
@@ -13,30 +13,11 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isUserLoading, setIsUserLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    // Since initializeFirebase handles initialization, we can safely get the auth instance.
-    const { auth } = initializeFirebase();
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (firebaseUser) => {
-        setUser(firebaseUser);
-        setIsUserLoading(false);
-      },
-      (error) => {
-        setError(error);
-        setIsUserLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, []);
+  // Get user state directly from the FirebaseProvider
+  const { user, isUserLoading, userError } = useFirebase();
 
   return (
-    <UserContext.Provider value={{ user, isUserLoading, error }}>
+    <UserContext.Provider value={{ user, isUserLoading, error: userError }}>
       {children}
     </UserContext.Provider>
   );

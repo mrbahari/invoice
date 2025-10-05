@@ -1,3 +1,20 @@
+/**
+ * @fileOverview
+ * This ruleset enforces a strict user-ownership model for user-specific data while allowing public read access to global product and category data.
+ *
+ * Data Structure:
+ * - /categories/{categoryId}: Publicly readable product categories.
+ * - /products/{productId}: Publicly readable product information.
+ * - /users/{userId}: Private user profile data, accessible only to the user.
+ * - /users/{userId}/clients/{clientId}: Private client data, accessible only to the user.
+ * - /users/{userId}/invoices/{invoiceId}: Private invoice data, accessible only to the user.
+ *
+ * Key Security Decisions:
+ * - Public Read Access for Categories and Products: The `categories` and `products` collections are intended for public consumption, so read access is open to everyone. Write access is strictly forbidden to client-side requests and can be performed from a trusted server environment.
+ * - Strict User Ownership: All data nested under `/users/{userId}` is exclusively accessible to the user identified by `userId`. This is enforced through the `isOwner(userId)` helper function.
+ * - User Creation Restriction: Users can only create their own profile document at `/users/{userId}` if the `userId` matches their `auth.uid`. They cannot create profiles for other users.
+ * - No User Listing: Listing all user documents is explicitly denied to protect user privacy.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -25,7 +42,9 @@ service cloud.firestore {
      */
     match /categories/{categoryId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
@@ -37,7 +56,9 @@ service cloud.firestore {
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
@@ -51,9 +72,11 @@ service cloud.firestore {
      * @principle Enforces document ownership; restricts access to a user's own data.
      */
     match /users/{userId} {
-      allow get, update, delete: if isOwner(userId);
-      allow create: if request.auth.uid == userId;
+      allow get: if isOwner(userId);
       allow list: if false;
+      allow create: if request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
@@ -66,8 +89,11 @@ service cloud.firestore {
      * @principle Enforces document ownership; restricts access to a user's own data tree.
      */
     match /users/{userId}/clients/{clientId} {
-      allow get, list, update, delete: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
@@ -80,8 +106,11 @@ service cloud.firestore {
      * @principle Enforces document ownership; restricts access to a user's own data tree.
      */
     match /users/{userId}/invoices/{invoiceId} {
-      allow get, list, update, delete: if isOwner(userId);
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
   }
 }

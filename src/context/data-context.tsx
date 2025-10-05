@@ -1,11 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useUser } from '@/context/user-context';
+import { useCollection, useMemoFirebase } from '@/firebase';
+import { collection, doc, writeBatch, getFirestore } from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
-
-// Define the shape of our data
 interface AppData {
   products: Product[];
   categories: Category[];
@@ -16,23 +19,20 @@ interface AppData {
   toolbarPositions: { [key: string]: ToolbarPosition };
 }
 
-// Define the context type
 interface DataContextType {
   data: AppData;
-  setData: React.Dispatch<React.SetStateAction<AppData>>;
-  resetData: () => Promise<void>;
-  clearAllData: () => Promise<void>;
+  setData: (newData: AppData) => Promise<void>;
   isInitialized: boolean;
-  isResetting: boolean;
-  LOCAL_STORAGE_KEY: string;
+  isResetting: boolean; // Retained for API compatibility if needed
+  LOCAL_STORAGE_KEY: string; // Retained for API compatibility
+  resetData: () => Promise<void>; // To be implemented with Firestore
+  clearAllData: () => Promise<void>; // To be implemented with Firestore
 }
 
-// Create the context
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export const LOCAL_STORAGE_KEY = 'hesabgar-app-data';
+export const LOCAL_STORAGE_KEY = 'hesabgar-app-data-firestore'; // Can be used for local settings if needed
 
-// Create an empty default structure. We will load the actual default from a fetch.
 const emptyData: AppData = {
   products: [],
   categories: [],
@@ -43,124 +43,127 @@ const emptyData: AppData = {
   toolbarPositions: {},
 };
 
-
-// Create the provider component
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(emptyData);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-
-  // Load initial data from localStorage or the default JSON file
-  useEffect(() => {
-    async function loadInitialData() {
-      try {
-        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          if (typeof parsedData.toolbarPositions !== 'object' || parsedData.toolbarPositions === null) {
-            parsedData.toolbarPositions = {};
-          }
-          setData(parsedData);
-        } else {
-          // If no data in local storage, fetch the default backup
-          const response = await fetch('/db/backup.json');
-          const defaultData = await response.json();
-          setData(defaultData);
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
-        }
-      } catch (error) {
-        console.error("Could not load initial data, trying to fetch default:", error);
-        try {
-            const response = await fetch('/db/backup.json');
-            const defaultData = await response.json();
-            setData(defaultData);
-        } catch (fetchError) {
-            console.error("Failed to fetch default backup data:", fetchError);
-            setData(emptyData); // Fallback to empty data structure
-        }
-      } finally {
-        setIsInitialized(true);
-      }
-    }
-    loadInitialData();
-  }, []);
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-      } catch (error) {
-        console.error("Failed to save data to localStorage:", error);
-        console.error("Failed to save data, not enough space.");
-      }
-    }
-  }, [data, isInitialized]);
+  const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
+  const [localData, setLocalData] = useState<AppData>(emptyData);
+  const [isSynced, setIsSynced] = useState(false);
+  const { firestore } = useMemo(() => initializeFirebase(), []);
 
 
-  // This function resets the application state by fetching the default backup file.
-  const resetData = useCallback(async (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setIsResetting(true);
-      fetch('/db/backup.json')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(defaultData => {
-          setData(defaultData);
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
-          resolve();
-        })
-        .catch(error => {
-          console.error("Failed to fetch and reset data:", error);
-          reject(error);
-        })
-        .finally(() => {
-          setTimeout(() => {
-            setIsResetting(false);
-          }, 500);
-        });
-    });
-  }, []);
+  // Define collection references, memoized to prevent re-renders
+  const productsRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const categoriesRef = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
+  const storesRef = useMemoFirebase(() => collection(firestore, 'stores'), [firestore]);
+  const unitsRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
+  const customersRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
+  const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
+  const toolbarPosRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
+
+
+  // Fetch collections from Firestore
+  const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsRef);
+  const { data: categoriesData, isLoading: categoriesLoading } = useCollection<Category>(categoriesRef);
+  const { data: storesData, isLoading: storesLoading } = useCollection<Store>(storesRef);
+  const { data: unitsData, isLoading: unitsLoading } = useCollection<UnitOfMeasurement>(unitsRef);
+  const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersRef);
+  const { data: invoicesData, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesRef);
   
-  // This function completely clears all application data.
-  const clearAllData = useCallback(async (): Promise<void> => {
-    return new Promise((resolve) => {
-        setIsResetting(true);
-        try {
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            // Setting to an empty object structure to avoid errors on reload before useEffect runs
-            setData(emptyData);
-            // Reload the page to ensure the app state is fully reset
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000); 
-        } catch (error) {
-            console.error("Failed to clear data", error);
-        } finally {
-             setTimeout(() => {
-                setIsResetting(false);
-                resolve();
-            }, 500);
-        }
-    });
-  }, []);
+  useEffect(() => {
+    // Check if user has logged out, then reset local state
+    if (!user && !isUserLoading) {
+      setLocalData(emptyData);
+      setIsSynced(false);
+    }
+  }, [user, isUserLoading]);
+  
+  // Combine all data sources into a single AppData object
+  useEffect(() => {
+    const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading;
+    
+    if (!isDataLoading) {
+      // Set local data from a combination of global and user-specific collections
+      setLocalData({
+        products: productsData || [],
+        categories: categoriesData || [],
+        stores: storesData || [],
+        units: unitsData || [],
+        customers: customersData || [],
+        invoices: invoicesData || [],
+        toolbarPositions: localData.toolbarPositions, // Persist this locally for now
+      });
+      setIsSynced(true);
+    }
+  }, [
+    productsData, categoriesData, storesData, unitsData, customersData, invoicesData,
+    productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading,
+    localData.toolbarPositions // Keep this dependency
+  ]);
 
+  const setData = async (newData: AppData) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
+      return;
+    }
+    
+    setLocalData(newData); // Optimistic update
+
+    try {
+      const batch = writeBatch(firestore);
+
+      // We assume that global collections (products, categories, stores) are not modified by the client.
+      // This is a common pattern where admin roles handle this data.
+      // If clients need to modify them, we'd need to handle that here.
+
+      // Handle user-specific collections
+      const collectionsToUpdate: { name: keyof AppData; ref: any }[] = [
+          { name: 'customers', ref: customersRef },
+          { name: 'invoices', ref: invoicesRef },
+          { name: 'units', ref: unitsRef },
+      ];
+
+      for (const { name, ref } of collectionsToUpdate) {
+        if (!ref) continue;
+        const localItems = (newData as any)[name] as { id: string }[];
+        const firestoreItems = (localData as any)[name] as { id: string }[];
+
+        // Items to add/update
+        localItems.forEach(item => {
+          batch.set(doc(ref, item.id), item);
+        });
+
+        // Items to delete
+        const localIds = new Set(localItems.map(item => item.id));
+        firestoreItems.forEach(item => {
+          if (!localIds.has(item.id)) {
+            batch.delete(doc(ref, item.id));
+          }
+        });
+      }
+      
+      await batch.commit();
+
+    } catch (error) {
+      console.error("Failed to save data to Firestore:", error);
+      toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی', description: 'اطلاعات در سرور ذخیره نشد.'});
+      // Optionally revert the optimistic update
+      // setLocalData(oldData);
+    }
+  };
+
+  const isInitialized = !isUserLoading && isSynced;
 
   const value = {
-    data,
+    data: localData,
     setData,
-    resetData,
-    clearAllData,
     isInitialized,
-    isResetting,
-    LOCAL_STORAGE_KEY,
+    isResetting: false, // Placeholder
+    LOCAL_STORAGE_KEY: 'unused', // Placeholder
+    resetData: async () => {}, // Placeholder
+    clearAllData: async () => {}, // Placeholder
   };
   
-  if (!isInitialized) {
+  if (!isInitialized && isUserLoading) {
       return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />
@@ -171,7 +174,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
-// Create a custom hook for easy access to the context
 export function useData() {
   const context = useContext(DataContext);
   if (context === undefined) {

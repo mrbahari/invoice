@@ -1,35 +1,41 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
+ * @file Firestore Security Rules
+ * @description This ruleset defines access control for the Firestore database.
  *
  * Core Philosophy:
- * This ruleset prioritizes a secure, owner-centric model for user-specific data while allowing public read access to global catalogs.
+ * This ruleset prioritizes security and data ownership.  User data is generally restricted to the owning user.
+ * Publicly accessible data (e.g., products, categories) is read-only for unauthenticated users.
  *
  * Data Structure:
- * - Public Catalogs: Products and Categories are stored in top-level collections, accessible for public reading.
- * - User-Specific Data: Customers, Invoices, Stores, Units and Settings are nested under `/users/{userId}`.
+ * - /products/{productId}: Public product catalog.
+ * - /categories/{categoryId}: Public product categories.
+ * - /users/{userId}: User profiles.
+ * - /users/{userId}/clients/{clientId}: User-specific customer data.
+ * - /users/{userId}/invoices/{invoiceId}: User-specific invoice data.
+ * - /users/{userId}/stores/{storeId}: User-specific store data.
+ * - /users/{userId}/units/{unitId}: User-specific units of measurement.
+ * - /users/{userId}/settings/{settingId}: User-specific application settings.
  *
  * Key Security Decisions:
- * - Public Catalog Read Access: Products and Categories are readable by all users, including unauthenticated users.
- * - Strict User Ownership: All data under `/users/{userId}` is strictly controlled by the user with the matching `userId`.
- * - No User Listing: Listing all users is not permitted.
+ * - Public read access to the "products" collection.
+ * - Strict user-ownership model for all data under /users/{userId}.
+ * - Data consistency is enforced for user-specific paths to ensure data integrity.
  *
  * Denormalization for Authorization:
- *  N/A - No denormalization is used in these rules, as ownership is derived directly from the path.
- *
+ *  -  N/A - Currently no denormalization is needed. If shared access is needed in the future, member lists should be stored directly on the secured document.
  * Structural Segregation:
- *  Public catalog data is stored in top-level collections, while private user data is stored under `/users/{userId}`, providing clear segregation.
+ * - Public data (products, categories) and private data (user data) are stored in separate top-level collections and user subcollections, respectively.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read products; restricts writes to ensure proper ownership.
+     * @description Allows anyone to read the products catalog.
      * @path /products/{productId}
      * @allow (get, list): Any user can read product information.
-     * @allow (create): Not applicable (no public creation).
-     * @deny (create, update, delete): No public modification or deletion.
-     * @principle Public read, owner-only writes (requires an owner field in schema, but not yet implemented)
+     * @deny (create, update, delete): No one can write to the products collection without authentication.
+     * @principle Allows public read access to product information.
      */
     match /products/{productId} {
       allow get, list: if true;
@@ -37,12 +43,11 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to read categories; restricts writes.
+     * @description Allows anyone to read the categories catalog.
      * @path /categories/{categoryId}
      * @allow (get, list): Any user can read category information.
-     * @allow (create): Not applicable (no public creation).
-     * @deny (create, update, delete): No public modification or deletion.
-     * @principle Public read, owner-only writes (requires an owner field in schema, but not yet implemented)
+     * @deny (create, update, delete): No one can write to the categories collection without authentication.
+     * @principle Allows public read access to category information.
      */
     match /categories/{categoryId} {
       allow get, list: if true;
@@ -50,90 +55,96 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows a user to read and write their own profile data.
+     * @description Manages user profile data.
      * @path /users/{userId}
-     * @allow (create): If the user ID in the path matches the authenticated user's ID (self-creation).
-     * @allow (get, list, update, delete): If the user ID in the path matches the authenticated user's ID (owner).
-     * @deny: Attempts to access or modify other user's profiles.
-     * @principle Enforces document ownership for all operations under /users/{userId}.
+     * @allow (create): A user can create their own profile.
+     * @allow (get, list, update, delete): Only the user can read, update, or delete their own profile.
+     * @deny: Any other operation.
+     * @principle Enforces user-ownership for profile data.
      */
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if false;
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow update: if isOwner(userId) && resource != null;
+      allow delete: if isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Enforces ownership for clients.
+     * @description Manages user-specific customer data.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (create): If the user ID in the path matches the authenticated user's ID.
-     * @allow (get, list, update, delete): If the user ID in the path matches the authenticated user's ID.
-     * @deny: Attempts to access or modify other user's clients.
-     * @principle Enforces document ownership for all operations under /users/{userId}/clients/{clientId}.
+     * @allow (create): A user can create customer data for themselves.
+     * @allow (get, list, update, delete): Only the user can read, update, or delete their own customer data.
+     * @deny: Any other operation.
+     * @principle Enforces user-ownership for customer data.
      */
     match /users/{userId}/clients/{clientId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && resource != null;
       allow delete: if isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Enforces ownership for invoices.
+     * @description Manages user-specific invoice data.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create): If the user ID in the path matches the authenticated user's ID.
-     * @allow (get, list, update, delete): If the user ID in the path matches the authenticated user's ID.
-     * @deny: Attempts to access or modify other user's invoices.
-     * @principle Enforces document ownership for all operations under /users/{userId}/invoices/{invoiceId}.
+     * @allow (create): A user can create invoice data for themselves.
+     * @allow (get, list, update, delete): Only the user can read, update, or delete their own invoice data.
+     * @deny: Any other operation.
+     * @principle Enforces user-ownership for invoice data.
      */
     match /users/{userId}/invoices/{invoiceId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && resource != null;
       allow delete: if isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Enforces ownership for stores.
+     * @description Manages user-specific store data.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create): If the user ID in the path matches the authenticated user's ID.
-     * @allow (get, list, update, delete): If the user ID in the path matches the authenticated user's ID.
-     * @deny: Attempts to access or modify other user's stores.
-     * @principle Enforces document ownership for all operations under /users/{userId}/stores/{storeId}.
+     * @allow (create): A user can create store data for themselves.
+     * @allow (get, list, update, delete): Only the user can read, update, or delete their own store data.
+     * @deny: Any other operation.
+     * @principle Enforces user-ownership for store data.
      */
     match /users/{userId}/stores/{storeId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && resource != null;
       allow delete: if isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Enforces ownership for units.
+     * @description Manages user-specific units of measurement.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create): If the user ID in the path matches the authenticated user's ID.
-     * @allow (get, list, update, delete): If the user ID in the path matches the authenticated user's ID.
-     * @deny: Attempts to access or modify other user's units.
-     * @principle Enforces document ownership for all operations under /users/{userId}/units/{unitId}.
+     * @allow (create): A user can create unit data for themselves.
+     * @allow (get, list, update, delete): Only the user can read, update, or delete their own unit data.
+     * @deny: Any other operation.
+     * @principle Enforces user-ownership for unit data.
      */
     match /users/{userId}/units/{unitId} {
-      allow get, list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && resource != null;
       allow delete: if isOwner(userId) && resource != null;
     }
 
-     /**
-      * @description Enforces ownership for settings.
-      * @path /users/{userId}/settings/{settingId}
-      * @allow (create): If the user ID in the path matches the authenticated user's ID.
-      * @allow (get, list, update, delete): If the user ID in the path matches the authenticated user's ID.
-      * @deny: Attempts to access or modify other user's settings.
-      * @principle Enforces document ownership for all operations under /users/{userId}/settings/{settingId}.
-      */
+      /**
+       * @description Manages user-specific application settings.
+       * @path /users/{userId}/settings/{settingId}
+       * @allow (create): A user can create settings data for themselves.
+       * @allow (get, list, update, delete): Only the user can read, update, or delete their own settings data.
+       * @deny: Any other operation.
+       * @principle Enforces user-ownership for settings data.
+       */
     match /users/{userId}/settings/{settingId} {
-        allow get, list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
         allow create: if isOwner(userId);
         allow update: if isOwner(userId) && resource != null;
         allow delete: if isOwner(userId) && resource != null;

@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import type { AuthFormValues } from '@/lib/definitions';
 import Link from 'next/link';
 
@@ -49,7 +49,7 @@ export function AuthForm({ formType, onSubmit }: AuthFormProps) {
     resolver: zodResolver(schema),
   });
 
-  const [state, formAction] = useFormState(onSubmit, {
+  const [state, formAction] = useActionState(onSubmit, {
     message: '',
     success: false,
   });

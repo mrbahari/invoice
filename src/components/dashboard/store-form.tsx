@@ -504,11 +504,63 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const handleAccordionToggle = (categoryId: string, element: HTMLDivElement | null) => {
     if(element) {
         setTimeout(() => {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 300); // Delay to allow accordion animation to finish
     }
   };
 
+  const buildStoreData = (): Omit<Store, 'id'> => ({
+    name,
+    description,
+    address,
+    phone,
+    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+    bankAccountHolder,
+    bankName,
+    bankAccountNumber,
+    bankIban,
+    bankCardNumber,
+  });
+
+  const handleSaveAsCopy = () => {
+    if (!name) {
+      toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
+      return;
+    }
+    
+    setIsProcessing(true);
+
+    const newStoreId = `store-${Math.random().toString(36).substr(2, 9)}`;
+    const newStoreData = { ...buildStoreData(), id: newStoreId };
+    
+    const copiedCategories = storeCategories.map(c => ({...c, storeId: newStoreId, id: `cat-${Math.random().toString(36).substr(2, 9)}`}));
+
+    setData(prev => ({
+        ...prev,
+        stores: [newStoreData, ...prev.stores],
+        categories: [...prev.categories, ...copiedCategories],
+    }));
+    
+    setIsProcessing(false);
+    toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
+    onSave();
+  }
+
+  const handleDelete = () => {
+      if (!store) return;
+      const storeHasProducts = data.products.some(p => p.storeId === store.id);
+      if (storeHasProducts) {
+          toast({ variant: 'destructive', title: 'خطا', description: 'این فروشگاه دارای محصول است و قابل حذف نیست.' });
+          return;
+      }
+      setData(prev => ({
+          ...prev,
+          stores: prev.stores.filter(s => s.id !== store.id),
+          categories: prev.categories.filter(c => c.storeId !== store.id),
+      }));
+      toast({ variant: 'success', title: 'فروشگاه حذف شد' });
+      onCancel();
+  };
 
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
 
@@ -519,22 +571,60 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             <div className="flex flex-col items-center gap-1">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-10 h-10">
-                            <ArrowRight className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                            <ArrowRight className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
                 </Tooltip>
-            </div>
-            <Separator orientation="horizontal" className="w-8" />
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-12 h-12 bg-green-600 text-white hover:bg-green-700">
-                        <Save className="h-6 w-6" />
+                {isEditMode && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  disabled={isProcessing} 
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
+                        </Tooltip>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+              )}
+              {isEditMode && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
+                        <Copy className="h-4 w-4" />
                     </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
-            </Tooltip>
+                  </TooltipTrigger>
+                  <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <Separator orientation="horizontal" className="w-6" />
+            <div className="flex flex-col items-center gap-1">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                            <Save className="h-5 w-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
+                </Tooltip>
+            </div>
         </FloatingToolbar>
         <Card>
             <CardHeader>

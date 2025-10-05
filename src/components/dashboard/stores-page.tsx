@@ -56,17 +56,6 @@ export default function StoresPage() {
     setEditingStore(undefined);
   };
 
-  const handleDeleteStore = (storeId: string) => {
-    setData((prev) => ({
-      ...prev,
-      stores: prev.stores.filter((s) => s.id !== storeId),
-      // Optional: also delete associated categories and products
-      categories: prev.categories.filter((c) => c.storeId !== storeId),
-      products: prev.products.filter((p) => p.storeId !== storeId),
-    }));
-    handleFormSuccess();
-  };
-
   const sortedAndFilteredStores = useMemo(() => {
     if (!stores) return [];
     return stores
@@ -99,7 +88,6 @@ export default function StoresPage() {
         store={editingStore}
         onSave={handleFormSuccess}
         onCancel={handleFormCancel}
-        onDelete={handleDeleteStore}
       />
     );
   }

@@ -2,25 +2,40 @@
 
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import type { AuthFormValues } from '@/lib/definitions';
-import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { initializeFirebase } from '@/firebase';
+import { useUser } from '@/context/user-context';
+import { Loader2 } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { createFirebaseAdminApp } from '@/firebase/admin-config';
+import { getAuth } from 'firebase-admin/auth';
+
 
 interface AuthFormProps {
-  formType: 'login' | 'signup' | 'forgot-password';
+  formType: 'login' | 'signup';
   onSubmit: (
+    state: any,
+    formData: FormData
+  ) => Promise<{ message: string; success: boolean }>;
+  onGoogleSignIn: () => Promise<{ success: boolean; error?: string }>;
+  onPasswordReset: (
     state: any,
     formData: FormData
   ) => Promise<{ message: string; success: boolean }>;
@@ -42,22 +57,22 @@ const forgotPasswordSchema = z.object({
   email: z.string().email('ایمیل نامعتبر است'),
 });
 
-
-export function AuthForm({ formType, onSubmit }: AuthFormProps) {
-  const [currentTab, setCurrentTab] = useState(formType);
-  const isLogin = currentTab === 'login';
-  const isSignup = currentTab === 'signup';
-  const isForgotPassword = currentTab === 'forgot-password';
-
+export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, onPasswordReset }: AuthFormProps) {
+  const { user, isUserLoading } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'login' | 'signup' | 'forgot-password'>(initialFormType);
+  
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      setIsOpen(false);
+    }
+  }, [user, isUserLoading]);
+  
   const getSchema = () => {
     switch (currentTab) {
-      case 'signup':
-        return signupSchema;
-      case 'forgot-password':
-        return forgotPasswordSchema;
-      case 'login':
-      default:
-        return loginSchema;
+      case 'signup': return signupSchema;
+      case 'forgot-password': return forgotPasswordSchema;
+      case 'login': default: return loginSchema;
     }
   };
 
@@ -65,14 +80,33 @@ export function AuthForm({ formType, onSubmit }: AuthFormProps) {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<AuthFormValues>({
     resolver: zodResolver(getSchema()),
   });
 
-  const [state, formAction, isPending] = useActionState(onSubmit, {
-    message: '',
-    success: false,
-  });
+  const [loginState, loginAction, isLoginPending] = useActionState(onSubmit, { message: '', success: false });
+  const [signupState, signupAction, isSignupPending] = useActionState(onSubmit, { message: '', success: false });
+  const [resetState, resetAction, isResetPending] = useActionState(onPasswordReset, { message: '', success: false });
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleClick = async () => {
+    setGoogleLoading(true);
+    const { success, error } = await onGoogleSignIn();
+    if (!success) {
+      // You might want to show a toast message here
+      console.error(error);
+    }
+    setGoogleLoading(false);
+  };
+  
+  useEffect(() => {
+    // Reset form fields and errors when tab changes
+    reset();
+  }, [currentTab, reset]);
+  
+  const isPending = isLoginPending || isSignupPending || isResetPending;
 
   const titles = {
     login: 'ورود به حساب کاربری',
@@ -91,162 +125,141 @@ export function AuthForm({ formType, onSubmit }: AuthFormProps) {
     signup: 'ایجاد حساب',
     'forgot-password': 'ارسال لینک بازیابی',
   };
+  
+  // This is a placeholder for the reCAPTCHA container
+  useEffect(() => {
+    if (currentTab === 'signup' && isOpen) {
+      const { auth } = initializeFirebase();
+      if (document.getElementById('recaptcha-container')?.childElementCount === 0) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible',
+          'callback': (response: any) => {
+            // reCAPTCHA solved, allow sign-up.
+          }
+        });
+      }
+    }
+  }, [currentTab, isOpen]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted">
-      <Card className="mx-auto max-w-sm w-full">
-        <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-          <CardHeader>
-             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">ورود</TabsTrigger>
-                <TabsTrigger value="signup">ثبت نام</TabsTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        {initialFormType === 'login' ? <Button variant="ghost" size="sm">ورود</Button> : <Button size="sm">ثبت نام</Button>}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as any)} className="w-full">
+          <DialogHeader>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">ورود</TabsTrigger>
+              <TabsTrigger value="signup">ثبت نام</TabsTrigger>
             </TabsList>
-            <CardTitle className="text-2xl pt-4">
+            <DialogTitle className="text-2xl pt-4 text-center">
               {titles[currentTab]}
-            </CardTitle>
-            <CardDescription>
+            </DialogTitle>
+            <DialogDescription className="text-center">
               {descriptions[currentTab]}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6">
             <TabsContent value="login">
-              <form action={formAction} className="grid gap-4">
+              <form action={loginAction} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="email-login">ایمیل</Label>
-                  <Input
-                    id="email-login"
-                    type="email"
-                    placeholder="m@example.com"
-                    {...register('email')}
-                  />
-                  {errors.email && (
-                    <p className="text-xs text-destructive">{errors.email.message}</p>
-                  )}
+                  <Input id="email-login" type="email" placeholder="m@example.com" {...register('email')} />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password-login">کلمه عبور</Label>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentTab('forgot-password')}
-                      className="mr-auto inline-block text-sm underline"
-                    >
+                    <button type="button" onClick={() => setCurrentTab('forgot-password')} className="mr-auto inline-block text-sm underline">
                       کلمه عبور خود را فراموش کرده‌اید؟
                     </button>
                   </div>
-                  <Input
-                    id="password-login"
-                    type="password"
-                    {...register('password')}
-                  />
-                  {errors.password && (
-                    <p className="text-xs text-destructive">{errors.password.message}</p>
-                  )}
+                  <Input id="password-login" type="password" {...register('password')} />
+                  {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
                 </div>
-                 <Button type="submit" className="w-full" disabled={isPending}>
-                  {buttonLabels[currentTab]}
+                {loginState?.message && !isLoginPending && <p className={`text-sm text-center ${loginState.success ? 'text-green-600' : 'text-destructive'}`}>{loginState.message}</p>}
+                <Button type="submit" className="w-full" disabled={isLoginPending}>
+                  {isLoginPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                  {buttonLabels.login}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="signup">
-               <form action={formAction} className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="firstName">نام</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="مثال: علی"
-                        {...register('firstName')}
-                      />
-                      {errors.firstName && (
-                        <p className="text-xs text-destructive">
-                          {errors.firstName.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="lastName">نام خانوادگی</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="مثال: محمدی"
-                        {...register('lastName')}
-                      />
-                      {errors.lastName && (
-                        <p className="text-xs text-destructive">
-                          {errors.lastName.message}
-                        </p>
-                      )}
-                    </div>
+              <form action={signupAction} className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="firstName">نام</Label>
+                    <Input id="firstName" placeholder="مثال: علی" {...register('firstName')} />
+                    {errors.firstName && <p className="text-xs text-destructive">{errors.firstName.message}</p>}
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="email-signup">ایمیل</Label>
-                    <Input
-                      id="email-signup"
-                      type="email"
-                      placeholder="m@example.com"
-                      {...register('email')}
-                    />
-                    {errors.email && (
-                      <p className="text-xs text-destructive">{errors.email.message}</p>
-                    )}
+                    <Label htmlFor="lastName">نام خانوادگی</Label>
+                    <Input id="lastName" placeholder="مثال: محمدی" {...register('lastName')} />
+                    {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password-signup">کلمه عبور</Label>
-                    <Input
-                      id="password-signup"
-                      type="password"
-                      {...register('password')}
-                    />
-                    {errors.password && (
-                      <p className="text-xs text-destructive">{errors.password.message}</p>
-                    )}
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isPending}>
-                    {buttonLabels[currentTab]}
-                  </Button>
-               </form>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email-signup">ایمیل</Label>
+                  <Input id="email-signup" type="email" placeholder="m@example.com" {...register('email')} />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password-signup">کلمه عبور</Label>
+                  <Input id="password-signup" type="password" {...register('password')} />
+                  {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+                </div>
+                <div id="recaptcha-container"></div>
+                {signupState?.message && !isSignupPending && <p className={`text-sm text-center ${signupState.success ? 'text-green-600' : 'text-destructive'}`}>{signupState.message}</p>}
+                <Button type="submit" className="w-full" disabled={isSignupPending}>
+                  {isSignupPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                  {buttonLabels.signup}
+                </Button>
+              </form>
             </TabsContent>
 
-             <TabsContent value="forgot-password">
-                <form action={formAction} className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-forgot">ایمیل</Label>
-                    <Input
-                      id="email-forgot"
-                      type="email"
-                      placeholder="m@example.com"
-                      {...register('email')}
-                    />
-                    {errors.email && (
-                      <p className="text-xs text-destructive">{errors.email.message}</p>
-                    )}
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isPending}>
-                    {buttonLabels[currentTab]}
-                  </Button>
-                   <Button
-                      type="button"
-                      variant="link"
-                      onClick={() => setCurrentTab('login')}
-                    >
-                      بازگشت به صفحه ورود
-                    </Button>
-                </form>
+            <TabsContent value="forgot-password">
+              <form action={resetAction} className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email-forgot">ایمیل</Label>
+                  <Input id="email-forgot" type="email" placeholder="m@example.com" {...register('email')} />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                </div>
+                {resetState?.message && !isResetPending && <p className={`text-sm text-center ${resetState.success ? 'text-green-600' : 'text-destructive'}`}>{resetState.message}</p>}
+                <Button type="submit" className="w-full" disabled={isResetPending}>
+                  {isResetPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                  {buttonLabels['forgot-password']}
+                </Button>
+                <Button type="button" variant="link" onClick={() => setCurrentTab('login')}>
+                  بازگشت به صفحه ورود
+                </Button>
+              </form>
             </TabsContent>
-
-             {state?.message && !isPending && (
-              <p
-                className={`mt-4 text-sm text-center ${
-                  state.success ? 'text-green-600' : 'text-destructive'
-                }`}
-              >
-                {state.message}
-              </p>
-            )}
-          </CardContent>
+            
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">یا ادامه با</span>
+              </div>
+            </div>
+            
+            <Button variant="outline" className="w-full" onClick={handleGoogleClick} disabled={googleLoading}>
+              {googleLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <svg className="ml-2 h-4 w-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.75 8.36,4.73 12.19,4.73C15.28,4.73 17.27,6.08 18.24,7.03L20.44,4.95C18.42,3.15 15.4,2 12.19,2C6.92,2 2.73,6.33 2.73,11.5C2.73,16.67 6.92,21 12.19,21C17.7,21 21.54,17.29 21.54,11.83C21.54,11.53 21.46,11.3 21.35,11.1Z"></path></svg>}
+              Google
+            </Button>
+          </div>
         </Tabs>
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
+}
+
+// Add a declaration for the recaptchaVerifier on the window object
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
 }

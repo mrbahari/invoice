@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/context/user-context';
-import { useCollection, useMemoFirebase } from '@/firebase';
+import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -33,7 +33,7 @@ interface DataContextType {
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
   loadDataBatch: (dataToLoad: Partial<AppData>) => Promise<void>;
-  clearAllData: () => Promise<void>;
+  clearAllUserData: () => Promise<void>;
 }
 
 
@@ -57,15 +57,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
   // Define collection references, memoized to prevent re-renders
-  const productsRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
-  const categoriesRef = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
-  const storesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
-  const unitsRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
-  const customersRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
-  const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
-  const toolbarPosRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
+  const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'categories') : null, [firestore]);
+  const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
+  const unitsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
+  const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
+  const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
+  const toolbarPosRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
-  const collectionRefs: Record<CollectionName, CollectionReference<any> | DocumentReference<any> | null> = useMemo(() => ({
+  const collectionRefs: Record<CollectionName, CollectionReference<any> | null> = useMemo(() => ({
     products: productsRef,
     categories: categoriesRef,
     stores: storesRef,
@@ -81,6 +81,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { data: unitsData, isLoading: unitsLoading } = useCollection<UnitOfMeasurement>(unitsRef);
   const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersRef);
   const { data: invoicesData, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesRef);
+  const { data: toolbarData, isLoading: toolbarLoading } = useDoc<any>(toolbarPosRef);
   
   useEffect(() => {
     // Check if user has logged out, then reset local state
@@ -92,7 +93,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   
   // Combine all data sources into a single AppData object
   useEffect(() => {
-    const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading;
+    const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading || toolbarLoading;
     
     if (!isDataLoading && (user || !isUserLoading)) {
       setLocalData({
@@ -102,7 +103,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         units: unitsData || [],
         customers: customersData || [],
         invoices: invoicesData || [],
-        toolbarPositions: localData.toolbarPositions, // Persist this locally for now
+        toolbarPositions: toolbarData || {},
       });
       setIsSynced(true);
     } else if (!user && !isUserLoading) {
@@ -112,14 +113,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [
     user, isUserLoading,
-    productsData, categoriesData, storesData, unitsData, customersData, invoicesData,
-    productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading,
-    localData.toolbarPositions // Keep this dependency
+    productsData, categoriesData, storesData, unitsData, customersData, invoicesData, toolbarData,
+    productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading, toolbarLoading
   ]);
 
   const addDocument = useCallback(async <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => {
+    if (!firestore) return;
     const ref = collectionRefs[collectionName];
-    if (!ref || !(ref instanceof CollectionReference)) {
+    if (!ref) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
@@ -128,7 +129,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Optimistic update
     setLocalData(prev => ({
       ...prev,
-      [collectionName]: [...prev[collectionName], { id: tempId, ...data }],
+      [collectionName]: [...prev[collectionName], { id: tempId, ...data } as Document],
     }));
 
     try {
@@ -154,11 +155,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs]);
+  }, [collectionRefs, firestore]);
 
   const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, data: Partial<Document>) => {
+    if (!firestore) return;
     const ref = collectionRefs[collectionName];
-     if (!ref || !(ref instanceof CollectionReference)) {
+     if (!ref) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
@@ -181,12 +183,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await updateDoc(docRef, data);
     } catch (error: any) {
         // Revert optimistic update
-        setLocalData(prev => ({
-            ...prev,
-            [collectionName]: prev[collectionName].map(item =>
-                item.id === docId ? originalItem! : item
-            )
-        }));
+        if (originalItem) {
+          setLocalData(prev => ({
+              ...prev,
+              [collectionName]: prev[collectionName].map(item =>
+                  item.id === docId ? originalItem : item
+              )
+          }));
+        }
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
@@ -194,11 +198,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, localData]);
+  }, [collectionRefs, localData, firestore]);
 
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
+    if (!firestore) return;
     const ref = collectionRefs[collectionName];
-    if (!ref || !(ref instanceof CollectionReference)) {
+    if (!ref) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
@@ -226,7 +231,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, localData]);
+  }, [collectionRefs, localData, firestore]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
     // Optimistic update for local state
@@ -252,20 +257,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [toolbarPosRef]);
 
-  const clearAllData = useCallback(async () => {
+  const clearAllUserData = useCallback(async () => {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
 
     // IMPORTANT: This function will only clear USER-SPECIFIC data.
     // Global collections like 'products' and 'categories' are NOT cleared.
-    const userCollections: (CollectionReference | null)[] = [
-        storesRef as CollectionReference,
-        unitsRef as CollectionReference,
-        customersRef as CollectionReference,
-        invoicesRef as CollectionReference,
+    const userCollectionsRefs: (CollectionReference | null)[] = [
+        storesRef,
+        unitsRef,
+        customersRef,
+        invoicesRef,
     ];
 
-    for (const ref of userCollections) {
+    for (const ref of userCollectionsRefs) {
         if (ref) {
             const q = query(ref);
             const snapshot = await getDocs(q);
@@ -273,6 +278,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
               if (doc.id) batch.delete(doc.ref);
             });
         }
+    }
+    if (toolbarPosRef) {
+      batch.delete(toolbarPosRef);
     }
 
     try {
@@ -285,26 +293,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
+  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
 
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
     
-    // IMPORTANT: This function only restores USER-SPECIFIC collections.
+    // This function only restores USER-SPECIFIC collections.
     // It intentionally skips 'products' and 'categories' which are global.
     const userCollectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
-        { ref: storesRef as CollectionReference, data: dataToLoad.stores },
-        { ref: unitsRef as CollectionReference, data: dataToLoad.units },
-        { ref: customersRef as CollectionReference, data: dataToLoad.customers },
-        { ref: invoicesRef as CollectionReference, data: dataToLoad.invoices },
+        { ref: storesRef, data: dataToLoad.stores },
+        { ref: unitsRef, data: dataToLoad.units },
+        { ref: customersRef, data: dataToLoad.customers },
+        { ref: invoicesRef, data: dataToLoad.invoices },
     ];
 
     for (const { ref, data } of userCollectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
-                if (item.id) {
+                // Ensure item.id is a non-empty string before creating a doc ref
+                if (item.id && typeof item.id === 'string') {
                     const docRef = doc(ref, item.id);
                     batch.set(docRef, item);
                 }
@@ -333,7 +342,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const isInitialized = !isUserLoading && isSynced;
 
-  const value = {
+  const value: DataContextType = {
     data: localData,
     isInitialized,
     addDocument,
@@ -341,7 +350,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteDocument,
     setToolbarPosition,
     loadDataBatch,
-    clearAllData,
+    clearAllUserData,
   };
   
   if (!isInitialized && (isUserLoading || !isSynced)) {

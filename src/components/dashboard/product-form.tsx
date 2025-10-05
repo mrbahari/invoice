@@ -41,6 +41,7 @@ import { Badge } from '../ui/badge';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 type ProductFormProps = {

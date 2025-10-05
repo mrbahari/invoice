@@ -219,7 +219,7 @@ export default function InvoicesPage({
                         key={invoice.id} 
                         className="flex flex-col justify-between"
                       >
-                        <CardHeader className="pb-4 p-4 sm:p-6">
+                        <CardHeader className="p-4 sm:p-6 pb-4">
                           <div className="flex justify-between items-start">
                             <div className="grid gap-1">
                               <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
@@ -242,7 +242,7 @@ export default function InvoicesPage({
                             <span>{formatCurrency(invoice.total)}</span>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex flex-row items-center justify-between pt-4 p-4 sm:p-6">
+                        <CardFooter className="flex flex-row items-center justify-between p-4 sm:p-6">
                             <button onClick={() => handleStatusChange(invoice.id, invoice.status)}>
                                 <Badge variant="outline" className={cn("text-xs font-mono cursor-pointer", statusStyles[invoice.status])}>
                                 {statusTranslation[invoice.status]}
@@ -284,7 +284,7 @@ export default function InvoicesPage({
                                                 این عمل غیرقابل بازگشت است و فاکتور شماره {invoice.invoiceNumber} را برای همیشه حذف می‌کند.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
-                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                        <AlertDialogFooter>
                                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                                             <AlertDialogAction
                                                 onClick={() => handleDelete(invoice.id)}

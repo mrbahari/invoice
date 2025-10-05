@@ -144,7 +144,7 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        {initialFormType === 'login' ? <Button variant="ghost" size="sm">ورود</Button> : <Button size="sm">ثبت نام</Button>}
+        {initialFormType === 'login' ? <Button variant="ghost" size="sm">ورود</Button> : <Button size="sm" variant="outline">ثبت نام</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as any)} className="w-full">

@@ -42,7 +42,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
       <div className="flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-x-6 gap-y-2">
             <h1 className="text-xl font-bold hidden md:block shrink-0">{pageTitle}</h1>
-            <div className="hidden lg:flex">
+            <div className="flex">
              <LiveClock />
             </div>
         </div>

@@ -33,7 +33,7 @@ interface DataContextType {
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
   loadDataBatch: (dataToLoad: Partial<AppData>) => Promise<void>;
-  clearAllUserData: () => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
 
@@ -65,14 +65,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
-  const collectionRefs: Record<CollectionName, CollectionReference<any> | null> = useMemo(() => ({
+  const collectionRefs: Record<CollectionName, CollectionReference<any> | DocumentReference<any> | null> = useMemo(() => ({
     products: productsRef,
     categories: categoriesRef,
     stores: storesRef,
     units: unitsRef,
     customers: customersRef,
     invoices: invoicesRef,
-  }), [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
+    toolbarPositions: toolbarPosRef,
+  }), [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
   // Fetch collections from Firestore
   const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsRef);
@@ -120,8 +121,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addDocument = useCallback(async <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => {
     if (!firestore) return;
     const ref = collectionRefs[collectionName];
-    if (!ref) {
-      console.error('Invalid collection reference or user not logged in.');
+    if (!ref || !(ref instanceof CollectionReference)) {
+      console.error('Invalid collection reference or user not logged in for collection:', collectionName);
       return;
     }
     
@@ -160,7 +161,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, data: Partial<Document>) => {
     if (!firestore) return;
     const ref = collectionRefs[collectionName];
-     if (!ref) {
+     if (!ref || !(ref instanceof CollectionReference)) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
@@ -203,7 +204,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
     if (!firestore) return;
     const ref = collectionRefs[collectionName];
-    if (!ref) {
+    if (!ref || !(ref instanceof CollectionReference)) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
@@ -257,7 +258,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [toolbarPosRef]);
 
-  const clearAllUserData = useCallback(async () => {
+  const clearAllData = useCallback(async () => {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
 
@@ -344,7 +345,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteDocument,
     setToolbarPosition,
     loadDataBatch,
-    clearAllUserData,
+    clearAllData,
   };
   
   if (!isInitialized && (isUserLoading || !isSynced)) {

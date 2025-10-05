@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -111,22 +110,9 @@ const CategoryTree = ({
         const isAdding = addingToParentId === cat.id;
 
         return (
-          <AccordionItem key={cat.id} value={cat.id} className="border-b-0 space-y-2">
-            <div className="flex items-center justify-end p-2 rounded-md hover:bg-muted/50 flex-row-reverse">
-              <AccordionTrigger
-                disabled={!hasSubCategories}
-                className={cn(
-                  'p-2',
-                  !hasSubCategories && 'hover:no-underline cursor-default'
-                )}
-              >
-                  <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{cat.name}</h4>
-                      {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
-                  </div>
-              </AccordionTrigger>
-              
-              <div className="flex items-center gap-1">
+          <AccordionItem key={cat.id} value={cat.id} className="border-b-0">
+            <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+               <div className="flex items-center gap-1">
                   <Tooltip>
                       <TooltipTrigger asChild>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
@@ -157,7 +143,15 @@ const CategoryTree = ({
                       </AlertDialogContent>
                   </AlertDialog>
               </div>
-
+              <AccordionTrigger
+                disabled={!hasSubCategories}
+                className="p-2"
+              >
+                  <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">{cat.name}</h4>
+                      {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+                  </div>
+              </AccordionTrigger>
             </div>
             
             {editingCategoryId === cat.id ? (
@@ -817,7 +811,3 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </TooltipProvider>
   );
 }
-
-    
-
-    

@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2, Copy, ChevronsUpDown, X } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2, Copy, ChevronsUpDown, X, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -112,58 +112,64 @@ const CategoryTree = ({
 
         return (
           <AccordionItem key={cat.id} value={cat.id} className="border-b-0 space-y-2">
-            <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-                
-                <div className="flex items-center gap-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onAiGenerate(cat)} disabled={isAiLoading}>
-                            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
-                        </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
-                    </Tooltip>
-                    {!hasSubCategories && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toggleAddForm(cat.id)}>
-                                <PlusCircle className="w-4 h-4 text-green-600" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
-                      </Tooltip>
-                    )}
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStartEdit(cat)}><Pencil className="w-4 h-4" /></Button>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                        <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </div>
-
-                {editingCategoryId === cat.id ? (
-                  <div className="flex-grow flex gap-2 items-center">
-                    <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
-                      <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button>
-                  </div>
-                ) : (
-                  <AccordionTrigger disabled={!hasSubCategories} className={cn("p-2", !hasSubCategories && "hover:no-underline")}>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{cat.name}</h4>
-                    </div>
-                  </AccordionTrigger>
+            <div className="flex items-center justify-end p-2 rounded-md hover:bg-muted/50 flex-row-reverse">
+              <AccordionTrigger
+                disabled={!hasSubCategories}
+                className={cn(
+                  'p-2',
+                  !hasSubCategories && 'hover:no-underline cursor-default'
                 )}
+              >
+                  <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">{cat.name}</h4>
+                      {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+                  </div>
+              </AccordionTrigger>
+              
+              <div className="flex items-center gap-1">
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
+                          {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
+                      </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                  </Tooltip>
+                  {!hasSubCategories && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
+                              <PlusCircle className="w-4 h-4 text-green-600" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                      <AlertDialogContent>
+                      <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                          <AlertDialogCancel>انصراف</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                      </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+              </div>
 
             </div>
             
+            {editingCategoryId === cat.id ? (
+              <div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8">
+                <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
+                  <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button>
+              </div>
+            ) : null}
+
             {isAdding && (
-                  <div className="flex gap-2 p-2 ml-6">
+                  <div className="flex gap-2 p-2 ml-8">
                     <Input 
                       value={newSubCategoryNames[cat.id] || ''} 
                       onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} 
@@ -176,7 +182,7 @@ const CategoryTree = ({
             )}
               
             <AccordionContent>
-                <div className="p-4 pt-2 border rounded-lg bg-muted/30 ml-4 space-y-4">
+                <div className="p-4 pt-2 border rounded-lg bg-muted/30 ml-2 mr-8 space-y-4">
                     <CategoryTree
                         categories={subCategories}
                         parentId={cat.id}
@@ -811,5 +817,7 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </TooltipProvider>
   );
 }
+
+    
 
     

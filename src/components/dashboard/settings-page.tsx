@@ -29,9 +29,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useData } from '@/context/data-context'; // Import useData
+import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
 import { useSearch } from './search-provider';
+import { useToast } from '@/hooks/use-toast';
 
 const colorThemes = [
     { name: 'Blue', value: '248 82% 50%'},
@@ -44,9 +45,10 @@ const colorThemes = [
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, addDocument, deleteDocument, resetData, clearAllData } = useData();
+  const { data, setData, addDocument, deleteDocument, resetData, clearAllData } = useData();
   const { setSearchVisible } = useSearch();
   const { units = [] } = data; // Use default empty array to prevent error
+  const { toast } = useToast();
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
@@ -151,28 +153,53 @@ export default function SettingsPage() {
     if (!file) {
       return;
     }
-
+    
+    setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
-          throw new Error("File is not valid text.");
+          throw new Error("فایل پشتیبان معتبر نیست.");
         }
         const restoredData = JSON.parse(text);
+
+        // Optimistically update local state for user-specific data ONLY
+        // This prevents the product list from showing and then disappearing
+        const currentUserSpecificData = {
+            customers: restoredData.customers || [],
+            invoices: restoredData.invoices || [],
+            stores: restoredData.stores || [],
+            units: restoredData.units || [],
+            toolbarPositions: restoredData.toolbarPositions || {},
+        }
+
+        // Pass this partial data to a dedicated local update function
+        if (setData) {
+            setData({
+                ...data, // Keep existing global data like products/categories
+                ...currentUserSpecificData
+            });
+        }
         
-        // Use the new resetData function with the restored data
+        // Then, proceed with the actual restore process, which only handles user data
         await resetData(restoredData);
+        toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات با موفقیت بازیابی شد.' });
           
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error restoring data:", error);
+        toast({ variant: 'destructive', title: 'خطا در بازیابی', description: error.message || 'فایل پشتیبان نامعتبر است.' });
+      } finally {
+        setIsProcessing(false);
+        // Reset file input so the same file can be selected again
+        if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
       }
     };
     reader.readAsText(file);
-    if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
   };
+
 
   const handleRestoreClick = () => {
     fileInputRef.current?.click();

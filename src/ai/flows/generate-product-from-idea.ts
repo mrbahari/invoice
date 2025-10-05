@@ -39,8 +39,7 @@ const generateProductFromIdeaFlow = ai.defineFlow(
     // Step 1: Generate Text details (name, description, price)
     const detailsResult = await ai.generate({
       model: 'googleai/gemini-2.5-flash',
-      prompt: `Based on the product idea "{{productIdea}}" in the "{{categoryName}}" category, generate a professional product name, description, and price in Persian.`,
-      input: input,
+      prompt: `Based on the product idea "${input.productIdea}" in the "${input.categoryName}" category, generate a professional product name, description, and price in Persian.`,
       output: {
         schema: z.object({
             name: z.string(),
@@ -50,7 +49,7 @@ const generateProductFromIdeaFlow = ai.defineFlow(
       },
     });
     
-    const details = detailsResult.output();
+    const details = detailsResult.output;
     if (!details) {
       throw new Error("Failed to generate product text details.");
     }
@@ -61,16 +60,11 @@ const generateProductFromIdeaFlow = ai.defineFlow(
         prompt: `یک عکس محصول حرفه‌ای و فوتورئالیستی از: «${details.name}». تصویر باید روی پس‌زمینه سفید ساده و تمیز باشد. از اضافه کردن هرگونه متن، لوگو یا واترمارک خودداری شود.`,
     });
 
-    const imageUrl = imageResult.media?.url;
+    let imageUrl = imageResult.media?.url;
     if (!imageUrl) {
         // Fallback to picsum if AI image generation fails
         const seed = encodeURIComponent(`${details.name} ${input.categoryName}`);
-        return {
-            ...details,
-            imageUrl: `https://picsum.photos/seed/${seed}/400/300`,
-            storeId: input.storeId,
-            subCategoryId: input.subCategoryId,
-        };
+        imageUrl = `https://picsum.photos/seed/${seed}/400/300`;
     }
 
     // Step 3: Combine and return

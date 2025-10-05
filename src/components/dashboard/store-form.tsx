@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useData } from '@/context/data-context';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { FloatingToolbar } from './floating-toolbar';
 import { Textarea } from '../ui/textarea';
 import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-flow';
 import { generateLogoPrompts } from '@/ai/flows/generate-logo-prompts';
@@ -146,13 +145,13 @@ const CategoryTree = ({
 
                  <AccordionTrigger
                     className="p-2 flex-1 justify-end"
-                    onClick={() => {
-                        if (hasSubCategories) onToggle(cat.id, itemRefs.current[cat.id]!)
+                     onClick={(e) => {
+                        if (!hasSubCategories) e.preventDefault();
                     }}
                 >
                     <div className="flex items-center gap-2">
                         <h4 className="font-semibold">{cat.name}</h4>
-                        {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+                         {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
                     </div>
                 </AccordionTrigger>
             </div>
@@ -375,7 +374,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     };
 
 
-  const handleSaveAll = () => {
+  const handleSaveAll = useCallback(() => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
@@ -399,39 +398,32 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       bankCardNumber,
     };
     
-    // Update store
-    let updatedStores;
-    if (isEditMode) {
-      updatedStores = data.stores.map(s => s.id === storeIdToSave ? newOrUpdatedStore : s);
-    } else {
-      updatedStores = [newOrUpdatedStore, ...data.stores];
-    }
-    
-    const otherStoresCategories = data.categories.filter(c => c.storeId !== storeIdToSave);
-    const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId: storeIdToSave}))];
-    
-    setData(prev => ({
-        ...prev,
-        stores: updatedStores,
-        categories: finalCategories,
-    }));
+    setData(prev => {
+        // Update stores
+        const updatedStores = isEditMode 
+            ? prev.stores.map(s => s.id === storeIdToSave ? newOrUpdatedStore : s)
+            : [newOrUpdatedStore, ...prev.stores];
+
+        // Update categories
+        const otherStoresCategories = prev.categories.filter(c => c.storeId !== storeIdToSave);
+        const finalCategories = [...otherStoresCategories, ...storeCategories.map(c => ({...c, storeId: storeIdToSave}))];
+        
+        return {
+            ...prev,
+            stores: updatedStores,
+            categories: finalCategories,
+        };
+    });
 
     toast({ variant: 'success', title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
     setIsProcessing(false);
     onSave();
-  };
-
-  const handleDeleteAllCategories = () => {
-      if (!store) { // Can't delete categories if the store doesn't exist yet
-          setStoreCategories([]);
-          return;
-      }
-      setStoreCategories([]);
-      setData(prev => ({
-          ...prev,
-          categories: prev.categories.filter(c => c.storeId !== store.id),
-      }));
-  };
+  }, [name, store, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber, isEditMode, storeCategories, setData, onSave, toast]);
+  
+  const handleDeleteAllCategories = useCallback(() => {
+    setStoreCategories([]);
+    toast({ variant: 'default', title: 'لیست پاک شد', description: 'دسته‌بندی‌ها به صورت موقت پاک شدند. برای نهایی کردن، تغییرات را ذخیره کنید.' });
+  }, [toast]);
 
   
   // Category Handlers
@@ -525,7 +517,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     bankCardNumber,
   });
 
-  const handleSaveAsCopy = () => {
+  const handleSaveAsCopy = useCallback(() => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
@@ -547,9 +539,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     setIsProcessing(false);
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
-  }
+  }, [address, bankAccountHolder, bankAccountNumber, bankCardNumber, bankIban, bankName, description, logoUrl, name, onSave, phone, setData, storeCategories, toast]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
       if (!store) return;
       const storeHasProducts = data.products.some(p => p.storeId === store.id);
       if (storeHasProducts) {
@@ -563,72 +555,78 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       }));
       toast({ variant: 'success', title: 'فروشگاه حذف شد' });
       onCancel();
-  };
+  }, [store, data.products, setData, toast, onCancel]);
 
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
 
   return (
     <TooltipProvider>
     <div className="max-w-4xl mx-auto grid gap-6 pb-28">
-        <FloatingToolbar pageKey="store-form">
-            <div className="flex flex-col items-center gap-1">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
-                            <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
-                </Tooltip>
+         <div className="fixed z-40 right-4 bottom-24 flex flex-col items-center gap-2 no-print">
+            <div
+            className={cn(
+                "flex flex-col items-center gap-1 p-1.5 bg-card/90 border rounded-lg shadow-lg backdrop-blur-sm"
+            )}
+            >
+                <div className="flex flex-col items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
+                                <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
+                    </Tooltip>
+                    {isEditMode && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    disabled={isProcessing} 
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
+                            </Tooltip>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
                 {isEditMode && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  disabled={isProcessing} 
-                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
-                        </Tooltip>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-              )}
-              {isEditMode && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
-                        <Copy className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-            <Separator orientation="horizontal" className="w-6" />
-            <div className="flex flex-col items-center gap-1">
-                <Tooltip>
+                    <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
-                            <Save className="h-5 w-5" />
+                        <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
+                            <Copy className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
-                </Tooltip>
+                    <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
+                    </Tooltip>
+                )}
+                </div>
+                <Separator orientation="horizontal" className="w-6" />
+                <div className="flex flex-col items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                                <Save className="h-5 w-5" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
+                    </Tooltip>
+                </div>
             </div>
-        </FloatingToolbar>
+        </div>
         <Card>
             <CardHeader>
                 <div className="flex flex-row items-center justify-between">

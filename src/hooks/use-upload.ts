@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
+import { initializeFirebase } from '@/firebase';
 import { useToast } from './use-toast';
 
 export function useUpload() {
@@ -16,6 +16,15 @@ export function useUpload() {
     setProgress(0);
     setError(null);
 
+    const { storage } = initializeFirebase();
+    if (!storage) {
+        const msg = "Firebase Storage is not available.";
+        setError(msg);
+        toast({ variant: 'destructive', title: 'Upload Error', description: msg });
+        setIsUploading(false);
+        return Promise.reject(null);
+    }
+    
     const storageRef = ref(storage, `product-images/${Date.now()}-${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 

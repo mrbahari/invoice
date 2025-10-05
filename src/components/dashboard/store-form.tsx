@@ -39,6 +39,7 @@ import { generateCategories } from '@/ai/flows/generate-categories-flow';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FloatingToolbar } from './floating-toolbar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 type StoreFormProps = {
@@ -105,108 +106,118 @@ const CategoryTree = ({
 
   return (
     <Accordion type="single" collapsible className="w-full">
-      {categories.map(cat => {
-        const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
-        const hasSubCategories = subCategories.length > 0;
-        const isAiLoading = aiLoading === cat.id;
-        const isAdding = addingToParentId === cat.id;
+      <AnimatePresence>
+        {categories.map(cat => {
+          const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
+          const hasSubCategories = subCategories.length > 0;
+          const isAiLoading = aiLoading === cat.id;
+          const isAdding = addingToParentId === cat.id;
 
-        return (
-          <AccordionItem key={cat.id} value={cat.id} className="border-b-0 mt-2" ref={el => itemRefs.current[cat.id] = el}>
-            <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-                <div className="flex items-center gap-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
-                            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
-                        </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
-                                <PlusCircle className="w-4 h-4 text-green-600" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
-                    </Tooltip>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                        <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </div>
+          return (
+             <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0, x: -50, transition: { duration: 0.3 } }}
+                transition={{ duration: 0.3, delay: 0.1 * categories.indexOf(cat) }}
+              >
+            <AccordionItem value={cat.id} className="border-b-0 mt-2" ref={el => itemRefs.current[cat.id] = el}>
+              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                  <div className="flex items-center gap-1">
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
+                              {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
+                          </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
+                                  <PlusCircle className="w-4 h-4 text-green-600" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
+                      </Tooltip>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                          <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                              <AlertDialogCancel>انصراف</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                          </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                  </div>
 
-                 <AccordionTrigger
-                    className="p-2 flex-1 justify-end"
-                     onClick={(e) => {
-                        if (!hasSubCategories) {
-                           e.preventDefault();
-                           return;
-                        }
-                        if (itemRefs.current[cat.id]) {
-                            onToggle(cat.id, itemRefs.current[cat.id]);
-                        }
-                    }}
-                >
-                    <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{cat.name}</h4>
-                         {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
-                    </div>
-                </AccordionTrigger>
-            </div>
-
-            {editingCategoryId === cat.id ? (
-              <div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8">
-                <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
-                  <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button>
+                  <AccordionTrigger
+                      className="p-2 flex-1 justify-end"
+                      onClick={(e) => {
+                          if (!hasSubCategories) {
+                            e.preventDefault();
+                            return;
+                          }
+                          if (itemRefs.current[cat.id]) {
+                              onToggle(cat.id, itemRefs.current[cat.id]);
+                          }
+                      }}
+                  >
+                      <div className="flex items-center gap-2">
+                          <h4 className="font-semibold">{cat.name}</h4>
+                          {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+                      </div>
+                  </AccordionTrigger>
               </div>
-            ) : null}
 
-            {isAdding && (
-                  <div className="flex gap-2 p-2 ml-8">
-                    <Input 
-                      value={newSubCategoryNames[cat.id] || ''} 
-                      onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} 
-                      placeholder={`نام زیردسته برای «${cat.name}»...`}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)}
-                      autoFocus
-                    />
-                    <Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button>
+              {editingCategoryId === cat.id ? (
+                <div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8">
+                  <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
+                    <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button>
                 </div>
-            )}
+              ) : null}
 
-            <AccordionContent>
-                <div className="p-4 pt-2 border rounded-lg bg-muted/30 ml-2 mr-8 space-y-4">
-                    <CategoryTree
-                        categories={subCategories}
-                        parentId={cat.id}
-                        allCategories={allCategories}
-                        onAddSubCategory={onAddSubCategory}
-                        onDelete={onDelete}
-                        onStartEdit={onStartEdit}
-                        onAiGenerate={onAiGenerate}
-                        onToggle={onToggle}
-                        editingCategoryId={editingCategoryId}
-                        editingCategoryName={editingCategoryName}
-                        onSaveEdit={onSaveEdit}
-                        onCancelEdit={onCancelEdit}
-                        setEditingCategoryName={setEditingCategoryName}
-                        aiLoading={aiLoading}
-                    />
-                </div>
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
+              {isAdding && (
+                    <div className="flex gap-2 p-2 ml-8">
+                      <Input 
+                        value={newSubCategoryNames[cat.id] || ''} 
+                        onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} 
+                        placeholder={`نام زیردسته برای «${cat.name}»...`}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)}
+                        autoFocus
+                      />
+                      <Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button>
+                  </div>
+              )}
+
+              <AccordionContent>
+                  <div className="p-4 pt-2 border rounded-lg bg-muted/30 ml-2 mr-8 space-y-4">
+                      <CategoryTree
+                          categories={subCategories}
+                          parentId={cat.id}
+                          allCategories={allCategories}
+                          onAddSubCategory={onAddSubCategory}
+                          onDelete={onDelete}
+                          onStartEdit={onStartEdit}
+                          onAiGenerate={onAiGenerate}
+                          onToggle={onToggle}
+                          editingCategoryId={editingCategoryId}
+                          editingCategoryName={editingCategoryName}
+                          onSaveEdit={onSaveEdit}
+                          onCancelEdit={onCancelEdit}
+                          setEditingCategoryName={setEditingCategoryName}
+                          aiLoading={aiLoading}
+                      />
+                  </div>
+              </AccordionContent>
+            </AccordionItem>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </Accordion>
   );
 };

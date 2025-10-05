@@ -103,19 +103,16 @@ const CategoryTree = ({
 
         return (
           <AccordionItem value={cat.id} key={cat.id} className="border-none">
-            <div className="flex items-center gap-2 mb-2">
-              <AccordionTrigger className="flex-1 group p-2 rounded-md hover:bg-muted/50 w-full text-right hover:no-underline">
-                  <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2">
-                          <ChevronsUpDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                          {editingCategoryId === cat.id ? (
-                            <div className="flex-grow flex gap-2 items-center">
-                              <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
-                            </div>
-                          ) : (
-                            <h4 className="font-semibold">{cat.name}</h4>
-                          )}
-                      </div>
+            <div className="flex items-center justify-between gap-2 mb-2 p-2 rounded-md hover:bg-muted/50">
+              <AccordionTrigger className="w-full text-right hover:no-underline p-0">
+                  <div className="flex items-center gap-2">
+                      {editingCategoryId === cat.id ? (
+                        <div className="flex-grow flex gap-2 items-center">
+                          <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
+                        </div>
+                      ) : (
+                        <h4 className="font-semibold">{cat.name}</h4>
+                      )}
                   </div>
               </AccordionTrigger>
               {editingCategoryId === cat.id ? (
@@ -124,7 +121,7 @@ const CategoryTree = ({
                     <Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button>
                   </div>
               ) : (
-                <div className="flex gap-1 items-center">
+                <div className="flex gap-1 items-center flex-shrink-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onAiGenerate(cat)} disabled={isAiLoading}>

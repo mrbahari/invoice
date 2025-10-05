@@ -54,7 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Define collection references, memoized to prevent re-renders
   const productsRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const categoriesRef = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
-  const storesRef = useMemoFirebase(() => user ? collection(firestore, 'stores') : null, [firestore, user]);
+  const storesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
   const unitsRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
   const customersRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
@@ -111,8 +111,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const batch = writeBatch(firestore);
 
-      // We assume that global collections (products, categories, stores) are not modified by the client.
-      // This is a common pattern where admin roles handle this data.
+      // We assume that global collections (products, categories) are not modified by the client.
       // If clients need to modify them, we'd need to handle that here.
 
       // Handle user-specific collections
@@ -120,6 +119,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           { name: 'customers', ref: customersRef },
           { name: 'invoices', ref: invoicesRef },
           { name: 'units', ref: unitsRef },
+          { name: 'stores', ref: storesRef },
       ];
 
       for (const { name, ref } of collectionsToUpdate) {

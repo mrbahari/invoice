@@ -281,8 +281,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/stores/{storeId}",
+        "definition": {
+          "entityName": "Store",
+          "schema": {
+            "$ref": "#/backend/entities/Store"
+          },
+          "description": "Stores are private to the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user (same as auth.uid)."
+            },
+            {
+              "name": "storeId",
+              "description": "Unique identifier for the store."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the Hisaabgar application's features, including product catalog management, client management, invoice creation, and reporting. It prioritizes authorization independence, clarity, and scalability.\n\n**Authorization Independence:**\n*   User-specific data (clients, invoices) is stored under the `/users/{userId}` path, making ownership clear and rules simple.\n*   Product categories and products can be managed globally, eliminating the need for complex authorization checks based on user roles or ownership. If product/category ownership were required, the `ownerId` field would need to be added and denormalized.\n\n**QAPs (Rules are not Filters):**\n*   The segregation of user-specific data and global product data allows for secure list operations. Rules can easily filter data based on the requesting user's ID or allow access to global product information without complex filtering logic.\n\n**Offline and Online Sync:**\nThe data structure supports both offline and online synchronization as User data will be stored under `/users/{userId}`. This makes it straightforward to manage syncing relevant data for each user.\n\n**Points System**\nThe user document contains a `points` field. This will allow the point system to be implemented."
+    "reasoning": "The Firestore structure is designed to support the Hisaabgar application's features, including product catalog management, client management, invoice creation, and reporting. It prioritizes authorization independence, clarity, and scalability.\n\n**Authorization Independence:**\n*   User-specific data (clients, invoices, stores) is stored under the `/users/{userId}` path, making ownership clear and rules simple.\n*   Product categories and products can be managed globally, eliminating the need for complex authorization checks based on user roles or ownership. If product/category ownership were required, the `ownerId` field would need to be added and denormalized.\n\n**QAPs (Rules are not Filters):**\n*   The segregation of user-specific data and global product data allows for secure list operations. Rules can easily filter data based on the requesting user's ID or allow access to global product information without complex filtering logic.\n\n**Offline and Online Sync:**\nThe data structure supports both offline and online synchronization as User data will be stored under `/users/{userId}`. This makes it straightforward to manage syncing relevant data for each user.\n\n**Points System**\nThe user document contains a `points` field. This will allow the point system to be implemented."
   }
 }

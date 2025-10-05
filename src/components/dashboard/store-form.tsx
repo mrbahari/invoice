@@ -38,6 +38,7 @@ import { cn } from '@/lib/utils';
 import { generateCategories } from '@/ai/flows/generate-categories-flow';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { FloatingToolbar } from './floating-toolbar';
 
 
 type StoreFormProps = {

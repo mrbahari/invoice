@@ -261,8 +261,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
 
-    // IMPORTANT: This function will only clear USER-SPECIFIC data.
-    // Global collections like 'products' and 'categories' are NOT cleared.
+    // This function will only clear USER-SPECIFIC data.
     const userCollectionsRefs: (CollectionReference | null)[] = [
         storesRef,
         unitsRef,
@@ -285,7 +284,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
         await batch.commit();
-        // The onSnapshot listeners will automatically update the local state to be empty.
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({
             path: 'multiple user-specific paths',
@@ -301,7 +299,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const batch = writeBatch(firestore);
     
     // This function only restores USER-SPECIFIC collections.
-    // It intentionally skips 'products' and 'categories' which are global.
     const userCollectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
         { ref: storesRef, data: dataToLoad.stores },
         { ref: unitsRef, data: dataToLoad.units },
@@ -312,7 +309,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     for (const { ref, data } of userCollectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
-                // Ensure item.id is a non-empty string before creating a doc ref
                 if (item.id && typeof item.id === 'string') {
                     const docRef = doc(ref, item.id);
                     batch.set(docRef, item);
@@ -321,14 +317,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    // Also write toolbar positions to its specific document
     if (toolbarPosRef && dataToLoad.toolbarPositions) {
         batch.set(toolbarPosRef, dataToLoad.toolbarPositions);
     }
 
     try {
         await batch.commit();
-        // The onSnapshot listeners will automatically fetch and update the local state.
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({
             path: 'multiple paths',

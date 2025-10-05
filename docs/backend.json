@@ -183,6 +183,26 @@
         "email",
         "points"
       ]
+    },
+    "Unit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Unit",
+      "type": "object",
+      "description": "Represents a unit of measurement for products.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the unit."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the unit (e.g., 'kg', 'item', 'box')."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
     }
   },
   "auth": {
@@ -301,8 +321,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/units/{unitId}",
+        "definition": {
+          "entityName": "Unit",
+          "schema": {
+            "$ref": "#/backend/entities/Unit"
+          },
+          "description": "Stores custom units of measurement for a user. Units are private to the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user (same as auth.uid)."
+            },
+            {
+              "name": "unitId",
+              "description": "Unique identifier for the unit."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the Hisaabgar application's features, including product catalog management, client management, invoice creation, and reporting. It prioritizes authorization independence, clarity, and scalability.\n\n**Authorization Independence:**\n*   User-specific data (clients, invoices, stores) is stored under the `/users/{userId}` path, making ownership clear and rules simple.\n*   Product categories and products can be managed globally, eliminating the need for complex authorization checks based on user roles or ownership. If product/category ownership were required, the `ownerId` field would need to be added and denormalized.\n\n**QAPs (Rules are not Filters):**\n*   The segregation of user-specific data and global product data allows for secure list operations. Rules can easily filter data based on the requesting user's ID or allow access to global product information without complex filtering logic.\n\n**Offline and Online Sync:**\nThe data structure supports both offline and online synchronization as User data will be stored under `/users/{userId}`. This makes it straightforward to manage syncing relevant data for each user.\n\n**Points System**\nThe user document contains a `points` field. This will allow the point system to be implemented."
+    "reasoning": "The Firestore structure is designed to support the Hisaabgar application's features, including product catalog management, client management, invoice creation, and reporting. It prioritizes authorization independence, clarity, and scalability.\n\n**Authorization Independence:**\n*   User-specific data (clients, invoices, stores, units) is stored under the `/users/{userId}` path, making ownership clear and rules simple.\n*   Product categories and products can be managed globally, eliminating the need for complex authorization checks based on user roles or ownership. If product/category ownership were required, the `ownerId` field would need to be added and denormalized.\n\n**QAPs (Rules are not Filters):**\n*   The segregation of user-specific data and global product data allows for secure list operations. Rules can easily filter data based on the requesting user's ID or allow access to global product information without complex filtering logic.\n\n**Offline and Online Sync:**\nThe data structure supports both offline and online synchronization as User data will be stored under `/users/{userId}`. This makes it straightforward to manage syncing relevant data for each user.\n\n**Points System**\nThe user document contains a `points` field. This will allow the point system to be implemented."
   }
 }

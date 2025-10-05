@@ -103,7 +103,7 @@ const generateCategoriesFlow = ai.defineFlow(
     } catch (error) {
       console.error("Error in generateCategoriesFlow:", error);
       // Return null or an empty structure to handle the failure gracefully
-      return null;
+      return { categories: [] };
     }
   }
 );

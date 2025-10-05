@@ -155,21 +155,16 @@ export default function SettingsPage() {
         }
         const restoredData = JSON.parse(text);
         
-        // Type guard to check for essential data
-        if (restoredData.categories && restoredData.customers && restoredData.products && restoredData.invoices) {
-          setData({
-              customers: restoredData.customers,
-              products: restoredData.products,
-              invoices: restoredData.invoices,
-              stores: restoredData.stores || [],
-              categories: restoredData.categories || [],
-              units: restoredData.units || [],
-              toolbarPosition: restoredData.toolbarPosition || { x: 20, y: 80 }
-          });
+        setData({
+            customers: restoredData.customers || [],
+            products: restoredData.products || [],
+            invoices: restoredData.invoices || [],
+            stores: restoredData.stores || [],
+            categories: restoredData.categories || [],
+            units: restoredData.units || [],
+            toolbarPositions: restoredData.toolbarPositions || {},
+        });
           
-        } else {
-          throw new Error("فایل پشتیبان معتبر نیست.");
-        }
       } catch (error) {
         console.error("Error restoring data:", error);
       }

@@ -160,7 +160,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
       return;
     }
-    
+    if (!docId) return; // Do not attempt to update a document without an ID
     const docRef = doc(ref, docId);
     
     const optimisticData = { ...localData };
@@ -190,6 +190,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
       return;
     }
+    if (!docId) return; // Do not attempt to delete a document without an ID
     const docRef = doc(ref, docId);
 
     const optimisticData = { ...localData };
@@ -235,42 +236,45 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const clearAllUserData = useCallback(async () => {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
+    // Note: We only clear user-specific data. Global data like products and categories are preserved.
     const collectionsToDelete: (CollectionReference | null)[] = [storesRef as CollectionReference, unitsRef as CollectionReference, customersRef as CollectionReference, invoicesRef as CollectionReference];
 
     for (const ref of collectionsToDelete) {
         if (ref) {
             const q = query(ref);
             const snapshot = await getDocs(q);
-            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            snapshot.docs.forEach(doc => {
+              if(doc.id) batch.delete(doc.ref)
+            });
         }
     }
     try {
         await batch.commit();
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({
-            path: 'multiple paths',
+            path: 'multiple user-specific paths',
             operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
     }
   }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
 
-  const loadDataBatch = useCallback(async (dataToLoad: AppData) => {
+  const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
     if (!firestore) return;
     const batch = writeBatch(firestore);
     
-    const collectionsToLoad: {name: CollectionName, ref: CollectionReference | null, data: any[]}[] = [
+    // Note: Only restore user-specific collections. This avoids permission errors on global collections.
+    const collectionsToLoad: {name: CollectionName, ref: CollectionReference | null, data: any[] | undefined}[] = [
         {name: 'stores', ref: storesRef as CollectionReference, data: dataToLoad.stores},
         {name: 'units', ref: unitsRef as CollectionReference, data: dataToLoad.units},
         {name: 'customers', ref: customersRef as CollectionReference, data: dataToLoad.customers},
         {name: 'invoices', ref: invoicesRef as CollectionReference, data: dataToLoad.invoices},
-        {name: 'products', ref: productsRef, data: dataToLoad.products},
-        {name: 'categories', ref: categoriesRef, data: dataToLoad.categories},
     ];
 
     for (const { ref, data } of collectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
+                // Ensure item has a valid ID before trying to write it
                 if (item.id) {
                     const docRef = doc(ref, item.id);
                     batch.set(docRef, item);
@@ -288,7 +292,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, storesRef, unitsRef, customersRef, invoicesRef, productsRef, categoriesRef]);
+  }, [firestore, storesRef, unitsRef, customersRef, invoicesRef]);
 
   const resetData = useCallback(async (dataToLoad: any = defaultDb) => {
     await clearAllUserData();

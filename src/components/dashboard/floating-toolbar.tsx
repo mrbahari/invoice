@@ -88,6 +88,7 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
       position={currentPosition}
       nodeRef={draggableToolbarRef}
       onStop={handleStop}
+      bounds={{ top: headerHeight, bottom: window.innerHeight - (draggableToolbarRef.current?.clientHeight || 0) - footerHeight, left: 0, right: window.innerWidth - (draggableToolbarRef.current?.clientWidth || 0) }}
     >
       <div
         ref={draggableToolbarRef}

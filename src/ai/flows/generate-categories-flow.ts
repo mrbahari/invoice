@@ -25,8 +25,9 @@ export type GenerateCategoriesOutput = z.infer<typeof GenerateCategoriesOutputSc
 
 
 // Exported wrapper function
-export async function generateCategories(input: GenerateCategoriesInput): Promise<GenerateCategoriesOutput | undefined> {
-  return generateCategoriesFlow(input);
+export async function generateCategories(input: GenerateCategoriesInput): Promise<GenerateCategoriesOutput> {
+  const result = await generateCategoriesFlow(input);
+  return result || { categories: [] };
 }
 
 // Prompt for generating MAIN (parent) categories
@@ -101,8 +102,8 @@ const generateCategoriesFlow = ai.defineFlow(
       return output;
     } catch (error) {
       console.error("Error in generateCategoriesFlow:", error);
-      // Return an empty structure on error to prevent app crash
-      return { categories: [] };
+      // Return null or an empty structure to handle the failure gracefully
+      return null;
     }
   }
 );

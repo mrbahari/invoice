@@ -146,7 +146,9 @@ const CategoryTree = ({
 
                  <AccordionTrigger
                     className="p-2 flex-1 justify-end"
-                    onClick={() => onToggle(cat.id, itemRefs.current[cat.id]!)}
+                    onClick={() => {
+                        if (hasSubCategories) onToggle(cat.id, itemRefs.current[cat.id]!)
+                    }}
                 >
                     <div className="flex items-center gap-2">
                         <h4 className="font-semibold">{cat.name}</h4>
@@ -323,29 +325,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         return parentPath ? `${parentPath} > ${cat.name}` : cat.name;
     }, []);
 
-    interface AiCategory {
-      name: string;
-      subCategories?: AiCategory[];
-    }
-    
-    const processAiCategories = (aiCats: AiCategory[], storeId: string, parentId?: string): Category[] => {
-        let results: Category[] = [];
-        aiCats.forEach(aiCat => {
-            const newId = `cat-${Math.random().toString(36).substr(2, 9)}`;
-            results.push({
-                id: newId,
-                name: aiCat.name,
-                storeId: storeId,
-                parentId: parentId,
-            });
-            if (aiCat.subCategories && aiCat.subCategories.length > 0) {
-                results = results.concat(processAiCategories(aiCat.subCategories, storeId, newId));
-            }
-        });
-        return results;
-    };
-
-
     const handleAiGenerateSubCategories = async (parentCategory?: Category) => {
         if (!name || !description) {
             toast({
@@ -355,21 +334,37 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             });
             return;
         }
-
+    
         const loaderId = parentCategory ? parentCategory.id : 'main';
         setAiLoadingCategory(loaderId);
-        
+    
         try {
-            const result = await generateCategories({ storeName: name, description });
-
-            if (result && result.categories) {
-                const newCats = processAiCategories(result.categories, store?.id || 'temp', parentCategory?.id);
-                if (newCats.length > 0) {
-                    setStoreCategories(prev => [...prev, ...newCats]);
-                    toast({ variant: 'success', title: `${newCats.length} دسته و زیردسته جدید اضافه شد` });
-                } else {
-                     toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد' });
-                }
+            const input: { storeName: string; description: string; parentCategoryPath?: string; existingSubCategories?: string[] } = {
+                storeName: name,
+                description,
+            };
+    
+            if (parentCategory) {
+                input.parentCategoryPath = getCategoryPath(parentCategory.id, storeCategories);
+                input.existingSubCategories = storeCategories
+                    .filter(c => c.parentId === parentCategory.id)
+                    .map(c => c.name);
+            }
+    
+            const result = await generateCategories(input);
+            
+            if (result && result.categories && result.categories.length > 0) {
+                const newCats = result.categories.map(catName => ({
+                    id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+                    name: catName,
+                    storeId: store?.id || 'temp',
+                    parentId: parentCategory?.id,
+                }));
+    
+                setStoreCategories(prev => [...prev, ...newCats]);
+                toast({ variant: 'success', title: `${newCats.length} دسته جدید اضافه شد` });
+            } else {
+                 toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی نتوانست دسته‌بندی جدیدی پیشنهاد دهد.' });
             }
         } catch (error) {
             console.error("Error generating categories:", error);
@@ -427,8 +422,16 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   };
 
   const handleDeleteAllCategories = () => {
-    setStoreCategories([]);
-  }
+      if (!store) { // Can't delete categories if the store doesn't exist yet
+          setStoreCategories([]);
+          return;
+      }
+      setStoreCategories([]);
+      setData(prev => ({
+          ...prev,
+          categories: prev.categories.filter(c => c.storeId !== store.id),
+      }));
+  };
 
   
   // Category Handlers

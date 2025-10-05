@@ -48,6 +48,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { generateProductFromIdea, type GenerateProductFromIdeaOutput } from '@/ai/flows/generate-product-from-idea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 
 
 type SortOption = 'newest' | 'name' | 'price';
@@ -162,6 +163,8 @@ export default function ProductsPage() {
   const storesScrollRef = useRef<HTMLDivElement>(null);
   useDraggableScroll(storesScrollRef, { direction: 'horizontal' });
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+
+  const { itemsToShow, sentinelRef } = useVirtualScroll(30);
 
 
   useEffect(() => {
@@ -278,6 +281,8 @@ export default function ProductsPage() {
     );
   }
 
+  const productsToShow = sortedAndFilteredProducts.slice(0, itemsToShow);
+
   return (
     <div className="grid gap-6" data-main-page="true">
       <Card>
@@ -360,8 +365,8 @@ export default function ProductsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedAndFilteredProducts.length > 0 ? (
-                sortedAndFilteredProducts.map((product) => (
+              {productsToShow.length > 0 ? (
+                productsToShow.map((product) => (
                   <TableRow
                     key={product.id}
                     onClick={() => handleEditClick(product)}
@@ -395,13 +400,21 @@ export default function ProductsPage() {
                   <TableCell colSpan={4} className="h-24 text-center">هیچ محصولی یافت نشد.</TableCell>
                 </TableRow>
               )}
+               {/* Sentinel element for infinite scroll */}
+              {productsToShow.length < sortedAndFilteredProducts.length && (
+                <TableRow ref={sentinelRef}>
+                  <TableCell colSpan={4} className="p-4 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            نمایش <strong>{sortedAndFilteredProducts.length}</strong> از{' '}
-            <strong>{products?.length || 0}</strong> محصول
+            نمایش <strong>{productsToShow.length}</strong> از{' '}
+            <strong>{sortedAndFilteredProducts.length}</strong> محصول
           </div>
         </CardFooter>
       </Card>

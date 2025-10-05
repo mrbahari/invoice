@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Store, Category, Product } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2, Copy } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, WandSparkles, Loader2, Copy, ChevronsUpDown } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -96,51 +96,59 @@ const CategoryTree = ({
   };
 
   return (
-    <div className="pl-4 space-y-2">
+    <div className="space-y-4">
       {categories.map(cat => {
         const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
         const isAiLoading = aiLoading === cat.id;
 
         return (
-          <Collapsible key={cat.id} defaultOpen={true} className="p-2 border rounded-lg bg-muted/20">
-            <div className="flex justify-between items-center mb-2">
-              {editingCategoryId === cat.id ? (
-                <div className="flex-grow flex gap-2 items-center">
-                  <Input value={editingCategoryName} onChange={(e) => setEditingCategoryName(e.target.value)} />
-                  <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={onCancelEdit}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                </div>
-              ) : (
-                <CollapsibleTrigger className="flex-grow text-right">
-                  <h4 className="font-semibold">{cat.name}</h4>
-                </CollapsibleTrigger>
-              )}
-              {!editingCategoryId && (
-                <div className="flex gap-1 items-center">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onAiGenerate(cat)} disabled={isAiLoading}>
-                        {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
-                      </Button>
-                    </TooltipTrigger>
-                     <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
-                  </Tooltip>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStartEdit(cat)}><Pencil className="w-4 h-4" /></Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              )}
-            </div>
+          <Collapsible key={cat.id} defaultOpen={true} className="space-y-2 mb-4">
+              <div className="flex items-center gap-2">
+                  <CollapsibleTrigger className="flex-1 group">
+                       <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 w-full text-right">
+                          <div className="flex items-center gap-2">
+                             <ChevronsUpDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                              {editingCategoryId === cat.id ? (
+                                <div className="flex-grow flex gap-2 items-center">
+                                  <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
+                                </div>
+                              ) : (
+                                <h4 className="font-semibold">{cat.name}</h4>
+                              )}
+                          </div>
+                       </div>
+                  </CollapsibleTrigger>
+                  {editingCategoryId === cat.id ? (
+                     <div className="flex gap-1 items-center">
+                        <Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1 items-center">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onAiGenerate(cat)} disabled={isAiLoading}>
+                            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
+                          </Button>
+                        </TooltipTrigger>
+                         <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                      </Tooltip>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStartEdit(cat)}><Pencil className="w-4 h-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
+              </div>
             <CollapsibleContent>
-              <div className="mt-2 space-y-2">
+              <div className="p-4 border rounded-lg bg-muted/30 ml-4 space-y-4">
                 <CategoryTree
                   categories={subCategories}
                   parentId={cat.id}
@@ -784,4 +792,3 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
     </TooltipProvider>
   );
 }
-

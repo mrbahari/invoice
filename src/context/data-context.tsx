@@ -6,7 +6,7 @@ import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, To
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/context/user-context';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getFirestore, DocumentReference, addDoc, updateDoc, deleteDoc, getDocs, query } from 'firebase/firestore';
+import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import defaultDb from '@/database/defaultdb.json';
@@ -65,7 +65,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
-  const collectionRefs = useMemo(() => ({
+  const collectionRefs: Record<CollectionName, CollectionReference<any> | DocumentReference<any> | null> = useMemo(() => ({
     products: productsRef,
     categories: categoriesRef,
     stores: storesRef,
@@ -94,7 +94,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading;
     
-    if (!isDataLoading && user) {
+    if (!isDataLoading) {
       setLocalData({
         products: productsData || [],
         categories: categoriesData || [],
@@ -119,28 +119,40 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addDocument = useCallback(async <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => {
     const ref = collectionRefs[collectionName];
-    if (!ref) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
+    if (!ref || !(ref instanceof CollectionReference)) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
       return;
     }
     
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const oldData = { ...localData };
+    setLocalData(prev => ({
+      ...prev,
+      [collectionName]: [...prev[collectionName], { id: tempId, ...data }],
+    }));
+
     try {
       const docRef = await addDoc(ref, data);
+      // Replace tempId with the real ID from Firestore
       setLocalData(prev => ({
         ...prev,
-        [collectionName]: [...prev[collectionName], { id: docRef.id, ...data }],
+        [collectionName]: prev[collectionName].map(item =>
+          item.id === tempId ? { ...item, id: docRef.id } : item
+        ),
       }));
       return docRef.id;
     } catch (error) {
       console.error(`Failed to add document to ${collectionName}:`, error);
       toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی' });
+      setLocalData(oldData); // Revert on failure
     }
-  }, [collectionRefs, toast]);
+  }, [collectionRefs, toast, localData]);
 
   const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, data: Partial<Document>) => {
     const ref = collectionRefs[collectionName];
-     if (!ref) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
+     if (!ref || !(ref instanceof CollectionReference)) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
       return;
     }
     
@@ -166,8 +178,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
     const ref = collectionRefs[collectionName];
-    if (!ref) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
+    if (!ref || !(ref instanceof CollectionReference)) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید یا مجموعه داده معتبر باشد.'});
       return;
     }
     const docRef = doc(ref, docId);
@@ -201,9 +213,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearAllUserData = useCallback(async () => {
-    if (!user) return;
+    if (!user || !firestore) return;
     const batch = writeBatch(firestore);
-    const collectionsToDelete: (CollectionReference | null)[] = [storesRef, unitsRef, customersRef, invoicesRef];
+    const collectionsToDelete: (CollectionReference | null)[] = [storesRef as CollectionReference, unitsRef as CollectionReference, customersRef as CollectionReference, invoicesRef as CollectionReference];
 
     for (const ref of collectionsToDelete) {
         if (ref) {
@@ -216,29 +228,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
 
   const loadDataBatch = useCallback(async (dataToLoad: AppData) => {
-    if (!user) return;
+    if (!firestore) return;
     const batch = writeBatch(firestore);
     
     const collectionsToLoad: {name: CollectionName, ref: CollectionReference | null, data: any[]}[] = [
-        {name: 'stores', ref: storesRef, data: dataToLoad.stores},
-        {name: 'units', ref: unitsRef, data: dataToLoad.units},
-        {name: 'customers', ref: customersRef, data: dataToLoad.customers},
-        {name: 'invoices', ref: invoicesRef, data: dataToLoad.invoices},
-        // Global collections - Note: This might be restricted by security rules
-        // {name: 'products', ref: productsRef, data: dataToLoad.products},
-        // {name: 'categories', ref: categoriesRef, data: dataToLoad.categories},
+        {name: 'stores', ref: storesRef as CollectionReference, data: dataToLoad.stores},
+        {name: 'units', ref: unitsRef as CollectionReference, data: dataToLoad.units},
+        {name: 'customers', ref: customersRef as CollectionReference, data: dataToLoad.customers},
+        {name: 'invoices', ref: invoicesRef as CollectionReference, data: dataToLoad.invoices},
+        // Global collections are now included
+        {name: 'products', ref: productsRef, data: dataToLoad.products},
+        {name: 'categories', ref: categoriesRef, data: dataToLoad.categories},
     ];
 
     for (const { ref, data } of collectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
-                const docRef = doc(ref, item.id);
-                batch.set(docRef, item);
+                if(item.id) { // Ensure item has an ID before creating a doc ref
+                    const docRef = doc(ref, item.id);
+                    batch.set(docRef, item);
+                }
             });
         }
     }
     await batch.commit();
-  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
+  }, [firestore, storesRef, unitsRef, customersRef, invoicesRef, productsRef, categoriesRef]);
 
   const resetData = useCallback(async (dataToLoad: any = defaultDb) => {
     await clearAllUserData();
@@ -283,3 +297,5 @@ export function useData() {
   }
   return context;
 }
+
+    

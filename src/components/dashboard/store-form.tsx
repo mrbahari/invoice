@@ -36,7 +36,7 @@ import { generateLogo, type GenerateLogoInput } from '@/ai/flows/generate-logo-f
 import { generateLogoPrompts } from '@/ai/flows/generate-logo-prompts';
 import type { GenerateLogoPromptsInput } from '@/ai/flows/generate-logo-prompts';
 import { cn } from '@/lib/utils';
-import { generateCategories, type GenerateCategoriesInput, type GenerateCategoriesOutput } from '@/ai/flows/generate-categories-flow';
+import { generateCategories, type GenerateCategoriesInput } from '@/ai/flows/generate-categories-flow';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -112,46 +112,47 @@ const CategoryTree = ({
         return (
           <AccordionItem key={cat.id} value={cat.id} className="border-b-0 mt-2">
             <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-              <div className="flex items-center gap-1">
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
-                        {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
-                    </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
-                </Tooltip>
-                 {!hasSubCategories && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
-                            <PlusCircle className="w-4 h-4 text-green-600" />
+                <div className="flex items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
+                            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
                         </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
-                  </Tooltip>
-                )}
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                    <AlertDialogContent>
-                    <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
-                    </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              <AccordionTrigger
-                disabled={!hasSubCategories}
-                className="p-2"
-              >
-                  <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{cat.name}</h4>
-                      {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
-                  </div>
-              </AccordionTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                    </Tooltip>
+                    {!hasSubCategories && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
+                                    <PlusCircle className="w-4 h-4 text-green-600" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
+                        </Tooltip>
+                    )}
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+
+                 <AccordionTrigger
+                    disabled={!hasSubCategories}
+                    className="p-2"
+                >
+                    <div className="flex items-center gap-2">
+                        <h4 className="font-semibold">{cat.name}</h4>
+                        {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+                    </div>
+                </AccordionTrigger>
             </div>
 
             {editingCategoryId === cat.id ? (
@@ -330,7 +331,9 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         if (!cat) return '';
         if (!cat.parentId) return cat.name;
         // Recursively find the parent's path
-        const parentPath = getCategoryPath(cat.parentId, allCats);
+        const parentCat = allCats.find(c => c.id === cat.parentId);
+        if (!parentCat) return cat.name; // Should not happen in a valid structure
+        const parentPath = getCategoryPath(parentCat.id, allCats);
         return parentPath ? `${parentPath} > ${cat.name}` : cat.name;
     }, []);
 
@@ -349,15 +352,20 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
         
         try {
             const categoryPath = getCategoryPath(parentCategory.id, storeCategories);
+            const existingSubCategories = storeCategories
+                .filter(c => c.parentId === parentCategory.id)
+                .map(c => c.name);
+
             const input: GenerateCategoriesInput = { 
                 storeName: name, 
-                description: `${description}. The context is product categorization. Generate sub-categories for the following parent category path: "${categoryPath}"` 
+                description,
+                parentCategoryPath: categoryPath,
+                existingSubCategories,
             };
             const result = await generateCategories(input);
 
             if (result && result.categories) {
-                // We'll take the subcategories from the first category generated, as it's the most relevant
-                const subCategoriesToAdd = result.categories[0]?.subCategories || [];
+                const subCategoriesToAdd = result.categories;
                 
                 if(subCategoriesToAdd.length === 0) {
                     toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی زیردسته جدیدی برای این بخش پیدا نکرد.' });
@@ -365,27 +373,16 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
                     return;
                 }
 
-                const newCats: Category[] = [];
-                const existingSubNames = new Set(storeCategories.filter(c => c.parentId === parentCategory.id).map(c => c.name.toLowerCase()));
-                
-                subCategoriesToAdd.forEach(subCatName => {
-                    if (!existingSubNames.has(subCatName.toLowerCase())) {
-                        const subCat: Category = {
-                            id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-                            name: subCatName,
-                            storeId: store?.id || 'temp',
-                            parentId: parentCategory.id,
-                        };
-                        newCats.push(subCat);
-                        existingSubNames.add(subCatName.toLowerCase());
-                    }
-                });
+                const newCats: Category[] = subCategoriesToAdd.map(subCatName => ({
+                    id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+                    name: subCatName,
+                    storeId: store?.id || 'temp',
+                    parentId: parentCategory.id,
+                }));
                 
                 if (newCats.length > 0) {
                     setStoreCategories(prev => [...prev, ...newCats]);
                     toast({ variant: 'success', title: `${newCats.length} زیردسته جدید اضافه شد` });
-                } else {
-                     toast({ variant: 'default', title: 'بدون تغییر', description: 'زیردسته‌های تولید شده از قبل وجود داشتند.' });
                 }
             }
         } catch (error) {
@@ -411,47 +408,23 @@ export function StoreForm({ store, onSave, onCancel, onDelete }: StoreFormProps)
       const result = await generateCategories(input);
 
       if (result && result.categories) {
-        const newCats: Category[] = [];
+        const newParentCats: Category[] = [];
         const existingParentNames = new Set(storeCategories.filter(c => !c.parentId).map(c => c.name.toLowerCase()));
 
-        result.categories.forEach(catData => {
-          let parentName = catData.name;
-          // Check for duplicate parent category name
-          if (existingParentNames.has(parentName.toLowerCase())) {
-            parentName = `_${parentName}`; // Add prefix if name exists
-          }
-          
-          const parentId = `cat-${Math.random().toString(36).substr(2, 9)}`;
-          const parentCat: Category = {
-            id: parentId,
-            name: parentName,
-            storeId: store?.id || 'temp',
-          };
-          newCats.push(parentCat);
-          existingParentNames.add(parentName.toLowerCase());
-
-          const existingSubNames = new Set(storeCategories.map(c => c.name.toLowerCase()));
-          catData.subCategories.forEach(subCatName => {
-            let finalSubCatName = subCatName;
-            if (existingSubNames.has(finalSubCatName.toLowerCase())) {
-                finalSubCatName = `_${finalSubCatName}`;
-            }
-
-            const subCat: Category = {
+        result.categories.forEach(catName => {
+          if (!existingParentNames.has(catName.toLowerCase())) {
+            newParentCats.push({
               id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-              name: finalSubCatName,
+              name: catName,
               storeId: store?.id || 'temp',
-              parentId: parentId,
-            };
-            newCats.push(subCat);
-            existingSubNames.add(finalSubCatName.toLowerCase());
-          });
+            });
+            existingParentNames.add(catName.toLowerCase());
+          }
         });
         
-        // Append new categories to existing ones instead of replacing
-        setStoreCategories(prev => [...prev, ...newCats]);
+        setStoreCategories(prev => [...prev, ...newParentCats]);
 
-        toast({ variant: 'success', title: 'دسته‌بندی‌ها با موفقیت تولید و اضافه شدند' });
+        toast({ variant: 'success', title: 'دسته‌بندی‌های اصلی با موفقیت تولید و اضافه شدند' });
       }
     } catch (error) {
       console.error("Error generating categories:", error);

@@ -61,6 +61,9 @@
     --foreground-hsl: 210 40% 98%;
     --primary-hsl: 210 40% 98%;
     --ring-hsl: 210 40% 98%;
+
+    --background: hsl(var(--background-hsl));
+    --foreground: hsl(var(--foreground-hsl));
  
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;

@@ -54,7 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Define collection references, memoized to prevent re-renders
   const productsRef = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const categoriesRef = useMemoFirebase(() => collection(firestore, 'categories'), [firestore]);
-  const storesRef = useMemoFirebase(() => collection(firestore, 'stores'), [firestore]);
+  const storesRef = useMemoFirebase(() => user ? collection(firestore, 'stores') : null, [firestore, user]);
   const unitsRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
   const customersRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);

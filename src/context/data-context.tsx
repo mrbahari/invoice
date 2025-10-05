@@ -5,7 +5,7 @@ import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, To
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/context/user-context';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getFirestore } from 'firebase/firestore';
+import { collection, doc, writeBatch, getFirestore, DocumentReference } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -106,16 +106,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
     
+    const oldData = localData;
     setLocalData(newData); // Optimistic update
 
     try {
       const batch = writeBatch(firestore);
-
-      // We assume that global collections (products, categories) are not modified by the client.
-      // If clients need to modify them, we'd need to handle that here.
-
-      // Handle user-specific collections
-      const collectionsToUpdate: { name: keyof AppData; ref: any }[] = [
+      
+      const collectionsToUpdate: { name: keyof AppData, ref: DocumentReference | null }[] = [
           { name: 'customers', ref: customersRef },
           { name: 'invoices', ref: invoicesRef },
           { name: 'units', ref: unitsRef },
@@ -125,17 +122,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
       for (const { name, ref } of collectionsToUpdate) {
         if (!ref) continue;
         const localItems = (newData as any)[name] as { id: string }[];
-        const firestoreItems = (localData as any)[name] as { id: string }[];
+        const firestoreItems = (oldData as any)[name] as { id: string }[];
 
         // Items to add/update
         localItems.forEach(item => {
-          batch.set(doc(ref, item.id), item);
+          if (item.id) { // Ensure item.id is not empty
+            batch.set(doc(ref, item.id), item);
+          }
         });
 
         // Items to delete
         const localIds = new Set(localItems.map(item => item.id));
         firestoreItems.forEach(item => {
-          if (!localIds.has(item.id)) {
+          if (item.id && !localIds.has(item.id)) { // Ensure item.id is not empty
             batch.delete(doc(ref, item.id));
           }
         });
@@ -146,8 +145,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to save data to Firestore:", error);
       toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی', description: 'اطلاعات در سرور ذخیره نشد.'});
-      // Optionally revert the optimistic update
-      // setLocalData(oldData);
+      setLocalData(oldData); // Revert optimistic update on failure
     }
   };
 

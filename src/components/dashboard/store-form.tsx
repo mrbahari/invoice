@@ -422,8 +422,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   
   const handleDeleteAllCategories = useCallback(() => {
     setStoreCategories([]);
-    toast({ variant: 'default', title: 'لیست پاک شد', description: 'دسته‌بندی‌ها به صورت موقت پاک شدند. برای نهایی کردن، تغییرات را ذخیره کنید.' });
-  }, [toast]);
+  }, []);
 
   
   // Category Handlers
@@ -709,7 +708,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                 <CardDescription>این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-3">
                         <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
                         <Input id="bank-account-holder" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="مثال: اسماعیل بهاری" />
@@ -726,10 +725,10 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                         <Label htmlFor="bank-card-number">شماره کارت</Label>
                         <Input id="bank-card-number" value={bankCardNumber} onChange={(e) => setBankCardNumber(e.target.value)} placeholder="اختیاری" />
                     </div>
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="bank-iban">شماره شبا (IBAN)</Label>
-                    <Input id="bank-iban" value={bankIban} onChange={(e) => setBankIban(e.target.value)} placeholder="مثال: IR..." dir="ltr" className="text-left" />
+                    <div className="grid gap-3 col-span-2">
+                        <Label htmlFor="bank-iban">شماره شبا (IBAN)</Label>
+                        <Input id="bank-iban" value={bankIban} onChange={(e) => setBankIban(e.target.value)} placeholder="مثال: IR..." dir="ltr" className="text-left" />
+                    </div>
                 </div>
             </CardContent>
         </Card>

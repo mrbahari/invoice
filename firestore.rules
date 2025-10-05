@@ -1,38 +1,41 @@
 /**
- * @fileoverview Firestore Security Rules for the Hisaabgar application.
+ * @file Firestore Security Rules for Hisaabgar Application
  *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for client data and
- * category data and their associated subcollections. Only the authenticated user
- * matching the document ID has full access.
+ * @core_philosophy This ruleset enforces a strict ownership model based on Firestore paths.
+ *  Clients can only access their own profiles and invoices. Categories and Products are accessible
+ *  to anyone.
  *
- * Data Structure:
- * - Clients are stored under /clients/{clientId}, where clientId is the user's UID.
- * - Invoices are stored under /clients/{clientId}/invoices/{invoiceId}.
- * - Categories are stored under /categories/{categoryId}.
- * - Products are stored under /categories/{categoryId}/products/{productId}.
+ * @data_structure
+ *  - /clients/{clientId}: Stores client profiles, with each document ID matching the client's UID.
+ *  - /clients/{clientId}/invoices/{invoiceId}: Stores invoices belonging to a specific client.
+ *  - /categories/{categoryId}: Stores product categories. Publicly readable.
+ *  - /categories/{categoryId}/products/{productId}: Stores products within a specific category. Publicly readable.
  *
- * Key Security Decisions:
- * - Listing of all clients or categories is disallowed.
- * - Data validation is minimal in this prototyping phase, focusing on
- *   authorization and relational integrity only.
- * - Public read access is NOT granted to any collection.
+ * @key_security_decisions
+ *  - Clients can only create, read, update, and delete their own profiles and invoices.
+ *  - Categories and Products are publicly readable, but creation, updates, and deletion are denied.
+ *  - List operations are enabled for clients to view their invoices, and enabled for all to view categories and products.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secures client profiles. Only the authenticated user matching the client ID can access.
+     * @description Allows clients to manage their own profile.
      * @path /clients/{clientId}
-     * @allow (create) User with UID 'user_abc' can create a client profile at /clients/user_abc.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their own profile at /clients/user_abc.
-     * @deny (create) User with UID 'user_xyz' cannot create a client profile at /clients/user_abc.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot access the profile at /clients/user_abc.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) - Authenticated user with UID 'user_abc' can create a client profile with ID 'user_abc'.
+     * @deny (create) - Authenticated user with UID 'user_abc' cannot create a client profile with ID 'user_xyz'.
+     * @allow (get) - Authenticated user with UID 'user_abc' can read the client profile with ID 'user_abc'.
+     * @deny (get) - Authenticated user with UID 'user_xyz' cannot read the client profile with ID 'user_abc'.
+     * @allow (list) - Authenticated user with UID 'user_abc' can list client profiles.
+     * @deny (list) - Listing is allowed and cannot be denied.
+     * @allow (update) - Authenticated user with UID 'user_abc' can update the client profile with ID 'user_abc'.
+     * @deny (update) - Authenticated user with UID 'user_xyz' cannot update the client profile with ID 'user_abc'.
+     * @allow (delete) - Authenticated user with UID 'user_abc' can delete the client profile with ID 'user_abc'.
+     * @deny (delete) - Authenticated user with UID 'user_xyz' cannot delete the client profile with ID 'user_abc'.
+     * @principle Enforces document ownership for client profiles.
      */
     match /clients/{clientId} {
-      // Helper function to check if the user is signed in and owns the document.
       function isSignedIn() {
         return request.auth != null;
       }
@@ -43,22 +46,27 @@ service cloud.firestore {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isOwner(clientId);
-      allow list: if false;
-
       allow create: if isSignedIn() && isOwner(clientId);
+      allow get: if isSignedIn() && isOwner(clientId);
+      allow list: if isSignedIn() && isOwner(clientId);
       allow update: if isExistingOwner(clientId);
       allow delete: if isExistingOwner(clientId);
     }
 
     /**
-     * @description Secures invoices associated with a client. Only the authenticated user matching the client ID can access.
+     * @description Allows clients to manage their own invoices.
      * @path /clients/{clientId}/invoices/{invoiceId}
-     * @allow (create) User with UID 'user_abc' can create an invoice at /clients/user_abc/invoices/invoice_123.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their own invoice at /clients/user_abc/invoices/invoice_123.
-     * @deny (create) User with UID 'user_xyz' cannot create an invoice at /clients/user_abc/invoices/invoice_123.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot access the invoice at /clients/user_abc/invoices/invoice_123.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) - Authenticated user with UID 'user_abc' can create an invoice under /clients/user_abc/invoices/invoice_123.
+     * @deny (create) - Authenticated user with UID 'user_xyz' cannot create an invoice under /clients/user_abc/invoices/invoice_123.
+     * @allow (get) - Authenticated user with UID 'user_abc' can read the invoice under /clients/user_abc/invoices/invoice_123.
+     * @deny (get) - Authenticated user with UID 'user_xyz' cannot read the invoice under /clients/user_abc/invoices/invoice_123.
+     * @allow (list) - Authenticated user with UID 'user_abc' can list invoices under /clients/user_abc.
+     * @deny (list) - Authenticated user with UID 'user_xyz' cannot list invoices under /clients/user_abc.
+     * @allow (update) - Authenticated user with UID 'user_abc' can update the invoice under /clients/user_abc/invoices/invoice_123.
+     * @deny (update) - Authenticated user with UID 'user_xyz' cannot update the invoice under /clients/user_abc/invoices/invoice_123.
+     * @allow (delete) - Authenticated user with UID 'user_abc' can delete the invoice under /clients/user_abc/invoices/invoice_123.
+     * @deny (delete) - Authenticated user with UID 'user_xyz' cannot delete the invoice under /clients/user_abc/invoices/invoice_123.
+     * @principle Enforces document ownership for invoices within a client's profile.
      */
     match /clients/{clientId}/invoices/{invoiceId} {
       function isSignedIn() {
@@ -70,70 +78,45 @@ service cloud.firestore {
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
-
-      allow get: if isOwner(clientId);
-      allow list: if isOwner(clientId);
-
       allow create: if isSignedIn() && isOwner(clientId);
+      allow get: if isSignedIn() && isOwner(clientId);
+      allow list: if isSignedIn() && isOwner(clientId);
       allow update: if isExistingOwner(clientId);
       allow delete: if isExistingOwner(clientId);
     }
 
-     /**
-      * @description Secures category profiles. Only the authenticated user matching the category ID can access.
-      * @path /categories/{categoryId}
-      * @allow (create) User with UID 'user_abc' can create a category profile at /categories/category_abc.
-      * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their own profile at /categories/category_abc.
-      * @deny (create) User with UID 'user_xyz' cannot create a category profile at /categories/category_abc.
-      * @deny (get, update, delete) User with UID 'user_xyz' cannot access the profile at /categories/category_abc.
-      * @principle Enforces document ownership for writes.
-      */
+    /**
+     * @description Allows public read access to categories, but denies all write operations.
+     * @path /categories/{categoryId}
+     * @allow (get) - Any user can read a category.
+     * @deny (get) - N/A
+     * @allow (list) - Any user can list categories.
+     * @deny (list) - N/A
+     * @deny (create) - No one can create categories.
+     * @deny (update) - No one can update categories.
+     * @deny (delete) - No one can delete categories.
+     * @principle Provides public read access while restricting write access.
+     */
     match /categories/{categoryId} {
-      // Helper function to check if the user is signed in and owns the document.
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(categoryId) {
-        return request.auth.uid == categoryId;
-      }
-      function isExistingOwner(categoryId) {
-        return isOwner(categoryId) && resource != null;
-      }
-
-      allow get: if isOwner(categoryId);
-      allow list: if false;
-
-      allow create: if isSignedIn() && isOwner(categoryId);
-      allow update: if isExistingOwner(categoryId);
-      allow delete: if isExistingOwner(categoryId);
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Secures products associated with a category. Only the authenticated user matching the category ID can access.
+     * @description Allows public read access to products, but denies all write operations.
      * @path /categories/{categoryId}/products/{productId}
-     * @allow (create) User with UID 'user_abc' can create a product at /categories/category_abc/products/product_123.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their own product at /categories/category_abc/products/product_123.
-     * @deny (create) User with UID 'user_xyz' cannot create a product at /categories/category_abc/products/product_123.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot access the product at /categories/category_abc/products/product_123.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (get) - Any user can read a product.
+     * @deny (get) - N/A
+     * @allow (list) - Any user can list products within a category.
+     * @deny (list) - N/A
+     * @deny (create) - No one can create products.
+     * @deny (update) - No one can update products.
+     * @deny (delete) - No one can delete products.
+     * @principle Provides public read access while restricting write access.
      */
     match /categories/{categoryId}/products/{productId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      function isOwner(categoryId) {
-        return request.auth.uid == categoryId;
-      }
-      function isExistingOwner(categoryId) {
-        return isOwner(categoryId) && resource != null;
-      }
-
-      allow get: if isOwner(categoryId);
-      allow list: if isOwner(categoryId);
-
-      allow create: if isSignedIn() && isOwner(categoryId);
-      allow update: if isExistingOwner(categoryId);
-      allow delete: if isExistingOwner(categoryId);
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
   }
 }

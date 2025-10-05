@@ -61,13 +61,14 @@ export type Invoice = {
   items: InvoiceItem[];
   subtotal: number;
   discount: number;
-  additions?: number;
+  additions: number;
   tax: number; // Assuming a fixed tax rate for simplicity
   total: number;
   description: string;
 };
 
 export type UnitOfMeasurement = {
+  id: string;
   name: string;
   defaultQuantity: number;
 };
@@ -95,6 +96,6 @@ export type DailySales = {
   unpaid: number;
 };
 
-export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'reports' | 'settings' | 'estimators';
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
 
 export type ToolbarPosition = { x: number, y: number };

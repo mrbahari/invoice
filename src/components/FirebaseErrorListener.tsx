@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -31,6 +32,7 @@ export function FirebaseErrorListener() {
 
   // On re-render, if an error exists in state, throw it.
   if (error) {
+    // Re-throwing the error to be caught by Next.js error boundary
     throw error;
   }
 

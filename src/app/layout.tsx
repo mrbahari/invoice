@@ -32,14 +32,12 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <UserProvider>
-              <DataProvider>
-                  <main className="relative z-10">
-                    {children}
-                  </main>
-                  <Toaster />
-              </DataProvider>
-            </UserProvider>
+            <DataProvider>
+                <main className="relative z-10">
+                  {children}
+                </main>
+                <Toaster />
+            </DataProvider>
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>

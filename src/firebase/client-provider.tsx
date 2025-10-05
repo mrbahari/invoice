@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, type ReactNode } from 'react';
@@ -14,6 +15,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     return initializeFirebase();
   }, []); // Empty dependency array ensures this runs only once on mount
 
+  // The UserProvider is now integrated inside the FirebaseProvider, so we don't need to wrap it here.
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices.firebaseApp}

@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useUser } from '@/context/user-context';
+import { useUser } from '@/firebase'; // Changed from user-context
 import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
@@ -12,6 +12,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 
+type DocumentWithoutId = Omit<Product, 'id'> | Omit<Category, 'id'> | Omit<Customer, 'id'> | Omit<Invoice, 'id'> | Omit<UnitOfMeasurement, 'id'> | Omit<Store, 'id'>;
 type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
 type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
 
@@ -31,6 +32,7 @@ interface DataContextType {
   addDocument: <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => Promise<string | undefined>;
   updateDocument: (collectionName: CollectionName, docId: string, data: Partial<Document>) => Promise<void>;
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
+  setData: React.Dispatch<React.SetStateAction<AppData>>; // Expose setData
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
   loadDataBatch: (dataToLoad: Partial<AppData>) => Promise<void>;
   clearAllData: () => Promise<void>;
@@ -51,7 +53,7 @@ const emptyData: AppData = {
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading } = useUser();
-  const [localData, setLocalData] = useState<AppData>(emptyData);
+  const [data, setData] = useState<AppData>(emptyData);
   const [isSynced, setIsSynced] = useState(false);
   const { firestore } = useMemo(() => initializeFirebase(), []);
 
@@ -65,7 +67,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
-  const collectionRefs: Record<CollectionName, CollectionReference<any> | DocumentReference<any> | null> = useMemo(() => ({
+  const collectionRefs: Record<string, CollectionReference<any> | DocumentReference<any> | null> = useMemo(() => ({
     products: productsRef,
     categories: categoriesRef,
     stores: storesRef,
@@ -87,7 +89,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check if user has logged out, then reset local state
     if (!user && !isUserLoading) {
-      setLocalData(emptyData);
+      setData(emptyData);
       setIsSynced(false);
     }
   }, [user, isUserLoading]);
@@ -97,7 +99,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading || toolbarLoading;
     
     if (!isDataLoading && (user || !isUserLoading)) {
-      setLocalData({
+      setData({
         products: productsData || [],
         categories: categoriesData || [],
         stores: storesData || [],
@@ -109,7 +111,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setIsSynced(true);
     } else if (!user && !isUserLoading) {
       // When user logs out, we should also be considered "synced" with an empty state
-      setLocalData(emptyData);
+      setData(emptyData);
       setIsSynced(true);
     }
   }, [
@@ -118,25 +120,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
     productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading, toolbarLoading
   ]);
 
-  const addDocument = useCallback(async <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => {
+  const addDocument = useCallback(async (collectionName: CollectionName, docData: DocumentWithoutId) => {
     if (!firestore) return;
     const ref = collectionRefs[collectionName];
-    if (!ref || !(ref instanceof CollectionReference)) {
-      console.error('Invalid collection reference or user not logged in for collection:', collectionName);
+
+    let collectionRef: CollectionReference | null = null;
+    if(ref instanceof CollectionReference) {
+      collectionRef = ref;
+    } else if (ref instanceof DocumentReference) {
+      // This case is not for adding documents, but we handle it for type safety
+      console.error('Cannot add a document to a DocumentReference');
       return;
+    }
+
+    if (!collectionRef) {
+        console.error('Invalid collection reference or user not logged in for collection:', collectionName);
+        return;
     }
     
     const tempId = `temp-${Date.now()}`;
     // Optimistic update
-    setLocalData(prev => ({
+    setData(prev => ({
       ...prev,
-      [collectionName]: [...prev[collectionName], { id: tempId, ...data } as Document],
+      [collectionName]: [...prev[collectionName], { id: tempId, ...docData } as Document],
     }));
 
     try {
-      const docRef = await addDoc(ref, data);
+      const docRef = await addDoc(collectionRef, docData);
       // Replace tempId with real ID from Firestore
-      setLocalData(prev => ({
+      setData(prev => ({
         ...prev,
         [collectionName]: prev[collectionName].map(item =>
           item.id === tempId ? { ...item, id: docRef.id } : item
@@ -145,23 +157,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return docRef.id;
     } catch (error: any) {
         // Revert optimistic update on failure
-        setLocalData(prev => ({
+        setData(prev => ({
             ...prev,
             [collectionName]: prev[collectionName].filter(item => item.id !== tempId)
         }));
         const permissionError = new FirestorePermissionError({
-          path: ref.path,
+          path: collectionRef.path,
           operation: 'create',
-          requestResourceData: data,
+          requestResourceData: docData,
         });
         errorEmitter.emit('permission-error', permissionError);
     }
   }, [collectionRefs, firestore]);
 
-  const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, data: Partial<Document>) => {
+  const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, docData: Partial<Document>) => {
     if (!firestore) return;
     const ref = collectionRefs[collectionName];
-     if (!ref || !(ref instanceof CollectionReference)) {
+    if (!ref || !(ref instanceof CollectionReference)) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
@@ -169,23 +181,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const docRef = doc(ref, docId);
     
-    const originalState = localData[collectionName];
+    const originalState = data[collectionName];
     const originalItem = originalState.find(item => item.id === docId);
 
     // Optimistic update
-    setLocalData(prev => ({
+    setData(prev => ({
       ...prev,
       [collectionName]: prev[collectionName].map(item =>
-        item.id === docId ? { ...item, ...data } : item
+        item.id === docId ? { ...item, ...docData } : item
       ),
     }));
 
     try {
-      await updateDoc(docRef, data);
+      await updateDoc(docRef, docData);
     } catch (error: any) {
         // Revert optimistic update
         if (originalItem) {
-          setLocalData(prev => ({
+          setData(prev => ({
               ...prev,
               [collectionName]: prev[collectionName].map(item =>
                   item.id === docId ? originalItem : item
@@ -195,11 +207,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
-            requestResourceData: data,
+            requestResourceData: docData,
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, localData, firestore]);
+  }, [collectionRefs, data, firestore]);
 
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
     if (!firestore) return;
@@ -212,11 +224,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     const docRef = doc(ref, docId);
 
-    const originalItem = localData[collectionName].find(item => item.id === docId);
+    const originalItem = data[collectionName].find(item => item.id === docId);
     if (!originalItem) return;
 
     // Optimistic update
-    setLocalData(prev => ({
+    setData(prev => ({
       ...prev,
       [collectionName]: prev[collectionName].filter(item => item.id !== docId),
     }));
@@ -225,18 +237,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await deleteDoc(docRef);
     } catch (error: any) {
         // Revert optimistic update
-        setLocalData(prev => ({...prev, [collectionName]: [...prev[collectionName], originalItem]}));
+        setData(prev => ({...prev, [collectionName]: [...prev[collectionName], originalItem]}));
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, localData, firestore]);
+  }, [collectionRefs, data, firestore]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
     // Optimistic update for local state
-    setLocalData(prev => ({
+    setData(prev => ({
       ...prev,
       toolbarPositions: {
         ...prev.toolbarPositions,
@@ -299,15 +311,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!user || !firestore) return;
     const batch = writeBatch(firestore);
     
-    // This function only restores USER-SPECIFIC collections.
-    const userCollectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
+    // This function can restore both public and user-specific collections.
+    const collectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
+        { ref: productsRef, data: dataToLoad.products },
+        { ref: categoriesRef, data: dataToLoad.categories },
         { ref: storesRef, data: dataToLoad.stores },
         { ref: unitsRef, data: dataToLoad.units },
         { ref: customersRef, data: dataToLoad.customers },
         { ref: invoicesRef, data: dataToLoad.invoices },
     ];
 
-    for (const { ref, data } of userCollectionsToLoad) {
+    for (const { ref, data } of collectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
                 if (item.id && typeof item.id === 'string') {
@@ -332,23 +346,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }, [user, firestore, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;
 
   const value: DataContextType = {
-    data: localData,
+    data,
     isInitialized,
     addDocument,
     updateDocument,
     deleteDocument,
+    setData,
     setToolbarPosition,
     loadDataBatch,
     clearAllData,
   };
   
-  if (!isInitialized && (isUserLoading || !isSynced)) {
+  if (!isInitialized) {
       return (
             <div className="flex h-screen w-screen items-center justify-center bg-background/80 backdrop-blur-sm">
                 <LoadingSpinner />

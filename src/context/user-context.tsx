@@ -1,7 +1,8 @@
+
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from 'firebase/auth';
+import { createContext, useContext } from 'react';
+import type { User } from 'firebase/auth';
 import { useFirebase } from '@/firebase/provider'; // Use the central provider
 
 interface UserContextType {
@@ -10,9 +11,11 @@ interface UserContextType {
   error: Error | null;
 }
 
+// User context is now managed by FirebaseProvider, we just need a way to access it.
+// This context is now redundant but kept for any components that might still be using `useUser` from this file.
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export function UserProvider({ children }: { children: ReactNode }) {
+export function UserProvider({ children }: { children: React.ReactNode }) {
   // Get user state directly from the FirebaseProvider
   const { user, isUserLoading, userError } = useFirebase();
 
@@ -23,10 +26,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// This hook is now a simple proxy to the `useFirebase` hook's user state.
 export function useUser() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
+  const { user, isUserLoading, userError } = useFirebase();
+  return { user, isUserLoading, error: userError };
 }

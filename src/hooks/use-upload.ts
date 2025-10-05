@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -22,7 +23,7 @@ export function useUpload() {
         setError(msg);
         toast({ variant: 'destructive', title: 'Upload Error', description: msg });
         setIsUploading(false);
-        return Promise.reject(null);
+        return Promise.resolve(null);
     }
     
     const storage = getStorage(firebaseApp);

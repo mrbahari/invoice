@@ -1,7 +1,8 @@
+
 'use client';
 import { getAuth, type User } from 'firebase/auth';
 
-type SecurityRuleContext = {
+export type SecurityRuleContext = {
   path: string;
   operation: 'get' | 'list' | 'create' | 'update' | 'delete' | 'write';
   requestResourceData?: any;
@@ -14,7 +15,7 @@ interface FirebaseAuthToken {
   phone_number: string | null;
   sub: string;
   firebase: {
-    identities: Record<string, string[]>;
+    identities: Record<string, any>; // Simplified
     sign_in_provider: string;
     tenant: string | null;
   };
@@ -44,6 +45,13 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
     return null;
   }
 
+  const providerId = currentUser.providerData[0]?.providerId || 'custom';
+  const identities: Record<string, any> = {};
+  if (currentUser.email && providerId !== 'anonymous') {
+    identities[providerId] = [currentUser.email];
+  }
+
+
   const token: FirebaseAuthToken = {
     name: currentUser.displayName,
     email: currentUser.email,
@@ -51,13 +59,8 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
     phone_number: currentUser.phoneNumber,
     sub: currentUser.uid,
     firebase: {
-      identities: currentUser.providerData.reduce((acc, p) => {
-        if (p.providerId) {
-          acc[p.providerId] = [p.uid];
-        }
-        return acc;
-      }, {} as Record<string, string[]>),
-      sign_in_provider: currentUser.providerData[0]?.providerId || 'custom',
+      identities,
+      sign_in_provider: providerId,
       tenant: currentUser.tenantId,
     },
   };
@@ -102,8 +105,9 @@ function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
  * @returns A string containing the error message and the JSON payload.
  */
 function buildErrorMessage(requestObject: SecurityRuleRequest): string {
-  return `Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
+  const message = `FirebaseError: Missing or insufficient permissions: The following request was denied by Firestore Security Rules:
 ${JSON.stringify(requestObject, null, 2)}`;
+  return message;
 }
 
 /**

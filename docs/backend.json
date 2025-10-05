@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Product": {
@@ -6,40 +7,20 @@
       "type": "object",
       "description": "Represents a product in the catalog.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the product."
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to Category. (Relationship: Category 1:N Product)"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the product."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the product image.",
-          "format": "uri"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the product."
-        },
-        "price": {
-          "type": "number",
-          "description": "Price of the product."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "storeId": { "type": "string" },
+        "subCategoryId": { "type": "string" },
+        "unit": { "type": "string" },
+        "subUnit": { "type": "string" },
+        "subUnitQuantity": { "type": "number" },
+        "subUnitPrice": { "type": "number" }
       },
-      "required": [
-        "id",
-        "categoryId",
-        "name",
-        "imageUrl",
-        "description",
-        "price"
-      ]
+      "required": ["id", "name", "price", "imageUrl", "storeId", "subCategoryId", "unit"]
     },
     "Category": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -47,24 +28,13 @@
       "type": "object",
       "description": "Represents a category of products.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the category."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the category."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the category."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "storeId": { "type": "string" },
+        "parentId": { "type": "string" },
+        "description": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name",
-        "description"
-      ]
+      "required": ["id", "name", "storeId"]
     },
     "Client": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -72,40 +42,14 @@
       "type": "object",
       "description": "Represents a customer profile.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the client."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "First name of the client."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "Last name of the client."
-        },
-        "email": {
-          "type": "string",
-          "description": "Email address of the client.",
-          "format": "email"
-        },
-        "phone": {
-          "type": "string",
-          "description": "Phone number of the client."
-        },
-        "billingAddress": {
-          "type": "string",
-          "description": "Billing address of the client."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "purchaseHistory": { "type": "string" }
       },
-      "required": [
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "phone",
-        "billingAddress"
-      ]
+      "required": ["id", "name", "phone"]
     },
     "Invoice": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -113,169 +57,120 @@
       "type": "object",
       "description": "Represents an invoice.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the invoice."
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Paid", "Pending", "Overdue"] },
+        "items": { 
+          "type": "array",
+          "items": { "$ref": "#/entities/InvoiceItem" }
         },
-        "clientId": {
-          "type": "string",
-          "description": "Reference to Client. (Relationship: Client 1:N Invoice)"
-        },
-        "invoiceDate": {
-          "type": "string",
-          "description": "Date when the invoice was created.",
-          "format": "date-time"
-        },
-        "dueDate": {
-          "type": "string",
-          "description": "Due date for the invoice.",
-          "format": "date-time"
-        },
-        "totalAmount": {
-          "type": "number",
-          "description": "Total amount of the invoice."
-        },
-        "discountAmount": {
-          "type": "number",
-          "description": "Discount applied to the invoice."
-        },
-        "status": {
-          "type": "string",
-          "description": "Status of the invoice (e.g., paid, unpaid, overdue)."
-        }
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "additions": { "type": "number" },
+        "tax": { "type": "number" },
+        "total": { "type": "number" },
+        "description": { "type": "string" }
       },
-      "required": [
-        "id",
-        "clientId",
-        "invoiceDate",
-        "dueDate",
-        "totalAmount",
-        "discountAmount",
-        "status"
-      ]
+      "required": ["id", "customerId", "invoiceNumber", "date", "status", "items", "total"]
     },
     "InvoiceItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "InvoiceItem",
       "type": "object",
-      "description": "Represents an item in an invoice.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the invoice item."
-        },
-        "invoiceId": {
-          "type": "string",
-          "description": "Reference to Invoice. (Relationship: Invoice 1:N InvoiceItem)"
-        },
-        "productId": {
-          "type": "string",
-          "description": "Reference to Product. (Relationship: Product 1:N InvoiceItem)"
-        },
-        "quantity": {
-          "type": "number",
-          "description": "Quantity of the product in the invoice item."
-        },
-        "unitPrice": {
-          "type": "number",
-          "description": "Unit price of the product in the invoice item."
-        },
-        "total": {
-          "type": "number",
-          "description": "Total price of the invoice item (quantity * unitPrice)."
-        }
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unitPrice": { "type": "number" },
+        "totalPrice": { "type": "number" },
+        "unit": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" }
       },
-      "required": [
-        "id",
-        "invoiceId",
-        "productId",
-        "quantity",
-        "unitPrice",
-        "total"
-      ]
+      "required": ["productId", "productName", "quantity", "unitPrice", "totalPrice", "unit"]
+    },
+    "Store": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Store",
+      "type": "object",
+      "description": "Represents a user's store.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "logoUrl": { "type": "string", "format": "uri" },
+        "bankAccountHolder": { "type": "string" },
+        "bankName": { "type": "string" },
+        "bankAccountNumber": { "type": "string" },
+        "bankIban": { "type": "string" },
+        "bankCardNumber": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Unit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Unit",
+      "type": "object",
+      "description": "Represents a unit of measurement.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "defaultQuantity": { "type": "number" }
+      },
+      "required": ["id", "name", "defaultQuantity"]
+    },
+    "ToolbarSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ToolbarSettings",
+      "type": "object",
+      "description": "Stores positions of floating toolbars.",
+      "properties": {}
     }
-  },
-  "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "/clients/{clientId}",
-        "definition": {
-          "entityName": "Client",
-          "schema": {
-            "$ref": "#/backend/entities/Client"
-          },
-          "description": "Stores client profiles. Each client document is identified by its unique clientId.",
-          "params": [
-            {
-              "name": "clientId",
-              "description": "Unique identifier for the client."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/clients/{clientId}/invoices/{invoiceId}",
-        "definition": {
-          "entityName": "Invoice",
-          "schema": {
-            "$ref": "#/backend/entities/Invoice"
-          },
-          "description": "Stores invoices associated with a specific client. Each invoice document is identified by its unique invoiceId.",
-          "params": [
-            {
-              "name": "clientId",
-              "description": "Unique identifier for the client."
-            },
-            {
-              "name": "invoiceId",
-              "description": "Unique identifier for the invoice."
-            }
-          ]
-        }
+        "path": "/products/{productId}",
+        "schema": { "$ref": "#/entities/Product" },
+        "description": "Public collection of all products."
       },
       {
         "path": "/categories/{categoryId}",
-        "definition": {
-          "entityName": "Category",
-          "schema": {
-            "$ref": "#/backend/entities/Category"
-          },
-          "description": "Stores product categories. Each category document is identified by its unique categoryId.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "Unique identifier for the category."
-            }
-          ]
-        }
+        "schema": { "$ref": "#/entities/Category" },
+        "description": "Public collection of all categories."
       },
       {
-        "path": "/categories/{categoryId}/products/{productId}",
-        "definition": {
-          "entityName": "Product",
-          "schema": {
-            "$ref": "#/backend/entities/Product"
-          },
-          "description": "Stores products within a specific category. Each product document is identified by its unique productId.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "Unique identifier for the category."
-            },
-            {
-              "name": "productId",
-              "description": "Unique identifier for the product."
-            }
-          ]
-        }
+        "path": "/users/{userId}/clients/{clientId}",
+        "schema": { "$ref": "#/entities/Client" },
+        "description": "User-specific collection of clients."
+      },
+      {
+        "path": "/users/{userId}/invoices/{invoiceId}",
+        "schema": { "$ref": "#/entities/Invoice" },
+        "description": "User-specific collection of invoices."
+      },
+      {
+        "path": "/users/{userId}/stores/{storeId}",
+        "schema": { "$ref": "#/entities/Store" },
+        "description": "User-specific collection of stores."
+      },
+      {
+        "path": "/users/{userId}/units/{unitId}",
+        "schema": { "$ref": "#/entities/Unit" },
+        "description": "User-specific collection of measurement units."
+      },
+      {
+        "path": "/users/{userId}/settings/toolbarPositions",
+        "schema": { "$ref": "#/entities/ToolbarSettings" },
+        "description": "Stores settings for a user, like toolbar positions."
       }
-    ],
-    "reasoning": "The Firestore structure is designed to support the Hisaabgar application's core features: product catalog management, client management, invoice creation, and reporting. It prioritizes authorization independence, clarity, and scalability.\n\n**Authorization Independence and QAPs:**\n\n*   **Clients and Invoices:**  Clients are stored under `/clients/{clientId}`. Invoices are stored under `/clients/{clientId}/invoices/{invoiceId}`. This structure allows for easy querying of a client's invoices and direct ownership. List operations are secured because access to invoices is tied to the client ID.  No denormalization is required here as access control is straightforward.\n*   **Categories and Products:** Categories are stored in `/categories/{categoryId}` and products are stored in `/categories/{categoryId}/products/{productId}`. Again, this facilitates direct querying and management of products within categories and vice versa. Listing products is restricted to those within a specific category, addressing QAPs without denormalization.\n\nThis design avoids `get()` calls in security rules by using path-based ownership for `Client`, `Invoice`, `Category` and `Product`. Each entity is directly accessible via its ID or the ID of its direct parent. This structure is highly secure and makes ownership-based security rules simple and efficient."
+    ]
+  },
+  "auth": {
+    "providers": ["password", "google.com"]
   }
 }

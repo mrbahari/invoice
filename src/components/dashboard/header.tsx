@@ -40,31 +40,29 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4 no-print">
       <div className="flex w-full items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold hidden md:block">{pageTitle}</h1>
-        </div>
+        <h1 className="text-xl font-bold hidden md:block shrink-0">{pageTitle}</h1>
 
-        <div className="flex-1 flex justify-center items-center gap-4">
-             <div className="relative flex-1 max-w-lg">
-                {showSearch && (
-                    <>
-                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="جستجو..."
-                        className="w-full rounded-lg bg-background pr-8"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    </>
-                )}
-            </div>
-            <div className="items-center gap-4 hidden lg:flex">
-                <LiveClock />
-            </div>
+        <div className="relative flex-1 max-w-lg">
+            {showSearch && (
+                <>
+                <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="جستجو..."
+                    className="w-full rounded-lg bg-background pr-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                </>
+            )}
         </div>
         
-        <UserNav />
+        <div className="flex items-center gap-4">
+            <div className="items-center gap-4 flex">
+                <LiveClock />
+            </div>
+            <UserNav />
+        </div>
       </div>
     </header>
   );

@@ -69,15 +69,16 @@
       "required": ["id", "name"]
     },
     "Unit": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Unit",
-        "type": "object",
-        "description": "Represents a unit of measurement for products.",
-        "properties": {
-            "name": { "type": "string", "description": "Name of the unit (e.g., 'kg', 'item')." },
-            "defaultQuantity": { "type": "number", "description": "Default conversion quantity." }
-        },
-        "required": ["name", "defaultQuantity"]
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Unit",
+      "type": "object",
+      "description": "Represents a unit of measurement for products.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "Name of the unit (e.g., 'kg', 'item')." },
+        "defaultQuantity": { "type": "number", "description": "Default conversion quantity." }
+      },
+      "required": ["id", "name", "defaultQuantity"]
     }
   },
   "auth": {

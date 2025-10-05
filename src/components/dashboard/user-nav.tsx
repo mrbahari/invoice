@@ -16,14 +16,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useUser } from '@/context/user-context';
-import { signOut, handleEmailPasswordAction, sendPasswordResetLink } from '@/app/auth/actions';
+import { signOut, handleSession, sendPasswordResetLink } from '@/app/auth/actions';
 import { AuthForm } from '../auth-form';
 import {
   signInWithPopup,
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { initializeFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import type { AuthFormValues } from '@/lib/definitions';
 
 
 export function UserNav() {
@@ -37,17 +41,8 @@ export function UserNav() {
       const result = await signInWithPopup(clientAuth, provider);
       const idToken = await result.user.getIdToken();
       
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create session');
-      }
+      await handleSession(idToken);
       
-      // Instead of redirecting, just refresh the router to update the server session
       router.refresh();
       
       return { success: true };
@@ -56,6 +51,42 @@ export function UserNav() {
       return { success: false, error: error.message };
     }
   };
+
+  const handleEmailPasswordAction = async (values: AuthFormValues, formType: 'login' | 'signup') => {
+    const { auth: clientAuth } = initializeFirebase();
+    const { email, password, firstName, lastName } = values;
+
+    if (!password) {
+        return { success: false, message: 'کلمه عبور الزامی است.' };
+    }
+
+    try {
+        let userCredential;
+        if (formType === 'signup') {
+            const displayName = `${firstName} ${lastName}`;
+            userCredential = await createUserWithEmailAndPassword(clientAuth, email, password);
+            await updateProfile(userCredential.user, { displayName });
+        } else {
+            userCredential = await signInWithEmailAndPassword(clientAuth, email, password);
+        }
+        
+        const idToken = await userCredential.user.getIdToken();
+        await handleSession(idToken);
+        
+        router.refresh();
+        return { success: true, message: 'عملیات موفقیت‌آمیز بود' };
+
+    } catch (error: any) {
+        let message = 'خطا در عملیات. لطفاً دوباره تلاش کنید.';
+        if (error.code === 'auth/email-already-in-use') {
+        message = 'این ایمیل قبلاً استفاده شده است.';
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'ایمیل یا کلمه عبور نامعتبر است.';
+        }
+        return { message, success: false };
+    }
+  };
+
 
   const handleSignOut = async () => {
     await signOut();

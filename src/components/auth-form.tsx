@@ -17,22 +17,16 @@ import { z } from 'zod';
 import { useActionState, useState, useEffect } from 'react';
 import type { AuthFormValues } from '@/lib/definitions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { RecaptchaVerifier } from 'firebase/auth';
 import { initializeFirebase } from '@/firebase';
 import { useUser } from '@/context/user-context';
 import { Loader2 } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createFirebaseAdminApp } from '@/firebase/admin-config';
-import { getAuth } from 'firebase-admin/auth';
-
 
 interface AuthFormProps {
   formType: 'login' | 'signup';
   onSubmit: (
-    state: any,
-    formData: FormData
+    values: AuthFormValues,
+    formType: 'login' | 'signup'
   ) => Promise<{ message: string; success: boolean }>;
   onGoogleSignIn: () => Promise<{ success: boolean; error?: string }>;
   onPasswordReset: (
@@ -61,6 +55,8 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
   const { user, isUserLoading } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState<'login' | 'signup' | 'forgot-password'>(initialFormType);
+  const [isPending, setIsPending] = useState(false);
+  const [formState, setFormState] = useState<{ message: string, success: boolean } | null>(null);
   
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -85,8 +81,6 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
     resolver: zodResolver(getSchema()),
   });
 
-  const [loginState, loginAction, isLoginPending] = useActionState(onSubmit, { message: '', success: false });
-  const [signupState, signupAction, isSignupPending] = useActionState(onSubmit, { message: '', success: false });
   const [resetState, resetAction, isResetPending] = useActionState(onPasswordReset, { message: '', success: false });
 
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -104,9 +98,16 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
   useEffect(() => {
     // Reset form fields and errors when tab changes
     reset();
+    setFormState(null);
   }, [currentTab, reset]);
   
-  const isPending = isLoginPending || isSignupPending || isResetPending;
+  const handleFormSubmit = async (data: AuthFormValues) => {
+    setIsPending(true);
+    setFormState(null);
+    const result = await onSubmit(data, currentTab as 'login' | 'signup');
+    setFormState(result);
+    setIsPending(false);
+  };
 
   const titles = {
     login: 'ورود به حساب کاربری',
@@ -162,7 +163,7 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
           </DialogHeader>
           <div className="px-6 pb-6">
             <TabsContent value="login">
-              <form action={loginAction} className="grid gap-4">
+              <form onSubmit={handleSubmit(handleFormSubmit)} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="email-login">ایمیل</Label>
                   <Input id="email-login" type="email" placeholder="m@example.com" {...register('email')} />
@@ -178,16 +179,16 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
                   <Input id="password-login" type="password" {...register('password')} />
                   {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
                 </div>
-                {loginState?.message && !isLoginPending && <p className={`text-sm text-center ${loginState.success ? 'text-green-600' : 'text-destructive'}`}>{loginState.message}</p>}
-                <Button type="submit" className="w-full" disabled={isLoginPending}>
-                  {isLoginPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                {formState?.message && !isPending && <p className={`text-sm text-center ${formState.success ? 'text-green-600' : 'text-destructive'}`}>{formState.message}</p>}
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                   {buttonLabels.login}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="signup">
-              <form action={signupAction} className="grid gap-4">
+              <form onSubmit={handleSubmit(handleFormSubmit)} className="grid gap-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="firstName">نام</Label>
@@ -211,9 +212,9 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
                   {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
                 </div>
                 <div id="recaptcha-container"></div>
-                {signupState?.message && !isSignupPending && <p className={`text-sm text-center ${signupState.success ? 'text-green-600' : 'text-destructive'}`}>{signupState.message}</p>}
-                <Button type="submit" className="w-full" disabled={isSignupPending}>
-                  {isSignupPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                {formState?.message && !isPending && <p className={`text-sm text-center ${formState.success ? 'text-green-600' : 'text-destructive'}`}>{formState.message}</p>}
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                   {buttonLabels.signup}
                 </Button>
               </form>

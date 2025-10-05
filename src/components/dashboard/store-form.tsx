@@ -145,7 +145,7 @@ const CategoryTree = ({
                           <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
                           <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                          <AlertDialogFooter>
                               <AlertDialogCancel>انصراف</AlertDialogCancel>
                               <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
                           </AlertDialogFooter>
@@ -154,7 +154,7 @@ const CategoryTree = ({
                   </div>
 
                   <AccordionTrigger
-                      className="p-2 flex-1 justify-end"
+                      className="p-2 flex-1 justify-end hover:no-underline"
                       onClick={(e) => {
                           if (!hasSubCategories) {
                             e.preventDefault();
@@ -608,7 +608,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogFooter>
                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                             <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
                         </AlertDialogFooter>
@@ -777,7 +777,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader><AlertDialogTitle>حذف همه دسته‌بندی‌ها</AlertDialogTitle><AlertDialogDescription>آیا مطمئن هستید که می‌خواهید تمام دسته‌بندی‌های این فروشگاه را حذف کنید؟ این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                            <AlertDialogFooter>
                                 <AlertDialogCancel>انصراف</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleDeleteAllCategories} className="bg-destructive hover:bg-destructive/90">حذف همه</AlertDialogAction>
                             </AlertDialogFooter>

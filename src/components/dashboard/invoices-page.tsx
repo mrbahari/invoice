@@ -219,16 +219,16 @@ export default function InvoicesPage({
                         key={invoice.id} 
                         className="flex flex-col justify-between"
                       >
-                        <CardHeader className="pb-4">
+                        <CardHeader className="pb-4 p-4 sm:p-6">
                           <div className="flex justify-between items-start">
                             <div className="grid gap-1">
-                              <CardTitle className="text-lg">{displayPhone}</CardTitle>
+                              <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
                               <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
                             </div>
                            
                           </div>
                         </CardHeader>
-                        <CardContent className="grid gap-2 text-sm">
+                        <CardContent className="grid gap-2 text-sm p-4 sm:p-6 pt-0">
                            <div className="flex justify-between">
                             <span className="text-muted-foreground">شماره فاکتور</span>
                             <span>{invoice.invoiceNumber}</span>
@@ -242,17 +242,17 @@ export default function InvoicesPage({
                             <span>{formatCurrency(invoice.total)}</span>
                           </div>
                         </CardContent>
-                        <CardFooter className="flex flex-row items-center justify-between pt-4">
+                        <CardFooter className="flex flex-row items-center justify-between pt-4 p-4 sm:p-6">
                             <button onClick={() => handleStatusChange(invoice.id, invoice.status)}>
                                 <Badge variant="outline" className={cn("text-xs font-mono cursor-pointer", statusStyles[invoice.status])}>
                                 {statusTranslation[invoice.status]}
                                 </Badge>
                             </button>
 
-                           <div className="flex items-center gap-1">
+                           <div className="flex items-center gap-0 sm:gap-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(invoice)}>
+                                    <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={() => handleEdit(invoice)}>
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -260,7 +260,7 @@ export default function InvoicesPage({
                                 </Tooltip>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handlePreview(invoice)}>
+                                    <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={() => handlePreview(invoice)}>
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -270,7 +270,7 @@ export default function InvoicesPage({
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                <Button variant="ghost" size="icon-sm" className="h-8 w-8 text-destructive hover:text-destructive">
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>

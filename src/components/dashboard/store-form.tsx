@@ -102,7 +102,7 @@ const CategoryTree = ({
 
 
   return (
-    <Accordion type="single" collapsible className="w-full space-y-2">
+    <Accordion type="single" collapsible className="w-full">
       {categories.map(cat => {
         const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
         const hasSubCategories = subCategories.length > 0;
@@ -110,38 +110,38 @@ const CategoryTree = ({
         const isAdding = addingToParentId === cat.id;
 
         return (
-          <AccordionItem key={cat.id} value={cat.id} className="border-b-0">
+          <AccordionItem key={cat.id} value={cat.id} className="border-b-0 mt-2">
             <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-               <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1">
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
+                        {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                </Tooltip>
+                 {!hasSubCategories && (
                   <Tooltip>
-                      <TooltipTrigger asChild>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>
-                          {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}
-                      </Button>
-                      </TooltipTrigger>
-                      <TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent>
+                    <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
+                            <PlusCircle className="w-4 h-4 text-green-600" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
                   </Tooltip>
-                  {!hasSubCategories && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}>
-                              <PlusCircle className="w-4 h-4 text-green-600" />
-                          </Button>
-                      </TooltipTrigger>
-                      <TooltipContent><p>افزودن زیردسته</p></TooltipContent>
-                    </Tooltip>
-                  )}
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                      <AlertDialogContent>
-                      <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
-                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                          <AlertDialogCancel>انصراف</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
-                      </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
+                )}
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
+                    <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                    </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
               </div>
               <AccordionTrigger
                 disabled={!hasSubCategories}
@@ -153,7 +153,7 @@ const CategoryTree = ({
                   </div>
               </AccordionTrigger>
             </div>
-            
+
             {editingCategoryId === cat.id ? (
               <div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8">
                 <Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} />
@@ -174,7 +174,7 @@ const CategoryTree = ({
                     <Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button>
                 </div>
             )}
-              
+
             <AccordionContent>
                 <div className="p-4 pt-2 border rounded-lg bg-muted/30 ml-2 mr-8 space-y-4">
                     <CategoryTree

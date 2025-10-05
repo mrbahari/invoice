@@ -39,31 +39,31 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4 no-print">
-      <div className="flex w-full items-center justify-between">
+      <div className="flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="hidden md:block">
-              <h1 className="text-xl font-bold">{pageTitle}</h1>
-          </div>
+            <h1 className="text-xl font-bold hidden md:block">{pageTitle}</h1>
+        </div>
+
+        <div className="flex-1 flex justify-center items-center gap-4">
+             <div className="relative flex-1 max-w-lg">
+                {showSearch && (
+                    <>
+                    <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="جستجو..."
+                        className="w-full rounded-lg bg-background pr-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    </>
+                )}
+            </div>
+            <div className="items-center gap-4 hidden lg:flex">
+                <LiveClock />
+            </div>
         </div>
         
-        <div className="relative ml-auto hidden flex-1 md:grow-0 sm:block">
-          {showSearch && (
-            <>
-              <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="جستجو..."
-                className="w-full rounded-lg bg-background pr-8 md:w-[200px] lg:w-[320px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </>
-          )}
-        </div>
-        
-         <div className="hidden sm:flex items-center gap-4 mr-4">
-          <LiveClock />
-        </div>
         <UserNav />
       </div>
     </header>

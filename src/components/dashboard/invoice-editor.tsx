@@ -527,7 +527,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       currentInvoice.items && currentInvoice.items.length > 0
         ? products.find((p) => p.id === currentInvoice.items![0].productId)
             ?.storeId || stores?.[0]?.id || ''
-        : stores?.[0]?.id || '';
+        : stores?.[0]?.id || ''
     
     setInvoice(currentInvoice);
     setStoreId(initialStoreId);
@@ -779,12 +779,18 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   
   const handleFinancialFieldChange = (
     field: 'discount' | 'additions' | 'tax',
-    setter: React.Dispatch<React.SetStateAction<string>>,
     value: string
   ) => {
     const numericValue = parseFormattedNumber(value);
+    const displayValue = value === '' ? '' : formatNumber(numericValue);
+    
+    switch(field) {
+        case 'discount': setDisplayDiscount(displayValue); break;
+        case 'additions': setDisplayAdditions(displayValue); break;
+        case 'tax': setDisplayTax(displayValue); break;
+    }
+
     setInvoice(prev => ({...prev, [field]: numericValue === '' ? 0 : numericValue}));
-    setter(value === '' ? '' : formatNumber(numericValue));
   };
 
   const handleProcessInvoice = (): string | null => {
@@ -905,7 +911,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogFooter>
                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                             <AlertDialogAction onClick={handleDeleteInvoice} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
                         </AlertDialogFooter>
@@ -1132,16 +1138,16 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                    <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', setDisplayDiscount, e.target.value)} className="font-mono" />
+                                    <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
                                 </div>
                                  <div className="grid gap-2">
                                     <Label htmlFor="additions">اضافات (ریال)</Label>
-                                    <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', setDisplayAdditions, e.target.value)} className="font-mono" />
+                                    <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                                <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', setDisplayTax, e.target.value)} className="font-mono" />
+                                <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
                             </div>
                             <Separator />
                             <div className="grid gap-2">

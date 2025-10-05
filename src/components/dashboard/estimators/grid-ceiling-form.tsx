@@ -90,7 +90,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
               <Input
                 id="length"
                 type="number"
-                placeholder="مثال: 8"
+                placeholder="مثال: ۸"
                 value={length}
                 onChange={handleInputChange(setLength)}
                 step="0.01"
@@ -101,7 +101,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
               <Input
                 id="width"
                 type="number"
-                placeholder="مثال: 4"
+                placeholder="مثال: ۴"
                 value={width}
                 onChange={handleInputChange(setWidth)}
                 step="0.01"

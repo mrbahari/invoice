@@ -119,7 +119,7 @@ export default function CustomerDetailPage({ customerId, onBack, onEdit, onInvoi
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orderCount}</div>
+            <div className="text-2xl font-bold">{orderCount.toLocaleString('fa-IR')}</div>
           </CardContent>
         </Card>
       </div>

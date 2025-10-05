@@ -67,8 +67,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [price, setPrice] = useState<number | ''>(product?.price ?? '');
   const [subUnitPrice, setSubUnitPrice] = useState<number | ''>(product?.subUnitPrice ?? '');
 
-  const [displayPrice, setDisplayPrice] = useState(product?.price ? formatNumber(product.price) : '');
-  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(product?.subUnitPrice ? formatNumber(product.subUnitPrice) : '');
+  const [displayPrice, setDisplayPrice] = useState(formatNumber(product?.price));
+  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(formatNumber(product?.subUnitPrice));
   
   const [storeId, setStoreId] = useState(product?.storeId || '');
   const [subCategoryId, setSubCategoryId] = useState(product?.subCategoryId || '');
@@ -77,7 +77,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
-  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(product?.subUnitQuantity ? formatNumber(product.subUnitQuantity) : '');
+  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity));
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState({
@@ -130,14 +130,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setPrice(numericValue);
-    setDisplayPrice(value === '' ? '' : formatNumber(numericValue));
+    setDisplayPrice(formatNumber(numericValue));
   };
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const numericValue = parseFormattedNumber(value);
     setSubUnitPrice(numericValue);
-    setDisplaySubUnitPrice(value === '' ? '' : formatNumber(numericValue));
+    setDisplaySubUnitPrice(formatNumber(numericValue));
 
     // Also update main price when sub unit price changes
     const subUnitQtyNum = Number(subUnitQuantity);
@@ -152,7 +152,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const value = e.target.value;
       const numericValue = parseFormattedNumber(value);
       setSubUnitQuantity(numericValue);
-      setDisplaySubUnitQuantity(value === '' ? '' : formatNumber(numericValue));
+      setDisplaySubUnitQuantity(formatNumber(numericValue));
   };
   
   const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -352,7 +352,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogFooter>
                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                             <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
                         </AlertDialogFooter>

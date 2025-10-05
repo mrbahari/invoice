@@ -74,7 +74,7 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
               <Input
                 id="length"
                 type="number"
-                placeholder="مثال: 15"
+                placeholder="مثال: ۱۵"
                 value={length}
                 onChange={handleInputChange(setLength)}
                 step="0.01"

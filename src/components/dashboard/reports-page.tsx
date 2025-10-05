@@ -232,7 +232,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{paidInvoiceCount}</div>
+              <div className="text-2xl font-bold">+{paidInvoiceCount.toLocaleString('fa-IR')}</div>
                <p className="text-xs text-muted-foreground">
                 تعداد فاکتورهای پرداخت شده در این دوره
               </p>
@@ -246,7 +246,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
               <Hourglass className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{unpaidInvoiceCount}</div>
+              <div className="text-2xl font-bold">+{unpaidInvoiceCount.toLocaleString('fa-IR')}</div>
               <p className="text-xs text-muted-foreground">
                 فاکتورهای در انتظار و سررسید گذشته
               </p>
@@ -260,7 +260,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{customerCount}</div>
+              <div className="text-2xl font-bold">+{customerCount.toLocaleString('fa-IR')}</div>
               <p className="text-xs text-muted-foreground">
                 مشتریانی که در این دوره خرید کرده‌اند
               </p>

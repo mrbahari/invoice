@@ -413,8 +413,8 @@ export default function ProductsPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            نمایش <strong>{productsToShow.length}</strong> از{' '}
-            <strong>{sortedAndFilteredProducts.length}</strong> محصول
+            نمایش <strong>{productsToShow.length.toLocaleString('fa-IR')}</strong> از{' '}
+            <strong>{sortedAndFilteredProducts.length.toLocaleString('fa-IR')}</strong> محصول
           </div>
         </CardFooter>
       </Card>

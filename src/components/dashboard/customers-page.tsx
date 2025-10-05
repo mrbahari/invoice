@@ -227,7 +227,7 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-center">
-                      {orderCount}
+                      {orderCount.toLocaleString('fa-IR')}
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-left">
                       {formatCurrency(totalSpent)}
@@ -259,8 +259,8 @@ export default function CustomersPage() {
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>{filteredCustomers.length}</strong> از{' '}
-          <strong>{customerList?.length || 0}</strong> مشتریان
+          نمایش <strong>{filteredCustomers.length.toLocaleString('fa-IR')}</strong> از{' '}
+          <strong>{(customerList?.length || 0).toLocaleString('fa-IR')}</strong> مشتریان
         </div>
       </CardFooter>
     </Card>

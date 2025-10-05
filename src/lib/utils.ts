@@ -69,9 +69,9 @@ export function getStorePrefix(storeName: string): string {
   return 'INV';
 }
 
-export const formatNumber = (num: number | ''): string => {
-    if (num === '' || num === null || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR').format(Number(num));
+export const formatNumber = (num: number | '' | null | undefined): string => {
+    if (num === '' || num === null || num === undefined || isNaN(Number(num))) return '';
+    return new Intl.NumberFormat('fa-IR', { useGrouping: false }).format(Number(num));
 };
   
 export const parseFormattedNumber = (str: string): number | '' => {

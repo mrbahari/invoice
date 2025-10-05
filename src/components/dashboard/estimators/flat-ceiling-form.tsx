@@ -99,7 +99,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
               <Input
                 id="length"
                 type="number"
-                placeholder="مثال: 5"
+                placeholder="مثال: ۵"
                 value={length}
                 onChange={handleInputChange(setLength)}
                 step="0.01"
@@ -110,7 +110,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
               <Input
                 id="width"
                 type="number"
-                placeholder="مثال: 4"
+                placeholder="مثال: ۴"
                 value={width}
                 onChange={handleInputChange(setWidth)}
                 step="0.01"

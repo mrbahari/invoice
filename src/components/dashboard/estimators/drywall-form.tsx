@@ -117,7 +117,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
                   <Input
                     id="length"
                     type="number"
-                    placeholder="مثال: 3.20"
+                    placeholder="مثال: ۳.۲۰"
                     value={length}
                     onChange={handleInputChange(setLength)}
                     step="0.01"
@@ -128,7 +128,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
                   <Input
                     id="height"
                     type="number"
-                    placeholder="مثال: 2.80"
+                    placeholder="مثال: ۲.۸۰"
                     value={height}
                     onChange={handleInputChange(setHeight)}
                     step="0.01"

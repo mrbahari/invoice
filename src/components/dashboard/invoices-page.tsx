@@ -54,7 +54,7 @@ export default function InvoicesPage({
   initialInvoice,
   setInitialInvoice,
 }: InvoicesPageProps) {
-  const { data, setData } = useData();
+  const { data, updateDocument, deleteDocument } = useData();
   const { customers, invoices: allInvoices } = data;
   const { searchTerm, setSearchVisible } = useSearch();
 
@@ -107,23 +107,15 @@ export default function InvoicesPage({
 
   const handleDelete = useCallback(
     (invoiceId: string) => {
-      setData((prev) => ({
-        ...prev,
-        invoices: prev.invoices.filter((inv) => inv.id !== invoiceId),
-      }));
+      deleteDocument('invoices', invoiceId);
       setView({ type: 'list' });
     },
-    [setData]
+    [deleteDocument]
   );
   
   const handleStatusChange = (invoiceId: string, currentStatus: InvoiceStatus) => {
     const newStatus = currentStatus === 'Paid' ? 'Pending' : 'Paid';
-    setData(prev => ({
-        ...prev,
-        invoices: prev.invoices.map(inv => 
-            inv.id === invoiceId ? { ...inv, status: newStatus } : inv
-        )
-    }));
+    updateDocument('invoices', invoiceId, { status: newStatus });
   };
 
   const handleSaveSuccess = useCallback(() => {

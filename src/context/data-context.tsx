@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
@@ -5,9 +6,13 @@ import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, To
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/context/user-context';
 import { useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getFirestore, DocumentReference } from 'firebase/firestore';
+import { collection, doc, writeBatch, getFirestore, DocumentReference, addDoc, updateDoc, deleteDoc, getDocs, query } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import defaultDb from '@/database/defaultdb.json';
+
+type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
+type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
 
 interface AppData {
   products: Product[];
@@ -21,17 +26,17 @@ interface AppData {
 
 interface DataContextType {
   data: AppData;
-  setData: (newData: AppData) => Promise<void>;
   isInitialized: boolean;
-  isResetting: boolean; // Retained for API compatibility if needed
-  LOCAL_STORAGE_KEY: string; // Retained for API compatibility
-  resetData: () => Promise<void>; // To be implemented with Firestore
-  clearAllData: () => Promise<void>; // To be implemented with Firestore
+  addDocument: <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => Promise<string | undefined>;
+  updateDocument: (collectionName: CollectionName, docId: string, data: Partial<Document>) => Promise<void>;
+  deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
+  setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
+  resetData: (dataToLoad?: any) => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export const LOCAL_STORAGE_KEY = 'hesabgar-app-data-firestore'; // Can be used for local settings if needed
+const DataContext = createContext<DataContextType | undefined>(undefined);
 
 const emptyData: AppData = {
   products: [],
@@ -60,6 +65,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const invoicesRef = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
+  const collectionRefs = useMemo(() => ({
+    products: productsRef,
+    categories: categoriesRef,
+    stores: storesRef,
+    units: unitsRef,
+    customers: customersRef,
+    invoices: invoicesRef,
+  }), [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
 
   // Fetch collections from Firestore
   const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsRef);
@@ -81,8 +94,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading;
     
-    if (!isDataLoading) {
-      // Set local data from a combination of global and user-specific collections
+    if (!isDataLoading && user) {
       setLocalData({
         products: productsData || [],
         categories: categoriesData || [],
@@ -93,72 +105,164 @@ export function DataProvider({ children }: { children: ReactNode }) {
         toolbarPositions: localData.toolbarPositions, // Persist this locally for now
       });
       setIsSynced(true);
+    } else if (!user && !isUserLoading) {
+      // When user logs out, we should also be considered "synced" with an empty state
+      setLocalData(emptyData);
+      setIsSynced(true);
     }
   }, [
+    user, isUserLoading,
     productsData, categoriesData, storesData, unitsData, customersData, invoicesData,
     productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading,
     localData.toolbarPositions // Keep this dependency
   ]);
 
-  const setData = async (newData: AppData) => {
-    if (!user) {
+  const addDocument = useCallback(async <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => {
+    const ref = collectionRefs[collectionName];
+    if (!ref) {
       toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
       return;
     }
     
-    const oldData = localData;
-    setLocalData(newData); // Optimistic update
+    try {
+      const docRef = await addDoc(ref, data);
+      setLocalData(prev => ({
+        ...prev,
+        [collectionName]: [...prev[collectionName], { id: docRef.id, ...data }],
+      }));
+      return docRef.id;
+    } catch (error) {
+      console.error(`Failed to add document to ${collectionName}:`, error);
+      toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی' });
+    }
+  }, [collectionRefs, toast]);
+
+  const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, data: Partial<Document>) => {
+    const ref = collectionRefs[collectionName];
+     if (!ref) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
+      return;
+    }
+    
+    const docRef = doc(ref, docId);
+    
+    // Optimistic update
+    const oldData = { ...localData };
+    setLocalData(prev => ({
+      ...prev,
+      [collectionName]: prev[collectionName].map(item =>
+        item.id === docId ? { ...item, ...data } : item
+      ),
+    }));
 
     try {
-      const batch = writeBatch(firestore);
-      
-      const collectionsToUpdate: { name: keyof AppData, ref: DocumentReference | null }[] = [
-          { name: 'customers', ref: customersRef },
-          { name: 'invoices', ref: invoicesRef },
-          { name: 'units', ref: unitsRef },
-          { name: 'stores', ref: storesRef },
-      ];
-
-      for (const { name, ref } of collectionsToUpdate) {
-        if (!ref) continue;
-        const localItems = (newData as any)[name] as { id: string }[];
-        const firestoreItems = (oldData as any)[name] as { id: string }[];
-
-        // Items to add/update
-        localItems.forEach(item => {
-          if (item.id) { // Ensure item.id is not empty
-            batch.set(doc(ref, item.id), item);
-          }
-        });
-
-        // Items to delete
-        const localIds = new Set(localItems.map(item => item.id));
-        firestoreItems.forEach(item => {
-          if (item.id && !localIds.has(item.id)) { // Ensure item.id is not empty
-            batch.delete(doc(ref, item.id));
-          }
-        });
-      }
-      
-      await batch.commit();
-
+      await updateDoc(docRef, data);
     } catch (error) {
-      console.error("Failed to save data to Firestore:", error);
-      toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی', description: 'اطلاعات در سرور ذخیره نشد.'});
-      setLocalData(oldData); // Revert optimistic update on failure
+      console.error(`Failed to update document in ${collectionName}:`, error);
+      toast({ variant: 'destructive', title: 'خطا در به‌روزرسانی' });
+      setLocalData(oldData); // Revert on failure
     }
-  };
+  }, [collectionRefs, toast, localData]);
+
+  const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
+    const ref = collectionRefs[collectionName];
+    if (!ref) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره اطلاعات باید وارد شوید.'});
+      return;
+    }
+    const docRef = doc(ref, docId);
+
+    // Optimistic update
+    const oldData = { ...localData };
+    setLocalData(prev => ({
+      ...prev,
+      [collectionName]: prev[collectionName].filter(item => item.id !== docId),
+    }));
+
+    try {
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error(`Failed to delete document from ${collectionName}:`, error);
+      toast({ variant: 'destructive', title: 'خطا در حذف' });
+      setLocalData(oldData); // Revert on failure
+    }
+  }, [collectionRefs, toast, localData]);
+  
+  const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
+    // This is a local-only operation for now to improve performance.
+    // A full implementation would debounce writes to Firestore.
+    setLocalData(prev => ({
+      ...prev,
+      toolbarPositions: {
+        ...prev.toolbarPositions,
+        [pageKey]: position,
+      },
+    }));
+  }, []);
+
+  const clearAllUserData = useCallback(async () => {
+    if (!user) return;
+    const batch = writeBatch(firestore);
+    const collectionsToDelete: (CollectionReference | null)[] = [storesRef, unitsRef, customersRef, invoicesRef];
+
+    for (const ref of collectionsToDelete) {
+        if (ref) {
+            const q = query(ref);
+            const snapshot = await getDocs(q);
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        }
+    }
+    await batch.commit();
+  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
+
+  const loadDataBatch = useCallback(async (dataToLoad: AppData) => {
+    if (!user) return;
+    const batch = writeBatch(firestore);
+    
+    const collectionsToLoad: {name: CollectionName, ref: CollectionReference | null, data: any[]}[] = [
+        {name: 'stores', ref: storesRef, data: dataToLoad.stores},
+        {name: 'units', ref: unitsRef, data: dataToLoad.units},
+        {name: 'customers', ref: customersRef, data: dataToLoad.customers},
+        {name: 'invoices', ref: invoicesRef, data: dataToLoad.invoices},
+        // Global collections - Note: This might be restricted by security rules
+        // {name: 'products', ref: productsRef, data: dataToLoad.products},
+        // {name: 'categories', ref: categoriesRef, data: dataToLoad.categories},
+    ];
+
+    for (const { ref, data } of collectionsToLoad) {
+        if (ref && data) {
+            data.forEach((item: Document) => {
+                const docRef = doc(ref, item.id);
+                batch.set(docRef, item);
+            });
+        }
+    }
+    await batch.commit();
+  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef]);
+
+  const resetData = useCallback(async (dataToLoad: any = defaultDb) => {
+    await clearAllUserData();
+    await loadDataBatch(dataToLoad);
+    toast({ variant: 'success', title: 'بازنشانی موفق', description: 'اطلاعات با موفقیت بازنشانی شد.' });
+  }, [clearAllUserData, loadDataBatch, toast]);
+
+  const clearAllData = useCallback(async () => {
+    await clearAllUserData();
+    toast({ variant: 'success', title: 'اطلاعات پاک شد', description: 'تمام داده‌های شما با موفقیت حذف شد.' });
+  }, [clearAllUserData, toast]);
+
 
   const isInitialized = !isUserLoading && isSynced;
 
   const value = {
     data: localData,
-    setData,
     isInitialized,
-    isResetting: false, // Placeholder
-    LOCAL_STORAGE_KEY: 'unused', // Placeholder
-    resetData: async () => {}, // Placeholder
-    clearAllData: async () => {}, // Placeholder
+    addDocument,
+    updateDocument,
+    deleteDocument,
+    setToolbarPosition,
+    resetData,
+    clearAllData,
   };
   
   if (!isInitialized && isUserLoading) {

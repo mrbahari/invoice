@@ -17,7 +17,7 @@ type FloatingToolbarProps = {
 const defaultPosition = { x: 20, y: 80 };
 
 export function FloatingToolbar({ children, className, pageKey }: FloatingToolbarProps) {
-  const { data, setData } = useData();
+  const { data, setToolbarPosition } = useData();
   const { toolbarPositions } = data;
   const draggableToolbarRef = useRef<HTMLDivElement>(null);
   
@@ -43,13 +43,7 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
       if (y + toolbarHeight > innerHeight - footerHeight) { y = innerHeight - footerHeight - toolbarHeight; positionChanged = true; }
       
       if (positionChanged) {
-        setData(currentData => ({
-          ...currentData,
-          toolbarPositions: {
-            ...currentData.toolbarPositions,
-            [pageKey]: { x, y }
-          }
-        }));
+        setToolbarPosition(pageKey, { x, y });
       }
     };
 
@@ -57,7 +51,7 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
     handleResize(); // Initial check
 
     return () => window.removeEventListener('resize', handleResize);
-  }, [data.toolbarPositions, pageKey, setData]);
+  }, [data.toolbarPositions, pageKey, setToolbarPosition]);
 
   const handleStop = (e: DraggableEvent, dragData: DraggableData) => {
     const { innerHeight } = window;
@@ -69,13 +63,7 @@ export function FloatingToolbar({ children, className, pageKey }: FloatingToolba
       y = innerHeight - footerHeight - dragData.node.clientHeight;
     }
 
-    setData(prev => ({
-        ...prev,
-        toolbarPositions: {
-            ...prev.toolbarPositions,
-            [pageKey]: { x: dragData.x, y }
-        }
-    }));
+    setToolbarPosition(pageKey, { x: dragData.x, y });
   };
 
   if (!children) {

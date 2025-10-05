@@ -44,7 +44,7 @@ const colorThemes = [
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, resetData, isResetting, LOCAL_STORAGE_KEY, clearAllData } = useData();
+  const { data, addDocument, deleteDocument, resetData, clearAllData } = useData();
   const { setSearchVisible } = useSearch();
   const { units = [] } = data; // Use default empty array to prevent error
 
@@ -54,6 +54,8 @@ export default function SettingsPage() {
   
   const isDuplicate = newUnitName.trim() !== '' && units.some(u => u.name === newUnitName.trim());
   const isInputEmpty = newUnitName.trim() === '';
+  const [isProcessing, setIsProcessing] = useState(false);
+
 
   useEffect(() => {
     setSearchVisible(false);
@@ -91,14 +93,14 @@ export default function SettingsPage() {
   }, [theme, activeColor]);
 
 
-  const handleAddUnit = () => {
+  const handleAddUnit = async () => {
     const name = newUnitName.trim();
 
     if (name === '' || isDuplicate) {
         return;
     }
     
-    setData({...data, units: [...units, { name, defaultQuantity: 1 }]});
+    await addDocument('units', { name, defaultQuantity: 1 });
     setNewUnitName('');
   };
 
@@ -109,16 +111,20 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteUnit = (unitNameToDelete: string) => {
-    setData({...data, units: units.filter(u => u.name !== unitNameToDelete)});
+  const handleDeleteUnit = async (unitId: string) => {
+    await deleteDocument('units', unitId);
   };
 
   const handleClearData = async () => {
+    setIsProcessing(true);
     await clearAllData();
+    setIsProcessing(false);
   };
   
   const handleLoadDefaults = async () => {
+    setIsProcessing(true);
     await resetData();
+    setIsProcessing(false);
   };
 
   const handleBackupData = () => {
@@ -147,7 +153,7 @@ export default function SettingsPage() {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
@@ -155,15 +161,8 @@ export default function SettingsPage() {
         }
         const restoredData = JSON.parse(text);
         
-        setData({
-            customers: restoredData.customers || [],
-            products: restoredData.products || [],
-            invoices: restoredData.invoices || [],
-            stores: restoredData.stores || [],
-            categories: restoredData.categories || [],
-            units: restoredData.units || [],
-            toolbarPositions: restoredData.toolbarPositions || {},
-        });
+        // Use the new resetData function with the restored data
+        await resetData(restoredData);
           
       } catch (error) {
         console.error("Error restoring data:", error);
@@ -231,12 +230,12 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-            <Button onClick={handleBackupData} variant="outline" disabled={isResetting}>
+            <Button onClick={handleBackupData} variant="outline" disabled={isProcessing}>
                 <Download className="ml-2 h-4 w-4" />
                 دانلود فایل پشتیبان (Backup)
             </Button>
             <div>
-              <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isResetting}>
+              <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isProcessing}>
                 <Upload className="ml-2 h-4 w-4" />
                 بازیابی از فایل (Restore)
               </Button>
@@ -259,10 +258,10 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {isResetting ? (
+          {isProcessing ? (
              <div className="flex items-center justify-center p-4 min-h-[160px]">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <p className="mr-4 text-muted-foreground">در حال بازنشانی اطلاعات...</p>
+                <p className="mr-4 text-muted-foreground">در حال پردازش...</p>
             </div>
           ) : (
             <>
@@ -275,7 +274,7 @@ export default function SettingsPage() {
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isResetting}>
+                    <Button variant="destructive" disabled={isProcessing}>
                         <Trash2 className='ml-2 h-4 w-4' />
                         پاک کردن اطلاعات
                     </Button>
@@ -298,12 +297,12 @@ export default function SettingsPage() {
                 <div>
                   <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
                   <p className="text-sm text-muted-foreground">
-                    اطلاعات فعلی با داده‌های اولیه برنامه (فایل mb.json) جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
+                    اطلاعات فعلی با داده‌های اولیه برنامه جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
                   </p>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" disabled={isResetting}>
+                    <Button variant="outline" disabled={isProcessing}>
                         <RefreshCw className='ml-2 h-4 w-4' />
                         بارگذاری پیش‌فرض
                     </Button>

@@ -41,7 +41,7 @@ type CustomerFormProps = {
 
 export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) {
   const isEditMode = !!customer;
-  const { data, setData } = useData();
+  const { addDocument, updateDocument, deleteDocument } = useData();
 
   const [name, setName] = useState(
     isEditMode && customer?.name === 'مشتری بدون نام' ? '' : customer?.name || ''
@@ -83,11 +83,10 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
 
     if (isEditMode && customer) {
       const updatedData = buildCustomerData();
-       setData({ ...data, customers: data.customers.map(c => c.id === customer.id ? { ...c, ...updatedData } : c) });
+       await updateDocument('customers', customer.id, updatedData);
     } else {
-      const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
-      const newData = { ...buildCustomerData(), id: newId };
-      setData({ ...data, customers: [newData, ...data.customers] });
+      const newData = { ...buildCustomerData() };
+      await addDocument('customers', newData);
     }
     
     setIsProcessing(false);
@@ -98,9 +97,8 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     if (!validateForm()) return;
     
     setIsProcessing(true);
-    const newId = `cust-${Math.random().toString(36).substr(2, 9)}`;
-    const newData = { ...buildCustomerData(), id: newId };
-    setData({ ...data, customers: [newData, ...data.customers] });
+    const newData = buildCustomerData();
+    await addDocument('customers', newData);
     
     setIsProcessing(false);
     onSave();
@@ -110,7 +108,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     if (!customer) return;
 
     setIsProcessing(true);
-    setData({ ...data, customers: data.customers.filter(c => c.id !== customer.id) });
+    await deleteDocument('customers', customer.id);
 
     setIsProcessing(false);
     onSave();

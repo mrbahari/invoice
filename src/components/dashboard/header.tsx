@@ -23,7 +23,8 @@ const tabToNameMapping: Record<DashboardTab, string> = {
 const showSearchTabs: DashboardTab[] = [
   'products',
   'categories',
-  'customers'
+  'customers',
+  'invoices',
 ];
 
 interface HeaderProps {

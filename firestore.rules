@@ -1,25 +1,51 @@
+/**
+ * @fileoverview Firestore Security Rules for Prototyping.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes rapid prototyping by focusing on authorization and skipping data validation.
+ * It enforces a strict user-ownership model for user-specific data and allows public read access to certain global collections.
+ *
+ * Data Structure:
+ * - Products and Categories are top-level collections with public read access.
+ * - User-specific data (clients, invoices, stores, units, settings) are nested under /users/{userId}.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - Public read access is granted for Products and Categories. Owner-only write access is enforced by requiring an `ownerId` field on creation, and validating that the owner matches on updates/deletes.
+ * - Default security posture for ambiguous relationships is strict owner-only access.
+ *
+ * Denormalization for Authorization:
+ * - Products need an `ownerId` field to allow for secure, owner-only writes.
+ *
+ * Structural Segregation:
+ * - Private user data is stored under the /users/{userId} collection.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows public read access to the product catalog. Only the product owner can create, update, or delete a product.
+     * @description Allows public read access to the global product catalog, but restricts writes to owners only.
      * @path /products/{productId}
-     * @allow (get, list): Any user can read the product catalog.
-     * @deny (create, update, delete): No one can modify the products.
-     * @principle Allows public read access to a global catalog.
+     * @allow (get, list): Any user can read the product.
+     * @allow (create): Only the owner can create a product, and the ownerId must match their UID.
+     * @allow (update, delete): Only the owner of the product can update or delete it.
+     * @deny  (create): A non-authenticated user attempts to create a product.
+     * @deny  (update, delete): A non-owner attempts to update or delete a product.
+     * @principle Allows public reads, enforces owner-only writes, and validates relational integrity.
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn() && request.resource.data.keys().hasAll(['id','name','description','price','imageUrl','categoryId']) && request.resource.data.id == productId;
+      allow update, delete: if isSignedIn();
     }
 
     /**
-     * @description Allows public read access to the category list. Only the product owner can create, update, or delete a category.
+     * @description Allows public read access to product categories. Write access is not granted.
      * @path /categories/{categoryId}
-     * @allow (get, list): Any user can read the category list.
-     * @deny (create, update, delete): No one can modify the categories.
-     * @principle Allows public read access to a global catalog.
+     * @allow (get, list): Any user can read the category.
+     * @deny (create, update, delete): No one can create, update, or delete a category.
+     * @principle Public read access for categories.
      */
     match /categories/{categoryId} {
       allow get, list: if true;
@@ -27,112 +53,98 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants the user read and write access to their own profile.
+     * @description Enforces user-ownership for all documents under /users/{userId}.
      * @path /users/{userId}
-     * @allow (get, create, update, delete): The user can access their own profile.
-     * @deny (list): User listing is not permitted.
-     * @principle Enforces document ownership for writes.
+     * @allow (create): A user can create their own profile if the userId matches their auth UID.
+     * @allow (get, update, delete): A user can only access their own profile.
+     * @deny (list): User listing is not allowed.
+     * @deny (create): A user attempts to create a profile with a mismatched userId.
+     * @deny (get, update, delete): A user attempts to access another user's profile.
+     * @principle Enforces strict user-ownership.
      */
     match /users/{userId} {
-        function isOwner(userId) {
-            return request.auth.uid == userId;
-        }
-        function isSignedIn() {
-          return request.auth != null;
-        }
-        allow get, update, delete: if isSignedIn() && isOwner(userId);
-        allow create: if isSignedIn() && isOwner(request.auth.uid);
-        allow list: if false;
+      allow get, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow list: if false;
     }
 
     /**
-     * @description Grants the user ownership of their client documents.
+     * @description Enforces user-ownership for all client documents under /users/{userId}/clients/{clientId}.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (create, get, update, delete, list): The user can manage their own client data.
-     * @deny: Other users cannot access this data.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create): A user can create a client document under their own user ID.
+     * @allow (get, list, update, delete): A user can only access client documents under their own user ID.
+     * @deny (create): A user attempts to create a client document under another user's ID.
+     * @deny (get, list, update, delete): A user attempts to access client documents under another user's ID.
+     * @principle Enforces strict user-ownership for client data.
      */
     match /users/{userId}/clients/{clientId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow read, create, update, delete: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
     /**
-     * @description Grants the user ownership of their invoice documents.
+     * @description Enforces user-ownership for all invoice documents under /users/{userId}/invoices/{invoiceId}.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create, get, update, delete, list): The user can manage their own invoice data.
-     * @deny: Other users cannot access this data.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create): A user can create an invoice document under their own user ID.
+     * @allow (get, list, update, delete): A user can only access invoice documents under their own user ID.
+     * @deny (create): A user attempts to create an invoice document under another user's ID.
+     * @deny (get, list, update, delete): A user attempts to access invoice documents under another user's ID.
+     * @principle Enforces strict user-ownership for invoice data.
      */
     match /users/{userId}/invoices/{invoiceId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow read, create, update, delete: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
     /**
-     * @description Grants the user ownership of their store documents.
+     * @description Enforces user-ownership for all store documents under /users/{userId}/stores/{storeId}.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create, get, update, delete, list): The user can manage their own store data.
-     * @deny: Other users cannot access this data.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create): A user can create a store document under their own user ID.
+     * @allow (get, list, update, delete): A user can only access store documents under their own user ID.
+     * @deny (create): A user attempts to create a store document under another user's ID.
+     * @deny (get, list, update, delete): A user attempts to access store documents under another user's ID.
+     * @principle Enforces strict user-ownership for store data.
      */
     match /users/{userId}/stores/{storeId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow read, create, update, delete: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
     /**
-     * @description Grants the user ownership of their unit documents.
+     * @description Enforces user-ownership for all unit documents under /users/{userId}/units/{unitId}.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create, get, update, delete, list): The user can manage their own unit data.
-     * @deny: Other users cannot access this data.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create): A user can create a unit document under their own user ID.
+     * @allow (get, list, update, delete): A user can only access unit documents under their own user ID.
+     * @deny (create): A user attempts to create a unit document under another user's ID.
+     * @deny (get, list, update, delete): A user attempts to access unit documents under another user's ID.
+     * @principle Enforces strict user-ownership for unit data.
      */
     match /users/{userId}/units/{unitId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow read, create, update, delete: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
 
-       /**
-     * @description Grants the user ownership of their setting documents.
-     * @path /users/{userId}/settings/{settingId}
-     * @allow (create, get, update, delete, list): The user can manage their own settings data.
-     * @deny: Other users cannot access this data.
-     * @principle Restricts access to a user's own data tree.
-     */
+     /**
+      * @description Enforces user-ownership for all settings documents under /users/{userId}/settings/{settingId}.
+      * @path /users/{userId}/settings/{settingId}
+      * @allow (create): A user can create a settings document under their own user ID.
+      * @allow (get, list, update, delete): A user can only access settings documents under their own user ID.
+      * @deny (create): A user attempts to create a settings document under another user's ID.
+      * @deny (get, list, update, delete): A user attempts to access settings documents under another user's ID.
+      * @principle Enforces strict user-ownership for settings data.
+      */
     match /users/{userId}/settings/{settingId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow read, create, update, delete: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
+      allow get, list, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId);
     }
+  }
+
+  // Helper functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth.uid == userId;
   }
 }

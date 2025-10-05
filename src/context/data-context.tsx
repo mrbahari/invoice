@@ -291,8 +291,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
         }
     }
+    // Safely reset the toolbar positions by setting it to an empty object
+    // This avoids a delete operation on a potentially non-existent document
     if (toolbarPosRef) {
-      batch.delete(toolbarPosRef);
+        batch.set(toolbarPosRef, {});
     }
 
     try {

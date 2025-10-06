@@ -316,14 +316,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
-    if (!user || !firestore) return;
+    if (!firestore) return;
     const batch = writeBatch(firestore);
     
-    // This function should only restore user-specific collections.
-    // Public collections like 'products' and 'categories' are managed centrally.
     const collectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
-        // { ref: productsRef, data: dataToLoad.products }, // DO NOT RESTORE
-        // { ref: categoriesRef, data: dataToLoad.categories }, // DO NOT RESTORE
+        { ref: productsRef, data: dataToLoad.products },
+        { ref: categoriesRef, data: dataToLoad.categories },
         { ref: storesRef, data: dataToLoad.stores },
         { ref: unitsRef, data: dataToLoad.units },
         { ref: customersRef, data: dataToLoad.customers },
@@ -336,6 +334,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 if (item.id && typeof item.id === 'string') {
                     const docRef = doc(ref, item.id);
                     batch.set(docRef, item);
+                } else {
+                    // If item has no ID, create a new doc in the collection
+                    const newDocRef = doc(ref);
+                    batch.set(newDocRef, item);
                 }
             });
         }
@@ -355,7 +357,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }, [firestore, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;

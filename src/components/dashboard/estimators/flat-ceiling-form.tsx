@@ -29,41 +29,60 @@ interface CutResult {
 
 /**
  * Calculates how many profiles are needed and the total waste.
+ * This version correctly handles pieces longer than the stock length.
  * @param count - Number of pieces to cut.
  * @param length - The required length of each piece.
  * @param stockLength - The length of the stock material (e.g., F47 profile).
  * @returns Object with pieces needed, total waste, and cut list.
  */
 function calculateProfileCuts(count: number, length: number, stockLength: number): CutResult {
-  if (length <= 0 || count <= 0) return { pieces: 0, waste: 0, cuts: [] };
-
-  const piecesPerStock = Math.floor(stockLength / length);
-  if (piecesPerStock === 0) { // Required length is longer than stock length
-      const piecesNeeded = count;
-      const totalWaste = piecesNeeded * (stockLength - length); // This case seems unlikely in reality but handled.
-      const cuts = Array.from({ length: count }, (_, i) => ({ piece: i + 1, length, from: i + 1 }));
-      return { pieces: piecesNeeded, waste: totalWaste, cuts };
+  if (length <= 0 || count <= 0) {
+    return { pieces: 0, waste: 0, cuts: [] };
   }
 
-  const pieces = Math.ceil(count / piecesPerStock);
-  const totalLengthUsed = count * length;
-  const totalStockLength = pieces * stockLength;
-  const waste = totalStockLength - totalLengthUsed;
+  let totalPiecesNeeded = 0;
+  const cuts: { piece: number; length: number; from: number }[] = [];
 
-  const cuts = [];
-  let currentStock = 1;
-  let remainingLengthInStock = stockLength;
-  for (let i = 1; i <= count; i++) {
-    if (remainingLengthInStock < length) {
-      currentStock++;
-      remainingLengthInStock = stockLength;
+  if (length > stockLength) {
+    // Handle lengths greater than stock length
+    const numFullStocksPerPiece = Math.floor(length / stockLength);
+    const remainingLength = length % stockLength;
+
+    totalPiecesNeeded = numFullStocksPerPiece * count;
+    
+    if (remainingLength > 0) {
+        const { pieces: remainingPieces } = calculateProfileCuts(count, remainingLength, stockLength);
+        totalPiecesNeeded += remainingPieces;
     }
-    cuts.push({ piece: i, length, from: currentStock });
-    remainingLengthInStock -= length;
+     // Simplified cut list for this complex case
+    for (let i = 1; i <= count; i++) {
+        cuts.push({ piece: i, length, from: i });
+    }
+
+  } else {
+    // Original logic for lengths smaller than or equal to stock length
+    const piecesPerStock = Math.floor(stockLength / length);
+    totalPiecesNeeded = Math.ceil(count / piecesPerStock);
+    
+    let currentStock = 1;
+    let remainingLengthInStock = stockLength;
+    for (let i = 1; i <= count; i++) {
+      if (remainingLengthInStock < length) {
+        currentStock++;
+        remainingLengthInStock = stockLength;
+      }
+      cuts.push({ piece: i, length, from: currentStock });
+      remainingLengthInStock -= length;
+    }
   }
 
-  return { pieces, waste, cuts };
+  const totalStockLengthUsed = totalPiecesNeeded * stockLength;
+  const totalLengthUsed = count * length;
+  const waste = totalStockLengthUsed - totalLengthUsed;
+
+  return { pieces: totalPiecesNeeded, waste, cuts };
 }
+
 
 interface PanelLayout {
   panelsNeeded: number;
@@ -82,8 +101,6 @@ function calculatePanelLayout(roomLength: number, roomWidth: number): PanelLayou
     const panelsInLength1 = Math.ceil(roomLength / PANEL_LENGTH);
     const panelsInWidth1 = Math.ceil(roomWidth / PANEL_WIDTH);
     const totalPanels1 = panelsInLength1 * panelsInWidth1;
-    const lastPanelLength1 = PANEL_LENGTH - ((panelsInLength1 * PANEL_LENGTH) - roomLength);
-    const lastPanelWidth1 = PANEL_WIDTH - ((panelsInWidth1 * PANEL_WIDTH) - roomWidth);
     
     const wastePieces1 = [];
     if (panelsInLength1 * PANEL_LENGTH > roomLength) {
@@ -127,9 +144,9 @@ type FlatCeilingFormProps = {
 
 type CeilingType = 'A' | 'B';
 
-export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
-  const [length, setLength] = useState<number | ''>('');
-  const [width, setWidth] = useState<number | ''>('');
+export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
+  const [length, setLength] = useState<number | ''>(6.32);
+  const [width, setWidth] = useState<number | ''>(3.14);
   const [suspensionHeight, setSuspensionHeight] = useState<number | ''>(20);
   const [ceilingType, setCeilingType] = useState<CeilingType>('B');
 
@@ -149,15 +166,16 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
     const area = l * w;
 
     // 2. L25 Profiles
-    const roundedPerimeter = Math.ceil(perimeter);
-    const l25Profiles = Math.ceil(roundedPerimeter / L25_LENGTH);
-    const l25Screws = Math.ceil(roundedPerimeter / 0.2);
+    const l25Profiles = Math.ceil(perimeter / L25_LENGTH);
+    const l25Screws = Math.ceil(perimeter / 0.2);
 
     // 3. F47 Main Runners (Load-bearing)
-    const f47MainRunnerCount = Math.floor(shortSide / 0.6);
+    const f47MainRunnerCount = Math.ceil(shortSide / 0.6) - 1;
     const f47MainTotalLength = f47MainRunnerCount * longSide;
     const { pieces: f47MainProfiles, waste: f47MainWaste, cuts: f47MainCuts } = calculateProfileCuts(f47MainRunnerCount, longSide, F47_LENGTH);
-    const wConnectors = f47MainCuts.filter(c => c.from > c.piece).length; // Simplified logic for W connectors
+    
+    // W Connectors: number of times a piece is longer than stock
+    const wConnectors = f47MainRunnerCount * Math.floor(longSide / F47_LENGTH);
 
     // 4. Suspension System
     const useBrackets = sHeight <= 12;
@@ -186,7 +204,8 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
     let typeAClips = 0;
     if (ceilingType === 'A') {
         const f47SecondaryRunnerCount = Math.floor(longSide / 0.9);
-        f47SecondaryProfiles = Math.ceil((f47SecondaryRunnerCount * shortSide) / F47_LENGTH);
+        const { pieces: secondaryPieces } = calculateProfileCuts(f47SecondaryRunnerCount, shortSide, F47_LENGTH);
+        f47SecondaryProfiles = secondaryPieces;
         typeAClips = f47SecondaryRunnerCount * f47MainRunnerCount;
     }
 
@@ -211,9 +230,9 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
 
     const estimationDetails = {
         area,
-        perimeter: roundedPerimeter,
+        perimeter,
         l25Profiles: { count: l25Profiles, length: L25_LENGTH },
-        f47MainProfiles: { count: f47MainProfiles, waste: f47MainWaste },
+        f47MainProfiles: { count: f47MainProfiles, waste: f47MainWaste, rows: f47MainRunnerCount },
         panelLayout,
     };
 
@@ -315,9 +334,9 @@ export function FlatCeilingForm({ onAddToList }: FlatCeilingFormProps) {
                 <h3 className="text-lg font-semibold mb-4 text-primary">۳. جزئیات و پرت مصالح</h3>
                  <div className="space-y-2 text-sm text-muted-foreground">
                     <p><strong>مساحت کل:</strong> {details.area.toFixed(2)} متر مربع</p>
-                    <p><strong>محیط:</strong> {details.perimeter} متر</p>
+                    <p><strong>محیط:</strong> {details.perimeter.toFixed(2)} متر</p>
                     <p><strong>نبشی L25:</strong> به {details.l25Profiles.count} شاخه {details.l25Profiles.length} متری نیاز است.</p>
-                    <p><strong>سازه F47 اصلی:</strong> به {details.f47MainProfiles.count} شاخه نیاز است. پرت تقریبی: {details.f47MainProfiles.waste.toFixed(2)} متر.</p>
+                    <p><strong>سازه F47 اصلی:</strong> برای {details.f47MainProfiles.rows} ردیف، به {details.f47MainProfiles.count} شاخه نیاز است. پرت تقریبی: {details.f47MainProfiles.waste.toFixed(2)} متر.</p>
                     <p><strong>پنل‌ها:</strong> به {details.panelLayout.panelsNeeded} برگ پنل نیاز است. پرت کل: {details.panelLayout.waste.toFixed(2)} متر مربع.</p>
                     {details.panelLayout.wastePieces.map((p, i) => (
                        <p key={i} className="pr-4"> - قطعه پرت {i+1}: {p.count} عدد به ابعاد {p.length.toFixed(2)} در {p.width.toFixed(2)} متر</p>

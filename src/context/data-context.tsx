@@ -61,7 +61,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Define collection references, memoized to prevent re-renders
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'categories') : null, [firestore]);
-  const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
+  const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'stores') : null, [firestore, user]);
   const unitsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
   const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
@@ -278,13 +278,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const collectionsToClear: (CollectionReference | null)[] = [
       productsRef,
       categoriesRef,
+      storesRef,
+      unitsRef, 
+      customersRef, 
+      invoicesRef,
     ];
     
-    // Add user-specific collections only if the user is logged in
-    if(user) {
-        collectionsToClear.push(storesRef, unitsRef, customersRef, invoicesRef);
-    }
-
     for (const ref of collectionsToClear) {
       if (ref) {
         const snapshot = await getDocs(query(ref));

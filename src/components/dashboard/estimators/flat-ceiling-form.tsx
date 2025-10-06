@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -36,51 +37,46 @@ interface CutResult {
  * @returns Object with pieces needed, total waste, and cut list.
  */
 function calculateProfileCuts(count: number, length: number, stockLength: number): CutResult {
-  if (length <= 0 || count <= 0) {
-    return { pieces: 0, waste: 0, cuts: [] };
-  }
-
-  let totalPiecesNeeded = 0;
-  const cuts: { piece: number; length: number; from: number }[] = [];
-
-  if (length > stockLength) {
-    // Handle lengths greater than stock length
-    const numFullStocksPerPiece = Math.floor(length / stockLength);
-    const remainingLength = length % stockLength;
-
-    totalPiecesNeeded = numFullStocksPerPiece * count;
-    
-    if (remainingLength > 0) {
-        const { pieces: remainingPieces } = calculateProfileCuts(count, remainingLength, stockLength);
-        totalPiecesNeeded += remainingPieces;
+    if (length <= 0 || count <= 0) {
+      return { pieces: 0, waste: 0, cuts: [] };
     }
-     // Simplified cut list for this complex case
-    for (let i = 1; i <= count; i++) {
-        cuts.push({ piece: i, length, from: i });
-    }
-
-  } else {
-    // Original logic for lengths smaller than or equal to stock length
-    const piecesPerStock = Math.floor(stockLength / length);
-    totalPiecesNeeded = Math.ceil(count / piecesPerStock);
-    
-    let currentStock = 1;
-    let remainingLengthInStock = stockLength;
-    for (let i = 1; i <= count; i++) {
-      if (remainingLengthInStock < length) {
-        currentStock++;
-        remainingLengthInStock = stockLength;
+  
+    // Array to store the lengths of all pieces to be cut
+    const allPieces: number[] = Array(count).fill(length);
+    let stockUsed = 0;
+    const cuts: { piece: number; length: number; from: number }[] = [];
+  
+    // Bin packing algorithm (First Fit Decreasing)
+    const bins: number[] = []; // Represents remaining length in each stock
+  
+    for (let i = 0; i < allPieces.length; i++) {
+      const pieceLength = allPieces[i];
+      let placed = false;
+  
+      // Try to fit the piece into an existing bin (stock)
+      for (let j = 0; j < bins.length; j++) {
+        if (bins[j] >= pieceLength) {
+          bins[j] -= pieceLength;
+          cuts.push({ piece: i + 1, length: pieceLength, from: j + 1 });
+          placed = true;
+          break;
+        }
       }
-      cuts.push({ piece: i, length, from: currentStock });
-      remainingLengthInStock -= length;
+  
+      // If it doesn't fit, open a new bin (use a new stock)
+      if (!placed) {
+        stockUsed++;
+        const newBinRemaining = stockLength - pieceLength;
+        bins.push(newBinRemaining);
+        cuts.push({ piece: i + 1, length: pieceLength, from: stockUsed });
+      }
     }
-  }
-
-  const totalStockLengthUsed = totalPiecesNeeded * stockLength;
-  const totalLengthUsed = count * length;
-  const waste = totalStockLengthUsed - totalLengthUsed;
-
-  return { pieces: totalPiecesNeeded, waste, cuts };
+    
+    const totalLengthUsed = count * length;
+    const totalStockLengthUsed = stockUsed * stockLength;
+    const waste = totalStockLengthUsed - totalLengthUsed;
+  
+    return { pieces: stockUsed, waste, cuts };
 }
 
 
@@ -171,8 +167,8 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
     // 3. F47 Main Runners (Load-bearing)
     const f47MainRunnerCount = Math.ceil(shortSide / 0.6) - 1;
-    const f47MainTotalLength = f47MainRunnerCount * longSide;
     const { pieces: f47MainProfiles, waste: f47MainWaste, cuts: f47MainCuts } = calculateProfileCuts(f47MainRunnerCount, longSide, F47_LENGTH);
+    const f47MainTotalLength = f47MainRunnerCount * longSide;
     
     // W Connectors: number of times a piece is longer than stock
     const wConnectors = f47MainRunnerCount * Math.floor(longSide / F47_LENGTH);
@@ -209,20 +205,19 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
         typeAClips = f47SecondaryRunnerCount * f47MainRunnerCount;
     }
 
-
     const materialList: MaterialResult[] = [
+      { material: 'پنل والیز', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'سازه F47', quantity: f47MainProfiles + f47SecondaryProfiles, unit: 'شاخه' },
-      { material: 'اتصال W', quantity: wConnectors, unit: 'عدد' },
-      { material: 'کلیپس', quantity: clips + typeAClips, unit: 'عدد' },
-      { material: 'پنل والیز', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
       { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
       { material: 'میخ و چاشنی', quantity: nailAndChargeCount, unit: 'عدد' },
+      { material: 'اتصال W', quantity: wConnectors, unit: 'عدد' },
+      { material: 'کلیپس', quantity: clips + typeAClips, unit: 'عدد' },
     ];
 
     if (u36Profiles > 0) {
-        materialList.push({ material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' });
+        materialList.splice(3, 0, { material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' });
     }
     if (useBrackets) {
         materialList.push({ material: 'براکت', quantity: totalHangers, unit: 'عدد' });

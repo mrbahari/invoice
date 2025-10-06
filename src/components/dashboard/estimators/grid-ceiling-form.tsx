@@ -46,11 +46,11 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
     const hangers = Math.ceil(area * 0.8);
 
     return [
+      { material: 'تایل پی وی سی', quantity: tiles, unit: 'عدد' },
       { material: 'نبشی L24', quantity: lProfilePieces, unit: 'شاخه' },
       { material: 'سپری T360', quantity: t360Pieces, unit: 'شاخه' },
       { material: 'سپری T120', quantity: t120Pieces, unit: 'شاخه' },
       { material: 'سپری T60', quantity: t60Pieces, unit: 'شاخه' },
-      { material: 'تایل پی وی سی', quantity: tiles, unit: 'عدد' },
       { material: 'آویز', quantity: hangers, unit: 'عدد' },
     ].filter(item => item.quantity > 0);
   }, [length, width]);

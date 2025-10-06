@@ -13,13 +13,13 @@ import { z } from 'zod';
 const GenerateCategoriesInputSchema = z.object({
   storeName: z.string().describe('The name of the store or company.'),
   description: z.string().describe('A brief description of what the store sells or does.'),
-  parentCategoryPath: z.string().optional().describe('The full path of the parent category, e.g., "Tools > Power Tools". If not provided, main categories will be generated.'),
+  parentCategoryPath: z.string().optional().describe('The full path of the parent category, e.g., "ابزارآلات > ابزار برقی". If not provided, main categories will be generated.'),
   existingSubCategories: z.array(z.string()).optional().describe('A list of sub-category names that already exist under the parent, to avoid duplicates.'),
 });
 export type GenerateCategoriesInput = z.infer<typeof GenerateCategoriesInputSchema>;
 
 const GenerateCategoriesOutputSchema = z.object({
-  categories: z.array(z.string()).describe('An array of generated category names in Persian.'),
+  categories: z.array(z.string()).describe('An array of 5 to 10 generated category names in Persian.'),
 });
 export type GenerateCategoriesOutput = z.infer<typeof GenerateCategoriesOutputSchema>;
 
@@ -30,47 +30,39 @@ export async function generateCategories(input: GenerateCategoriesInput): Promis
   return result || { categories: [] };
 }
 
-// Prompt for generating MAIN (parent) categories
-const mainCategoriesPrompt = ai.definePrompt({
-    name: 'generateMainCategoriesPrompt',
-    input: { schema: z.object({ storeName: z.string(), description: z.string() }) },
-    output: { schema: GenerateCategoriesOutputSchema },
-    prompt: `
-    You are an expert in business categorization and product management for the Iranian market.
-    Based on the following store name and description (in Persian), generate a structured list of 5 to 10 relevant MAIN product categories in PERSIAN.
-    These categories should be broad and general, suitable for a top-level menu in an e-commerce or inventory system.
 
-    Store Name: "{{storeName}}"
-    Description: "{{description}}"
-
-    Example for a construction material store: "ابزارآلات", "مصالح ساختمانی", "رنگ و پوشش", "لوازم برقی", "تجهیزات ایمنی"
-    `,
-});
-
-// Prompt for generating SUB-categories
-const subCategoriesPrompt = ai.definePrompt({
-    name: 'generateSubCategoriesPrompt',
+const generateCategoriesPrompt = ai.definePrompt({
+    name: 'generateCategoriesPrompt',
     input: { schema: GenerateCategoriesInputSchema },
     output: { schema: GenerateCategoriesOutputSchema },
     prompt: `
-    You are a highly specialized expert in product categorization for the Iranian market.
-    Your task is to generate a list of 5 to 10 relevant and specific SUB-CATEGORIES in PERSIAN for a given parent category.
+    You are an expert in business categorization and product management for the Iranian market.
+    Your task is to generate a list of 5 to 10 relevant category names in PERSIAN.
 
     **Context:**
     - Store Name: "{{storeName}}"
     - Store Description: "{{description}}"
-    - Parent Category Path: "{{parentCategoryPath}}"
-
-    **Crucial Instruction:**
-    You MUST NOT generate any of the following sub-category names, as they already exist:
-    {{#if existingSubCategories}}
-    - {{#each existingSubCategories}}{{{this}}}{{/each}}
+    
+    {{#if parentCategoryPath}}
+    **Instruction for SUB-CATEGORIES:**
+    - You MUST generate specific sub-categories that logically fit under the parent category path: "{{parentCategoryPath}}".
+    - You MUST NOT generate any of the following sub-category names, as they already exist:
+      {{#if existingSubCategories}}
+        {{#each existingSubCategories}}
+        - {{{this}}}
+        {{/each}}
+      {{else}}
+        (No existing sub-categories to exclude)
+      {{/if}}
+    - Example: If parent path is "ابزار > ابزار برقی", valid sub-categories are "دریل", "فرز", "پیچ‌گوشتی شارژی".
+    
     {{else}}
-    (No existing sub-categories to exclude)
+    **Instruction for MAIN CATEGORIES:**
+    - You MUST generate broad, top-level product categories.
+    - Example for a construction material store: "ابزارآلات", "مصالح ساختمانی", "رنگ و پوشش", "لوازم برقی", "تجهیزات ایمنی".
     {{/if}}
 
-    Generate only specific, relevant sub-categories that logically fit under the "{{parentCategoryPath}}". Do not suggest categories that are too broad or are peers of the parent.
-    For example, if the path is "ابزار > ابزار برقی", valid sub-categories would be "دریل", "فرز", "پیچ‌گوشتی شارژی". Invalid ones would be "ابزار دستی" (a peer) or "ابزار" (too broad).
+    Generate the list of categories now.
     `,
 });
 
@@ -82,28 +74,12 @@ const generateCategoriesFlow = ai.defineFlow(
     outputSchema: GenerateCategoriesOutputSchema,
   },
   async (input) => {
-    try {
-      let promptToUse;
-      
-      // Decide which prompt to use based on the input
-      if (input.parentCategoryPath) {
-        // We are generating sub-categories
-        promptToUse = subCategoriesPrompt;
-      } else {
-        // We are generating main (parent) categories
-        promptToUse = mainCategoriesPrompt;
-      }
-
-      const { output } = await promptToUse(input);
-      
-      if (!output) {
-        throw new Error("Failed to generate categories from AI prompt.");
-      }
-      return output;
-    } catch (error) {
-      console.error("Error in generateCategoriesFlow:", error);
-      // Return null or an empty structure to handle the failure gracefully
+    const { output } = await generateCategoriesPrompt(input);
+    
+    if (!output) {
+      // In case the AI returns an empty response, we ensure a valid structure.
       return { categories: [] };
     }
+    return output;
   }
 );

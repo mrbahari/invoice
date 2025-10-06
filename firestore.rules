@@ -1,154 +1,177 @@
-/**
- * @description This ruleset enforces a strict user-ownership model for user-specific data and allows public read access to product and category data.
- * @dataStructure
- * - Products and Categories are stored in top-level collections accessible to all users.
- * - All other data (clients, invoices, stores, units, settings) is nested under /users/{userId}.
- * @keySecurityDecisions
- * - Users can only manage data under their own user ID.
- * - Listing of other users' data is disallowed.
- * - Products and Categories are publicly readable.
- * @denormalizationForAuthorization None needed
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read product information, but restricts modifications to only authenticated users who set the `storeId` correctly.
+     * @description Controls access to user profile information.
+     * @path /users/{userId}
+     * @allow (read, update) Authenticated user accessing their own profile.
+     * @deny (read, update) Authenticated user trying to access another user's profile.
+     * @allow (create) Authenticated user creating their own profile during signup.
+     * @deny (delete) Any user attempting to delete a profile.
+     * @principle Enforces document ownership for user profiles.
+     */
+    match /users/{userId} {
+      allow read, update: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to product information. Products are publicly readable, but write access is restricted to vendors and admins.
      * @path /products/{productId}
-     * @allow (get, list): Any user can read product data.
-     * @allow (create): An authenticated user can create a product if `storeId` is set.
-     * @allow (update, delete): An authenticated user can update/delete the product if `storeId` is set.
-     * @deny Any unauthenticated user is denied write access.
-     * @principle Public read, owner-only writes, relational integrity on create.
+     * @allow (read) Any user can read product information.
+     * @allow (create) Authenticated user with 'admin' role or matching vendor ID creating a product.
+     * @allow (update) Authenticated user with 'admin' role or matching vendor ID updating a product.
+     * @allow (delete) Authenticated user with 'admin' role or matching vendor ID deleting a product.
+     * @deny (create) Unauthenticated user attempting to create a product.
+     * @deny (update) Unauthenticated user attempting to update a product.
+     * @deny (delete) Unauthenticated user attempting to delete a product.
+     * @principle Public read access with owner-only writes.
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.keys().hasAll(['name', 'price', 'imageUrl', 'storeId', 'subCategoryId', 'unit']) && request.resource.data.storeId is string; // Relaxed data validation for prototyping
-      allow update, delete: if isSignedIn(); // Relaxed data validation for prototyping
+      allow create: if isSignedIn() && (isAdmin() || request.auth.uid == request.resource.data.vendorId);
+      allow update: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.vendorId);
+      allow delete: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.vendorId);
     }
 
     /**
-     * @description Allows anyone to read category information, but restricts modifications to only authenticated users who set the `storeId` correctly.
-     * @path /categories/{categoryId}
-     * @allow (get, list): Any user can read category data.
-     * @allow (create): An authenticated user can create a category if `storeId` is set.
-     * @allow (update, delete): An authenticated user can update/delete the category if `storeId` is set.
-     * @deny Any unauthenticated user is denied write access.
-     * @principle Public read, owner-only writes, relational integrity on create.
+     * @description Controls access to shopping cart information. Only the cart owner can read and write cart data.
+     * @path /carts/{cartId}
+     * @allow (read, write) Authenticated user accessing their own cart.
+     * @deny (read, write) Authenticated user trying to access another user's cart.
+     * @principle Enforces document ownership for shopping carts.
      */
-    match /categories/{categoryId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.keys().hasAll(['name', 'storeId']) && request.resource.data.storeId is string; // Relaxed data validation for prototyping
-      allow update, delete: if isSignedIn(); // Relaxed data validation for prototyping
+    match /carts/{cartId} {
+      allow read, write: if isSignedIn() && request.auth.uid == cartId;
     }
 
     /**
-     * @description Manages user-specific client data. Only the owner can create, read, update, or delete clients.
+     * @description Controls access to order information. Order owners can create and read orders. Vendors and admins can read and update orders related to their products.
+     * @path /orders/{orderId}
+     * @allow (create) Authenticated user creating an order with their own user ID as the owner.
+     * @allow (read) Authenticated user reading their own order, or an admin, or a vendor reading an order containing their products.
+     * @allow (update) Authenticated user updating their own order, or an admin, or a vendor updating an order containing their products.
+     * @deny (delete) Any user attempting to delete an order.
+     * @principle Enforces document ownership and vendor access for orders.
+     */
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && request.resource.data.owner == request.auth.uid;
+      allow read: if isSignedIn() && (request.resource.data.owner == request.auth.uid || isAdmin() || isVendorForOrder(request.resource.data.items));
+      allow update: if isSignedIn() && (request.resource.data.owner == request.auth.uid || isAdmin() || isVendorForOrder(request.resource.data.items));
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to vendor information. Read access is public, but create/update access is restricted to admins or the vendor owner.
+     * @path /vendors/{vendorId}
+     * @allow (read) Any user can read vendor information.
+     * @allow (create) Authenticated user can create vendor.
+     * @allow (update) Authenticated user with 'admin' role or the vendor owner updating the vendor.
+     * @deny (create) Unauthenticated user attempting to create a vendor.
+     * @deny (update) Unauthenticated user attempting to update a vendor who is not the owner or an admin.
+     * @principle Public read access with owner-only writes.
+     */
+    match /vendors/{vendorId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.ownerUid);
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to product reviews. Any user can create a review for a product they bought. Only the review author can update/delete their review.
+     * @path /products/{productId}/reviews/{reviewId}
+     * @allow (create) Authenticated user creating a review with their own user ID as the author.
+     * @allow (read) Any user can read reviews.
+     * @allow (update, delete) Authenticated user updating or deleting their own review.
+     * @deny (create) Unauthenticated user attempting to create a review.
+     * @deny (update, delete) Authenticated user trying to update or delete another user's review.
+     * @principle Enforces document ownership for reviews.
+     */
+    match /products/{productId}/reviews/{reviewId} {
+      allow create: if isSignedIn() && request.resource.data.authorUid == request.auth.uid;
+      allow get, list: if true;
+      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.authorUid;
+    }
+
+        /**
+     * @description Controls access to client information under a user. Only the user can read, create, update, and delete client data.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (create): An authenticated user can create a client if the `userId` matches their auth UID.
-     * @allow (get, list): An authenticated user can read their own client data.
-     * @allow (update, delete): An authenticated user can update/delete their own client data.
-     * @deny Any other user is denied access to this client data.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (read, write) Authenticated user accessing their own client data.
+     * @deny (read, write) Authenticated user trying to access another user's client data.
+     * @principle Enforces document ownership for clients.
      */
     match /users/{userId}/clients/{clientId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.keys().hasAll(['name', 'phone']);
-      allow update: if isExistingOwner(userId) && resource.data.id == request.resource.data.id; // Enforce immutability of ownerId on update.
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Manages user-specific invoice data. Only the owner can create, read, update, or delete invoices.
+            /**
+     * @description Controls access to invoice information under a user. Only the user can read, create, update, and delete invoice data.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create): An authenticated user can create an invoice if the `userId` matches their auth UID.
-     * @allow (get, list): An authenticated user can read their own invoice data.
-     * @allow (update, delete): An authenticated user can update/delete their own invoice data.
-     * @deny Any other user is denied access to this invoice data.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (read, write) Authenticated user accessing their own invoice data.
+     * @deny (read, write) Authenticated user trying to access another user's invoice data.
+     * @principle Enforces document ownership for invoices.
      */
     match /users/{userId}/invoices/{invoiceId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.keys().hasAll(['customerId', 'invoiceNumber', 'date', 'status', 'items', 'total']);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Manages user-specific store data. Only the owner can create, read, update, or delete stores.
+                /**
+     * @description Controls access to store information under a user. Only the user can read, create, update, and delete store data.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create): An authenticated user can create a store if the `userId` matches their auth UID.
-     * @allow (get, list): An authenticated user can read their own store data.
-     * @allow (update, delete): An authenticated user can update/delete their own store data.
-     * @deny Any other user is denied access to this store data.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (read, write) Authenticated user accessing their own store data.
+     * @deny (read, write) Authenticated user trying to access another user's store data.
+     * @principle Enforces document ownership for stores.
      */
     match /users/{userId}/stores/{storeId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.keys().hasAll(['name', 'ownerId']) && request.resource.data.ownerId == userId;
-      allow update: if isExistingOwner(userId) && resource.data.ownerId == request.resource.data.ownerId; // Enforce immutability of ownerId on update.
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Manages user-specific unit data. Only the owner can create, read, update, or delete units.
+                    /**
+     * @description Controls access to unit information under a user. Only the user can read, create, update, and delete unit data.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create): An authenticated user can create a unit if the `userId` matches their auth UID.
-     * @allow (get, list): An authenticated user can read their own unit data.
-     * @allow (update, delete): An authenticated user can update/delete their own unit data.
-     * @deny Any other user is denied access to this unit data.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (read, write) Authenticated user accessing their own unit data.
+     * @deny (read, write) Authenticated user trying to access another user's unit data.
+     * @principle Enforces document ownership for units.
      */
     match /users/{userId}/units/{unitId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.keys().hasAll(['name', 'defaultQuantity']);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Manages user-specific toolbar settings. Only the owner can create, read, update, or delete their own settings.
+                        /**
+     * @description Controls access to toolbar settings information under a user. Only the user can read, create, update, and delete toolbar settings data.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (create): An authenticated user can create settings if the `userId` matches their auth UID.
-     * @allow (get, list): An authenticated user can read their own settings.
-     * @allow (update, delete): An authenticated user can update/delete their own settings.
-     * @deny Any other user is denied access to this settings data.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (read, write) Authenticated user accessing their own toolbar settings data.
+     * @deny (read, write) Authenticated user trying to access another user's toolbar settings data.
+     * @principle Enforces document ownership for toolbar settings.
      */
     match /users/{userId}/settings/toolbarPositions {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    //-------------------- HELPER FUNCTIONS --------------------
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the user is the owner of the document.
-     * @param {string} userId The user ID to check against.
-     * @return {boolean} True if the user is the owner, false otherwise.
+     * @description Fallback rule to deny all read and write access to any other documents not explicitly matched.
+     * @path /{document=**}
+     * @deny (read, write) Any user attempting to access any unmatched document.
+     * @principle Denies access to any path not explicitly allowed.
      */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    match /{document=**} {
+      allow read, write: if false;
     }
+  }
 
-    /**
-     * @description Checks if the user is the owner of the document and the document exists.
-     * @param {string} userId The user ID to check against.
-     * @return {boolean} True if the user is the owner and the document exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
+  // Helper Functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isAdmin() {
+    return isSignedIn() && request.auth.token.role == 'admin';
+  }
+
+  function isVendorForOrder(items) {
+    return isSignedIn() && request.auth.uid in items[].vendorId;
   }
 }

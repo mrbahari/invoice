@@ -109,7 +109,7 @@ const CategoryTree = ({
   return (
     <Accordion type="single" collapsible className="w-full">
       <AnimatePresence>
-        {categories.map(cat => {
+        {categories.map((cat, index) => {
           const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
           const hasSubCategories = subCategories.length > 0;
           const isAiLoading = aiLoading === cat.id;
@@ -121,7 +121,7 @@ const CategoryTree = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0, x: -50, transition: { duration: 0.3 } }}
-                transition={{ duration: 0.3, delay: 0.1 * categories.indexOf(cat) }}
+                transition={{ duration: 0.3, delay: 0.1 * index }}
               >
             <AccordionItem value={cat.id} className="border-b-0 mt-2" ref={el => itemRefs.current[cat.id] = el}>
               <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
@@ -196,7 +196,7 @@ const CategoryTree = ({
               )}
 
               <AccordionContent>
-                  <div className="p-4 pt-2 ml-4 border-r pr-4 space-y-4">
+                  <div className="p-4 pt-2 border-l pr-4 ml-4 space-y-4">
                       <CategoryTree
                           categories={subCategories}
                           parentId={cat.id}
@@ -428,24 +428,21 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }, [user, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
 const updateCategoriesForStore = async (storeId: string) => {
-    // Categories that are new or have changed
-    const categoriesToUpdate: Category[] = [];
-    // Categories that existed but are now removed
-    const existingCategoryIdsInDb = new Set(data.categories.filter(c => c.storeId === storeId).map(c => c.id));
-    const currentCategoryIdsInState = new Set(storeCategories.map(c => c.id));
+    const existingCategories = data.categories.filter(c => c.storeId === storeId);
+    const existingCategoryIds = new Set(existingCategories.map(c => c.id));
+    const currentStateCategoryIds = new Set(storeCategories.map(c => c.id));
 
-    // Delete categories that are no longer in the local state
-    for (const catId of existingCategoryIdsInDb) {
-        if (!currentCategoryIdsInState.has(catId)) {
-            await deleteDocument('categories', catId);
+    // Delete categories that are in DB but not in local state
+    for (const category of existingCategories) {
+        if (!currentStateCategoryIds.has(category.id)) {
+            await deleteDocument('categories', category.id);
         }
     }
 
     // Add or Update categories from local state
     for (const category of storeCategories) {
-        // If it's a new category (temp id) or doesn't exist in the DB for this store
-        if (category.id.startsWith('temp-') || !existingCategoryIdsInDb.has(category.id)) {
-            // Firestore will generate a new ID, we just provide the data.
+        if (category.id.startsWith('temp-')) {
+            // It's a new category, add it
             await addDocument('categories', {
                 name: category.name,
                 storeId: storeId,
@@ -453,10 +450,9 @@ const updateCategoriesForStore = async (storeId: string) => {
             });
         } else {
             // It's an existing category, check for updates
-             const originalCat = data.categories.find(c => c.id === category.id);
-             // A simple JSON diff to see if anything changed
+             const originalCat = existingCategories.find(c => c.id === category.id);
              if (JSON.stringify(originalCat) !== JSON.stringify({ ...category, storeId })) {
-                await updateDocument('categories', category.id, { ...category, storeId });
+                await updateDocument('categories', category.id, { name: category.name, parentId: category.parentId });
              }
         }
     }
@@ -476,28 +472,24 @@ const updateCategoriesForStore = async (storeId: string) => {
 
     try {
         const storeData = buildStoreData();
+        let currentStoreId = store?.id;
 
-        if (isEditMode && store) {
+        if (isEditMode && currentStoreId) {
             // Update existing store
-            await updateDocument('stores', store.id, storeData);
-            // Sync categories (add/update/delete)
-            await updateCategoriesForStore(store.id);
-            toast({ variant: 'success', title: 'فروشگاه با موفقیت ویرایش شد' });
+            await updateDocument('stores', currentStoreId, storeData);
         } else {
-            // Create new store
+            // Create new store and get its ID
             const newStoreId = await addDocument('stores', storeData);
-            if (newStoreId) {
-                // Now that we have a real store ID, save the new categories.
-                for (const category of storeCategories) {
-                    await addDocument('categories', { 
-                        name: category.name, 
-                        parentId: category.parentId,
-                        storeId: newStoreId 
-                    });
-                }
-                toast({ variant: 'success', title: 'فروشگاه با موفقیت ایجاد شد' });
+            if (!newStoreId) {
+                throw new Error("Failed to create new store.");
             }
+            currentStoreId = newStoreId;
         }
+
+        // Sync categories (add/update/delete) with the final store ID
+        await updateCategoriesForStore(currentStoreId);
+        
+        toast({ variant: 'success', title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
         onSave();
 
     } catch (error) {
@@ -506,7 +498,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, user, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument]);
+  }, [name, user, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, updateCategoriesForStore]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {
@@ -928,3 +920,4 @@ const updateCategoriesForStore = async (storeId: string) => {
     </TooltipProvider>
   );
 }
+

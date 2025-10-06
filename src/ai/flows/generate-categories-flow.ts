@@ -14,12 +14,19 @@ const GenerateCategoriesInputSchema = z.object({
   storeName: z.string().describe('The name of the store or company.'),
   description: z.string().describe('A brief description of what the store sells or does.'),
   parentCategoryPath: z.string().optional().describe('The full path of the parent category, e.g., "ابزارآلات > ابزار برقی". If not provided, main categories will be generated.'),
-  existingSubCategories: z.array(z.string()).optional().describe('A list of sub-category names that already exist under the parent, to avoid duplicates.'),
+  existingCategoryNames: z.array(z.string()).optional().describe('A list of category names that already exist under the parent, to avoid duplicates.'),
 });
 export type GenerateCategoriesInput = z.infer<typeof GenerateCategoriesInputSchema>;
 
+
+// Recursive schema for a category node which can have children of the same type
+const CategoryNodeSchema: z.ZodType<any> = z.object({
+    name: z.string().describe("The name of the category in Persian."),
+    children: z.array(z.lazy(() => CategoryNodeSchema)).optional().describe("An array of sub-category nodes."),
+});
+
 const GenerateCategoriesOutputSchema = z.object({
-  categories: z.array(z.string()).describe('An array of 5 to 10 generated category names in Persian.'),
+  categories: z.array(CategoryNodeSchema).describe('An array of generated category trees. Each object can have nested children.'),
 });
 export type GenerateCategoriesOutput = z.infer<typeof GenerateCategoriesOutputSchema>;
 
@@ -37,7 +44,9 @@ const generateCategoriesPrompt = ai.definePrompt({
     output: { schema: GenerateCategoriesOutputSchema },
     prompt: `
     You are an expert in business categorization and product management for the Iranian market.
-    Your task is to generate a list of 5 to 10 relevant category names in PERSIAN.
+    Your task is to generate a hierarchical list of relevant category names in PERSIAN.
+    The structure must be a tree, with main categories and nested sub-categories.
+    The hierarchy depth should be between 2 and 4 levels.
 
     **Context:**
     - Store Name: "{{storeName}}"
@@ -46,23 +55,51 @@ const generateCategoriesPrompt = ai.definePrompt({
     {{#if parentCategoryPath}}
     **Instruction for SUB-CATEGORIES:**
     - You MUST generate specific sub-categories that logically fit under the parent category path: "{{parentCategoryPath}}".
-    - You MUST NOT generate any of the following sub-category names, as they already exist:
-      {{#if existingSubCategories}}
-        {{#each existingSubCategories}}
+    - The generated categories should be more specific and detailed as they go deeper into the hierarchy.
+    - You MUST NOT generate any of the following category names, as they already exist under this parent:
+      {{#if existingCategoryNames}}
+        {{#each existingCategoryNames}}
         - {{{this}}}
         {{/each}}
       {{else}}
-        (No existing sub-categories to exclude)
+        (No existing categories to exclude)
       {{/if}}
-    - Example: If parent path is "ابزار > ابزار برقی", valid sub-categories are "دریل", "فرز", "پیچ‌گوشتی شارژی".
+    - Example for parent path "ابزار > ابزار برقی": A valid response could be { "categories": [{ "name": "دریل", "children": [{ "name": "دریل چکشی" }, { "name": "دریل شارژی" }] }, { "name": "فرز" }] }.
     
     {{else}}
     **Instruction for MAIN CATEGORIES:**
-    - You MUST generate broad, top-level product categories.
-    - Example for a construction material store: "ابزارآلات", "مصالح ساختمانی", "رنگ و پوشش", "لوازم برقی", "تجهیزات ایمنی".
+    - You MUST generate broad, top-level product categories with at least 2 levels of nested sub-categories.
+    - The main categories should be general, and sub-categories should become progressively more specific.
+    - You MUST NOT generate any of the following main category names, as they already exist:
+      {{#if existingCategoryNames}}
+        {{#each existingCategoryNames}}
+        - {{{this}}}
+        {{/each}}
+      {{else}}
+        (No existing categories to exclude)
+      {{/if}}
+    - Example for a construction material store: 
+      { 
+        "categories": [
+          { 
+            "name": "ابزارآلات", 
+            "children": [
+              { "name": "ابزار برقی", "children": [{ "name": "دریل" }, { "name": "فرز" }] },
+              { "name": "ابزار دستی", "children": [{ "name": "آچار" }, { "name": "انبر" }] }
+            ] 
+          },
+          {
+            "name": "مصالح ساختمانی",
+            "children": [
+              { "name": "سیمان و گچ" },
+              { "name": "آجر و بلوک" }
+            ]
+          }
+        ] 
+      }
     {{/if}}
 
-    Generate the list of categories now.
+    Generate the category structure now. Ensure the output is a valid JSON that matches the required schema.
     `,
 });
 
@@ -76,8 +113,8 @@ const generateCategoriesFlow = ai.defineFlow(
   async (input) => {
     const { output } = await generateCategoriesPrompt(input);
     
-    if (!output) {
-      // In case the AI returns an empty response, we ensure a valid structure.
+    if (!output || !output.categories) {
+      // In case the AI returns an empty or invalid response, we ensure a valid structure.
       return { categories: [] };
     }
     return output;

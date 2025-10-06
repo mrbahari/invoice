@@ -1,68 +1,50 @@
 {
-  "customers": [
+  "stores": [
     {
-      "name": "مشتری بدون نام",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09124505468",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید",
-      "id": "cust-q0wfxlko6"
+      "id": "store-rmn4dd0j1",
+      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2",
+      "name": "فروشگاه دکوربند",
+      "description": "فروشگاه تخصصی فروش و اجرای انواع سقف کاذب، دیوار خشک (کناف) و مصالح مرتبط. ارائه دهنده محصولات با کیفیت و مشاوره فنی برای پروژه‌های ساختمانی و دکوراسیون داخلی.",
+      "address": "تهران، خیابان سهروردی، شماره ۱۲۳",
+      "phone": "۰۲۱-۸۸۸۸۴۴۴۴",
+      "logoUrl": "https://firebasestorage.googleapis.com/v0/b/hisaabgarv1-2-52613231-274bb.appspot.com/o/product-images%2F1722441999230-logo-dekorband.png?alt=media&token=487d60f5-502a-43f1-b851-419b16893699",
+      "bankAccountHolder": "اسماعیل بهاری",
+      "bankName": "بانک سامان",
+      "bankAccountNumber": "۱۲۳-۴۵۶-۷۸۹۰",
+      "bankIban": "IR123456789012345678901234",
+      "bankCardNumber": "۶۲۱۹-۸۶۱۰-۱۲۳۴-۵۶۷۸"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-4wvkm1da4",
+      "name": "سقف کاذب",
+      "storeId": "store-rmn4dd0j1"
     },
     {
-      "name": "مشتری بدون نام",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09127228748",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید",
-      "id": "cust-8r3drmala"
+      "id": "cat-wdyk0d278",
+      "name": "دیوار خشک",
+      "storeId": "store-rmn4dd0j1"
     },
     {
-      "name": "مشتری بدون نام",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09128177323",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید",
-      "id": "cust-uzlgikkgp"
+      "id": "cat-b60jiow8i",
+      "name": "سازه و پروفیل",
+      "storeId": "store-rmn4dd0j1"
     },
     {
-      "id": "cust-t7qq0wtzl",
-      "name": "09197166675",
-      "email": "ایمیل ثبت نشده",
-      "phone": "شماره ثبت نشده",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید"
+      "id": "cat-j9v4d7bbf",
+      "name": "تایل ۶۰*۶۰",
+      "parentId": "cat-4wvkm1da4",
+      "storeId": "store-rmn4dd0j1"
     },
     {
-      "id": "cust-zv7mf3v4i",
-      "name": "مشتری بدون نام",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09398330932",
-      "address": "آدرس ثبت نشده",
-      "purchaseHistory": "مشتری جدید"
-    },
-    {
-      "id": "cust-uv6dic62a",
-      "name": "اصغر حسن زاده | شرکت همراه کوشا کیش",
-      "email": "ایمیل ثبت نشده",
-      "phone": "09121372580",
-      "address": "فرودگاه امام خمینی",
-      "purchaseHistory": "مشتری جدید"
+      "id": "cat-y3l8x1kcr",
+      "name": "سقف فلت",
+      "parentId": "cat-4wvkm1da4",
+      "storeId": "store-rmn4dd0j1"
     }
   ],
   "products": [
-    {
-      "id": "prod-2a2a44xdt",
-      "name": "کلیپس کی پلاس",
-      "code": "",
-      "description": "",
-      "price": 45000,
-      "storeId": "store-rmn4dd0j1",
-      "subCategoryId": "cat-b60jiow8i",
-      "unit": "عدد",
-      "subUnitQuantity": 0,
-      "subUnitPrice": 0,
-      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpzKbS6b4tUynAXvoG1Qa-bdaEIOUSDF9vsMTcIOiP4w&s=10"
-    },
     {
       "id": "prod-k2zt7pkmr",
       "name": "L25 نبشی کی پلاس",
@@ -75,49 +57,29 @@
       "subUnit": "متر طول",
       "subUnitQuantity": 4,
       "subUnitPrice": 210000,
-      "imageUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAQDQ0QEBANCgkNDg0ODg0NDg8JCggNFR0WIhYSHx8YKCgsJCYxGxMTITQtMTU3OjoxFx81OzcsQygvLi8BCgoKDg0NFQ0NFzcZFRkrLSsrKystKysrKysrKysrKystKysrKysrKysrKysrLSsrKysrKysrKysrKysrKysrK//AABEIAN4A3gMBIgACEQEDEQH/xAAbAAEAAwEBAQEAAAAAAAAAAAAAAQIDBQQGB//EAD8QAAIBAgMFBgMFBQcFAAAAAAABAgMRBCExBRJBUXEiYYGRofAGE9EyQlKxwRQjc7LhJTRigpLC8RUkNUNT/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFREBAQAAAAAAAAAAAAAAAAAAABH/2gAMAwEBAhEDEQH/AP3EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIv75ASCESAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACLlKtWMU5SahFcW7JHzO1filJuGHSlLP97L7MegH0GNx1OjHeqSUI+cn4HyW1fiWpU3o0r0aVn2tas1z7jh4jEzqNyqSc6n4myr1fReJR+i7BbeEoNttumm23vSk3xOgeDYX90w38Gm/NI95AAAAAAAAAAAAAAACAAAAAAAAGAAuc/ae1qVBWlLeq2uqcbOpL6Ae9y98DjbT+IaVK8YfvqyurL7ELczhbR2tVrpq7pUXpTi8/FnPjRyeWrEE7Tx1Ws71JN62isqcFyOe75PN3euljp/s10r8mFhtFbIo5kdPF+hOufO3X3ke97PfBc30TM5YCondRlJZaLebA++2N/dcL/Apfyo9p4dlyUcPh4yajONGlGUW0pRairr0PamuvqQSCLkOXvgBYEJ+XoyQAAAEAAAAAAAAAAADOpNJNtpRV25OyikuIGlzDEYqFOO9OShHPXV24HE2j8QpJqglUenzZb0acb8UuP5dThSlKc3OcpVJSt9rPd+moHV2htydTs0t6jB37eXzZr1t70OQqKs9c73d23OT1bvc1pw96tmihkl3mhlGlpr9DWlT0PRCC04mlOloBnGl77jZUVl7SRpGHiemnRurvsx56tkGNKg28l+itzPZSpqLytvfi13WVU7qyvCPXOT5jO2bvw92AwxD7TfN9L6kUzWrC5jupX5d+VwNYVeV792Vy+GqVKz7EnCgmt+tfedSS1hG/erN9V0yw2GdfnDCWS3vsvGLutpHXr4nZpw3YpJKMYpJKNkopaLK3AgvH3xz4lisSwFiAAAAAAAAA3Yi/vgBJDZ5MdtCnRSc5JN/Zis5z6I+ax+2qta6jejQeVotqpUXe+HgB2dq7ep0m4xvXrr7kGtyD/xPgfO4zGVazTqNunlu01eNKNrefV+h59xJRikklfhZXZqoaLivK3H9CiFG6ff53yu/NGkY6+/fAvCBrGAFIx09TaMLtci8YaG0Y2KKqFmaQXvn3F4U28lqrZ8I956I9hPdcZS4zabafIgpGmotbyW9+HVLrYtVnd8X3K6REXflHprcS72/wAwKxkuX+6xa64O3hbIi9tEl6X8r8bGdWsowc5NRird8pS4Lrey7+8C9SoldtqMEm3KTUYKPO/hfwGGwTrdqpFwwt040ppxqYrlKV9Fx3fPk74LAupJVKy3YpqVKg/uNffnzle3Q6qXvS7AlL3xb4slCxZEAAASAAAAAEEkAZYjEQpxcpyVOms3KbUIxXifNbT+Jm+zQi4xf/umlvSS4qL/AFOX8W1JvbFKG83Q/wCnqoqbb+WqqqSW/bnZ2MoQvBPK934X4ARFXqSlJynUlJ3nJuc5WvxfQ13bTulbJd97k0oef1NoQv4O3kUU3c/yN1EmUM0zaMMyiKcMzdRM1w538zRJ3WT1WmbfkQX3dDanSvm7xhzyvLoWjQ3c5p7+XZ+1FctCXfNuzfPR2AnfySStFeXUiWb1y62KQn329Csq/f6XAu4rh+tykvFeliN982vRIyq1VGyW9VqzdoU4Pt1JeOmqd+9a3sUWrVlBXd5t2ioJOVSpJ6RSWb/5PZgNny3lVrWddX3IZTp4VcVlrLS78FbV32ds3cfzKjVTFtNbyT+Xho5XhG/gr6vwSOkl75LkZBEpCxZAEAAARIAAMgCSAQwJbIbKylbU8tbEJJ5gfIfF3/lcO19r9hqLwVRfUzpR7Nlpk8yPiCspbVwq1/7XEJ9FKH9T2Rjw7lboUZ0fqbU4/p58RCFjanHTxfgUTCJrC176IhWtfTrw7zelQvG8m4Q6XlMgpTpOTaXnpGPu56INRyjJuaSTnazb5LkVqVkrJLdgtEsikWs3Z+mTAuk75N25cmQ306536EqT/q8ispy0v6LICX3LxKzT4a+Xv30K3edm/qeeLqTqfLo2lW++779HDRfGTX5cc9AL1Kst5U6aVXES0hooR/FJ8F77zsbN2aqKbb+ZiJr95VlrP/CuUb8PzzZbZ2AjRi0m51JWdSpKznXlzf04Hrt75gSEgiSCUAABKIJAAAAQCJAGzKdVK5WrO3M5ONxDSYHpxWMstUcHG7TeaR48Zjm3ZHNqSd2+JRmqu/tTCt//AAxS/kPooLU+Xwz/ALSwXfSxf8qf6H1WmuWoGkI5x6/UtTl2o/ecrpJXbki1KnvZaRst5vKEE+Z6o7scoSe9bOeSclyXIDOEFFdq3zE8l92HU0qVHa9738CspJatyfgykp8k/HKwETemXqKeXNGLb526akx0d8+/O4G8ppcd58rmUsVyXrZozVLS+9n0u/Irg8NPEytTbpYWN1UxCd5VJLWEPVb3c9bARRp1K9SVOm3FRdqld9tYeWV4rnKz8L58E/pMHg4UYKEFaOsm+1UqSesm+L7y+Ew0KUI04RVOnFWjGKtGK9tvxZqBPvvZNiEWIFgAAJRCJAAAAAADIZJAFZRR5a+CjK57CrQHzO0dg3u4a+p8vjcPOnJqSaefBu9uHofprj5mGJwMKkWpxjNPXLNlo/KsDP8AtLAXaWWMXcv3b+nofdUqd05TW7BpWTynNPivqeDanwTP51HEYTELD4nDycoLEU/2mlZrtRytkZ1sHtlO7p7LxS1vSq18LKbeuUk0uXkB13VTSio7sElaP4bcc9TGone6SXNpvPzOTHGbShdVNlVbL71DGUMTddMmVqfEijdVcFtTDvjKeCnOmvGNwO1DrZkyzybb/JnBpfGGztHiFTqfhq061Br/AFJHvobbwtS25iMNNvRRrU3UfhcD1VYLk0UTjHOV7ZO/2Uu8rWqpRc20oL8TTglzyv76m2y9nSxG7UrJwwmUoUZLcqYu2k5clxt+RBGDw0sW79qns673pZ057Qa1S5R7+PDmfR0qajGMYpRhFJRjG0YwitFkaRjbSySSXJK2hawFUWSFgABIAgkAAAAAAAAAAAgAAAAAAGLAARu+9A0SAMqtCMlaUYzXKSU0/M5mI+F8BUbc8Hg5Sf3v2elGp5pHYAHzuE+CtnUq0a1PDRp1o6WnVlTf+Vu2qT8D6CMfffzLAAAAAAAAAAAAAAAAAAASBBIAAAAAABAJAEAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/2Q=="
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hisaabgarv1-2-52613231-274bb.appspot.com/o/product-images%2F1722442435472-l25.png?alt=media&token=0b62e49c-f9e4-4de1-ad77-3e155c65a047"
+    },
+    {
+      "id": "prod-2a2a44xdt",
+      "name": "کلیپس کی پلاس",
+      "code": "",
+      "description": "",
+      "price": 45000,
+      "storeId": "store-rmn4dd0j1",
+      "subCategoryId": "cat-b60jiow8i",
+      "unit": "عدد",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hisaabgarv1-2-52613231-274bb.appspot.com/o/product-images%2F1722442533038-clip.png?alt=media&token=c19ef3e6-99fd-4682-95f2-95f0ed5d97f5"
     }
   ],
-  "toolbarPositions": {
-    "product-form": {
-      "x": 20,
-      "y": 80
-    },
-    "customer-form": {
-      "x": 20,
-      "y": 80
-    },
-    "invoice-editor": {
-      "x": 20,
-      "y": 80
-    },
-    "invoices-list": {
-      "x": 20,
-      "y": 80
-    },
-    "invoice-preview": {
-      "x": 20,
-      "y": 80
-    },
-    "store-form": {
-      "x": 20,
-      "y": 80
-    },
-    "estimator-box": {
-      "x": 20,
-      "y": 80
-    },
-    "estimator-grid-ceiling": {
-      "x": 20,
-      "y": 80
-    },
-    "estimator-flat-ceiling": {
-      "x": 20,
-      "y": 80
-    },
-    "estimator-drywall": {
-      "x": 20,
-      "y": 80
-    }
-  }
+  "units": [
+    { "id": "unit-1", "name": "عدد", "defaultQuantity": 1 },
+    { "id": "unit-2", "name": "شاخه", "defaultQuantity": 1 },
+    { "id": "unit-3", "name": "برگ", "defaultQuantity": 1 },
+    { "id": "unit-4", "name": "متر مربع", "defaultQuantity": 1 },
+    { "id": "unit-5", "name": "بسته", "defaultQuantity": 1 },
+    { "id": "unit-6", "name": "متر طول", "defaultQuantity": 1 }
+  ],
+  "customers": [],
+  "invoices": [],
+  "toolbarPositions": {}
 }

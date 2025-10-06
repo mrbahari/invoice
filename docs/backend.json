@@ -98,6 +98,7 @@
       "description": "Represents a user's store.",
       "properties": {
         "id": { "type": "string" },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns this store." },
         "name": { "type": "string" },
         "description": { "type": "string" },
         "address": { "type": "string" },
@@ -109,7 +110,7 @@
         "bankIban": { "type": "string" },
         "bankCardNumber": { "type": "string" }
       },
-      "required": ["id", "name"]
+      "required": ["id", "name", "ownerId"]
     },
     "Unit": {
       "$schema": "http://json-schema.org/draft-07/schema#",

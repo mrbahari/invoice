@@ -11,6 +11,7 @@ export type Customer = {
 
 export type Store = {
   id: string;
+  ownerId: string; // The UID of the user who owns this store
   name: string;
   description?: string;
   address?: string;

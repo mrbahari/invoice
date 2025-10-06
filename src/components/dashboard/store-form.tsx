@@ -41,6 +41,7 @@ import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FloatingToolbar } from './floating-toolbar';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from '@/firebase';
 
 
 type StoreFormProps = {
@@ -226,6 +227,7 @@ const CategoryTree = ({
 
 export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
+  const { user } = useUser();
   const isEditMode = !!store;
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
@@ -261,20 +263,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   // State for AI logo prompts
   const [logoPrompts, setLogoPrompts] = useState<string[]>([]);
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
-
-  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
-    name,
-    description,
-    address,
-    phone,
-    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-    bankAccountHolder,
-    bankName,
-    bankAccountNumber,
-    bankIban,
-    bankCardNumber,
-  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
-
+  
   const isDuplicateCategory = useMemo(() => {
     if (!newCategoryName.trim()) return false;
     return storeCategories.some(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && !c.parentId);
@@ -370,30 +359,43 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         setAiLoadingCategory(loaderId);
     
         try {
-            const input: { storeName: string; description: string; parentCategoryPath?: string; existingSubCategories?: string[] } = {
+            const input: { storeName: string; description: string; parentCategoryPath?: string; existingCategoryNames?: string[] } = {
                 storeName: name,
                 description,
             };
     
             if (parentCategory) {
                 input.parentCategoryPath = getCategoryPath(parentCategory.id, storeCategories);
-                input.existingSubCategories = storeCategories
+                input.existingCategoryNames = storeCategories
                     .filter(c => c.parentId === parentCategory.id)
+                    .map(c => c.name);
+            } else {
+                 input.existingCategoryNames = storeCategories
+                    .filter(c => !c.parentId)
                     .map(c => c.name);
             }
     
             const result = await generateCategories(input);
             
             if (result && result.categories && result.categories.length > 0) {
-                const newCats = result.categories.map(catName => ({
-                    id: `cat-${Math.random().toString(36).substr(2, 9)}`,
-                    name: catName,
-                    storeId: store?.id || 'temp',
-                    parentId: parentCategory?.id,
-                }));
-    
+                 const newCats: Category[] = [];
+                const processNode = (node: any, parentId?: string) => {
+                    const newCat: Category = {
+                        id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+                        name: node.name,
+                        storeId: store?.id || 'temp', // This will be updated on save
+                        parentId: parentId,
+                    };
+                    newCats.push(newCat);
+                    if (node.children && node.children.length > 0) {
+                        node.children.forEach((child: any) => processNode(child, newCat.id));
+                    }
+                };
+
+                result.categories.forEach(node => processNode(node, parentCategory?.id));
+
                 setStoreCategories(prev => [...prev, ...newCats]);
-                toast({ variant: 'success', title: `${newCats.length} دسته جدید اضافه شد` });
+                toast({ variant: 'success', title: `${newCats.length} دسته و زیردسته جدید اضافه شد` });
             } else {
                  toast({ variant: 'default', title: 'نتیجه‌ای یافت نشد', description: 'هوش مصنوعی نتوانست دسته‌بندی جدیدی پیشنهاد دهد.' });
             }
@@ -405,6 +407,25 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         }
     };
 
+
+    const buildStoreData = useCallback((): Omit<Store, 'id'> => {
+        if (!user) {
+            throw new Error("User not authenticated.");
+        }
+        return {
+            ownerId: user.uid,
+            name,
+            description,
+            address,
+            phone,
+            logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+            bankAccountHolder,
+            bankName,
+            bankAccountNumber,
+            bankIban,
+            bankCardNumber,
+        }
+    }, [user, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
 const updateCategoriesForStore = async (storeId: string) => {
     const existingCategories = data.categories.filter(c => c.storeId === storeId);
@@ -439,6 +460,10 @@ const updateCategoriesForStore = async (storeId: string) => {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
     }
+    if (!user) {
+        toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره فروشگاه باید وارد شوید.' });
+        return;
+    }
     
     setIsProcessing(true);
 
@@ -468,7 +493,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument]);
+  }, [name, user, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {
@@ -596,6 +621,10 @@ const updateCategoriesForStore = async (storeId: string) => {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
     }
+    if (!user) {
+        toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره فروشگاه باید وارد شوید.' });
+        return;
+    }
     
     setIsProcessing(true);
 
@@ -612,7 +641,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     setIsProcessing(false);
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
-  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
+  }, [name, user, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
   const handleDelete = useCallback(async () => {
       if (!store) return;
@@ -827,12 +856,7 @@ const updateCategoriesForStore = async (storeId: string) => {
                     </Tooltip>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="outline" size="icon" disabled={isProcessing}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>حذف همه دسته‌بندی‌ها</p></TooltipContent>
-                            </Tooltip>
+                            <Button variant="outline" size="icon" disabled={isProcessing}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader><AlertDialogTitle>حذف همه دسته‌بندی‌ها</AlertDialogTitle><AlertDialogDescription>آیا مطمئن هستید که می‌خواهید تمام دسته‌بندی‌های این فروشگاه را حذف کنید؟ این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>

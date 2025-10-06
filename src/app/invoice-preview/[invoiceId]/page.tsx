@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -79,7 +80,7 @@ export default function PublicInvoicePreviewPage() {
   const router = useRouter();
   const params = useParams();
   const { data, isInitialized } = useData();
-  const { invoices, stores, customers } = data;
+  const { invoices, stores, customers, products } = data;
   const invoiceId = params.invoiceId as string;
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -182,13 +183,16 @@ export default function PublicInvoicePreviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.map((item, index) => (
+                {invoice.items.map((item, index) => {
+                    const product = products.find(p => p.id === item.productId);
+                    const imageUrl = product?.imageUrl || item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.productName)}/40/40`;
+                    return (
                   <tr key={index}>
                     <td className="border p-1 text-center">{index + 1}</td>
                      <td className="border p-1">
-                        {item.imageUrl && (
+                        {imageUrl && (
                             <Image 
-                                src={item.imageUrl} 
+                                src={imageUrl} 
                                 alt={item.productName} 
                                 width={40} 
                                 height={40} 
@@ -202,7 +206,7 @@ export default function PublicInvoicePreviewPage() {
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.totalPrice)}</td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </section>

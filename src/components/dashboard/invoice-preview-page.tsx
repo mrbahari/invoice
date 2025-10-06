@@ -138,13 +138,18 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   const handleDownloadImage = () => {
     const element = document.getElementById('invoice-card');
     if (!element) return;
-
+  
+    // Use the natural width of the element for a better capture
+    const elementWidth = element.offsetWidth;
+  
     html2canvas(element, {
-      scale: 1, // Set scale to 1 to avoid unwanted scaling
+      scale: 1.5, // Increase scale for better resolution
       useCORS: true,
       logging: false,
-      width: 800, // Set a fixed width
-      windowWidth: 800, // Match windowWidth to the fixed width
+      width: elementWidth,
+      windowWidth: elementWidth,
+      x: 0,
+      y: 0,
     }).then(canvas => {
       const link = document.createElement('a');
       link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
@@ -276,13 +281,15 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               </thead>
               <tbody>
                 {invoice.items.map((item, index) => {
+                   const product = products.find(p => p.id === item.productId);
+                   const imageUrl = product?.imageUrl || item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.productName)}/40/40`;
                    return (
                   <tr key={index}>
                     <td className="border p-1 text-center">{index + 1}</td>
                      <td className="border p-1">
-                        {item?.imageUrl && (
+                        {imageUrl && (
                             <Image 
-                                src={item.imageUrl} 
+                                src={imageUrl} 
                                 alt={item.productName} 
                                 width={40} 
                                 height={40} 

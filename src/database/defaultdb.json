@@ -1,84 +1,8 @@
 {
-  "stores": [
-    {
-      "id": "store-rmn4dd0j1",
-      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2",
-      "name": "فروشگاه دکوربند",
-      "description": "فروشگاه تخصصی فروش و اجرای انواع سقف کاذب، دیوار خشک (کناف) و مصالح مرتبط. ارائه دهنده محصولات با کیفیت و مشاوره فنی برای پروژه‌های ساختمانی و دکوراسیون داخلی.",
-      "address": "تهران، خیابان سهروردی، شماره ۱۲۳",
-      "phone": "۰۲۱-۸۸۸۸۴۴۴۴",
-      "logoUrl": "https://firebasestorage.googleapis.com/v0/b/hisaabgarv1-2-52613231-274bb.appspot.com/o/product-images%2F1722441999230-logo-dekorband.png?alt=media&token=487d60f5-502a-43f1-b851-419b16893699",
-      "bankAccountHolder": "اسماعیل بهاری",
-      "bankName": "بانک سامان",
-      "bankAccountNumber": "۱۲۳-۴۵۶-۷۸۹۰",
-      "bankIban": "IR123456789012345678901234",
-      "bankCardNumber": "۶۲۱۹-۸۶۱۰-۱۲۳۴-۵۶۷۸"
-    }
-  ],
-  "categories": [
-    {
-      "id": "cat-4wvkm1da4",
-      "name": "سقف کاذب",
-      "storeId": "store-rmn4dd0j1"
-    },
-    {
-      "id": "cat-wdyk0d278",
-      "name": "دیوار خشک",
-      "storeId": "store-rmn4dd0j1"
-    },
-    {
-      "id": "cat-b60jiow8i",
-      "name": "سازه و پروفیل",
-      "storeId": "store-rmn4dd0j1"
-    },
-    {
-      "id": "cat-j9v4d7bbf",
-      "name": "تایل ۶۰*۶۰",
-      "parentId": "cat-4wvkm1da4",
-      "storeId": "store-rmn4dd0j1"
-    },
-    {
-      "id": "cat-y3l8x1kcr",
-      "name": "سقف فلت",
-      "parentId": "cat-4wvkm1da4",
-      "storeId": "store-rmn4dd0j1"
-    }
-  ],
-  "products": [
-    {
-      "id": "prod-k2zt7pkmr",
-      "name": "L25 نبشی کی پلاس",
-      "code": "",
-      "description": "نبشی L25 کناف، راهکاری ایده‌آل برای تقویت و محافظت از گوشه‌ها و لبه‌های سازه‌های کناف شماست. این پروفیل با کیفیت بالا، استحکام فوق‌العاده‌ای را ارائه داده و نصب آن بسیار آسان است، ضامن زیبایی و دوام پروژه‌های شما.",
-      "price": 840000,
-      "storeId": "store-rmn4dd0j1",
-      "subCategoryId": "cat-b60jiow8i",
-      "unit": "شاخه",
-      "subUnit": "متر طول",
-      "subUnitQuantity": 4,
-      "subUnitPrice": 210000,
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hisaabgarv1-2-52613231-274bb.appspot.com/o/product-images%2F1722442435472-l25.png?alt=media&token=0b62e49c-f9e4-4de1-ad77-3e155c65a047"
-    },
-    {
-      "id": "prod-2a2a44xdt",
-      "name": "کلیپس کی پلاس",
-      "code": "",
-      "description": "",
-      "price": 45000,
-      "storeId": "store-rmn4dd0j1",
-      "subCategoryId": "cat-b60jiow8i",
-      "unit": "عدد",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/hisaabgarv1-2-52613231-274bb.appspot.com/o/product-images%2F1722442533038-clip.png?alt=media&token=c19ef3e6-99fd-4682-95f2-95f0ed5d97f5"
-    }
-  ],
-  "units": [
-    { "id": "unit-1", "name": "عدد", "defaultQuantity": 1 },
-    { "id": "unit-2", "name": "شاخه", "defaultQuantity": 1 },
-    { "id": "unit-3", "name": "برگ", "defaultQuantity": 1 },
-    { "id": "unit-4", "name": "متر مربع", "defaultQuantity": 1 },
-    { "id": "unit-5", "name": "بسته", "defaultQuantity": 1 },
-    { "id": "unit-6", "name": "متر طول", "defaultQuantity": 1 }
-  ],
+  "stores": [],
+  "categories": [],
+  "products": [],
+  "units": [],
   "customers": [],
   "invoices": [],
   "toolbarPositions": {}

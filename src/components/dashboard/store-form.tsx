@@ -262,13 +262,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const [logoPrompts, setLogoPrompts] = useState<string[]>([]);
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
 
-  const isDuplicateCategory = useMemo(() => {
-    if (!newCategoryName.trim()) return false;
-    return storeCategories.some(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && !c.parentId);
-  }, [newCategoryName, storeCategories]);
-
-  const isCategoryInputEmpty = newCategoryName.trim() === '';
-
   const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
     name,
     description,
@@ -281,6 +274,14 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     bankIban,
     bankCardNumber,
   }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
+
+  const isDuplicateCategory = useMemo(() => {
+    if (!newCategoryName.trim()) return false;
+    return storeCategories.some(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && !c.parentId);
+  }, [newCategoryName, storeCategories]);
+
+  const isCategoryInputEmpty = newCategoryName.trim() === '';
+
 
   useEffect(() => {
     if (store) {
@@ -467,7 +468,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, deleteDocument, data.categories]);
+  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, data.categories]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {

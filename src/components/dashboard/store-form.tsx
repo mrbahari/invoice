@@ -231,6 +231,19 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
   
+  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
+    name,
+    description,
+    address,
+    phone,
+    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+    bankAccountHolder,
+    bankName,
+    bankAccountNumber,
+    bankIban,
+    bankCardNumber,
+  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
+
   const [name, setName] = useState(store?.name || '');
   const [description, setDescription] = useState(store?.description || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -268,19 +281,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [newCategoryName, storeCategories]);
 
   const isCategoryInputEmpty = newCategoryName.trim() === '';
-
-  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
-    name,
-    description,
-    address,
-    phone,
-    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-    bankAccountHolder,
-    bankName,
-    bankAccountNumber,
-    bankIban,
-    bankCardNumber,
-  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
   useEffect(() => {
     if (store) {
@@ -508,10 +508,10 @@ const updateCategoriesForStore = async (storeId: string) => {
             return;
         }
 
-        const deletePromises = categoryIdsToDelete.map(id => deleteDocument('categories', id));
-        await Promise.all(deletePromises);
+        for (const catId of categoryIdsToDelete) {
+          await deleteDocument('categories', catId);
+        }
 
-        // UI state update is handled by the real-time listener in DataProvider
         toast({ variant: 'success', title: 'عملیات موفق', description: 'تمام دسته‌بندی‌ها حذف شدند.' });
     } catch (error) {
         console.error("Error deleting all categories:", error);

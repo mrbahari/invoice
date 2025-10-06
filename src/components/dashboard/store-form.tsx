@@ -231,19 +231,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
   
-  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
-    name,
-    description,
-    address,
-    phone,
-    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-    bankAccountHolder,
-    bankName,
-    bankAccountNumber,
-    bankIban,
-    bankCardNumber,
-  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
-
   const [name, setName] = useState(store?.name || '');
   const [description, setDescription] = useState(store?.description || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -281,6 +268,19 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [newCategoryName, storeCategories]);
 
   const isCategoryInputEmpty = newCategoryName.trim() === '';
+
+  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
+    name,
+    description,
+    address,
+    phone,
+    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+    bankAccountHolder,
+    bankName,
+    bankAccountNumber,
+    bankIban,
+    bankCardNumber,
+  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
   useEffect(() => {
     if (store) {
@@ -406,19 +406,14 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
 
 const updateCategoriesForStore = async (storeId: string) => {
-    // This function now just returns the plan, the actual execution is in handleSaveAll
     const existingCategories = data.categories.filter(c => c.storeId === storeId);
     const existingCategoryIds = new Set(existingCategories.map(c => c.id));
     const currentCategoryIds = new Set(storeCategories.map(c => c.id));
 
-    const toDelete: string[] = [];
-    const toUpdate: Partial<Category>[] = [];
-    const toAdd: Omit<Category, 'id'>[] = [];
-
     // Categories to delete
     for (const cat of existingCategories) {
         if (!currentCategoryIds.has(cat.id)) {
-            toDelete.push(cat.id);
+            await deleteDocument('categories', cat.id);
         }
     }
 
@@ -429,14 +424,13 @@ const updateCategoriesForStore = async (storeId: string) => {
             // Check if anything actually changed to avoid unnecessary updates
             const originalCat = existingCategories.find(c => c.id === id);
             if (JSON.stringify(originalCat) !== JSON.stringify(cat)) {
-                toUpdate.push({ id, ...catData, storeId });
+                 await updateDocument('categories', id, { ...catData, storeId });
             }
         } else {
-            toAdd.push({ ...catData, storeId });
+            // For new categories, let Firestore generate the ID by not passing it.
+            await addDocument('categories', { ...catData, storeId });
         }
     }
-
-    return { toDelete, toUpdate, toAdd };
 };
 
   const handleSaveAll = useCallback(async () => {
@@ -452,25 +446,14 @@ const updateCategoriesForStore = async (storeId: string) => {
 
         if (isEditMode && store) {
             await updateDocument('stores', store.id, storeData);
-            const { toDelete, toUpdate, toAdd } = await updateCategoriesForStore(store.id);
-
-            for (const catId of toDelete) {
-                await deleteDocument('categories', catId);
-            }
-            for (const catData of toUpdate) {
-                if (catData.id) {
-                    await updateDocument('categories', catData.id, catData);
-                }
-            }
-            for (const catData of toAdd) {
-                await addDocument('categories', catData);
-            }
+            await updateCategoriesForStore(store.id);
             toast({ variant: 'success', title: 'فروشگاه با موفقیت ویرایش شد' });
         } else {
             const newStoreId = await addDocument('stores', storeData);
             if (newStoreId) {
+                // Now that we have a real store ID, save the categories.
                 for (const category of storeCategories) {
-                    const { id, ...catData } = category;
+                    const { id, ...catData } = category; // Exclude temp id
                     await addDocument('categories', { ...catData, storeId: newStoreId });
                 }
                 toast({ variant: 'success', title: 'فروشگاه با موفقیت ایجاد شد' });
@@ -508,10 +491,14 @@ const updateCategoriesForStore = async (storeId: string) => {
             return;
         }
 
+        // Perform a batch delete for efficiency
+        const batch = [];
         for (const catId of categoryIdsToDelete) {
-          await deleteDocument('categories', catId);
+          batch.push(deleteDocument('categories', catId));
         }
+        await Promise.all(batch);
 
+        setStoreCategories([]); // Clear local state after successful deletion
         toast({ variant: 'success', title: 'عملیات موفق', description: 'تمام دسته‌بندی‌ها حذف شدند.' });
     } catch (error) {
         console.error("Error deleting all categories:", error);

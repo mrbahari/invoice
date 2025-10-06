@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Waves, Square, Layers, CheckCircle2 } from 'lucide-react';
 import type { MaterialResult } from '../estimators-page';
 import { cn } from '@/lib/utils';
+import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 
 
 type DrywallFormProps = {
@@ -23,6 +24,9 @@ type WallType = 'partition' | 'lining';
 export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [height, setHeight] = useState<number | ''>('');
+  const [displayLength, setDisplayLength] = useState('');
+  const [displayHeight, setDisplayHeight] = useState('');
+
   const [wallType, setWallType] = useState<WallType>('partition');
   const [includeWool, setIncludeWool] = useState(true);
 
@@ -78,14 +82,11 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
     return materialList.filter(item => item.quantity > 0);
   }, [length, height, wallType, includeWool]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '') {
-      setter('');
-    } else {
-      const num = parseFloat(value);
-      setter(isNaN(num) ? '' : num);
-    }
+    const numericValue = parseFormattedNumber(value);
+    displaySetter(formatNumber(numericValue));
+    setter(numericValue);
   };
 
   const handleAddClick = () => {
@@ -95,7 +96,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
     }
     const typeText = wallType === 'partition' ? 'جداکننده' : 'پوششی';
     const woolText = includeWool ? 'با پشم سنگ' : 'بدون پشم سنگ';
-    const description = `دیوار ${typeText}: ${length} * ${height} متر (${woolText})`;
+    const description = `دیوار ${typeText}: ${formatNumber(length)} * ${formatNumber(height)} متر (${woolText})`;
     onAddToList(description, results);
   };
 
@@ -116,22 +117,20 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
                   <Label htmlFor="length">طول دیوار (متر)</Label>
                   <Input
                     id="length"
-                    type="number"
+                    type="text"
                     placeholder="مثال: ۳.۲۰"
-                    value={length}
-                    onChange={handleInputChange(setLength)}
-                    step="0.01"
+                    value={displayLength}
+                    onChange={handleInputChange(setLength, setDisplayLength)}
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="height">ارتفاع دیوار (متر)</Label>
                   <Input
                     id="height"
-                    type="number"
+                    type="text"
                     placeholder="مثال: ۲.۸۰"
-                    value={height}
-                    onChange={handleInputChange(setHeight)}
-                    step="0.01"
+                    value={displayHeight}
+                    onChange={handleInputChange(setHeight, setDisplayHeight)}
                   />
                 </div>
               </div>

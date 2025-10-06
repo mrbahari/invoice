@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import type { MaterialResult } from '../estimators-page';
+import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 
 type BoxCeilingFormProps = {
     onAddToList: (description: string, results: MaterialResult[]) => void;
@@ -18,6 +19,7 @@ type BoxCeilingFormProps = {
 
 export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
+  const [displayLength, setDisplayLength] = useState('');
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -38,14 +40,11 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
     ].filter(item => item.quantity > 0);
   }, [length]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '') {
-      setter('');
-    } else {
-      const num = parseFloat(value);
-      setter(isNaN(num) ? '' : num);
-    }
+    const numericValue = parseFormattedNumber(value);
+    displaySetter(formatNumber(numericValue));
+    setter(numericValue);
   };
 
   const handleAddClick = () => {
@@ -54,7 +53,7 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
       console.error("No results to add.");
       return;
     }
-    const description = `باکس و نورمخفی: ${length} متر`;
+    const description = `باکس و نورمخفی: ${displayLength} متر`;
     onAddToList(description, results);
   };
 
@@ -73,11 +72,10 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
               <Label htmlFor="length">طول باکس (متر)</Label>
               <Input
                 id="length"
-                type="number"
+                type="text"
                 placeholder="مثال: ۱۵"
-                value={length}
-                onChange={handleInputChange(setLength)}
-                step="0.01"
+                value={displayLength}
+                onChange={handleInputChange(setLength, setDisplayLength)}
               />
             </div>
           </div>

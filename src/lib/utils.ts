@@ -78,11 +78,12 @@ export const parseFormattedNumber = (str: string): number | '' => {
     if (!str) return '';
     const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
     const englishDigits = '0123456789';
-    let numericString = str;
+    let numericString = String(str); // Ensure it's a string
     for (let i = 0; i < 10; i++) {
         numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
     }
-    numericString = numericString.replace(/[^0-9.]/g, ''); // Allow dots for decimals
+    // Allow dots for decimals, remove other non-numeric characters except for the first dot
+    numericString = numericString.replace(/[^0-9.]/g, ''); 
     const number = parseFloat(numericString);
     return isNaN(number) ? '' : number;
 };

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import type { MaterialResult } from '../estimators-page';
+import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 
 type GridCeilingFormProps = {
     onAddToList: (description: string, results: MaterialResult[]) => void;
@@ -19,6 +20,9 @@ type GridCeilingFormProps = {
 export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [width, setWidth] = useState<number | ''>('');
+  const [displayLength, setDisplayLength] = useState('');
+  const [displayWidth, setDisplayWidth] = useState('');
+
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);
@@ -55,14 +59,11 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '') {
-      setter('');
-    } else {
-      const num = parseFloat(value);
-      setter(isNaN(num) ? '' : num);
-    }
+    const numericValue = parseFormattedNumber(value);
+    displaySetter(formatNumber(numericValue));
+    setter(numericValue);
   };
 
   const handleAddClick = () => {
@@ -70,7 +71,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
       // You can add a toast message here
       return;
     }
-    const description = `سقف مشبک: ${length} * ${width} متر`;
+    const description = `سقف مشبک: ${displayLength} * ${displayWidth} متر`;
     onAddToList(description, results);
   };
 
@@ -89,22 +90,20 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
               <Label htmlFor="length">طول اتاق (متر)</Label>
               <Input
                 id="length"
-                type="number"
+                type="text"
                 placeholder="مثال: ۸"
-                value={length}
-                onChange={handleInputChange(setLength)}
-                step="0.01"
+                value={displayLength}
+                onChange={handleInputChange(setLength, setDisplayLength)}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="width">عرض اتاق (متر)</Label>
               <Input
                 id="width"
-                type="number"
+                type="text"
                 placeholder="مثال: ۴"
-                value={width}
-                onChange={handleInputChange(setWidth)}
-                step="0.01"
+                value={displayWidth}
+                onChange={handleInputChange(setWidth, setDisplayWidth)}
               />
             </div>
           </div>

@@ -11,6 +11,7 @@ import { PlusCircle, Layers, CheckCircle2 } from 'lucide-react';
 import type { MaterialResult } from '../estimators-page';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 
 // =================================================================
 // Helper Functions
@@ -28,14 +29,7 @@ interface CutResult {
   cuts: { piece: number, length: number, from: number }[];
 }
 
-/**
- * Calculates how many profiles are needed and the total waste.
- * This version correctly handles pieces longer than the stock length.
- * @param count - Number of pieces to cut.
- * @param length - The required length of each piece.
- * @param stockLength - The length of the stock material (e.g., F47 profile).
- * @returns Object with pieces needed, total waste, and cut list.
- */
+
 function calculateProfileCuts(count: number, length: number, stockLength: number): CutResult {
     if (length <= 0 || count <= 0) {
       return { pieces: 0, waste: 0, cuts: [] };
@@ -46,20 +40,53 @@ function calculateProfileCuts(count: number, length: number, stockLength: number
     let stockUsed = 0;
     const cuts: { piece: number; length: number; from: number }[] = [];
   
-    // Bin packing algorithm (First Fit Decreasing)
+    // Bin packing algorithm (First Fit Decreasing) - simplified for identical pieces
     const bins: number[] = []; // Represents remaining length in each stock
   
     for (let i = 0; i < allPieces.length; i++) {
       const pieceLength = allPieces[i];
       let placed = false;
   
-      // Try to fit the piece into an existing bin (stock)
-      for (let j = 0; j < bins.length; j++) {
-        if (bins[j] >= pieceLength) {
-          bins[j] -= pieceLength;
-          cuts.push({ piece: i + 1, length: pieceLength, from: j + 1 });
+      // Handle pieces longer than stock length
+      if (pieceLength > stockLength) {
+          const numStock = Math.floor(pieceLength / stockLength);
+          const remainder = pieceLength % stockLength;
+
+          for (let k=0; k < numStock; k++) {
+              stockUsed++;
+              cuts.push({ piece: i + 1, length: stockLength, from: stockUsed });
+          }
+
+          if (remainder > 0.01) { // Check for significant remainder
+            let remainderPlaced = false;
+            // Try to fit the remainder in an existing bin
+            for (let j = 0; j < bins.length; j++) {
+              if (bins[j] >= remainder) {
+                bins[j] -= remainder;
+                cuts.push({ piece: i + 1, length: remainder, from: j + 1 });
+                remainderPlaced = true;
+                break;
+              }
+            }
+            // If remainder doesn't fit, open a new bin
+            if (!remainderPlaced) {
+              stockUsed++;
+              const newBinRemaining = stockLength - remainder;
+              bins.push(newBinRemaining);
+              cuts.push({ piece: i + 1, length: remainder, from: stockUsed });
+            }
+          }
           placed = true;
-          break;
+
+      } else {
+        // Try to fit the piece into an existing bin (stock)
+        for (let j = 0; j < bins.length; j++) {
+          if (bins[j] >= pieceLength) {
+            bins[j] -= pieceLength;
+            cuts.push({ piece: i + 1, length: pieceLength, from: j + 1 });
+            placed = true;
+            break;
+          }
         }
       }
   
@@ -144,6 +171,11 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   const [length, setLength] = useState<number | ''>(6.32);
   const [width, setWidth] = useState<number | ''>(3.14);
   const [suspensionHeight, setSuspensionHeight] = useState<number | ''>(20);
+  
+  const [displayLength, setDisplayLength] = useState(() => formatNumber(6.32));
+  const [displayWidth, setDisplayWidth] = useState(() => formatNumber(3.14));
+  const [displaySuspensionHeight, setDisplaySuspensionHeight] = useState(() => formatNumber(20));
+
   const [ceilingType, setCeilingType] = useState<CeilingType>('B');
 
   const { results, details } = useMemo(() => {
@@ -209,16 +241,20 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
       { material: 'پنل والیز', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'سازه F47', quantity: f47MainProfiles + f47SecondaryProfiles, unit: 'شاخه' },
-      { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
-      { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
-      { material: 'میخ و چاشنی', quantity: nailAndChargeCount, unit: 'عدد' },
-      { material: 'اتصال W', quantity: wConnectors, unit: 'عدد' },
-      { material: 'کلیپس', quantity: clips + typeAClips, unit: 'عدد' },
     ];
-
+    
     if (u36Profiles > 0) {
-        materialList.splice(3, 0, { material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' });
+        materialList.push({ material: 'سازه U36', quantity: u36Profiles, unit: 'شاخه' });
     }
+
+    materialList.push(
+        { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
+        { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
+        { material: 'میخ و چاشنی', quantity: nailAndChargeCount, unit: 'عدد' },
+        { material: 'اتصال W', quantity: wConnectors, unit: 'عدد' },
+        { material: 'کلیپس', quantity: clips + typeAClips, unit: 'عدد' },
+    )
+    
     if (useBrackets) {
         materialList.push({ material: 'براکت', quantity: totalHangers, unit: 'عدد' });
     }
@@ -234,19 +270,16 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     return { results: materialList.filter(item => item.quantity > 0), details: estimationDetails };
   }, [length, width, suspensionHeight, ceilingType]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === '') {
-      setter('');
-    } else {
-      const num = parseFloat(value);
-      setter(isNaN(num) ? '' : num);
-    }
+    const numericValue = parseFormattedNumber(value);
+    displaySetter(formatNumber(numericValue));
+    setter(numericValue);
   };
 
   const handleAddClick = () => {
     if (results.length === 0) return;
-    const description = `سقف فلت تیپ ${ceilingType}: ${length} * ${width} متر`;
+    const description = `سقف فلت تیپ ${ceilingType}: ${formatNumber(length)} * ${formatNumber(width)} متر`;
     onAddToList(description, results);
   };
 
@@ -265,11 +298,11 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="grid gap-2">
                     <Label htmlFor="length">طول اتاق (متر)</Label>
-                    <Input id="length" type="number" placeholder="مثال: ۶.۳۲" value={length} onChange={handleInputChange(setLength)} step="0.01"/>
+                    <Input id="length" type="text" placeholder="مثال: ۶.۳۲" value={displayLength} onChange={handleInputChange(setLength, setDisplayLength)} />
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="width">عرض اتاق (متر)</Label>
-                    <Input id="width" type="number" placeholder="مثال: ۳.۱۴" value={width} onChange={handleInputChange(setWidth)} step="0.01"/>
+                    <Input id="width" type="text" placeholder="مثال: ۳.۱۴" value={displayWidth} onChange={handleInputChange(setWidth, setDisplayWidth)} />
                 </div>
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
@@ -299,7 +332,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
             </div>
             <div className="grid gap-2 mt-6">
                 <Label htmlFor="sHeight">ارتفاع آویز (سانتی‌متر)</Label>
-                <Input id="sHeight" type="number" placeholder="مثال: ۲۰" value={suspensionHeight} onChange={handleInputChange(setSuspensionHeight)} step="1"/>
+                <Input id="sHeight" type="text" placeholder="مثال: ۲۰" value={displaySuspensionHeight} onChange={handleInputChange(setSuspensionHeight, setDisplaySuspensionHeight)} />
                 <p className="text-xs text-muted-foreground">اگر ارتفاع کمتر از ۱۲ سانتی‌متر باشد، از براکت به جای آویز U36 استفاده می‌شود.</p>
             </div>
           </div>
@@ -328,13 +361,13 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                 <Separator className="my-6" />
                 <h3 className="text-lg font-semibold mb-4 text-primary">۳. جزئیات و پرت مصالح</h3>
                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>مساحت کل:</strong> {details.area.toFixed(2)} متر مربع</p>
-                    <p><strong>محیط:</strong> {details.perimeter.toFixed(2)} متر</p>
-                    <p><strong>نبشی L25:</strong> به {details.l25Profiles.count} شاخه {details.l25Profiles.length} متری نیاز است.</p>
-                    <p><strong>سازه F47 اصلی:</strong> برای {details.f47MainProfiles.rows} ردیف، به {details.f47MainProfiles.count} شاخه نیاز است. پرت تقریبی: {details.f47MainProfiles.waste.toFixed(2)} متر.</p>
-                    <p><strong>پنل‌ها:</strong> به {details.panelLayout.panelsNeeded} برگ پنل نیاز است. پرت کل: {details.panelLayout.waste.toFixed(2)} متر مربع.</p>
+                    <p><strong>مساحت کل:</strong> {(details.area.toFixed(2)).toLocaleString('fa-IR')} متر مربع</p>
+                    <p><strong>محیط:</strong> {(details.perimeter.toFixed(2)).toLocaleString('fa-IR')} متر</p>
+                    <p><strong>نبشی L25:</strong> به {details.l25Profiles.count.toLocaleString('fa-IR')} شاخه {details.l25Profiles.length.toLocaleString('fa-IR')} متری نیاز است.</p>
+                    <p><strong>سازه F47 اصلی:</strong> برای {details.f47MainProfiles.rows.toLocaleString('fa-IR')} ردیف، به {details.f47MainProfiles.count.toLocaleString('fa-IR')} شاخه نیاز است. پرت تقریبی: {(details.f47MainProfiles.waste.toFixed(2)).toLocaleString('fa-IR')} متر.</p>
+                    <p><strong>پنل‌ها:</strong> به {details.panelLayout.panelsNeeded.toLocaleString('fa-IR')} برگ پنل نیاز است. پرت کل: {(details.panelLayout.waste.toFixed(2)).toLocaleString('fa-IR')} متر مربع.</p>
                     {details.panelLayout.wastePieces.map((p, i) => (
-                       <p key={i} className="pr-4"> - قطعه پرت {i+1}: {p.count} عدد به ابعاد {p.length.toFixed(2)} در {p.width.toFixed(2)} متر</p>
+                       <p key={i} className="pr-4"> - قطعه پرت {formatNumber(i+1)}: {p.count.toLocaleString('fa-IR')} عدد به ابعاد {(p.length.toFixed(2)).toLocaleString('fa-IR')} در {(p.width.toFixed(2)).toLocaleString('fa-IR')} متر</p>
                     ))}
                 </div>
             </div>

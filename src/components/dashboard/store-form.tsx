@@ -196,7 +196,7 @@ const CategoryTree = ({
               )}
 
               <AccordionContent>
-                  <div className="p-4 pt-2 border rounded-lg bg-muted/30 ml-2 mr-8 space-y-4">
+                  <div className="p-4 pt-2 ml-4 border-r pr-4 space-y-4">
                       <CategoryTree
                           categories={subCategories}
                           parentId={cat.id}

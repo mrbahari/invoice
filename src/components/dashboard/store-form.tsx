@@ -227,7 +227,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
   const isEditMode = !!store;
 
-  const { data, setData } = useData();
+  const { data, setData, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
   
   const [name, setName] = useState(store?.name || '');
@@ -392,7 +392,32 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     };
 
 
-  const handleSaveAll = useCallback(() => {
+const updateCategoriesForStore = async (storeId: string) => {
+    const existingCategories = data.categories.filter(c => c.storeId === storeId);
+    const existingCategoryIds = new Set(existingCategories.map(c => c.id));
+    const currentCategoryIds = new Set(storeCategories.map(c => c.id));
+
+    // Categories to delete
+    for (const cat of existingCategories) {
+        if (!currentCategoryIds.has(cat.id)) {
+            await deleteDocument('categories', cat.id);
+        }
+    }
+
+    // Categories to add or update
+    for (const cat of storeCategories) {
+        if (existingCategoryIds.has(cat.id)) {
+            // Update existing
+            await updateDocument('categories', cat.id, { ...cat, storeId });
+        } else {
+            // Add new
+            const { id, ...catData } = cat;
+            await addDocument('categories', { ...catData, storeId });
+        }
+    }
+};
+
+  const handleSaveAll = useCallback(async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
@@ -400,43 +425,27 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     
     setIsProcessing(true);
 
-    const storeIdToSave = store?.id || `store-${Math.random().toString(36).substr(2, 9)}`;
+    const storeData = buildStoreData();
 
-    const newOrUpdatedStore: Store = {
-      id: storeIdToSave,
-      name,
-      description,
-      address,
-      phone,
-      logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-      bankAccountHolder,
-      bankName,
-      bankAccountNumber,
-      bankIban,
-      bankCardNumber,
-    };
-    
-    setData(prev => {
-        // Update stores
-        const updatedStores = isEditMode 
-            ? prev.stores.map(s => s.id === storeIdToSave ? newOrUpdatedStore : s)
-            : [newOrUpdatedStore, ...prev.stores];
+    if (isEditMode && store) {
+        await updateDocument('stores', store.id, storeData);
+        await updateCategoriesForStore(store.id);
+        toast({ variant: 'success', title: 'فروشگاه با موفقیت ویرایش شد' });
+    } else {
+        const newStoreId = await addDocument('stores', storeData);
+        if (newStoreId) {
+            // Now add categories with the new storeId
+            for (const category of storeCategories) {
+                const { id, ...catData } = category;
+                await addDocument('categories', { ...catData, storeId: newStoreId });
+            }
+            toast({ variant: 'success', title: 'فروشگاه با موفقیت ایجاد شد' });
+        }
+    }
 
-        // Update categories: remove all old categories for this store, then add the current (potentially empty) list
-        const otherStoresCategories = prev.categories.filter(c => c.storeId !== storeIdToSave);
-        const finalThisStoreCategories = storeCategories.map(c => ({...c, storeId: storeIdToSave}));
-        
-        return {
-            ...prev,
-            stores: updatedStores,
-            categories: [...otherStoresCategories, ...finalThisStoreCategories],
-        };
-    });
-
-    toast({ variant: 'success', title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
     setIsProcessing(false);
     onSave();
-  }, [name, store, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber, isEditMode, storeCategories, setData, onSave, toast]);
+  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument]);
   
   const handleDeleteAllCategories = useCallback(() => {
     setStoreCategories([]);
@@ -534,7 +543,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     bankCardNumber,
   });
 
-  const handleSaveAsCopy = useCallback(() => {
+  const handleSaveAsCopy = useCallback(async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
@@ -542,37 +551,39 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     
     setIsProcessing(true);
 
-    const newStoreId = `store-${Math.random().toString(36).substr(2, 9)}`;
-    const newStoreData = { ...buildStoreData(), id: newStoreId };
-    
-    const copiedCategories = storeCategories.map(c => ({...c, storeId: newStoreId, id: `cat-${Math.random().toString(36).substr(2, 9)}`}));
+    const storeData = buildStoreData();
+    const newStoreId = await addDocument('stores', storeData);
 
-    setData(prev => ({
-        ...prev,
-        stores: [newStoreData, ...prev.stores],
-        categories: [...prev.categories, ...copiedCategories],
-    }));
+    if (newStoreId) {
+        for (const category of storeCategories) {
+            const { id, ...catData } = category;
+            await addDocument('categories', { ...catData, storeId: newStoreId });
+        }
+    }
     
     setIsProcessing(false);
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
-  }, [address, bankAccountHolder, bankAccountNumber, bankCardNumber, bankIban, bankName, description, logoUrl, name, onSave, phone, setData, storeCategories, toast]);
+  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
       if (!store) return;
       const storeHasProducts = data.products.some(p => p.storeId === store.id);
       if (storeHasProducts) {
           toast({ variant: 'destructive', title: 'خطا', description: 'این فروشگاه دارای محصول است و قابل حذف نیست.' });
           return;
       }
-      setData(prev => ({
-          ...prev,
-          stores: prev.stores.filter(s => s.id !== store.id),
-          categories: prev.categories.filter(c => c.storeId !== store.id),
-      }));
+      
+      const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
+      for (const catId of categoryIdsToDelete) {
+          await deleteDocument('categories', catId);
+      }
+      
+      await deleteDocument('stores', store.id);
+
       toast({ variant: 'success', title: 'فروشگاه حذف شد' });
       onCancel();
-  }, [store, data.products, setData, toast, onCancel]);
+  }, [store, data.products, data.categories, deleteDocument, toast, onCancel]);
 
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
 

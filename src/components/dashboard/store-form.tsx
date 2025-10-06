@@ -228,7 +228,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
   const isEditMode = !!store;
 
-  const { data, setData, addDocument, updateDocument, deleteDocument } = useData();
+  const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
   
   const [name, setName] = useState(store?.name || '');
@@ -269,6 +269,18 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
   const isCategoryInputEmpty = newCategoryName.trim() === '';
 
+  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
+    name,
+    description,
+    address,
+    phone,
+    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+    bankAccountHolder,
+    bankName,
+    bankAccountNumber,
+    bankIban,
+    bankCardNumber,
+  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
   useEffect(() => {
     if (store) {
@@ -427,19 +439,6 @@ const updateCategoriesForStore = async (storeId: string) => {
     return { toDelete, toUpdate, toAdd };
 };
 
-  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
-    name,
-    description,
-    address,
-    phone,
-    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-    bankAccountHolder,
-    bankName,
-    bankAccountNumber,
-    bankIban,
-    bankCardNumber,
-  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
-
   const handleSaveAll = useCallback(async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
@@ -488,33 +487,39 @@ const updateCategoriesForStore = async (storeId: string) => {
   }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, deleteDocument, data.categories]);
   
   const handleDeleteAllCategories = useCallback(async () => {
-    const categoryIdsToDelete = storeCategories.map(c => c.id);
-    const hasProducts = products.some(p => p.subCategoryId && categoryIdsToDelete.includes(p.subCategoryId));
-
-    if (hasProducts) {
-        toast({
-            variant: 'destructive',
-            title: 'خطا در حذف',
-            description: 'برخی از دسته‌بندی‌ها به محصولات اختصاص داده شده‌اند و قابل حذف نیستند.',
-        });
-        return;
+    if (!store) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'ابتدا فروشگاه را ذخیره کنید.' });
+      return;
     }
-
+    
+    setIsProcessing(true);
     try {
-        // We only need to delete from the local state. 
-        // The main save function will handle the actual deletion from Firestore
-        // by comparing the new empty local state with the previous state.
-        setStoreCategories([]);
-        toast({
-            variant: 'success',
-            title: 'دسته‌بندی‌ها پاک شدند',
-            description: 'برای حذف نهایی، روی دکمه "ذخیره کل تغییرات" کلیک کنید.',
-        });
+        const categoriesToDelete = data.categories.filter(c => c.storeId === store.id);
+        const categoryIdsToDelete = categoriesToDelete.map(c => c.id);
+
+        const hasProducts = products.some(p => p.subCategoryId && categoryIdsToDelete.includes(p.subCategoryId));
+        if (hasProducts) {
+            toast({
+                variant: 'destructive',
+                title: 'خطا در حذف',
+                description: 'برخی از دسته‌بندی‌ها به محصولات اختصاص داده شده‌اند و قابل حذف نیستند.',
+            });
+            setIsProcessing(false);
+            return;
+        }
+
+        const deletePromises = categoryIdsToDelete.map(id => deleteDocument('categories', id));
+        await Promise.all(deletePromises);
+
+        // UI state update is handled by the real-time listener in DataProvider
+        toast({ variant: 'success', title: 'عملیات موفق', description: 'تمام دسته‌بندی‌ها حذف شدند.' });
     } catch (error) {
-        console.error("Error preparing to delete all categories:", error);
+        console.error("Error deleting all categories:", error);
         toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در حذف دسته‌بندی‌ها رخ داد.' });
+    } finally {
+        setIsProcessing(false);
     }
-  }, [storeCategories, products, toast]);
+}, [store, data.categories, products, deleteDocument, toast]);
 
   
   // Category Handlers
@@ -836,7 +841,7 @@ const updateCategoriesForStore = async (storeId: string) => {
                         <AlertDialogTrigger asChild>
                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="outline" size="icon"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                    <Button variant="outline" size="icon" disabled={isProcessing}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>حذف همه دسته‌بندی‌ها</p></TooltipContent>
                             </Tooltip>
@@ -898,5 +903,3 @@ const updateCategoriesForStore = async (storeId: string) => {
     </TooltipProvider>
   );
 }
-
-    

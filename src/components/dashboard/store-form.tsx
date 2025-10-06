@@ -379,12 +379,12 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             if (result && result.categories && result.categories.length > 0) {
                  const newCats: Category[] = [];
-                const processNode = (node: any, parentId?: string) => {
+                const processNode = (node: any, pId?: string) => {
                     const newCat: Category = {
                         id: `cat-${Math.random().toString(36).substr(2, 9)}`,
                         name: node.name,
                         storeId: store?.id || 'temp', // This will be updated on save
-                        parentId: parentId,
+                        parentId: pId,
                     };
                     newCats.push(newCat);
                     if (node.children && node.children.length > 0) {
@@ -428,29 +428,36 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }, [user, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
 const updateCategoriesForStore = async (storeId: string) => {
-    const existingCategories = data.categories.filter(c => c.storeId === storeId);
-    const existingCategoryIds = new Set(existingCategories.map(c => c.id));
-    const currentCategoryIds = new Set(storeCategories.map(c => c.id));
+    // Categories that are new or have changed
+    const categoriesToUpdate: Category[] = [];
+    // Categories that existed but are now removed
+    const existingCategoryIdsInDb = new Set(data.categories.filter(c => c.storeId === storeId).map(c => c.id));
+    const currentCategoryIdsInState = new Set(storeCategories.map(c => c.id));
 
-    // Categories to delete
-    for (const cat of existingCategories) {
-        if (!currentCategoryIds.has(cat.id)) {
-            await deleteDocument('categories', cat.id);
+    // Delete categories that are no longer in the local state
+    for (const catId of existingCategoryIdsInDb) {
+        if (!currentCategoryIdsInState.has(catId)) {
+            await deleteDocument('categories', catId);
         }
     }
 
-    // Categories to add or update
-    for (const cat of storeCategories) {
-        if (existingCategoryIds.has(cat.id)) {
-            // Check if anything actually changed to avoid unnecessary updates
-            const originalCat = existingCategories.find(c => c.id === cat.id);
-            if (JSON.stringify(originalCat) !== JSON.stringify(cat)) {
-                 await updateDocument('categories', cat.id, { ...cat, storeId });
-            }
+    // Add or Update categories from local state
+    for (const category of storeCategories) {
+        // If it's a new category (temp id) or doesn't exist in the DB for this store
+        if (category.id.startsWith('temp-') || !existingCategoryIdsInDb.has(category.id)) {
+            // Firestore will generate a new ID, we just provide the data.
+            await addDocument('categories', {
+                name: category.name,
+                storeId: storeId,
+                parentId: category.parentId,
+            });
         } else {
-            // For new categories, let Firestore generate the ID by not passing it.
-            const { id, ...catData } = cat;
-            await addDocument('categories', { ...catData, storeId });
+            // It's an existing category, check for updates
+             const originalCat = data.categories.find(c => c.id === category.id);
+             // A simple JSON diff to see if anything changed
+             if (JSON.stringify(originalCat) !== JSON.stringify({ ...category, storeId })) {
+                await updateDocument('categories', category.id, { ...category, storeId });
+             }
         }
     }
 };
@@ -471,16 +478,22 @@ const updateCategoriesForStore = async (storeId: string) => {
         const storeData = buildStoreData();
 
         if (isEditMode && store) {
+            // Update existing store
             await updateDocument('stores', store.id, storeData);
+            // Sync categories (add/update/delete)
             await updateCategoriesForStore(store.id);
             toast({ variant: 'success', title: 'فروشگاه با موفقیت ویرایش شد' });
         } else {
+            // Create new store
             const newStoreId = await addDocument('stores', storeData);
             if (newStoreId) {
-                // Now that we have a real store ID, save the categories.
+                // Now that we have a real store ID, save the new categories.
                 for (const category of storeCategories) {
-                    const { id, ...catData } = category; // Exclude temp id
-                    await addDocument('categories', { ...catData, storeId: newStoreId });
+                    await addDocument('categories', { 
+                        name: category.name, 
+                        parentId: category.parentId,
+                        storeId: newStoreId 
+                    });
                 }
                 toast({ variant: 'success', title: 'فروشگاه با موفقیت ایجاد شد' });
             }
@@ -546,7 +559,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     if(isDuplicate) return;
 
     const newCat: Category = {
-      id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+      id: `temp-${Math.random().toString(36).substr(2, 9)}`,
       name: newCategoryName.trim(),
       storeId: store?.id || 'temp', // temp id until store is saved
       parentId,
@@ -557,7 +570,7 @@ const updateCategoriesForStore = async (storeId: string) => {
 
   const handleAddSubCategory = (parentId: string, name: string) => {
     const newSubCat: Category = {
-      id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+      id: `temp-${Math.random().toString(36).substr(2, 9)}`,
       name,
       storeId: store?.id || 'temp',
       parentId,

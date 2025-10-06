@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback, ChangeEvent } from 'react';
@@ -417,6 +418,19 @@ const updateCategoriesForStore = async (storeId: string) => {
     }
 };
 
+  const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
+    name,
+    description,
+    address,
+    phone,
+    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
+    bankAccountHolder,
+    bankName,
+    bankAccountNumber,
+    bankIban,
+    bankCardNumber,
+  }), [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
+
   const handleSaveAll = useCallback(async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
@@ -529,19 +543,6 @@ const updateCategoriesForStore = async (storeId: string) => {
         }, 300); // Delay to allow accordion animation to finish
     }
   };
-
-  const buildStoreData = (): Omit<Store, 'id'> => ({
-    name,
-    description,
-    address,
-    phone,
-    logoUrl: logoUrl || `https://picsum.photos/seed/${Math.random()}/110/110`,
-    bankAccountHolder,
-    bankName,
-    bankAccountNumber,
-    bankIban,
-    bankCardNumber,
-  });
 
   const handleSaveAsCopy = useCallback(async () => {
     if (!name) {

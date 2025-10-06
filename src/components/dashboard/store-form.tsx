@@ -394,28 +394,37 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
 
 const updateCategoriesForStore = async (storeId: string) => {
+    // This function now just returns the plan, the actual execution is in handleSaveAll
     const existingCategories = data.categories.filter(c => c.storeId === storeId);
     const existingCategoryIds = new Set(existingCategories.map(c => c.id));
     const currentCategoryIds = new Set(storeCategories.map(c => c.id));
 
+    const toDelete: string[] = [];
+    const toUpdate: Partial<Category>[] = [];
+    const toAdd: Omit<Category, 'id'>[] = [];
+
     // Categories to delete
     for (const cat of existingCategories) {
         if (!currentCategoryIds.has(cat.id)) {
-            await deleteDocument('categories', cat.id);
+            toDelete.push(cat.id);
         }
     }
 
     // Categories to add or update
     for (const cat of storeCategories) {
-        if (existingCategoryIds.has(cat.id)) {
-            // Update existing
-            await updateDocument('categories', cat.id, { ...cat, storeId });
+        const { id, ...catData } = cat;
+        if (existingCategoryIds.has(id)) {
+            // Check if anything actually changed to avoid unnecessary updates
+            const originalCat = existingCategories.find(c => c.id === id);
+            if (JSON.stringify(originalCat) !== JSON.stringify(cat)) {
+                toUpdate.push({ id, ...catData, storeId });
+            }
         } else {
-            // Add new
-            const { id, ...catData } = cat;
-            await addDocument('categories', { ...catData, storeId });
+            toAdd.push({ ...catData, storeId });
         }
     }
+
+    return { toDelete, toUpdate, toAdd };
 };
 
   const buildStoreData = useCallback((): Omit<Store, 'id'> => ({
@@ -439,31 +448,73 @@ const updateCategoriesForStore = async (storeId: string) => {
     
     setIsProcessing(true);
 
-    const storeData = buildStoreData();
+    try {
+        const storeData = buildStoreData();
 
-    if (isEditMode && store) {
-        await updateDocument('stores', store.id, storeData);
-        await updateCategoriesForStore(store.id);
-        toast({ variant: 'success', title: 'فروشگاه با موفقیت ویرایش شد' });
-    } else {
-        const newStoreId = await addDocument('stores', storeData);
-        if (newStoreId) {
-            // Now add categories with the new storeId
-            for (const category of storeCategories) {
-                const { id, ...catData } = category;
-                await addDocument('categories', { ...catData, storeId: newStoreId });
+        if (isEditMode && store) {
+            await updateDocument('stores', store.id, storeData);
+            const { toDelete, toUpdate, toAdd } = await updateCategoriesForStore(store.id);
+
+            for (const catId of toDelete) {
+                await deleteDocument('categories', catId);
             }
-            toast({ variant: 'success', title: 'فروشگاه با موفقیت ایجاد شد' });
+            for (const catData of toUpdate) {
+                if (catData.id) {
+                    await updateDocument('categories', catData.id, catData);
+                }
+            }
+            for (const catData of toAdd) {
+                await addDocument('categories', catData);
+            }
+            toast({ variant: 'success', title: 'فروشگاه با موفقیت ویرایش شد' });
+        } else {
+            const newStoreId = await addDocument('stores', storeData);
+            if (newStoreId) {
+                for (const category of storeCategories) {
+                    const { id, ...catData } = category;
+                    await addDocument('categories', { ...catData, storeId: newStoreId });
+                }
+                toast({ variant: 'success', title: 'فروشگاه با موفقیت ایجاد شد' });
+            }
         }
+        onSave();
+
+    } catch (error) {
+        console.error("Error saving store:", error);
+        toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی', description: 'لطفا دوباره امتحان کنید' });
+    } finally {
+        setIsProcessing(false);
+    }
+  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, deleteDocument, data.categories]);
+  
+  const handleDeleteAllCategories = useCallback(async () => {
+    const categoryIdsToDelete = storeCategories.map(c => c.id);
+    const hasProducts = products.some(p => p.subCategoryId && categoryIdsToDelete.includes(p.subCategoryId));
+
+    if (hasProducts) {
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: 'برخی از دسته‌بندی‌ها به محصولات اختصاص داده شده‌اند و قابل حذف نیستند.',
+        });
+        return;
     }
 
-    setIsProcessing(false);
-    onSave();
-  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument]);
-  
-  const handleDeleteAllCategories = useCallback(() => {
-    setStoreCategories([]);
-  }, []);
+    try {
+        // We only need to delete from the local state. 
+        // The main save function will handle the actual deletion from Firestore
+        // by comparing the new empty local state with the previous state.
+        setStoreCategories([]);
+        toast({
+            variant: 'success',
+            title: 'دسته‌بندی‌ها پاک شدند',
+            description: 'برای حذف نهایی، روی دکمه "ذخیره کل تغییرات" کلیک کنید.',
+        });
+    } catch (error) {
+        console.error("Error preparing to delete all categories:", error);
+        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در حذف دسته‌بندی‌ها رخ داد.' });
+    }
+  }, [storeCategories, products, toast]);
 
   
   // Category Handlers
@@ -497,11 +548,7 @@ const updateCategoriesForStore = async (storeId: string) => {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    if (products.some(p => p.subCategoryId === categoryId)) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'این دسته به یک یا چند محصول اختصاص داده شده است و قابل حذف نیست.' });
-        return;
-    }
-
+    // Check if this category or any of its subcategories are used by products
     let allIdsToDelete = new Set<string>();
     let queue = [categoryId];
     allIdsToDelete.add(categoryId);
@@ -513,6 +560,13 @@ const updateCategoriesForStore = async (storeId: string) => {
             allIdsToDelete.add(child.id);
             queue.push(child.id);
         });
+    }
+
+    const isUsed = products.some(p => p.subCategoryId && allIdsToDelete.has(p.subCategoryId));
+
+    if (isUsed) {
+        toast({ variant: 'destructive', title: 'خطا', description: 'این دسته یا زیردسته‌های آن به یک یا چند محصول اختصاص داده شده و قابل حذف نیست.' });
+        return;
     }
 
     setStoreCategories(prev => prev.filter(c => !allIdsToDelete.has(c.id)));
@@ -844,3 +898,5 @@ const updateCategoriesForStore = async (storeId: string) => {
     </TooltipProvider>
   );
 }
+
+    

@@ -420,15 +420,15 @@ const updateCategoriesForStore = async (storeId: string) => {
 
     // Categories to add or update
     for (const cat of storeCategories) {
-        const { id, ...catData } = cat;
-        if (existingCategoryIds.has(id)) {
+        if (existingCategoryIds.has(cat.id)) {
             // Check if anything actually changed to avoid unnecessary updates
-            const originalCat = existingCategories.find(c => c.id === id);
+            const originalCat = existingCategories.find(c => c.id === cat.id);
             if (JSON.stringify(originalCat) !== JSON.stringify(cat)) {
-                 await updateDocument('categories', id, { ...catData, storeId });
+                 await updateDocument('categories', cat.id, { ...cat, storeId });
             }
         } else {
             // For new categories, let Firestore generate the ID by not passing it.
+            const { id, ...catData } = cat;
             await addDocument('categories', { ...catData, storeId });
         }
     }
@@ -468,7 +468,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, data.categories]);
+  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {

@@ -271,42 +271,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [toolbarPosRef]);
 
   const clearAllData = useCallback(async () => {
-    if (!user || !firestore) return;
+    if (!firestore) return;
     const batch = writeBatch(firestore);
 
-    // This function will only clear USER-SPECIFIC data.
-    const userCollectionsRefs: (CollectionReference | null)[] = [
-        storesRef,
-        unitsRef,
-        customersRef,
-        invoicesRef,
+    // This function clears ALL data, both user-specific and public collections
+    const collectionsToClear: (CollectionReference | null)[] = [
+      productsRef,
+      categoriesRef,
     ];
-
-    for (const ref of userCollectionsRefs) {
-        if (ref) {
-            const q = query(ref);
-            const snapshot = await getDocs(q);
-            snapshot.docs.forEach(doc => {
-              if (doc.id) batch.delete(doc.ref);
-            });
-        }
+    
+    // Add user-specific collections only if the user is logged in
+    if(user) {
+        collectionsToClear.push(storesRef, unitsRef, customersRef, invoicesRef);
     }
+
+    for (const ref of collectionsToClear) {
+      if (ref) {
+        const snapshot = await getDocs(query(ref));
+        snapshot.docs.forEach(doc => {
+          if (doc.id) batch.delete(doc.ref);
+        });
+      }
+    }
+
     // Safely reset the toolbar positions by setting it to an empty object
-    // This avoids a delete operation on a potentially non-existent document
-    if (toolbarPosRef) {
-        batch.set(toolbarPosRef, {});
+    if (user && toolbarPosRef) {
+      batch.set(toolbarPosRef, {});
     }
 
     try {
-        await batch.commit();
-    } catch(error: any) {
-        const permissionError = new FirestorePermissionError({
-            path: 'multiple user-specific paths',
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+      await batch.commit();
+      // On successful commit, also clear the local state
+      setData(emptyData);
+    } catch (error: any) {
+      const permissionError = new FirestorePermissionError({
+        path: 'multiple paths',
+        operation: 'delete',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      // Do not clear local state on error
+      throw error; // Re-throw so caller knows it failed
     }
-  }, [user, firestore, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }, [user, firestore, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
 
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {

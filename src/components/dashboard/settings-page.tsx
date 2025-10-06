@@ -47,7 +47,7 @@ const colorThemes = [
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, addDocument, deleteDocument, clearAllData, loadDataBatch } = useData();
+  const { data, setData, addDocument, deleteDocument, clearAllData, loadDataBatch } = useData();
   const { setSearchVisible } = useSearch();
   const { units = [] } = data; // Use default empty array to prevent error
   const { toast } = useToast();
@@ -121,19 +121,29 @@ export default function SettingsPage() {
 
   const handleClearData = async () => {
     setIsProcessing(true);
-    await clearAllData();
-    setIsProcessing(false);
-    toast({ variant: 'success', title: 'اطلاعات پاک شد', description: 'تمام داده‌های شما با موفقیت حذف شد.' });
+    try {
+      await clearAllData();
+      toast({ variant: 'success', title: 'اطلاعات پاک شد', description: 'تمام داده‌های شما با موفقیت حذف شد.' });
+    } catch (error) {
+       toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در پاک کردن اطلاعات رخ داد.' });
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   const handleLoadDefaults = async () => {
     setIsProcessing(true);
-    // First clear existing user-specific data
-    await clearAllData(); 
-    // Then load the default data
-    await loadDataBatch(defaultDb);
-    setIsProcessing(false);
-    toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
+    try {
+      // First clear existing user-specific data
+      await clearAllData();
+      // Then load the default data
+      await loadDataBatch(defaultDb);
+      toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
+    } catch (error) {
+       toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در بارگذاری داده‌های پیش‌فرض رخ داد.' });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleBackupData = () => {

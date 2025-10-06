@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft, ChevronsUpDown } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft, ChevronsUpDown, User, Wrench, Building } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
@@ -24,6 +23,7 @@ import {
 import { FloatingToolbar } from './floating-toolbar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useSearch } from './search-provider';
+import { SmartOrderForm } from './estimators/smart-order-form';
 
 
 export interface MaterialResult {
@@ -38,7 +38,7 @@ export interface Estimation {
   results: MaterialResult[];
 }
 
-type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall';
+type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall' | 'smart-order';
 
 const estimatorTypes = [
     {
@@ -47,6 +47,7 @@ const estimatorTypes = [
         imageUrl: '/images/b2.jpg',
         imageHint: 'drywall ceiling',
         component: BoxCeilingForm,
+        icon: Wrench,
     },
     {
         id: 'grid-ceiling' as EstimatorType,
@@ -54,6 +55,7 @@ const estimatorTypes = [
         imageUrl: '/images/s2.jpg',
         imageHint: 'grid ceiling',
         component: GridCeilingForm,
+        icon: Wrench,
     },
     {
         id: 'flat-ceiling' as EstimatorType,
@@ -61,6 +63,7 @@ const estimatorTypes = [
         imageUrl: '/images/f2.jpg',
         imageHint: 'flat ceiling',
         component: FlatCeilingForm,
+        icon: Wrench,
     },
     {
         id: 'drywall' as EstimatorType,
@@ -68,6 +71,7 @@ const estimatorTypes = [
         imageUrl: '/images/d2.jpg',
         imageHint: 'drywall installation',
         component: DrywallForm,
+        icon: Wrench,
     }
 ];
 
@@ -161,6 +165,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'آویز': ['آویز', 'hanger'],
         'میخ و چاشنی': ['میخ', 'چاشنی', 'میخ و چاشنی'],
         'پشم سنگ': ['پشم سنگ', 'rockwool'],
+        'اتصال W': ['اتصال w', 'w clip', 'دبلیو'],
+        'کلیپس': ['کلیپس', 'clip'],
     };
 
     aggregatedResults.forEach(item => {
@@ -188,7 +194,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let productName = product ? product.name : item.material;
         const imageUrl = product ? product.imageUrl : `https://picsum.photos/seed/${productName}/400/300`;
 
-        if ((materialNameLower.includes('پیچ ۲.۵') || materialNameLower.includes('پیچ سازه')) && item.unit === 'عدد') {
+        if ((materialNameLower.includes('پیچ') || materialNameLower.includes('میخ')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
         } else {
@@ -237,7 +243,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     setEstimationList([]);
   };
 
-  const ActiveForm = selectedEstimator ? estimatorTypes.find(e => e.id === selectedEstimator)?.component : null;
+  const ActiveForm = selectedEstimator ? (estimatorTypes.find(e => e.id === selectedEstimator)?.component || (selectedEstimator === 'smart-order' ? SmartOrderForm : null)) : null;
 
   return (
     <div className='pb-40' data-main-page="true">
@@ -273,35 +279,64 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         exit={{ opacity: 0, x: 50 }}
                         transition={{ duration: 0.3 }}
                     >
-                         <Card>
+                        <Card>
                             <CardHeader className="items-center">
-                                <CardTitle>برآورد مصالح</CardTitle>
+                                <CardTitle>برآوردگر مصالح</CardTitle>
                                 <CardDescription>
-                                ابتدا نوع محاسبه را انتخاب کرده، ابعاد را وارد کنید و به لیست برآورد اضافه کنید. در انتها می‌توانید از لیست تجمیعی، یک فاکتور نهایی بسازید.
+                                نوع محاسبه را انتخاب کنید، ابعاد را وارد کرده و به لیست برآورد اضافه کنید.
                                 </CardDescription>
                             </CardHeader>
                         </Card>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                            {estimatorTypes.map((estimator) => (
-                                <Card 
-                                    key={estimator.id}
-                                    onClick={() => handleEstimatorSelect(estimator.id)}
-                                    className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                                >
-                                    <div className="relative w-full h-[120px] overflow-hidden">
-                                        <Image
-                                            src={estimator.imageUrl}
-                                            alt={estimator.title}
-                                            fill
-                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                            data-ai-hint={estimator.imageHint}
-                                        />
+                        
+                        <div className="grid grid-cols-1 gap-6 mt-8">
+                             <Card 
+                                onClick={() => handleEstimatorSelect('smart-order')}
+                                className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg bg-gradient-to-tr from-primary/10 to-transparent"
+                            >
+                                <div className="p-6 flex flex-col md:flex-row items-center gap-6">
+                                    <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-primary/20 border-2 border-primary/30">
+                                         <Building className="h-10 w-10 text-primary" />
                                     </div>
-                                    <div className="p-3 text-center">
-                                        <CardTitle className="text-base font-bold">{estimator.title}</CardTitle>
+                                    <div className="text-center md:text-right">
+                                        <CardTitle className="text-xl font-bold text-primary">سفارش هوشمند</CardTitle>
+                                        <p className="text-muted-foreground mt-2">
+                                        لیست مصالح خود را از روی فایل اکسل، تصویر یا متن وارد کنید تا به صورت هوشمند به فاکتور تبدیل شود.
+                                        </p>
                                     </div>
-                                </Card>
-                            ))}
+                                </div>
+                            </Card>
+
+                             <Card>
+                                <CardHeader>
+                                    <div className="flex items-center gap-3">
+                                        <Wrench className="h-6 w-6 text-muted-foreground" />
+                                        <CardTitle className="text-xl font-bold">برآوردگر دستی مصالح</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                     {estimatorTypes.map((estimator) => (
+                                        <Card 
+                                            key={estimator.id}
+                                            onClick={() => handleEstimatorSelect(estimator.id)}
+                                            className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                                        >
+                                            <div className="relative w-full h-[120px] overflow-hidden">
+                                                <Image
+                                                    src={estimator.imageUrl}
+                                                    alt={estimator.title}
+                                                    fill
+                                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    data-ai-hint={estimator.imageHint}
+                                                />
+                                            </div>
+                                            <div className="p-3 text-center">
+                                                <CardTitle className="text-base font-bold">{estimator.title}</CardTitle>
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </CardContent>
+                            </Card>
+
                         </div>
                     </motion.div>
                 )}

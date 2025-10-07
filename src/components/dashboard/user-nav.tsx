@@ -28,6 +28,7 @@ import {
 import { initializeFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import type { AuthFormValues } from '@/lib/definitions';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 
 
 export function UserNav() {
@@ -90,7 +91,6 @@ export function UserNav() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.refresh(); // Refresh to clear server-side user state
   };
 
 
@@ -124,42 +124,58 @@ export function UserNav() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={user.photoURL ?? `https://avatar.vercel.sh/${user.uid}.png`}
-              alt={user.displayName ?? 'User Avatar'}
-            />
-            <AvatarFallback>
-              {getInitials(user.displayName, user.email)}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {user.displayName ?? 'کاربر مهمان'}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.email ?? 'ایمیل ثبت نشده'}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push('/dashboard?tab=settings')}>
-            تنظیمات
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>
-            خروج
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-9 w-9">
+              <AvatarImage
+                src={user.photoURL ?? `https://avatar.vercel.sh/${user.uid}.png`}
+                alt={user.displayName ?? 'User Avatar'}
+              />
+              <AvatarFallback>
+                {getInitials(user.displayName, user.email)}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">
+                {user.displayName ?? 'کاربر مهمان'}
+              </p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {user.email ?? 'ایمیل ثبت نشده'}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => router.push('/dashboard?tab=settings')}>
+              تنظیمات
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  خروج
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+        </DropdownMenuContent>
+      </DropdownMenu>
+       <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>خروج از حساب</AlertDialogTitle>
+            <AlertDialogDescription>
+              آیا برای خروج از حساب کاربری خود مطمئن هستید؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>انصراف</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} className="bg-destructive hover:bg-destructive/90">تایید و خروج</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
   );
 }

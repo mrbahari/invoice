@@ -386,7 +386,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                         id: `temp-${Math.random().toString(36).substr(2, 9)}`,
                         name: node.name,
                         storeId: store?.id || 'temp',
-                        parentId: pId,
+                        parentId: pId || undefined,
                     };
                     newCats.push(newCat);
                     
@@ -475,10 +475,16 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         for (const cat of storeCategories) {
             const isNew = cat.id.startsWith('temp-');
             const { id, ...catData } = cat;
+            
+            const dataToSave = {
+              ...catData,
+              storeId: finalStoreId,
+              parentId: catData.parentId || null // Ensure parentId is null, not undefined
+            };
 
             if (isNew) {
                 const newCatRef = doc(collection(firestore, 'users', user.uid, 'categories'));
-                batch.set(newCatRef, { ...catData, storeId: finalStoreId });
+                batch.set(newCatRef, dataToSave);
             } else {
                 const existingCat = existingCategories.find(c => c.id === id);
                 if (existingCat && existingCat.name !== cat.name) {
@@ -556,7 +562,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       id: `temp-${Math.random().toString(36).substr(2, 9)}`,
       name: newCategoryName.trim(),
       storeId: store?.id || 'temp', // temp id until store is saved
-      parentId,
+      parentId: parentId || undefined,
     };
     setStoreCategories(prev => [...prev, newCat]);
     setNewCategoryName('');

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
@@ -18,7 +17,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Badge } from '../ui/badge';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency, cn, getStorePrefix } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { FloatingToolbar } from './floating-toolbar';
@@ -26,7 +25,7 @@ import { FloatingToolbar } from './floating-toolbar';
 
 type View =
   | { type: 'list' }
-  | { type: 'editor'; invoiceId?: string; }
+  | { type: 'editor' }
   | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
 
 type InvoicesPageProps = {
@@ -77,14 +76,25 @@ export default function InvoicesPage({
   }, [draftInvoice, view.type]);
 
   const handleCreate = useCallback(() => {
-    setDraftInvoice(null); // Clear any previous draft
+    setDraftInvoice({
+        date: new Date().toISOString(),
+        status: 'Pending',
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        additions: 0,
+        tax: 0,
+        total: 0,
+        description: '',
+        invoiceNumber: `${getStorePrefix('INV')}-${(allInvoices.length + 1).toString().padStart(4, '0')}`,
+    }); // Clear any previous draft
     setView({ type: 'editor' });
-  }, [setDraftInvoice]);
+  }, [setDraftInvoice, allInvoices.length]);
   
   const handleEdit = useCallback(
     (invoice: Invoice) => {
         setDraftInvoice(invoice);
-        setView({ type: 'editor', invoiceId: invoice.id });
+        setView({ type: 'editor' });
     },
     [setDraftInvoice]
   );
@@ -103,7 +113,7 @@ export default function InvoicesPage({
   const handleBackFromPreview = useCallback(
     (invoiceId?: string) => {
       if (view.type === 'preview' && view.from === 'editor' && invoiceId) {
-        setView({ type: 'editor', invoiceId: invoiceId });
+        setView({ type: 'editor' });
       } else {
         setView({ type: 'list' });
       }
@@ -158,12 +168,12 @@ export default function InvoicesPage({
   const renderContent = () => {
     switch (view.type) {
       case 'editor':
+        if (!draftInvoice) return null; // Should not happen if logic is correct
         return (
           <div className="pb-16">
             <InvoiceEditor
-              invoiceId={view.invoiceId}
-              draftInvoice={draftInvoice}
-              setDraftInvoice={setDraftInvoice}
+              invoice={draftInvoice}
+              setInvoice={setDraftInvoice}
               onSaveSuccess={handleSaveSuccess}
               onPreview={handlePreviewFromEditor}
               onCancel={handleCancel}
@@ -175,7 +185,13 @@ export default function InvoicesPage({
           <InvoicePreviewPage
             invoiceId={view.invoiceId}
             onBack={() => handleBackFromPreview(view.invoiceId)}
-            onEdit={(id) => setView({ type: 'editor', invoiceId: id })}
+            onEdit={(id) => {
+                const invoiceToEdit = allInvoices.find(inv => inv.id === id);
+                if (invoiceToEdit) {
+                    setDraftInvoice(invoiceToEdit);
+                    setView({ type: 'editor' });
+                }
+            }}
           />
         );
       case 'list':

@@ -67,9 +67,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 
 type InvoiceEditorProps = {
-    invoiceId?: string;
-    draftInvoice: Partial<Invoice> | null;
-    setDraftInvoice: (invoice: Partial<Invoice> | null) => void;
+    invoice: Partial<Invoice>;
+    setInvoice: (invoice: Partial<Invoice> | null) => void;
     onSaveSuccess: (invoiceId: string) => void;
     onPreview: (invoiceId: string) => void;
     onCancel: () => void;
@@ -447,8 +446,8 @@ const AddProductsComponent = React.memo(({
 AddProductsComponent.displayName = 'AddProductsComponent';
 
 
-export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
-  const { data, addDocument, updateDocument } = useData();
+export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
+  const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const isClient = useIsClient();
   const isMobile = useIsMobile();
@@ -456,51 +455,11 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
   
-  const isEditMode = !!invoiceId;
-
-  // Find the invoice to edit from the main data source if an ID is provided
-  const invoiceToEdit = useMemo(() => 
-    isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined
-  , [invoices, invoiceId, isEditMode]);
-
-  // Use local state for the invoice being edited
-  const [invoice, setInvoice] = useState<Partial<Invoice>>({});
-  
-  useEffect(() => {
-    // This effect now serves to initialize the editor from the draft prop
-    let currentInvoice: Partial<Invoice>;
-    if (draftInvoice) {
-      currentInvoice = draftInvoice;
-    } else if (isEditMode && invoiceToEdit) {
-      currentInvoice = invoiceToEdit;
-    } else {
-      // Creating a brand new invoice
-      currentInvoice = {
-          date: new Date().toISOString(),
-          status: 'Pending',
-          items: [],
-          subtotal: 0,
-          discount: 0,
-          additions: 0,
-          tax: 0,
-          total: 0,
-          description: '',
-          invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      };
-    }
-    setInvoice(currentInvoice);
-  }, [invoiceId, invoiceToEdit, draftInvoice, isEditMode, invoices.length]);
-  
-  // Update the shared draft invoice state whenever the local invoice changes
-  useEffect(() => {
-    setDraftInvoice(invoice);
-  }, [invoice, setDraftInvoice]);
+  const isEditMode = !!invoice.id;
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [storeId, setStoreId] = useState<string>('');
   const [openItemId, setOpenItemId] = useState<string | null>(null);
-
-
 
   // Display state for formatted numbers
   const [displayDiscount, setDisplayDiscount] = useState('');
@@ -514,8 +473,6 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-
-  // This effect initializes the form for creating a new invoice or editing an existing one
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -540,7 +497,7 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
     setDisplayAdditions(formatNumber(invoice.additions || 0));
     setDisplayTax(formatNumber(invoice.tax || 0));
 
-  }, [invoice, customerList, products, stores]);
+  }, [invoice.customerId, invoice.items, invoice.discount, invoice.additions, invoice.tax, customerList, products, stores]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -552,14 +509,15 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
   // When customer changes, update invoice details
   useEffect(() => {
     if (selectedCustomer) {
-      setInvoice(prev => ({
-        ...prev,
+      setInvoice({
+        ...invoice,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerEmail: selectedCustomer.email
-      }));
+      });
     }
-  }, [selectedCustomer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCustomer, setInvoice]);
 
   // Recalculate totals whenever items or financial fields change
   useEffect(() => {
@@ -569,8 +527,11 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
     const tax = Number(invoice.tax) || 0;
     const total = subtotal - discount + additions + tax;
 
-    setInvoice(prev => ({ ...prev, subtotal, total }));
-  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax]);
+    if (invoice.subtotal !== subtotal || invoice.total !== total) {
+        setInvoice({ ...invoice, subtotal, total });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax, setInvoice]);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -634,8 +595,7 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
 
   
   const handleAddProduct = (product: Product) => {
-    setInvoice(prevInvoice => {
-      const currentItems = prevInvoice.items ? [...prevInvoice.items] : [];
+      const currentItems = invoice.items ? [...invoice.items] : [];
       const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
       let newItems;
@@ -668,26 +628,24 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
         newItems = [newItem, ...currentItems];
       }
       
-      return {...prevInvoice, items: newItems};
-    });
+      setInvoice({...invoice, items: newItems});
   };
 
   const handleRemoveProduct = (product: Product) => {
-    setInvoice(prevInvoice => {
-      if (!prevInvoice.items) return prevInvoice;
+      if (!invoice.items) return invoice;
 
-      const existingItemIndex = prevInvoice.items.findIndex(item => item.productId === product.id);
+      const existingItemIndex = invoice.items.findIndex(item => item.productId === product.id);
 
       if (existingItemIndex === -1) {
-        return prevInvoice; // Product not in invoice, do nothing
+        return invoice; // Product not in invoice, do nothing
       }
 
-      const itemToUpdate = prevInvoice.items[existingItemIndex];
+      const itemToUpdate = invoice.items[existingItemIndex];
       let newItems;
 
       if (itemToUpdate.quantity > 1) {
         // Decrease quantity
-        newItems = prevInvoice.items.map((item, index) => {
+        newItems = invoice.items.map((item, index) => {
           if (index === existingItemIndex) {
             const newQuantity = item.quantity - 1;
             return {
@@ -700,28 +658,24 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
         });
       } else {
         // Remove item if quantity is 1
-        newItems = prevInvoice.items.filter((_, index) => index !== existingItemIndex);
+        newItems = invoice.items.filter((_, index) => index !== existingItemIndex);
       }
 
-      return { ...prevInvoice, items: newItems };
-    });
+      setInvoice({ ...invoice, items: newItems });
   };
 
 
   const handleItemChange = useCallback((index: number, field: keyof InvoiceItem, value: any) => {
-    setInvoice(prev => {
-        const newItems = prev.items ? [...prev.items] : [];
+        const newItems = invoice.items ? [...invoice.items] : [];
         if (newItems[index]) {
             const updatedItem = { ...newItems[index], [field]: value };
             newItems[index] = updatedItem;
         }
-        return { ...prev, items: newItems };
-    });
-  }, [setInvoice]);
+        setInvoice({ ...invoice, items: newItems });
+  }, [invoice, setInvoice]);
 
   const handleReplaceItem = useCallback((index: number, newProduct: Product) => {
-    setInvoice(prev => {
-        const newItems = prev.items ? [...prev.items] : [];
+        const newItems = invoice.items ? [...invoice.items] : [];
         if (newItems[index]) {
             const oldItem = newItems[index];
             newItems[index] = {
@@ -734,13 +688,11 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
                 imageUrl: newProduct.imageUrl
             };
         }
-        return { ...prev, items: newItems };
-    });
-  }, [setInvoice]);
+        setInvoice({ ...invoice, items: newItems });
+  }, [invoice, setInvoice]);
   
   const handleUnitChange = useCallback((index: number, newUnit: string) => {
-    setInvoice(prev => {
-      const newItems = prev.items ? [...prev.items] : [];
+      const newItems = invoice.items ? [...invoice.items] : [];
       const item = newItems[index];
       if (item) {
         const product = products.find(p => p.id === item.productId);
@@ -751,27 +703,24 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
           item.totalPrice = (item.quantity || 0) * unitPrice;
         }
       }
-      return {...prev, items: newItems};
-    });
-  }, [products, setInvoice]);
+      setInvoice({...invoice, items: newItems});
+  }, [invoice, products, setInvoice]);
 
   const handleRemoveItem = useCallback((index: number) => {
-    setInvoice(prev => ({
-        ...prev,
-        items: prev.items?.filter((_, i) => i !== index)
-    }));
-  }, [setInvoice]);
+    setInvoice({
+        ...invoice,
+        items: invoice.items?.filter((_, i) => i !== index)
+    });
+  }, [invoice, setInvoice]);
 
   const handleDragEnd = (result: DropResult) => {
     document.body.classList.remove('dragging-invoice-item');
     setIsDragging(false);
     if (!result.destination) return;
-    setInvoice(prev => {
-      const items = Array.from(prev.items || []);
+      const items = Array.from(invoice.items || []);
       const [removed] = items.splice(result.source.index, 1);
       items.splice(result.destination!.index, 0, removed);
-      return {...prev, items};
-    });
+      setInvoice({...invoice, items});
   };
 
   const handleDragStart = (start: DragStart) => {
@@ -793,7 +742,7 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
         case 'tax': setDisplayTax(displayValue); break;
     }
 
-    setInvoice(prev => ({...prev, [field]: numericValue === '' ? 0 : numericValue}));
+    setInvoice({...invoice, [field]: numericValue === '' ? 0 : numericValue});
   };
 
   const handleProcessInvoice = async (): Promise<string | null> => {
@@ -1159,7 +1108,7 @@ export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSave
                         </div>
                          <div className="grid gap-2">
                             <Label htmlFor="description">توضیحات</Label>
-                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice(prev => ({...prev, description: e.target.value}));}} className="min-h-[240px]" />
+                            <Textarea id="description" value={invoice.description} onChange={(e) => {setInvoice({...invoice, description: e.target.value});}} className="min-h-[240px]" />
                         </div>
                     </CardContent>
                 </Card>

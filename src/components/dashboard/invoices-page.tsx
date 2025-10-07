@@ -104,10 +104,11 @@ export default function InvoicesPage({
       setView({ type: 'preview', invoiceId: invoice.id, from: 'list' }),
     []
   );
+  
   const handlePreviewFromEditor = useCallback(
     (invoiceId: string) =>
       setView({ type: 'preview', invoiceId, from: 'editor' }),
-    []
+    [setView]
   );
 
   const handleBackFromPreview = useCallback(
@@ -168,11 +169,10 @@ export default function InvoicesPage({
   const renderContent = () => {
     switch (view.type) {
       case 'editor':
-        if (!draftInvoice) return null; // Should not happen if logic is correct
         return (
           <div className="pb-16">
             <InvoiceEditor
-              invoice={draftInvoice}
+              invoice={draftInvoice!}
               setInvoice={setDraftInvoice}
               onSaveSuccess={handleSaveSuccess}
               onPreview={handlePreviewFromEditor}

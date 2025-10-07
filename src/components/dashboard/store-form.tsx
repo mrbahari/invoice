@@ -441,20 +441,22 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
             const { id, ...catData } = cat;
-            const finalCatData: any = {
+
+            const finalCatData: Omit<Category, 'id'> = {
                 ...catData,
                 storeId: finalStoreId,
-                name: cat.name // ensure name is updated
+                name: cat.name,
             };
 
             if (parentId) {
                 finalCatData.parentId = parentId;
             }
 
+
             if (isNew) {
                 batch.set(catRef, finalCatData);
             } else {
-                 batch.update(catRef, finalCatData);
+                 batch.update(catRef, finalCatData as { [key: string]: any });
             }
         }
 

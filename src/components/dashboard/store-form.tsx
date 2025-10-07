@@ -508,44 +508,27 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }
   }, [name, user, firestore, isEditMode, store, buildStoreData, storeCategories, data.categories, toast, onSave]);
   
-  const handleDeleteAllCategories = useCallback(async () => {
-    if (!store) {
-      toast({ variant: 'destructive', title: 'خطا', description: 'ابتدا فروشگاه را ذخیره کنید.' });
-      return;
+  const handleDeleteAllCategories = useCallback(() => {
+    // Check if any category is used by products
+    const allCategoryIds = new Set(storeCategories.map(c => c.id));
+    const isUsed = products.some(p => p.subCategoryId && allCategoryIds.has(p.subCategoryId));
+    
+    if (isUsed) {
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: 'برخی از دسته‌بندی‌ها به محصولات اختصاص داده شده‌اند و قابل حذف نیستند.',
+        });
+        return;
     }
     
-    setIsProcessing(true);
-    try {
-        const categoriesToDelete = data.categories.filter(c => c.storeId === store.id);
-        const categoryIdsToDelete = categoriesToDelete.map(c => c.id);
-
-        const hasProducts = products.some(p => p.subCategoryId && categoryIdsToDelete.includes(p.subCategoryId));
-        if (hasProducts) {
-            toast({
-                variant: 'destructive',
-                title: 'خطا در حذف',
-                description: 'برخی از دسته‌بندی‌ها به محصولات اختصاص داده شده‌اند و قابل حذف نیستند.',
-            });
-            setIsProcessing(false);
-            return;
-        }
-
-        // Perform a batch delete for efficiency
-        const batch = [];
-        for (const catId of categoryIdsToDelete) {
-          batch.push(deleteDocument('categories', catId));
-        }
-        await Promise.all(batch);
-
-        setStoreCategories([]); // Clear local state after successful deletion
-        toast({ variant: 'success', title: 'عملیات موفق', description: 'تمام دسته‌بندی‌ها حذف شدند.' });
-    } catch (error) {
-        console.error("Error deleting all categories:", error);
-        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در حذف دسته‌بندی‌ها رخ داد.' });
-    } finally {
-        setIsProcessing(false);
-    }
-}, [store, data.categories, products, deleteDocument, toast]);
+    setStoreCategories([]); // Clear local state
+    toast({
+        variant: 'default',
+        title: 'دسته‌بندی‌ها پاک شدند',
+        description: 'تغییرات پس از ذخیره نهایی اعمال خواهد شد.',
+    });
+  }, [storeCategories, products, toast]);
 
   
   // Category Handlers

@@ -67,7 +67,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
-  const collectionRefs: Record<string, CollectionReference<any> | DocumentReference<any> | null> = useMemo(() => ({
+  const collectionRefs = useMemo(() => ({
     products: productsRef,
     categories: categoriesRef,
     stores: storesRef,
@@ -120,18 +120,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading, toolbarLoading
   ]);
 
-  const addDocument = useCallback(async (collectionName: CollectionName, docData: DocumentWithoutId) => {
-    if (!firestore) return;
-    const ref = collectionRefs[collectionName];
+  const getCollectionRef = useCallback((collectionName: CollectionName) => {
+    const refs = {
+      products: productsRef,
+      categories: categoriesRef,
+      stores: storesRef,
+      units: unitsRef,
+      customers: customersRef,
+      invoices: invoicesRef,
+    };
+    return refs[collectionName];
+  }, [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
 
-    let collectionRef: CollectionReference | null = null;
-    if(ref instanceof CollectionReference) {
-      collectionRef = ref;
-    } else if (ref instanceof DocumentReference) {
-      // This case is not for adding documents, but we handle it for type safety
-      console.error('Cannot add a document to a DocumentReference');
-      return;
-    }
+
+  const addDocument = useCallback(async (collectionName: CollectionName, docData: DocumentWithoutId) => {
+    if (!firestore || !user) return;
+    const collectionRef = getCollectionRef(collectionName);
 
     if (!collectionRef) {
         console.error('Invalid collection reference or user not logged in for collection:', collectionName);
@@ -168,18 +172,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, firestore]);
+  }, [firestore, user, getCollectionRef]);
 
   const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, docData: Partial<Document>) => {
-    if (!firestore) return;
-    const ref = collectionRefs[collectionName];
-    if (!ref || !(ref instanceof CollectionReference)) {
+    if (!firestore || !user) return;
+    const collectionRef = getCollectionRef(collectionName);
+    
+    if (!collectionRef) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
     if (!docId || docId.startsWith('temp-')) return; 
 
-    const docRef = doc(ref, docId);
+    const docRef = doc(collectionRef, docId);
     
     const originalState = data[collectionName];
     const originalItem = originalState.find(item => item.id === docId);
@@ -211,18 +216,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, data, firestore]);
+  }, [firestore, user, getCollectionRef, data]);
 
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
-    if (!firestore) return;
-    const ref = collectionRefs[collectionName];
-    if (!ref || !(ref instanceof CollectionReference)) {
+    if (!firestore || !user) return;
+    const collectionRef = getCollectionRef(collectionName);
+    
+    if (!collectionRef) {
       console.error('Invalid collection reference or user not logged in.');
       return;
     }
     if (!docId || docId.startsWith('temp-')) return; 
     
-    const docRef = doc(ref, docId);
+    const docRef = doc(collectionRef, docId);
 
     const originalItem = data[collectionName].find(item => item.id === docId);
     if (!originalItem) return;
@@ -244,7 +250,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [collectionRefs, data, firestore]);
+  }, [firestore, user, getCollectionRef, data]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
     // Optimistic update for local state
@@ -377,3 +383,5 @@ export function useData() {
   }
   return context;
 }
+
+    

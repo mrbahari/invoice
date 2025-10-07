@@ -30,7 +30,7 @@ export function useUpload() {
     const storageRef = ref(storage, path);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       uploadTask.on(
         'state_changed',
         (snapshot) => {
@@ -43,7 +43,7 @@ export function useUpload() {
           setError(errorMessage);
           toast({ variant: 'destructive', title: 'خطا در آپلود', description: errorMessage });
           setIsUploading(false);
-          reject(null);
+          resolve(null); // IMPORTANT: Resolve with null instead of rejecting
         },
         async () => {
           try {
@@ -57,7 +57,7 @@ export function useUpload() {
             setError(errorMessage);
             toast({ variant: 'destructive', title: 'خطا', description: errorMessage });
             setIsUploading(false);
-            reject(null);
+            resolve(null); // IMPORTANT: Resolve with null instead of rejecting
           }
         }
       );

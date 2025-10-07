@@ -111,39 +111,39 @@ const CategoryTree = ({
 
 
   return (
-    <Droppable droppableId={parentId} type="CATEGORY">
-      {(provided) => (
-        <div {...provided.droppableProps} ref={provided.innerRef}>
-          <Accordion type="single" collapsible className="w-full" value={openItems.find(item => categories.some(c => c.id === item))} onValueChange={(value) => value && onToggle(value)}>
-            {categories.map((cat, index) => {
-              const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
-              const hasSubCategories = subCategories.length > 0;
-              const isAiLoading = aiLoading === cat.id;
-              const isAdding = addingToParentId === cat.id;
-              const isOpen = openItems.includes(cat.id);
+    <Accordion type="single" collapsible className="w-full" value={openItems.find(item => categories.some(c => c.id === item))} onValueChange={(value) => value && onToggle(value)}>
+      {categories.map((cat, index) => {
+        const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
+        const hasSubCategories = subCategories.length > 0;
+        const isAiLoading = aiLoading === cat.id;
+        const isAdding = addingToParentId === cat.id;
+        const isOpen = openItems.includes(cat.id);
 
-              return (
-                <Draggable key={cat.id} draggableId={cat.id} index={index}>
-                    {(provided, snapshot) => (
+        return (
+          <Droppable droppableId={cat.id} type="CATEGORY" key={cat.id}>
+            {(dropProvided) => (
+              <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+                <Draggable draggableId={cat.id} index={index}>
+                  {(dragProvided, dragSnapshot) => (
                     <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={cn(
-                          'mt-2',
-                          snapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg'
-                        )}
+                      ref={dragProvided.innerRef}
+                      {...dragProvided.draggableProps}
+                      className={cn(
+                        'mt-2',
+                        dragSnapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg'
+                      )}
                     >
                       <AccordionItem value={cat.id} className="border-b-0">
                         <div className="p-2 rounded-md hover:bg-muted/50">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div {...provided.dragHandleProps} className="p-2 cursor-grab">
+                             <div className="flex items-center gap-2">
+                                <div {...dragProvided.dragHandleProps} className="p-2 cursor-grab">
                                     <GripVertical className="h-5 w-5 text-muted-foreground" />
                                 </div>
-                                <AccordionTrigger disabled={!hasSubCategories} className="p-2 hover:no-underline">
+                                <AccordionTrigger disabled={!hasSubCategories} className="p-2 hover:no-underline flex-grow justify-start">
                                   <div className="flex items-center gap-2">
-                                      <h4 className="font-semibold">{cat.name}</h4>
-                                      {hasSubCategories && <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />}
+                                    {hasSubCategories && <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />}
+                                    <h4 className="font-semibold">{cat.name}</h4>
                                   </div>
                                 </AccordionTrigger>
                             </div>
@@ -164,15 +164,15 @@ const CategoryTree = ({
                         </AccordionContent>
                       </AccordionItem>
                     </div>
-                )}
+                  )}
                 </Draggable>
-              );
-            })}
-          </Accordion>
-          {provided.placeholder}
-        </div>
-      )}
-    </Droppable>
+                {dropProvided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        );
+      })}
+    </Accordion>
   );
 };
 
@@ -450,7 +450,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
-            const finalCatData: Partial<Category> = {
+            const finalCatData: Partial<Omit<Category, 'id'>> = {
                 name: cat.name,
                 storeId: finalStoreId,
                 ...(cat.description && { description: cat.description }),
@@ -460,7 +460,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             if (isNew) {
                 batch.set(catRef, finalCatData);
             } else {
-                 batch.update(catRef, finalCatData as { [key: string]: any });
+                 batch.update(catRef, finalCatData);
             }
         }
 
@@ -585,23 +585,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const handleAccordionToggle = (itemId: string) => {
     setOpenAccordionItems(prev => {
         if (prev.includes(itemId)) {
-            // If it's already open, close it
             return prev.filter(id => id !== itemId);
         } else {
-            // If it's closed, open it (and keep others open since it's not single-type)
-            const newOpenItems = [itemId];
-            let currentId = itemId;
-            while(currentId) {
-                const cat = storeCategories.find(c => c.id === currentId);
-                if (cat && cat.parentId && !newOpenItems.includes(cat.parentId)) {
-                    newOpenItems.push(cat.parentId);
-                    currentId = cat.parentId;
-                } else {
-                    break;
-                }
-            }
-            // Return only the path to the clicked item
-            return newOpenItems;
+            return [itemId];
         }
     });
   };
@@ -620,14 +606,20 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     if (newStoreId) {
         for (const category of storeCategories) {
             const { id, ...catData } = category;
-            await addDocument('categories', { ...catData, storeId: newStoreId });
+            const finalCatData: Partial<Omit<Category, 'id'>> = {
+                ...catData,
+                storeId: newStoreId,
+                ...(catData.parentId && { parentId: catData.parentId }),
+                ...(catData.description && { description: catData.description }),
+            };
+            await addDocument('categories', finalCatData);
         }
     }
     
     setIsProcessing(false);
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
-  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave, user]);
+  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
   const handleDelete = useCallback(async () => {
       if (!store) return;
@@ -928,25 +920,32 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                 <Separator />
                 <DragDropContext onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart}>
                     <div className="grid gap-4">
-                        {parentCategories.length > 0 ? (
-                            <CategoryTree 
-                                categories={parentCategories}
-                                parentId="root"
-                                allCategories={storeCategories}
-                                onAddSubCategory={handleAddSubCategory}
-                                onDelete={handleDeleteCategory}
-                                onStartEdit={handleStartEditCategory}
-                                onAiGenerate={handleAiGenerateSubCategories}
-                                editingCategoryId={editingCategoryId}
-                                editingCategoryName={editingCategoryName}
-                                onSaveEdit={handleSaveCategoryEdit}
-                                onCancelEdit={handleCancelEditCategory}
-                                setEditingCategoryName={setEditingCategoryName}
-                                aiLoading={aiLoadingCategory}
-                                openItems={openAccordionItems}
-                                onToggle={handleAccordionToggle}
-                            />
-                        ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
+                        <Droppable droppableId="root" type="CATEGORY">
+                            {(provided) => (
+                                <div ref={provided.innerRef} {...provided.droppableProps}>
+                                    {parentCategories.length > 0 ? (
+                                        <CategoryTree 
+                                            categories={parentCategories}
+                                            parentId="root"
+                                            allCategories={storeCategories}
+                                            onAddSubCategory={handleAddSubCategory}
+                                            onDelete={handleDeleteCategory}
+                                            onStartEdit={handleStartEditCategory}
+                                            onAiGenerate={handleAiGenerateSubCategories}
+                                            editingCategoryId={editingCategoryId}
+                                            editingCategoryName={editingCategoryName}
+                                            onSaveEdit={handleSaveCategoryEdit}
+                                            onCancelEdit={handleCancelEditCategory}
+                                            setEditingCategoryName={setEditingCategoryName}
+                                            aiLoading={aiLoadingCategory}
+                                            openItems={openAccordionItems}
+                                            onToggle={handleAccordionToggle}
+                                        />
+                                    ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
+                                    {provided.placeholder}
+                                </div>
+                            )}
+                        </Droppable>
                     </div>
                 </DragDropContext>
             </CardContent>

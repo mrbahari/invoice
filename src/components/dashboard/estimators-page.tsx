@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -25,6 +24,8 @@ import { FloatingToolbar } from './floating-toolbar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useSearch } from './search-provider';
 import { SmartOrderForm } from './estimators/smart-order-form';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 
 export interface MaterialResult {
@@ -86,6 +87,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const { data: appData } = useData();
   const { products, invoices } = appData;
   const { setSearchVisible } = useSearch();
+  const { user } = useUser();
+  const { toast } = useToast();
 
   useEffect(() => {
     setSearchVisible(false);
@@ -93,6 +96,14 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }, [setSearchVisible]);
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
+     if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای دسترسی به این بخش، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
     setSelectedEstimator(estimatorId);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -141,6 +152,14 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   }, [estimationList]);
 
   const handleCreateFinalInvoice = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای ایجاد فاکتور، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
     if (aggregatedResults.length === 0) {
       // No items to create an invoice from.
       return;

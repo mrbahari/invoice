@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DashboardTab } from '@/app/dashboard/page';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
   { tab: 'dashboard', icon: Home, label: 'داشبورد' },
@@ -29,8 +31,23 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const { user } = useUser();
+  const { toast } = useToast();
+  
   const handleTabClick = (tab: DashboardTab) => {
     onTabChange(tab);
+  };
+  
+  const handleInvoiceClick = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای ایجاد فاکتور، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
+    onTabChange('invoices');
   };
 
   return (
@@ -56,7 +73,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         {/* Central Action Button */}
         <div className="flex h-full w-full items-center justify-center">
             <button 
-              onClick={() => handleTabClick('invoices')}
+              onClick={handleInvoiceClick}
               className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
             >
               <FileText className="h-8 w-8" />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -33,6 +32,8 @@ import {
 } from "@/components/ui/accordion"
 import { useData } from '@/context/data-context';
 import { useSearch } from './search-provider';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -45,6 +46,8 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
   const { data } = useData();
   const { invoices: allInvoices, customers: allCustomers, products: allProducts } = data;
   const { setSearchVisible } = useSearch();
+  const { user } = useUser();
+  const { toast } = useToast();
 
   const [period, setPeriod] = useState<Period>('all');
 
@@ -52,6 +55,18 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     setSearchVisible(false);
     return () => setSearchVisible(true);
   }, [setSearchVisible]);
+
+  const handleNavigation = (tab: DashboardTab) => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای مشاهده این بخش، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
+    onNavigate(tab);
+  };
 
   const { 
     totalRevenue, 
@@ -209,7 +224,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right">
+        <button onClick={() => handleNavigation('invoices')} className="w-full text-right">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -225,7 +240,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right">
+        <button onClick={() => handleNavigation('invoices')} className="w-full text-right">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
@@ -239,7 +254,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="w-full text-right">
+        <button onClick={() => handleNavigation('invoices')} className="w-full text-right">
            <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
@@ -253,7 +268,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </CardContent>
           </Card>
         </button>
-        <button onClick={() => onNavigate('customers')} className="w-full text-right">
+        <button onClick={() => handleNavigation('customers')} className="w-full text-right">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>

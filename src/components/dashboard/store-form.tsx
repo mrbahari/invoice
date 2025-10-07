@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback, ChangeEvent } from 'react';
@@ -43,6 +44,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUser, useFirestore } from '@/firebase';
 import { writeBatch, doc, collection } from 'firebase/firestore';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
+import { useUpload } from '@/hooks/use-upload';
+import { Progress } from '@/components/ui/progress';
+
 
 type StoreFormProps = {
   store?: Store;
@@ -132,11 +136,8 @@ const CategoryTree = ({
                         <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                           <Accordion type="single" collapsible className="w-full">
                             <AccordionItem value={cat.id} className="border-b-0" ref={el => itemRefs.current[cat.id] = el}>
-                              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50" {...provided.dragHandleProps}>
                                 <div className="flex items-center gap-1">
-                                  <div {...provided.dragHandleProps} className="cursor-grab p-2">
-                                      <GripVertical className="w-4 h-4 text-muted-foreground" />
-                                  </div>
                                   <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
                                   <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
                                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
@@ -208,9 +209,10 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLogoGenerating, setIsLogoGenerating] = useState(false);
   const [aiLoadingCategory, setAiLoadingCategory] = useState<string | null>(null);
   
+  const { uploadFile, isUploading, progress } = useUpload();
+
   // State for AI logo prompts
   const [logoPrompts, setLogoPrompts] = useState<string[]>([]);
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
@@ -231,14 +233,14 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }
   }, [store, data.categories]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const path = `images/shop/logo/${file.name}`;
+      const downloadedUrl = await uploadFile(file, path);
+      if (downloadedUrl) {
+          setLogoUrl(downloadedUrl);
+      }
     }
   };
 
@@ -262,27 +264,32 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         return;
       }
 
-      setIsLogoGenerating(true);
        try {
+            let promptToUse;
             if (logoPrompts.length === 0) {
                 const { prompts } = await generateLogoPrompts({ storeName: name, description });
                 if (!prompts || prompts.length === 0) throw new Error("Failed to generate prompts.");
                 setLogoPrompts(prompts);
-                setCurrentPromptIndex(0);
-                const result = await generateLogo({ prompt: prompts[0], storeName: name });
-                if (result.imageUrl) setLogoUrl(result.imageUrl);
+                promptToUse = prompts[0];
                 setCurrentPromptIndex(1);
             } else {
-                 const prompt = logoPrompts[currentPromptIndex];
-                 const result = await generateLogo({ prompt, storeName: name });
-                 if (result.imageUrl) setLogoUrl(result.imageUrl);
+                 promptToUse = logoPrompts[currentPromptIndex];
                  setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % logoPrompts.length);
             }
-
+            
+            const result = await generateLogo({ prompt: promptToUse, storeName: name });
+            if (result.imageUrl) {
+                const response = await fetch(result.imageUrl);
+                const blob = await response.blob();
+                const file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
+                const path = `images/shop/logo/${file.name}`;
+                const downloadedUrl = await uploadFile(file, path);
+                if (downloadedUrl) {
+                    setLogoUrl(downloadedUrl);
+                }
+            }
         } catch (error) {
             console.error("Error during logo generation process:", error);
-        } finally {
-            setIsLogoGenerating(false);
         }
   };
   
@@ -426,7 +433,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         for (const cat of storeCategories) {
             const isNew = cat.id.startsWith('temp-');
             const realId = isNew ? idMap.get(cat.id)! : cat.id;
-            const parentId = cat.parentId ? (idMap.get(cat.parentId) || cat.parentId) : null;
+            const parentId = cat.parentId ? (idMap.get(cat.parentId) || cat.parentId) : undefined;
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
@@ -434,7 +441,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                 const { id, ...catData } = cat;
                 batch.set(catRef, { ...catData, storeId: finalStoreId, parentId });
             } else {
-                 batch.update(catRef, { name: cat.name, parentId: parentId || null });
+                 batch.update(catRef, { name: cat.name, parentId: parentId || undefined });
             }
         }
 
@@ -731,6 +738,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                         <Label>لوگوی فروشگاه</Label>
                         <div className='flex items-start gap-6'>
                           <div className="relative w-24 h-24">
+                              {isUploading && <Progress value={progress} className="absolute top-0 left-0 w-full h-1" />}
                               {logoUrl ? (
                                 <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2 bg-white" key={logoUrl} unoptimized />
                               ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
@@ -744,9 +752,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                                         variant="outline"
                                         className="absolute -bottom-2 -left-2 h-8 w-8 rounded-full bg-background"
                                         onClick={handleGenerateLogo}
-                                        disabled={isLogoGenerating}
+                                        disabled={isUploading}
                                     >
-                                        {isLogoGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>تولید لوگو با هوش مصنوعی</p></TooltipContent>

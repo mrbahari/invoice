@@ -12,7 +12,7 @@ export function useUpload() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File): Promise<string | null> => {
+  const uploadFile = async (file: File, path: string): Promise<string | null> => {
     setIsUploading(true);
     setProgress(0);
     setError(null);
@@ -27,7 +27,7 @@ export function useUpload() {
     }
     
     const storage = getStorage(firebaseApp);
-    const storageRef = ref(storage, `product-images/${Date.now()}-${file.name}`);
+    const storageRef = ref(storage, path);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
     return new Promise((resolve, reject) => {

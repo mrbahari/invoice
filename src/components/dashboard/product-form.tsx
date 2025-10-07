@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
@@ -208,7 +209,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const downloadedUrl = await uploadFile(file);
+      const path = `images/product/${Date.now()}-${file.name}`;
+      const downloadedUrl = await uploadFile(file, path);
       if (downloadedUrl) {
           setImageUrl(downloadedUrl);
       }

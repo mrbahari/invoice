@@ -19,8 +19,14 @@ const GenerateCategoriesInputSchema = z.object({
 export type GenerateCategoriesInput = z.infer<typeof GenerateCategoriesInputSchema>;
 
 
-// Recursive schema for a category node which can have children of the same type
-const CategoryNodeSchema: z.ZodType<any> = z.lazy(() => z.object({
+// Define the recursive type explicitly
+type CategoryNode = {
+    name: string;
+    children?: CategoryNode[];
+};
+
+// Use the explicit type with z.ZodType for the lazy schema
+const CategoryNodeSchema: z.ZodType<CategoryNode> = z.lazy(() => z.object({
     name: z.string().describe("The name of the category in Persian."),
     children: z.array(CategoryNodeSchema).optional().describe("An array of sub-category nodes."),
 }));

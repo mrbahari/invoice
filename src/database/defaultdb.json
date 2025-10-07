@@ -1,8 +1,38 @@
 {
-  "stores": [],
-  "categories": [],
+  "stores": [
+    {
+      "id": "store-default",
+      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2",
+      "name": "فروشگاه پیش‌فرض",
+      "description": "فروشگاه اصلی برای محصولات پیش‌فرض",
+      "address": "آدرس پیش‌فرض",
+      "phone": "021-00000000",
+      "logoUrl": "https://picsum.photos/seed/default-store/110/110"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-default-parent",
+      "name": "دسته اصلی پیش‌فرض",
+      "storeId": "store-default",
+      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2"
+    },
+    {
+      "id": "cat-default-child",
+      "name": "زیردسته پیش‌فرض",
+      "storeId": "store-default",
+      "parentId": "cat-default-parent",
+      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2"
+    }
+  ],
   "products": [],
-  "units": [],
+  "units": [
+      { "id": "unit-1", "name": "عدد", "defaultQuantity": 1 },
+      { "id": "unit-2", "name": "متر", "defaultQuantity": 1 },
+      { "id": "unit-3", "name": "شاخه", "defaultQuantity": 1 },
+      { "id": "unit-4", "name": "برگ", "defaultQuantity": 1 },
+      { "id": "unit-5", "name": "بسته", "defaultQuantity": 1 }
+  ],
   "customers": [],
   "invoices": [],
   "toolbarPositions": {}

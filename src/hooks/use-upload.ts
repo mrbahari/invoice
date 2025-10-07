@@ -2,8 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { initializeFirebase } from '@/firebase';
 import { useToast } from './use-toast';
 
 export function useUpload() {
@@ -12,55 +10,53 @@ export function useUpload() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File, path: string): Promise<string | null> => {
+  const uploadFile = async (file: File, path?: string): Promise<string | null> => {
     setIsUploading(true);
     setProgress(0);
     setError(null);
 
-    const { firebaseApp } = initializeFirebase();
-    if (!firebaseApp) {
-        const msg = "Firebase is not available.";
-        setError(msg);
-        toast({ variant: 'destructive', title: 'Upload Error', description: msg });
-        setIsUploading(false);
-        return Promise.resolve(null);
+    const formData = new FormData();
+    formData.append('file', file);
+    if(path) {
+        formData.append('path', path);
     }
-    
-    const storage = getStorage(firebaseApp);
-    const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
 
     return new Promise((resolve) => {
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const currentProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setProgress(currentProgress);
-        },
-        (uploadError) => {
-          console.error("Upload failed:", uploadError);
-          const errorMessage = "آپلود تصویر با خطا مواجه شد. لطفاً دوباره تلاش کنید.";
-          setError(errorMessage);
-          toast({ variant: 'destructive', title: 'خطا در آپلود', description: errorMessage });
-          setIsUploading(false);
-          resolve(null); // IMPORTANT: Resolve with null instead of rejecting
-        },
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            toast({ variant: 'success', title: 'آپلود موفق', description: 'تصویر با موفقیت آپلود شد.' });
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                const currentProgress = (event.loaded / event.total) * 100;
+                setProgress(currentProgress);
+            }
+        });
+
+        xhr.addEventListener('load', () => {
             setIsUploading(false);
-            resolve(downloadURL);
-          } catch (e) {
-            console.error("Could not get download URL:", e);
-            const errorMessage = "خطا در دریافت آدرس تصویر پس از آپلود.";
+            if (xhr.status >= 200 && xhr.status < 300) {
+                const response = JSON.parse(xhr.responseText);
+                toast({ variant: 'success', title: 'آپلود موفق', description: 'تصویر با موفقیت آپلود شد.' });
+                resolve(response.url);
+            } else {
+                const errorMessage = `آپلود تصویر با خطا مواجه شد. (وضعیت: ${xhr.status})`;
+                console.error("Upload failed:", xhr.responseText);
+                setError(errorMessage);
+                toast({ variant: 'destructive', title: 'خطا در آپلود', description: xhr.responseText || errorMessage });
+                resolve(null);
+            }
+        });
+
+        xhr.addEventListener('error', () => {
+            const errorMessage = "خطا در شبکه هنگام آپلود فایل.";
+            console.error("Upload failed due to a network error.");
             setError(errorMessage);
-            toast({ variant: 'destructive', title: 'خطا', description: errorMessage });
+            toast({ variant: 'destructive', title: 'خطا در آپلود', description: errorMessage });
             setIsUploading(false);
-            resolve(null); // IMPORTANT: Resolve with null instead of rejecting
-          }
-        }
-      );
+            resolve(null);
+        });
+
+        xhr.open('POST', '/api/upload', true);
+        xhr.send(formData);
     });
   };
 

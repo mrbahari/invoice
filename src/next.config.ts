@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
-    domains: ['localhost', 'firebasestorage.googleapis.com'],
+    domains: ['localhost'],
   },
 };
 

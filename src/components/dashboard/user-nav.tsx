@@ -36,7 +36,6 @@ import { Loader2 } from 'lucide-react';
 export function UserNav() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const [signOutState, signOutAction, isSignOutPending] = useActionState(signOut, null);
 
 
   const handleClientGoogleSignIn = async () => {
@@ -170,11 +169,10 @@ export function UserNav() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <form action={signOutAction}>
+            <form action={signOut}>
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2">
                     <AlertDialogCancel>انصراف</AlertDialogCancel>
-                    <Button type="submit" variant="destructive" disabled={isSignOutPending}>
-                        {isSignOutPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                    <Button type="submit" variant="destructive">
                         تایید و خروج
                     </Button>
                 </div>

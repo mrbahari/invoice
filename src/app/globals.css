@@ -120,6 +120,11 @@
 
 }
 
+/* Style for @hello-pangea/dnd placeholder */
+.dnd-placeholder {
+  @apply bg-blue-500/20 border-2 border-dashed border-blue-500 rounded-lg;
+}
+
 
 @media print {
   html {

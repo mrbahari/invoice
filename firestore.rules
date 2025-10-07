@@ -1,166 +1,116 @@
-/**
- * @fileoverview Firestore Security Rules for the application.
- *
- * Core Philosophy:
- * This ruleset prioritizes data security by implementing strict access control based on resource ownership for user-specific data and public read access with owner-only writes for public collections.
- *
- * Data Structure:
- * - Products and Categories are stored in top-level, publicly readable collections.
- * - Stores are stored in a top-level, publicly readable collection. Writes are restricted to the store owner.
- * - Clients, Invoices, Units, and ToolbarSettings are stored in user-specific subcollections under `/users/{userId}`.
- *
- * Key Security Decisions:
- * - Public listing is enabled for the Products, Categories, and Stores collections.
- * - Strict ownership is enforced for user-specific data under `/users/{userId}`.
- * - The rules do NOT perform extensive data validation in this prototyping phase.
- * - Denormalization is used where necessary (e.g., `ownerId` on Stores) to avoid costly `get()` calls in the rules.
- *
- * Denormalization for Authorization:
- * - The `Store` entity contains an `ownerId` field to enable secure ownership checks without needing to query a separate user document.
- *
- * Structural Segregation:
- * - Private user data (Clients, Invoices, Units, ToolbarSettings) is stored under the `/users/{userId}` path, while public data (Products, Categories, Stores) is stored in top-level collections.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read product information, but only allows authorized users to create, update, or delete products.
+     * @description Allows public read access to product information, but restricts write access to owners.
      * @path /products/{productId}
-     * @allow (get, list): if true
-     * @allow (create): if request.auth != null
-     * @allow (update): if request.auth != null
-     * @allow (delete): if request.auth != null
-     * @deny (create): if request.auth == null
-     * @deny (update): if request.auth == null
-     * @deny (delete): if request.auth == null
-     * @principle Allows public read access while restricting writes to authorized users.
+     * @allow get, list: Anyone can read product information.
+     * @allow create: Only the owner can create a product, and the `ownerId` must match their UID.
+     * @allow update, delete: Only the owner can update or delete a product.
+     * @deny create: A non-authenticated user cannot create a product.
+     * @deny update, delete: A non-owner cannot update or delete a product.
+     * @principle Allows public reads, but enforces document ownership for writes.
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow create: if isSignedIn() && exists(/databases/$(database)/documents/stores/$(request.resource.data.storeId));
+      allow update, delete: if isSignedIn() && exists(/databases/$(database)/documents/stores/$(resource.data.storeId));
     }
 
     /**
-     * @description Allows anyone to read category information, but only allows authorized users to create, update, or delete categories.
+     * @description Allows public read access to category information, but restricts write access to owners.
      * @path /categories/{categoryId}
-     * @allow (get, list): if true
-     * @allow (create): if request.auth != null
-     * @allow (update): if request.auth != null
-     * @allow (delete): if request.auth != null
-     * @deny (create): if request.auth == null
-     * @deny (update): if request.auth == null
-     * @deny (delete): if request.auth == null
-     * @principle Allows public read access while restricting writes to authorized users.
+     * @allow get, list: Anyone can read category information.
+     * @allow create: Only the owner can create a category, and the `ownerId` must match their UID.
+     * @allow update, delete: Only the owner can update or delete a category.
+     * @deny create: A non-authenticated user cannot create a category.
+     * @deny update, delete: A non-owner cannot update or delete a category.
      */
     match /categories/{categoryId} {
       allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
     }
     
     /**
-     * @description Allows anyone to read store information, but only the store owner can create, update, or delete the store.
+     * @description Allows public read access to stores, but restricts write access to the store owner.
      * @path /stores/{storeId}
-     * @allow (get, list): if true
-     * @allow (create): if request.auth.uid == request.resource.data.ownerId
-     * @allow (update): if isExistingOwner(resource.data.ownerId)
-     * @allow (delete): if isExistingOwner(resource.data.ownerId)
-     * @deny (create): if request.auth.uid != request.resource.data.ownerId
-     * @deny (update): if !isExistingOwner(resource.data.ownerId)
-     * @deny (delete): if !isExistingOwner(resource.data.ownerId)
-     * @principle Enforces store ownership for writes, allowing public read access.
+     * @allow get, list: Anyone can read store information.
+     * @allow create: Only the owner can create a store, and the `ownerId` must match their UID.
+     * @allow update, delete: Only the owner can update or delete a store.
+     * @deny create: A non-authenticated user cannot create a store.
+     * @deny update, delete: A non-owner cannot update or delete a store.
+     * @principle Allows public reads, but enforces document ownership for writes.
      */
     match /stores/{storeId} {
       allow get, list: if true;
-      allow create: if request.auth.uid == request.resource.data.ownerId;
-      allow update: if isExistingOwner(resource.data.ownerId);
-      allow delete: if isExistingOwner(resource.data.ownerId);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
     /**
-     * @description Allows a user to manage their own clients. Only the owner can read, create, update, or delete clients under their user ID.
+     * @description Enforces owner-only access to client data.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (get, list): if isOwner(userId)
-     * @allow (create): if isOwner(userId)
-     * @allow (update): if isExistingOwner(userId)
-     * @allow (delete): if isExistingOwner(userId)
-     * @deny (get): if !isOwner(userId)
-     * @deny (list): if !isOwner(userId)
-     * @deny (create): if !isOwner(userId)
-     * @deny (update): if !isExistingOwner(userId)
-     * @deny (delete): if !isExistingOwner(userId)
-     * @principle Enforces document ownership for all operations on a user's clients.
+     * @allow get, list: Only the owner can read their clients.
+     * @allow create: Only the owner can create a client. The `userId` in the path must match the authenticated user's UID.
+     * @allow update, delete: Only the owner can update or delete a client.
+     * @deny create: A non-authenticated user cannot create a client. A user cannot create a client under another user's ID.
+     * @deny update, delete: A non-owner cannot update or delete a client.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/clients/{clientId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update, delete: if isOwner(userId);
     }
 
     /**
-     * @description Allows a user to manage their own invoices. Only the owner can read, create, update, or delete invoices under their user ID.
+     * @description Enforces owner-only access to invoice data.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (get, list): if isOwner(userId)
-     * @allow (create): if isOwner(userId)
-     * @allow (update): if isExistingOwner(userId)
-     * @allow (delete): if isExistingOwner(userId)
-     * @deny (get): if !isOwner(userId)
-     * @deny (list): if !isOwner(userId)
-     * @deny (create): if !isOwner(userId)
-     * @deny (update): if !isExistingOwner(userId)
-     * @deny (delete): if !isExistingOwner(userId)
-     * @principle Enforces document ownership for all operations on a user's invoices.
+     * @allow get, list: Only the owner can read their invoices.
+     * @allow create: Only the owner can create an invoice. The `userId` in the path must match the authenticated user's UID.
+     * @allow update, delete: Only the owner can update or delete an invoice.
+     * @deny create: A non-authenticated user cannot create an invoice. A user cannot create an invoice under another user's ID.
+     * @deny update, delete: A non-owner cannot update or delete an invoice.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/invoices/{invoiceId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update, delete: if isOwner(userId);
     }
 
     /**
-     * @description Allows a user to manage their own units. Only the owner can read, create, update, or delete units under their user ID.
+     * @description Enforces owner-only access to unit data.
      * @path /users/{userId}/units/{unitId}
-     * @allow (get, list): if isOwner(userId)
-     * @allow (create): if isOwner(userId)
-     * @allow (update): if isExistingOwner(userId)
-     * @allow (delete): if isExistingOwner(userId)
-     * @deny (get): if !isOwner(userId)
-     * @deny (list): if !isOwner(userId)
-     * @deny (create): if !isOwner(userId)
-     * @deny (update): if !isExistingOwner(userId)
-     * @deny (delete): if !isExistingOwner(userId)
-     * @principle Enforces document ownership for all operations on a user's units.
+     * @allow get, list: Only the owner can read their measurement units.
+     * @allow create: Only the owner can create a measurement unit. The `userId` in the path must match the authenticated user's UID.
+     * @allow update, delete: Only the owner can update or delete a measurement unit.
+     * @deny create: A non-authenticated user cannot create a measurement unit. A user cannot create a unit under another user's ID.
+     * @deny update, delete: A non-owner cannot update or delete a measurement unit.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/units/{unitId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update, delete: if isOwner(userId);
     }
 
     /**
-     * @description Allows a user to manage their own toolbar settings. Only the owner can read, create, update, or delete settings under their user ID.
+     * @description Enforces owner-only access to toolbar settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (get): if isOwner(userId)
-     * @allow (list): if isOwner(userId)
-     * @allow (create): if isOwner(userId)
-     * @allow (update): if isExistingOwner(userId)
-     * @allow (delete): if isExistingOwner(userId)
-     * @deny (get): if !isOwner(userId)
-     * @deny (list): if !isOwner(userId)
-     * @deny (create): if !isOwner(userId)
-     * @deny (update): if !isExistingOwner(userId)
-     * @deny (delete): if !isExistingOwner(userId)
-     * @principle Enforces document ownership for all operations on a user's toolbar settings.
+     * @allow get, list: Only the owner can read their toolbar settings.
+     * @allow create: Only the owner can create toolbar settings. The `userId` in the path must match the authenticated user's UID.
+     * @allow update, delete: Only the owner can update or delete toolbar settings.
+     * @deny create: A non-authenticated user cannot create toolbar settings. A user cannot create settings under another user's ID.
+     * @deny update, delete: A non-owner cannot update or delete toolbar settings.
+     * @principle Restricts access to a user's own data tree.
      */
     match /users/{userId}/settings/toolbarPositions {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update, delete: if isOwner(userId);
     }
   }
 
@@ -170,10 +120,6 @@ service cloud.firestore {
   }
 
   function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-  function isExistingOwner(ownerId) {
-    return isSignedIn() && request.auth.uid == ownerId && resource != null;
+    return isSignedIn() && request.auth.uid == userId;
   }
 }

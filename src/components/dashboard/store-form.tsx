@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback, ChangeEvent } from 'react';
@@ -408,12 +407,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     };
 
 
-    const buildStoreData = useCallback((): Omit<Store, 'id'> => {
-        if (!user) {
-            throw new Error("User not authenticated.");
-        }
+    const buildStoreData = useCallback((): Omit<Store, 'id'> & { ownerId?: string } => {
         return {
-            ownerId: user.uid,
+            ...(user && { ownerId: user.uid }),
             name,
             description,
             address,
@@ -920,4 +916,3 @@ const updateCategoriesForStore = async (storeId: string) => {
     </TooltipProvider>
   );
 }
-

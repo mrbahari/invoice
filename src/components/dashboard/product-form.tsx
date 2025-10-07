@@ -232,15 +232,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (): Omit<Product, 'id'> & { ownerId: string } => {
-    if (!user) throw new Error("User not logged in");
+  const buildProductData = (): Omit<Product, 'id'> & { ownerId?: string } => {
     const numericPrice = Number(price);
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
     return {
-      ownerId: user.uid,
+      ...(user && { ownerId: user.uid }),
       name,
       code,
       description,

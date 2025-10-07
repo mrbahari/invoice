@@ -40,8 +40,6 @@ import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FloatingToolbar } from './floating-toolbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUser } from '@/firebase';
-
 
 type StoreFormProps = {
   store?: Store;
@@ -226,7 +224,6 @@ const CategoryTree = ({
 
 export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
-  const { user } = useUser();
   const isEditMode = !!store;
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
@@ -407,9 +404,8 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     };
 
 
-    const buildStoreData = useCallback((): Omit<Store, 'id'> & { ownerId?: string } => {
+    const buildStoreData = useCallback((): Omit<Store, 'id'> => {
         return {
-            ...(user && { ownerId: user.uid }),
             name,
             description,
             address,
@@ -421,7 +417,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             bankIban,
             bankCardNumber,
         }
-    }, [user, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
+    }, [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
 const updateCategoriesForStore = async (storeId: string) => {
     const existingCategories = data.categories.filter(c => c.storeId === storeId);
@@ -459,10 +455,6 @@ const updateCategoriesForStore = async (storeId: string) => {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
     }
-    if (!user) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره فروشگاه باید وارد شوید.' });
-        return;
-    }
     
     setIsProcessing(true);
 
@@ -494,7 +486,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, user, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, updateCategoriesForStore]);
+  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, updateCategoriesForStore]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {
@@ -622,10 +614,6 @@ const updateCategoriesForStore = async (storeId: string) => {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
     }
-    if (!user) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'برای ذخیره فروشگاه باید وارد شوید.' });
-        return;
-    }
     
     setIsProcessing(true);
 
@@ -642,7 +630,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     setIsProcessing(false);
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
-  }, [name, user, buildStoreData, storeCategories, addDocument, toast, onSave]);
+  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
   const handleDelete = useCallback(async () => {
       if (!store) return;

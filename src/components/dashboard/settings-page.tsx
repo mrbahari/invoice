@@ -144,16 +144,8 @@ export default function SettingsPage() {
     }
     setIsProcessing(true);
     try {
-      // First clear existing user-specific data
       await clearAllData();
-      // Then load the default data, making sure to add the current user's ID as owner
-      const ownedData = {
-          ...defaultDb,
-          stores: defaultDb.stores.map(store => ({...store, ownerId: user.uid})),
-          products: defaultDb.products.map(product => ({...product, ownerId: user.uid})),
-          categories: defaultDb.categories.map(category => ({...category, ownerId: user.uid})),
-      }
-      await loadDataBatch(ownedData);
+      await loadDataBatch(defaultDb);
       toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
     } catch (error) {
        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در بارگذاری داده‌های پیش‌فرض رخ داد.' });
@@ -201,22 +193,8 @@ export default function SettingsPage() {
         }
         const restoredData = JSON.parse(text);
         
-        // Ensure the restored data has the current user's ID as owner
-        const ownedData = {
-            ...restoredData,
-            stores: restoredData.stores?.map((store: any) => ({...store, ownerId: user.uid})) || [],
-            products: restoredData.products?.map((product: any) => ({...product, ownerId: user.uid})) || [],
-            categories: restoredData.categories?.map((category: any) => ({...category, ownerId: user.uid})) || [],
-            customers: restoredData.customers || [],
-            invoices: restoredData.invoices || [],
-            units: restoredData.units || [],
-            toolbarPositions: restoredData.toolbarPositions || {},
-        }
-        
-        // First, clear the user's current data from Firestore.
         await clearAllData();
-        // Then, load the user-specific data from the backup into Firestore.
-        await loadDataBatch(ownedData);
+        await loadDataBatch(restoredData);
 
         toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات با موفقیت بازیابی شد.' });
           
@@ -225,7 +203,6 @@ export default function SettingsPage() {
         toast({ variant: 'destructive', title: 'خطا در بازیابی', description: error.message || 'فایل پشتیبان نامعتبر است.' });
       } finally {
         setIsProcessing(false);
-        // Reset file input so the same file can be selected again
         if(fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -389,5 +366,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

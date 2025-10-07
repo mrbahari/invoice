@@ -98,7 +98,6 @@
       "description": "Represents a user's store.",
       "properties": {
         "id": { "type": "string" },
-        "ownerId": { "type": "string", "description": "The UID of the user who owns this store." },
         "name": { "type": "string" },
         "description": { "type": "string" },
         "address": { "type": "string" },
@@ -110,7 +109,7 @@
         "bankIban": { "type": "string" },
         "bankCardNumber": { "type": "string" }
       },
-      "required": ["id", "name", "ownerId"]
+      "required": ["id", "name"]
     },
     "Unit": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -135,19 +134,19 @@
   "firestore": {
     "structure": [
       {
-        "path": "/products/{productId}",
-        "schema": { "$ref": "#/entities/Product" },
-        "description": "Public collection of all products."
+        "path": "/users/{userId}/stores/{storeId}",
+        "schema": { "$ref": "#/entities/Store" },
+        "description": "User-specific collection of stores."
       },
       {
-        "path": "/categories/{categoryId}",
-        "schema": { "$ref": "#/entities/Category" },
-        "description": "Public collection of all categories."
+        "path": "/users/{userId}/products/{productId}",
+        "schema": { "$ref": "#/entities/Product" },
+        "description": "User-specific collection of products."
       },
-       {
-        "path": "/stores/{storeId}",
-        "schema": { "$ref": "#/entities/Store" },
-        "description": "Public collection of stores."
+      {
+        "path": "/users/{userId}/categories/{categoryId}",
+        "schema": { "$ref": "#/entities/Category" },
+        "description": "User-specific collection of categories."
       },
       {
         "path": "/users/{userId}/clients/{clientId}",
@@ -175,5 +174,3 @@
     "providers": ["password", "google.com"]
   }
 }
-
-    

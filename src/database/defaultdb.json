@@ -2,7 +2,6 @@
   "stores": [
     {
       "id": "store-default",
-      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2",
       "name": "فروشگاه پیش‌فرض",
       "description": "فروشگاه اصلی برای محصولات پیش‌فرض",
       "address": "آدرس پیش‌فرض",
@@ -14,15 +13,13 @@
     {
       "id": "cat-default-parent",
       "name": "دسته اصلی پیش‌فرض",
-      "storeId": "store-default",
-      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2"
+      "storeId": "store-default"
     },
     {
       "id": "cat-default-child",
       "name": "زیردسته پیش‌فرض",
       "storeId": "store-default",
-      "parentId": "cat-default-parent",
-      "ownerId": "xHYjOZByDvVoCdllW9YbyGU9ZKb2"
+      "parentId": "cat-default-parent"
     }
   ],
   "products": [],

@@ -59,9 +59,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
   // Define collection references, memoized to prevent re-renders
-  const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
-  const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'categories') : null, [firestore]);
-  const storesRef = useMemoFirebase(() => firestore ? collection(firestore, 'stores') : null, [firestore]);
+  const productsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'products') : null, [firestore, user]);
+  const categoriesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'categories') : null, [firestore, user]);
+  const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
   const unitsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
   const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
@@ -274,22 +274,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!firestore || !user) return;
     const batch = writeBatch(firestore);
 
-    // Define user-specific collections under the current user's UID
-    const userCollections: CollectionReference[] = [
-        collection(firestore, 'users', user.uid, 'units'),
-        collection(firestore, 'users', user.uid, 'clients'),
-        collection(firestore, 'users', user.uid, 'invoices'),
-    ];
-
-    // Define public collections that are filtered by ownerId
-    const publicOwnedCollections: { ref: CollectionReference, ownerId: string }[] = [
-        { ref: collection(firestore, 'stores'), ownerId: user.uid },
-        { ref: collection(firestore, 'products'), ownerId: user.uid },
-        { ref: collection(firestore, 'categories'), ownerId: user.uid },
+    const collectionsToClear: (CollectionReference | null)[] = [
+      productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef
     ];
     
-    // Batch delete documents from user-specific collections
-    for (const ref of userCollections) {
+    for (const ref of collectionsToClear) {
       if (ref) {
         const snapshot = await getDocs(query(ref));
         snapshot.docs.forEach(doc => {
@@ -297,24 +286,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
       }
     }
-    
-    // Batch delete documents from public collections owned by the user
-    for (const { ref, ownerId } of publicOwnedCollections) {
-      const q = query(ref, where("ownerId", "==", ownerId));
-      const snapshot = await getDocs(q);
-      snapshot.docs.forEach(doc => {
-          if(doc.id) batch.delete(doc.ref);
-      });
-    }
 
-    // Safely reset the toolbar positions by setting it to an empty object
     if (toolbarPosRef) {
       batch.set(toolbarPosRef, {});
     }
 
     try {
       await batch.commit();
-      // On successful commit, also clear the local state
       setData(emptyData);
     } catch (error: any) {
       const permissionError = new FirestorePermissionError({
@@ -322,14 +300,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         operation: 'delete',
       });
       errorEmitter.emit('permission-error', permissionError);
-      // Do not clear local state on error
       throw error; // Re-throw so caller knows it failed
     }
-  }, [user, firestore, toolbarPosRef]);
+  }, [user, firestore, toolbarPosRef, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
 
 
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const batch = writeBatch(firestore);
     
     const collectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
@@ -364,7 +341,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }, [firestore, user, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;

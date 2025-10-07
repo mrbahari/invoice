@@ -48,6 +48,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
     const t60Pieces = Math.ceil(area / 0.72);
     const tiles = Math.ceil((area / 0.36) * 1.03);
     const hangers = Math.ceil(area * 0.8);
+    const screws = Math.ceil(perimeter / 0.3); // Screws for L-profile, every 30cm
 
     return [
       { material: 'تایل پی وی سی', quantity: tiles, unit: 'عدد' },
@@ -56,6 +57,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
       { material: 'سپری T120', quantity: t120Pieces, unit: 'شاخه' },
       { material: 'سپری T60', quantity: t60Pieces, unit: 'شاخه' },
       { material: 'آویز', quantity: hangers, unit: 'عدد' },
+      { material: 'پیچ پنل', quantity: screws, unit: 'عدد'},
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   

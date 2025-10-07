@@ -76,7 +76,7 @@ const estimatorTypes = [
 ];
 
 type EstimatorsPageProps = {
-    onNavigate: (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'> }) => void;
+    onNavigate: (tab: DashboardTab, data?: { invoice: Partial<Invoice> }) => void;
 };
 
 export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
@@ -147,52 +147,56 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
     
+    // Improved product mapping with aliases
     const productMap: Record<string, string[]> = {
-        'پنل والیز': ['پنل والیز', 'پانل گچی', 'panel'],
-        'پنل جی برد': ['پنل جی برد', 'پانل گچی', 'panel'],
-        'تایل پی وی سی': ['تایل پی وی سی', 'تایل', 'tile'],
-        'سازه f47': ['سازه f47', 'f47'],
-        'سازه u36': ['سازه u36', 'u36'],
-        'نبشی l25': ['نبشی l25', 'l25'],
-        'نبشی l24': ['نبشی l24', 'l24'],
-        'سپری t360': ['سپری t360', 't360'],
-        'سپری t120': ['سپری t120', 't120'],
-        'سپری t60': ['سپری t60', 't60'],
-        'رانر': ['رانر', 'runner'],
-        'استاد': ['استاد', 'stud'],
-        'پیچ ۲.۵': ['پیچ ۲.۵', 'پیچ پنل', 'tn25', 'پیچ 2.5'],
-        'پیچ سازه': ['پیچ سازه', 'ln9'],
-        'آویز': ['آویز', 'hanger'],
-        'میخ و چاشنی': ['میخ', 'چاشنی', 'میخ و چاشنی'],
-        'پشم سنگ': ['پشم سنگ', 'rockwool'],
-        'اتصال W': ['اتصال w', 'w clip', 'دبلیو'],
-        'کلیپس': ['کلیپس', 'clip'],
+      'پنل والیز': ['پنل والیز', 'پانل گچی', 'panel'],
+      'پنل جی برد': ['پنل جی برد', 'پانل گچی', 'panel'],
+      'تایل پی وی سی': ['تایل', 'pvc'],
+      'سازه f47': ['f47'],
+      'سازه u36': ['u36'],
+      'نبشی l25': ['l25'],
+      'نبشی l24': ['l24'],
+      'سپری t360': ['t360', '3.60'],
+      'سپری t120': ['t120', '1.20'],
+      'سپری t60': ['t60', '0.60'],
+      'رانر': ['runner'],
+      'استاد': ['stud'],
+      'پیچ پنل': ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'],
+      'پیچ سازه': ['پیچ سازه', 'ln9', 'پیچ LN'],
+      'آویز': ['آویز', 'hanger'],
+      'میخ و چاشنی': ['میخ', 'چاشنی'],
+      'پشم سنگ': ['پشم سنگ', 'rockwool'],
+      'اتصال W': ['اتصال w', 'w clip', 'دبلیو'],
+      'کلیپس': ['کلیپس', 'clip'],
+      'براکت': ['براکت', 'bracket'],
     };
 
     aggregatedResults.forEach(item => {
-        let product: Product | undefined;
-        const materialNameLower = item.material.trim().toLowerCase();
-        
-        let foundKey: string | undefined;
+        let matchedProduct: Product | undefined;
+        const materialNameLower = item.material.toLowerCase();
+
+        // Find the best match from productMap
+        let bestMatchKey: string | undefined;
         for (const key in productMap) {
             if (productMap[key].some(alias => materialNameLower.includes(alias.toLowerCase()))) {
-                foundKey = key;
+                bestMatchKey = key;
                 break;
             }
         }
-        
-        const aliases = foundKey ? productMap[foundKey] : [materialNameLower];
 
-        product = products.find(p => 
+        const aliases = bestMatchKey ? productMap[bestMatchKey] : [materialNameLower];
+
+        // Find product in database that matches any of the aliases
+        matchedProduct = products.find(p => 
             aliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase()))
         );
 
         let quantity = item.quantity;
         let unit = item.unit;
-        let unitPrice = product ? product.price : 0;
-        let productId = product ? product.id : `mat-${item.material.replace(/\s+/g, '-')}`;
-        let productName = product ? product.name : item.material;
-        const imageUrl = product ? product.imageUrl : `https://picsum.photos/seed/${productName}/400/300`;
+        let unitPrice = matchedProduct ? matchedProduct.price : 0;
+        let productId = matchedProduct ? matchedProduct.id : `mat-${item.material.replace(/\s+/g, '-')}`;
+        let productName = matchedProduct ? matchedProduct.name : item.material;
+        const imageUrl = matchedProduct ? matchedProduct.imageUrl : `https://picsum.photos/seed/${encodeURIComponent(productName)}/400/300`;
 
         if ((materialNameLower.includes('پیچ') || materialNameLower.includes('میخ')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
@@ -223,7 +227,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
     const invoiceDescription = estimationList.map(est => `- ${est.description}`).join('\n');
 
-    const newInvoice: Omit<Invoice, 'id'> = {
+    const newInvoice: Partial<Invoice> = {
       invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
       customerId: '',
       customerName: '',

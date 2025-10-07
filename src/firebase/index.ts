@@ -9,13 +9,8 @@ import { useUser } from '../context/user-context';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
-  if (!getApps().length) {
-    const firebaseApp = initializeApp(firebaseConfig);
-    return getSdks(firebaseApp);
-  }
-
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
+  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  return getSdks(app);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {

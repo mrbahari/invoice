@@ -1,58 +1,69 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is signed in
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if the user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Helper function to check if the request is part of a batch write
-    function isBatchWrite() {
-      return request.method == 'write' && request.resource == null;
-    }
-
-    // Helper function to check if the user is the owner of a store (for public collections)
-    function isStoreOwner(storeId) {
-      return isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
-    }
     
-    // --- Public Collections ---
+    // --- Public read-only collections
     match /products/{productId} {
       allow read: if true;
-      allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
+      allow create: if isBatchWrite() || isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
+    }
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || isStoreOwner(request.resource.data.storeId);
       allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
       allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
     }
 
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
-      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
-    }
-    
+    // ----- Public stores collection -----
     match /stores/{storeId} {
       allow read: if true;
       allow create: if isBatchWrite() || (isSignedIn() && request.resource.data.ownerId == request.auth.uid);
-      allow update: if isSignedIn() && isStoreOwner(storeId);
-      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(storeId));
+      allow update: if isBatchWrite() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      allow delete: if isBatchWrite() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
     }
+    
 
-    // --- Private User Subcollections ---
-    match /users/{userId}/{collection}/{docId} {
-       allow read, delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-       allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-       allow update: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-    }
+    // ----- Users subcollections: only owner allowed -----
+    match /users/{userId}/ {
+      // Clients
+      match /clients/{clientId} {
+        allow read, write: if isSignedIn() && isOwner(userId);
+      }
 
-    match /users/{userId}/settings/toolbarPositions {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      // Invoices
+      match /invoices/{invoiceId} {
+        allow read, write: if isSignedIn() && isOwner(userId);
+      }
+
+      // Units
+      match /units/{unitId} {
+        allow read, write: if isSignedIn() && isOwner(userId);
+      }
+
+      // Settings (e.g. toolbarPositions)
+      match /settings/{docId} {
+          allow read, write: if isSignedIn() && isOwner(userId);
+      }
     }
+  }
+
+  // ---------------- Helper functions ----------------
+
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+  
+  function isBatchWrite() {
+    return request.method == 'write' && request.resource == null;
+  }
+  
+  function isStoreOwner(storeId) {
+    return request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
   }
 }

@@ -120,6 +120,7 @@ const CategoryTree = ({
               const hasSubCategories = subCategories.length > 0;
               const isAiLoading = aiLoading === cat.id;
               const isAdding = addingToParentId === cat.id;
+              const isOpen = openItems.includes(cat.id);
 
               return (
                 <Draggable key={cat.id} draggableId={cat.id} index={index}>
@@ -134,21 +135,24 @@ const CategoryTree = ({
                     >
                       <AccordionItem value={cat.id} className="border-b-0">
                         <div className="p-2 rounded-md hover:bg-muted/50">
-                           <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                  <div {...provided.dragHandleProps} className="p-2 cursor-grab">
-                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                  </div>
-                                  <AccordionTrigger disabled={!hasSubCategories} className="p-2 hover:no-underline">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div {...provided.dragHandleProps} className="p-2 cursor-grab">
+                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <AccordionTrigger disabled={!hasSubCategories} className="p-2 hover:no-underline">
+                                  <div className="flex items-center gap-2">
                                       <h4 className="font-semibold">{cat.name}</h4>
-                                  </AccordionTrigger>
-                              </div>
-                              <div className="flex items-center gap-1 mr-auto">
+                                      {hasSubCategories && <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />}
+                                  </div>
+                                </AccordionTrigger>
+                            </div>
+                            <div className="flex items-center gap-1">
                                 <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
                                 <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
                                 <AlertDialog><AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-                              </div>
+                            </div>
                           </div>
                           {editingCategoryId === cat.id ? (<div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8"><Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} /><Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button><Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button></div>) : null}
                           {isAdding && (<div className="flex gap-2 p-2 ml-8"><Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder={`نام زیردسته برای «${cat.name}»...`} onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)} autoFocus /><Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button></div>)}
@@ -579,21 +583,27 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   };
   
   const handleAccordionToggle = (itemId: string) => {
-      setOpenAccordionItems(prev => {
-          const newOpenItems = [itemId];
-          // Find parent and add it to the list
-          let currentId = itemId;
-          while(currentId) {
-              const cat = storeCategories.find(c => c.id === currentId);
-              if (cat && cat.parentId && !newOpenItems.includes(cat.parentId)) {
-                  newOpenItems.push(cat.parentId);
-                  currentId = cat.parentId;
-              } else {
-                  break;
-              }
-          }
-          return newOpenItems;
-      });
+    setOpenAccordionItems(prev => {
+        if (prev.includes(itemId)) {
+            // If it's already open, close it
+            return prev.filter(id => id !== itemId);
+        } else {
+            // If it's closed, open it (and keep others open since it's not single-type)
+            const newOpenItems = [itemId];
+            let currentId = itemId;
+            while(currentId) {
+                const cat = storeCategories.find(c => c.id === currentId);
+                if (cat && cat.parentId && !newOpenItems.includes(cat.parentId)) {
+                    newOpenItems.push(cat.parentId);
+                    currentId = cat.parentId;
+                } else {
+                    break;
+                }
+            }
+            // Return only the path to the clicked item
+            return newOpenItems;
+        }
+    });
   };
 
   const handleSaveAsCopy = useCallback(async () => {

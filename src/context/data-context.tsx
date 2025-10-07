@@ -309,20 +309,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!firestore || !user) return;
     const batch = writeBatch(firestore);
     
-    const collectionsToLoad: { ref: CollectionReference | null, data: any[] | undefined }[] = [
-        { ref: productsRef, data: dataToLoad.products },
-        { ref: categoriesRef, data: dataToLoad.categories },
-        { ref: storesRef, data: dataToLoad.stores },
-        { ref: unitsRef, data: dataToLoad.units },
-        { ref: customersRef, data: dataToLoad.customers },
-        { ref: invoicesRef, data: dataToLoad.invoices },
+    const collectionsToLoad: { name: CollectionName, ref: CollectionReference | null, data: any[] | undefined }[] = [
+        { name: 'products', ref: productsRef, data: dataToLoad.products },
+        { name: 'categories', ref: categoriesRef, data: dataToLoad.categories },
+        { name: 'stores', ref: storesRef, data: dataToLoad.stores },
+        { name: 'units', ref: unitsRef, data: dataToLoad.units },
+        { name: 'customers', ref: customersRef, data: dataToLoad.customers },
+        { name: 'invoices', ref: invoicesRef, data: dataToLoad.invoices },
     ];
 
-    for (const { ref, data } of collectionsToLoad) {
+    for (const { name, ref, data } of collectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
                 const docRef = item.id ? doc(ref, item.id) : doc(ref);
-                batch.set(docRef, item);
+                const { id, ...itemData } = item;
+                batch.set(docRef, itemData);
             });
         }
     }

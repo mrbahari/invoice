@@ -40,7 +40,8 @@ import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FloatingToolbar } from './floating-toolbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
+import { writeBatch, doc, collection } from 'firebase/firestore';
 
 type StoreFormProps = {
   store?: Store;
@@ -227,6 +228,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
   const isEditMode = !!store;
   const { user } = useUser();
+  const firestore = useFirestore();
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
@@ -376,20 +378,19 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             const result = await generateCategories(input);
             
             if (result && result.categories && result.categories.length > 0) {
-                 const newCats: Category[] = [];
+                const newCats: Category[] = [];
                 const processNode = (node: any, pId?: string) => {
-                    if (!node || !node.name) return; // Skip null/undefined nodes and nodes without a name
+                    if (!node || !node.name) return;
                     
                     const newCat: Category = {
                         id: `temp-${Math.random().toString(36).substr(2, 9)}`,
                         name: node.name,
-                        storeId: store?.id || 'temp', // This will be updated on save
+                        storeId: store?.id || 'temp',
                         parentId: pId,
                     };
                     newCats.push(newCat);
                     
                     if (node.children && node.children.length > 0) {
-                        // Ensure children is always an array
                         const children = Array.isArray(node.children) ? node.children : [node.children];
                         children.forEach((child: any) => processNode(child, newCat.id));
                     }
@@ -426,41 +427,12 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         }
     }, [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
-const updateCategoriesForStore = async (storeId: string) => {
-    const existingCategories = data.categories.filter(c => c.storeId === storeId);
-    
-    // Use sets for efficient lookup
-    const existingIds = new Set(existingCategories.map(c => c.id));
-    const currentIds = new Set(storeCategories.map(c => c.id));
-
-    // Categories to delete: in existing but not in current state
-    const toDelete = existingCategories.filter(c => !currentIds.has(c.id));
-    for (const category of toDelete) {
-        await deleteDocument('categories', category.id);
-    }
-    
-    // Categories to add or update
-    for (const category of storeCategories) {
-        if (existingIds.has(category.id)) {
-            // Update if name changed
-            const originalCat = existingCategories.find(c => c.id === category.id);
-            if (originalCat && originalCat.name !== category.name) {
-               await updateDocument('categories', category.id, { name: category.name });
-            }
-        } else {
-            // Add new category (it must be a temp one)
-            const { id, ...catData } = category;
-            await addDocument('categories', { ...catData, storeId });
-        }
-    }
-};
-
   const handleSaveAll = useCallback(async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
       return;
     }
-    if (!user) {
+    if (!user || !firestore) {
       toast({ variant: 'destructive', title: 'برای ذخیره باید وارد شوید.' });
       return;
     }
@@ -468,34 +440,67 @@ const updateCategoriesForStore = async (storeId: string) => {
     setIsProcessing(true);
 
     try {
+        const batch = writeBatch(firestore);
         const storeData = buildStoreData();
-        let currentStoreId = store?.id;
+        let finalStoreId = store?.id;
 
-        if (isEditMode && currentStoreId) {
-            // Update existing store
-            await updateDocument('stores', currentStoreId, storeData);
+        // 1. Handle Store Document
+        if (isEditMode && finalStoreId) {
+            const storeRef = doc(firestore, 'users', user.uid, 'stores', finalStoreId);
+            batch.update(storeRef, storeData);
         } else {
-            // Create new store and get its ID
-            const newStoreId = await addDocument('stores', storeData);
-            if (!newStoreId) {
-                throw new Error("Failed to create new store.");
-            }
-            currentStoreId = newStoreId;
+            const storeRef = doc(collection(firestore, 'users', user.uid, 'stores'));
+            batch.set(storeRef, storeData);
+            finalStoreId = storeRef.id;
         }
 
-        // Sync categories (add/update/delete) with the final store ID
-        await updateCategoriesForStore(currentStoreId);
+        if (!finalStoreId) {
+            throw new Error("Store ID is not available.");
+        }
+
+        // 2. Handle Categories
+        const existingCategories = data.categories.filter(c => c.storeId === store?.id);
+        const existingCatIds = new Set(existingCategories.map(c => c.id));
+        const currentCatIds = new Set(storeCategories.map(c => c.id));
+
+        // Categories to delete
+        for (const cat of existingCategories) {
+            if (!currentCatIds.has(cat.id)) {
+                const catRef = doc(firestore, 'users', user.uid, 'categories', cat.id);
+                batch.delete(catRef);
+            }
+        }
+
+        // Categories to add or update
+        for (const cat of storeCategories) {
+            const isNew = cat.id.startsWith('temp-');
+            const { id, ...catData } = cat;
+
+            if (isNew) {
+                const newCatRef = doc(collection(firestore, 'users', user.uid, 'categories'));
+                batch.set(newCatRef, { ...catData, storeId: finalStoreId });
+            } else {
+                const existingCat = existingCategories.find(c => c.id === id);
+                if (existingCat && existingCat.name !== cat.name) {
+                    const catRef = doc(firestore, 'users', user.uid, 'categories', id);
+                    batch.update(catRef, { name: cat.name });
+                }
+            }
+        }
+
+        // 3. Commit the batch
+        await batch.commit();
         
         toast({ variant: 'success', title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
         onSave();
 
     } catch (error) {
-        console.error("Error saving store:", error);
+        console.error("Error saving store with batch:", error);
         toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی', description: 'لطفا دوباره امتحان کنید' });
     } finally {
         setIsProcessing(false);
     }
-  }, [name, user, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, updateCategoriesForStore]);
+  }, [name, user, firestore, isEditMode, store, buildStoreData, storeCategories, data.categories, toast, onSave]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {

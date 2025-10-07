@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
   
-  const [initialInvoice, setInitialInvoice] = useState<Omit<Invoice, 'id'> | null>(null);
+  const [draftInvoice, setDraftInvoice] = useState<Partial<Invoice> | null>(null);
 
   useEffect(() => {
     if (!searchParams.get('tab')) {
@@ -33,11 +33,13 @@ export default function DashboardPage() {
     }
   }, [searchParams, router]);
 
-  const handleNavigation = (tab: DashboardTab, data?: { invoice: Omit<Invoice, 'id'>}) => {
+  const handleNavigation = (tab: DashboardTab, data?: { invoice: Partial<Invoice>}) => {
     if (tab === 'invoices' && data?.invoice) {
-        setInitialInvoice(data.invoice);
-    } else {
-        setInitialInvoice(null);
+        setDraftInvoice(data.invoice);
+    } else if (tab !== 'invoices') {
+      // Clear draft when navigating away from invoices tab if needed,
+      // but the user wants to preserve it, so we comment this out.
+      // setDraftInvoice(null);
     }
     // We need to push to trigger a re-render that shows the correct tab
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
@@ -49,8 +51,8 @@ export default function DashboardPage() {
   // Prepare props for the active component
   const componentProps: any = {
     onNavigate: handleNavigation,
-    initialInvoice: initialInvoice,
-    setInitialInvoice: setInitialInvoice,
+    draftInvoice: draftInvoice,
+    setDraftInvoice: setDraftInvoice,
   };
 
 

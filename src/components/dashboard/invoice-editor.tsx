@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -68,8 +67,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 
 type InvoiceEditorProps = {
-    invoiceId?: string; // Can be a new invoice (undefined) or an existing one
-    initialUnsavedInvoice?: Omit<Invoice, 'id'> | null; // For invoices coming from estimators
+    invoiceId?: string;
+    draftInvoice: Partial<Invoice> | null;
+    setDraftInvoice: (invoice: Partial<Invoice> | null) => void;
     onSaveSuccess: (invoiceId: string) => void;
     onPreview: (invoiceId: string) => void;
     onCancel: () => void;
@@ -447,8 +447,8 @@ const AddProductsComponent = React.memo(({
 AddProductsComponent.displayName = 'AddProductsComponent';
 
 
-export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
-  const { data, setData } = useData();
+export function InvoiceEditor({ invoiceId, draftInvoice, setDraftInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
+  const { data, addDocument, updateDocument } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const isClient = useIsClient();
   const isMobile = useIsMobile();
@@ -463,8 +463,39 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     isEditMode ? invoices.find(inv => inv.id === invoiceId) : undefined
   , [invoices, invoiceId, isEditMode]);
 
-  // State for the invoice being edited
+  // Use local state for the invoice being edited
   const [invoice, setInvoice] = useState<Partial<Invoice>>({});
+  
+  useEffect(() => {
+    // This effect now serves to initialize the editor from the draft prop
+    let currentInvoice: Partial<Invoice>;
+    if (draftInvoice) {
+      currentInvoice = draftInvoice;
+    } else if (isEditMode && invoiceToEdit) {
+      currentInvoice = invoiceToEdit;
+    } else {
+      // Creating a brand new invoice
+      currentInvoice = {
+          date: new Date().toISOString(),
+          status: 'Pending',
+          items: [],
+          subtotal: 0,
+          discount: 0,
+          additions: 0,
+          tax: 0,
+          total: 0,
+          description: '',
+          invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
+      };
+    }
+    setInvoice(currentInvoice);
+  }, [invoiceId, invoiceToEdit, draftInvoice, isEditMode, invoices.length]);
+  
+  // Update the shared draft invoice state whenever the local invoice changes
+  useEffect(() => {
+    setDraftInvoice(invoice);
+  }, [invoice, setDraftInvoice]);
+
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [storeId, setStoreId] = useState<string>('');
   const [openItemId, setOpenItemId] = useState<string | null>(null);
@@ -492,52 +523,24 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
   }, []);
   
   useEffect(() => {
-    let currentInvoice: Partial<Invoice>;
-    if (isEditMode && invoiceToEdit) {
-      // Editing an existing invoice
-      currentInvoice = invoiceToEdit;
-      const customer = customerList.find(c => c.id === invoiceToEdit.customerId);
-      setSelectedCustomer(customer);
-    } else if (initialUnsavedInvoice) {
-      // Creating a new invoice from an estimator
-      currentInvoice = {
-        ...initialUnsavedInvoice,
-        invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      };
-      setSelectedCustomer(undefined);
-    } else {
-      // Creating a brand new invoice
-      currentInvoice = {
-          date: new Date().toISOString(),
-          status: 'Pending',
-          items: [],
-          subtotal: 0,
-          discount: 0,
-          additions: 0,
-          tax: 0,
-          total: 0,
-          description: '',
-          invoiceNumber: `${getStorePrefix('INV')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
-      };
-      setSelectedCustomer(undefined);
-    }
-
+    const customer = invoice.customerId ? customerList.find(c => c.id === invoice.customerId) : undefined;
+    setSelectedCustomer(customer);
+    
     // Set initial store based on products or default
     const initialStoreId =
-      currentInvoice.items && currentInvoice.items.length > 0
-        ? products.find((p) => p.id === currentInvoice.items![0].productId)
+      invoice.items && invoice.items.length > 0
+        ? products.find((p) => p.id === invoice.items![0].productId)
             ?.storeId || stores?.[0]?.id || ''
         : stores?.[0]?.id || ''
     
-    setInvoice(currentInvoice);
     setStoreId(initialStoreId);
 
     // Initialize display values
-    setDisplayDiscount(formatNumber(currentInvoice.discount || 0));
-    setDisplayAdditions(formatNumber(currentInvoice.additions || 0));
-    setDisplayTax(formatNumber(currentInvoice.tax || 0));
+    setDisplayDiscount(formatNumber(invoice.discount || 0));
+    setDisplayAdditions(formatNumber(invoice.additions || 0));
+    setDisplayTax(formatNumber(invoice.tax || 0));
 
-  }, [invoiceId, invoiceToEdit, initialUnsavedInvoice, isEditMode, customerList, products, stores, invoices.length]);
+  }, [invoice, customerList, products, stores]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -714,7 +717,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         }
         return { ...prev, items: newItems };
     });
-  }, []);
+  }, [setInvoice]);
 
   const handleReplaceItem = useCallback((index: number, newProduct: Product) => {
     setInvoice(prev => {
@@ -733,7 +736,7 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
         }
         return { ...prev, items: newItems };
     });
-  }, []);
+  }, [setInvoice]);
   
   const handleUnitChange = useCallback((index: number, newUnit: string) => {
     setInvoice(prev => {
@@ -750,14 +753,14 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
       }
       return {...prev, items: newItems};
     });
-  }, [products]);
+  }, [products, setInvoice]);
 
   const handleRemoveItem = useCallback((index: number) => {
     setInvoice(prev => ({
         ...prev,
         items: prev.items?.filter((_, i) => i !== index)
     }));
-  }, []);
+  }, [setInvoice]);
 
   const handleDragEnd = (result: DropResult) => {
     document.body.classList.remove('dragging-invoice-item');
@@ -793,74 +796,69 @@ export function InvoiceEditor({ invoiceId, initialUnsavedInvoice, onSaveSuccess,
     setInvoice(prev => ({...prev, [field]: numericValue === '' ? 0 : numericValue}));
   };
 
-  const handleProcessInvoice = (): string | null => {
+  const handleProcessInvoice = async (): Promise<string | null> => {
     if (!selectedCustomer) {
       setIsCustomerSelectorOpen(true);
       return null;
     }
     
     setIsProcessing(true);
-    let processedInvoiceId: string;
+    let processedInvoiceId: string | undefined = invoice.id;
 
-    if (isEditMode) {
-        processedInvoiceId = invoiceToEdit!.id;
-        const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
-        setData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === processedInvoiceId ? finalInvoice : inv) }));
+    const finalInvoiceData = {
+        ...invoice,
+        customerId: selectedCustomer.id,
+        customerName: selectedCustomer.name,
+        customerEmail: selectedCustomer.email
+    } as Omit<Invoice, 'id'>;
+
+    if (isEditMode && processedInvoiceId) {
+        await updateDocument('invoices', processedInvoiceId, finalInvoiceData);
     } else {
-        processedInvoiceId = `inv-${Math.random().toString(36).substr(2, 9)}`;
-        const finalInvoice = { ...invoice, id: processedInvoiceId } as Invoice;
-        setData(prev => ({ ...prev, invoices: [finalInvoice, ...prev.invoices] }));
+        processedInvoiceId = await addDocument('invoices', finalInvoiceData);
     }
 
     setIsProcessing(false);
-    return processedInvoiceId;
+    return processedInvoiceId || null;
   };
   
   const handleDeleteInvoice = () => {
-    if (!isEditMode) return;
-    setData(prev => ({ ...prev, invoices: prev.invoices.filter(inv => inv.id !== (invoiceToEdit as Invoice).id) }));
+    if (!isEditMode || !invoice.id) return;
+    deleteDocument('invoices', invoice.id);
     onCancel();
   };
 
-  const handleSaveAndExit = () => {
-      const processedId = handleProcessInvoice();
+  const handleSaveAndExit = async () => {
+      const processedId = await handleProcessInvoice();
       if (processedId) {
           onSaveSuccess(processedId);
       }
   };
   
-  const handlePreviewClick = () => {
-    // If it's a new invoice that hasn't been saved, save it first.
-    if (!isEditMode) {
-        const newId = handleProcessInvoice();
-        if (newId) {
-            onPreview(newId);
-        }
-    } else {
-        // If it's an existing invoice, just save any current changes and then preview.
-        const updatedId = handleProcessInvoice(); // This saves any pending pending changes
-        if(updatedId) {
-          onPreview(updatedId);
-        }
+  const handlePreviewClick = async () => {
+    const processedId = await handleProcessInvoice();
+    if (processedId) {
+        onPreview(processedId);
     }
   };
 
-  const handleAddNewCustomer = () => {
+  const handleAddNewCustomer = async () => {
     if (!/^\d{11}$/.test(customerSearch)) return;
 
-    const newCustomerData: Omit<Customer, 'id' | 'purchaseHistory'> & { id: string, purchaseHistory: string } = {
-      id: `cust-${Math.random().toString(36).substr(2, 9)}`,
+    const newCustomerData: Omit<Customer, 'id' | 'purchaseHistory'> = {
       name: `مشتری جدید`,
       phone: customerSearch.trim(),
       email: 'ایمیل ثبت نشده',
       address: 'آدرس ثبت نشده',
-      purchaseHistory: 'مشتری جدید',
     };
     
-    setData(prev => ({ ...prev, customers: [newCustomerData, ...prev.customers] }));
-    setSelectedCustomer(newCustomerData);
-    setIsCustomerSelectorOpen(false);
-    setCustomerSearch('');
+    const newId = await addDocument('customers', newCustomerData);
+    if(newId) {
+        const newCustomer = { ...newCustomerData, id: newId, purchaseHistory: 'مشتری جدید' };
+        setSelectedCustomer(newCustomer);
+        setIsCustomerSelectorOpen(false);
+        setCustomerSearch('');
+    }
   };
 
    return (

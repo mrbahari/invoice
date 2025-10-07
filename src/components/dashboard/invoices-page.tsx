@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
@@ -26,12 +25,12 @@ import { FloatingToolbar } from './floating-toolbar';
 
 type View =
   | { type: 'list' }
-  | { type: 'editor'; invoiceId?: string; initialUnsavedInvoice?: Omit<Invoice, 'id'> }
+  | { type: 'editor'; invoiceId?: string; }
   | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
 
 type InvoicesPageProps = {
-  initialInvoice: Omit<Invoice, 'id'> | null;
-  setInitialInvoice: (invoice: Omit<Invoice, 'id'> | null) => void;
+  draftInvoice: Partial<Invoice> | null;
+  setDraftInvoice: (invoice: Partial<Invoice> | null) => void;
 };
 
 const statusStyles: Record<InvoiceStatus, string> = {
@@ -51,8 +50,8 @@ const statusIcons: Record<InvoiceStatus, React.ElementType> = {
 };
 
 export default function InvoicesPage({
-  initialInvoice,
-  setInitialInvoice,
+  draftInvoice,
+  setDraftInvoice,
 }: InvoicesPageProps) {
   const { data, updateDocument, deleteDocument } = useData();
   const { customers, invoices: allInvoices } = data;
@@ -71,18 +70,24 @@ export default function InvoicesPage({
 
   // Effect to handle the initial invoice prop from estimators or other pages
   useEffect(() => {
-    if (initialInvoice) {
-      setView({ type: 'editor', initialUnsavedInvoice: initialInvoice });
-      // Clear it after use so it doesn't trigger again on re-renders
-      setInitialInvoice(null);
+    if (draftInvoice && view.type !== 'editor') {
+      setView({ type: 'editor' });
     }
-  }, [initialInvoice, setInitialInvoice]);
+  }, [draftInvoice, view.type]);
 
-  const handleCreate = useCallback(() => setView({ type: 'editor' }), []);
+  const handleCreate = useCallback(() => {
+    setDraftInvoice(null); // Clear any previous draft
+    setView({ type: 'editor' });
+  }, [setDraftInvoice]);
+  
   const handleEdit = useCallback(
-    (invoice: Invoice) => setView({ type: 'editor', invoiceId: invoice.id }),
-    []
+    (invoice: Invoice) => {
+        setDraftInvoice(invoice);
+        setView({ type: 'editor', invoiceId: invoice.id });
+    },
+    [setDraftInvoice]
   );
+  
   const handlePreview = useCallback(
     (invoice: Invoice) =>
       setView({ type: 'preview', invoiceId: invoice.id, from: 'list' }),
@@ -120,14 +125,16 @@ export default function InvoicesPage({
 
   const handleSaveSuccess = useCallback(() => {
     setView({ type: 'list' });
+    setDraftInvoice(null);
     if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, []);
+  }, [setDraftInvoice]);
 
   const handleCancel = useCallback(() => {
     setView({ type: 'list' });
-  }, []);
+    setDraftInvoice(null);
+  }, [setDraftInvoice]);
 
   const filteredInvoices = useMemo(() => {
     if (!allInvoices) return [];
@@ -154,7 +161,8 @@ export default function InvoicesPage({
           <div className="pb-16">
             <InvoiceEditor
               invoiceId={view.invoiceId}
-              initialUnsavedInvoice={view.initialUnsavedInvoice}
+              draftInvoice={draftInvoice}
+              setDraftInvoice={setDraftInvoice}
               onSaveSuccess={handleSaveSuccess}
               onPreview={handlePreviewFromEditor}
               onCancel={handleCancel}

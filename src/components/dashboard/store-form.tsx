@@ -40,6 +40,7 @@ import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FloatingToolbar } from './floating-toolbar';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from '@/firebase';
 
 type StoreFormProps = {
   store?: Store;
@@ -225,6 +226,7 @@ const CategoryTree = ({
 export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { toast } = useToast();
   const isEditMode = !!store;
+  const { user } = useUser();
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
@@ -376,7 +378,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             if (result && result.categories && result.categories.length > 0) {
                  const newCats: Category[] = [];
                 const processNode = (node: any, pId?: string) => {
-                    if(!node.name) return; // Skip nodes without a name
+                    if (!node || !node.name) return; // Skip null nodes and nodes without a name
                     const newCat: Category = {
                         id: `temp-${Math.random().toString(36).substr(2, 9)}`,
                         name: node.name,
@@ -405,8 +407,12 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     };
 
 
-    const buildStoreData = useCallback((): Omit<Store, 'id'> => {
+    const buildStoreData = useCallback((): Omit<Store, 'id'> & { ownerId: string } => {
+        if (!user) {
+            throw new Error("User not authenticated");
+        }
         return {
+            ownerId: user.uid,
             name,
             description,
             address,
@@ -418,16 +424,16 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             bankIban,
             bankCardNumber,
         }
-    }, [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
+    }, [user, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
 const updateCategoriesForStore = async (storeId: string) => {
     const existingCategories = data.categories.filter(c => c.storeId === storeId);
     const existingCategoryIds = new Set(existingCategories.map(c => c.id));
-    const currentStateCategoryIds = new Set(storeCategories.map(c => c.id));
 
     // Delete categories that are in DB but not in local state
     for (const category of existingCategories) {
-        if (!currentStateCategoryIds.has(category.id)) {
+        const stillExistsInState = storeCategories.some(sc => sc.id === category.id);
+        if (!stillExistsInState) {
             await deleteDocument('categories', category.id);
         }
     }
@@ -436,10 +442,12 @@ const updateCategoriesForStore = async (storeId: string) => {
     for (const category of storeCategories) {
         if (category.id.startsWith('temp-')) {
             // It's a new category, add it
+            if (!user) continue; // Should not happen if buildStoreData passed
             await addDocument('categories', {
                 name: category.name,
                 storeId: storeId,
                 parentId: category.parentId,
+                ownerId: user.uid
             });
         } else if (existingCategoryIds.has(category.id)) {
             // It's an existing category, check for updates
@@ -454,6 +462,10 @@ const updateCategoriesForStore = async (storeId: string) => {
   const handleSaveAll = useCallback(async () => {
     if (!name) {
       toast({ variant: 'destructive', title: 'نام فروشگاه الزامی است.' });
+      return;
+    }
+    if (!user) {
+      toast({ variant: 'destructive', title: 'برای ذخیره باید وارد شوید.' });
       return;
     }
     
@@ -487,7 +499,7 @@ const updateCategoriesForStore = async (storeId: string) => {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, updateCategoriesForStore]);
+  }, [name, user, isEditMode, store, buildStoreData, storeCategories, toast, onSave, updateDocument, addDocument, updateCategoriesForStore]);
   
   const handleDeleteAllCategories = useCallback(async () => {
     if (!store) {
@@ -623,15 +635,15 @@ const updateCategoriesForStore = async (storeId: string) => {
 
     if (newStoreId) {
         for (const category of storeCategories) {
-            const { id, ...catData } = category;
-            await addDocument('categories', { ...catData, storeId: newStoreId });
+            const { id, ownerId, ...catData } = category;
+            await addDocument('categories', { ...catData, ownerId: user!.uid, storeId: newStoreId });
         }
     }
     
     setIsProcessing(false);
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
-  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
+  }, [name, buildStoreData, storeCategories, addDocument, toast, onSave, user]);
 
   const handleDelete = useCallback(async () => {
       if (!store) return;

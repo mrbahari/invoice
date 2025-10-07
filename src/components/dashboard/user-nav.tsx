@@ -15,40 +15,54 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useUser } from '@/context/user-context';
-import { signOut, handleSession, sendPasswordResetLink } from '@/app/auth/actions';
+import { useUser, useAuth } from '@/firebase';
+import { sendPasswordResetLink } from '@/app/auth/actions';
 import { AuthForm } from '../auth-form';
 import {
   signInWithPopup,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   updateProfile,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { initializeFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import type { AuthFormValues } from '@/lib/definitions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { useActionState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await firebaseSignOut(auth);
+      // The onAuthStateChanged listener in FirebaseProvider will handle the user state update.
+      // We can redirect or refresh to ensure a clean state.
+      toast({ variant: 'success', title: 'خروج موفق', description: 'شما با موفقیت از حساب خود خارج شدید.' });
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({ variant: 'destructive', title: 'خطا در خروج', description: 'مشکلی در فرآیند خروج رخ داد.' });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   const handleClientGoogleSignIn = async () => {
     try {
-      const { auth: clientAuth } = initializeFirebase();
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(clientAuth, provider);
-      const idToken = await result.user.getIdToken();
-      
-      await handleSession(idToken);
-      
-      router.refresh();
-      
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle the rest
       return { success: true };
     } catch (error: any) {
       console.error('Google Sign-In Error', error);
@@ -57,7 +71,6 @@ export function UserNav() {
   };
 
   const handleEmailPasswordAction = async (values: AuthFormValues, formType: 'login' | 'signup') => {
-    const { auth: clientAuth } = initializeFirebase();
     const { email, password, firstName, lastName } = values;
 
     if (!password) {
@@ -65,19 +78,14 @@ export function UserNav() {
     }
 
     try {
-        let userCredential;
         if (formType === 'signup') {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const displayName = `${firstName} ${lastName}`;
-            userCredential = await createUserWithEmailAndPassword(clientAuth, email, password);
             await updateProfile(userCredential.user, { displayName });
         } else {
-            userCredential = await signInWithEmailAndPassword(clientAuth, email, password);
+            await signInWithEmailAndPassword(auth, email, password);
         }
-        
-        const idToken = await userCredential.user.getIdToken();
-        await handleSession(idToken);
-        
-        router.refresh();
+        // onAuthStateChanged will handle the rest
         return { success: true, message: 'عملیات موفقیت‌آمیز بود' };
 
     } catch (error: any) {
@@ -168,15 +176,12 @@ export function UserNav() {
               آیا برای خروج از حساب کاربری خود مطمئن هستید؟
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <form action={signOut}>
-                <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2">
-                    <AlertDialogCancel>انصراف</AlertDialogCancel>
-                    <Button type="submit" variant="destructive">
-                        تایید و خروج
-                    </Button>
-                </div>
-            </form>
+          <AlertDialogFooter className="grid-cols-2">
+            <AlertDialogCancel>انصراف</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} disabled={isSigningOut} className="bg-destructive hover:bg-destructive/90">
+                {isSigningOut && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                تایید و خروج
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>

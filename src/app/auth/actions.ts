@@ -1,29 +1,22 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createFirebaseAdminApp } from '@/firebase/admin-config';
-import { getAuth } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { initializeFirebase } from '@/firebase';
-import { sendPasswordResetEmail, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 const SESSION_COOKIE_NAME = '__session';
 
-export async function handleSession(idToken: string) {
-  const adminApp = createFirebaseAdminApp();
-  if (!adminApp) {
-    throw new Error('Firebase Admin SDK not initialized');
-  }
-  const adminAuth = getAuth(adminApp);
-  const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-  const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-  cookies().set(SESSION_COOKIE_NAME, sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
-}
-
+// This function is kept for reference but is no longer the primary sign-out mechanism.
+// The client-side will handle sign-out and this can be removed later if not needed.
 export async function signOut() {
-  cookies().delete(SESSION_COOKIE_NAME);
-  // Revalidate the root layout to ensure user state is cleared everywhere
+  // The primary sign-out logic is now on the client in UserNav.tsx.
+  // This server action can serve as a fallback or be removed.
+  // For now, it just clears the cookie if it exists.
+  if (cookies().has(SESSION_COOKIE_NAME)) {
+    cookies().delete(SESSION_COOKIE_NAME);
+  }
   revalidatePath('/', 'layout'); 
   redirect('/');
 }

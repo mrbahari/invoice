@@ -3,58 +3,80 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // General functions
+    // Helper Functions
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getStoreOwnerId(storeId) {
+      return get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
     }
 
     function isStoreOwner(storeId) {
-       // This function now correctly points to the public 'stores' collection
-       return request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+      return isSignedIn() && request.auth.uid == getStoreOwnerId(storeId);
     }
-
+    
     function isBatchWrite() {
-      // A batch write is identified by having multiple writes in one request.
-      // A simple proxy for this is checking if the request object is available,
-      // as it's not populated in the same way for batch writes in rules simulation.
-      // For real batch writes, this checks if the specific write within the batch is allowed.
-      // A more robust check might be needed if complex batch logic is added.
       return request.resource == null;
     }
 
-    // Public Collections: Anyone can read, but only specific users can write.
-    match /products/{productId} {
-       allow read: if true;
-       // Allow create if it's a batch write OR if the user is the owner of the store.
-       allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
-       // Allow update only if the user is the owner of the store (storeId doesn't change).
-       allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-       // Allow delete for batch writes OR if the user is the store owner.
-       allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
-    }
-
-    match /categories/{categoryId} {
-       allow read: if true;
-       allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
-       allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-       allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
-    }
-
+    // Public Collections Rules
     match /stores/{storeId} {
       allow read: if true;
-      allow create: if isBatchWrite() || (isSignedIn() && isOwner(request.resource.data.ownerId));
-      allow update: if isSignedIn() && isOwner(resource.data.ownerId);
-      allow delete: if isBatchWrite() || (isSignedIn() && isOwner(resource.data.ownerId));
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
+      allow update: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
+      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
+    }
+     match /categories/{categoryId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
+      allow update: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
+      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
     }
 
-    // User-specific subcollections
+
+    // User-Private Collections Rules
     match /users/{userId}/{document=**} {
-      allow read, update, delete: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
+        allow read, write: if isSignedIn() && isOwner(userId);
     }
+    
+    match /users/{userId}/stores/{storeId} {
+       allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId) && request.resource.data.ownerId == userId);
+       allow read, update: if isSignedIn() && isOwner(userId);
+       allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+    
+    match /users/{userId}/units/{unitId} {
+       allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+       allow read, update: if isSignedIn() && isOwner(userId);
+       allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+    
+    match /users/{userId}/clients/{clientId} {
+       allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+       allow read, update: if isSignedIn() && isOwner(userId);
+       allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+    
+     match /users/{userId}/invoices/{invoiceId} {
+       allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+       allow read, update: if isSignedIn() && isOwner(userId);
+       allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+
+     match /users/{userId}/settings/toolbarPositions {
+        allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+        allow read, update: if isSignedIn() && isOwner(userId);
+        allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+     }
   }
 }

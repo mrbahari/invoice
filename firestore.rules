@@ -1,183 +1,84 @@
-/**
- * @file Firestore Security Rules
- * @description This ruleset enforces a combination of user-based ownership and public read access where appropriate.
- *
- * Data Structure:
- * - Products and Categories are stored in top-level collections with public read access and owner-only writes.
- * - Clients, Invoices, Stores, and Units are stored in user-specific subcollections under `/users/{userId}`.
- * - Toolbar settings are stored in a special document `/users/{userId}/settings/toolbarPositions`.
- *
- * Key Security Decisions:
- * - Users can only manage data within their own `/users/{userId}` data tree.
- * - Products and categories are publicly readable but only modifiable by their owners.
- * - Listing of user-owned data is allowed.
- * - Deletion of multiple paths at once is disallowed; each path must be deleted separately.
- *
- * Denormalization for Authorization:
- * - Stores have an `ownerId` field that is used to enforce ownership.
- * - Products require a `storeId` that relates to a `Store` document. It's assumed the `Store` document contains the actual owner, enabling the Product rules to indirectly verify product ownership.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Grants public read access to all products, but restricts write access to the owner of the store the product belongs to.
-     * @path /products/{productId}
-     * @allow (get, list): Any user can read product information.
-     * @allow (create): Only the owner of the store associated with the product can create it, and the storeId must match a store owned by the user. The creator must set the product.storeId value to a valid store id.
-     * @allow (update, delete): Only the owner of the store associated with the product can update or delete it.
-     * @deny (create): If the storeId does not match the id of a store owned by the user.
-     * @principle Allows public read access while restricting write access to the store owner.
-     */
-    match /products/{productId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && isValidProductCreateRequest();
-      allow update, delete: if isSignedIn() && isProductExistingStoreOwner(productId);
-
-      function isValidProductCreateRequest() {
-          return request.resource.data.storeId is string
-            && exists(/databases/$(database)/documents/users/$(request.auth.uid)/stores/$(request.resource.data.storeId));
-      }
-
-      function isProductExistingStoreOwner(productId) {
-        return get(/databases/$(database)/documents/products/$(productId)).data.storeId is string && exists(/databases/$(database)/documents/users/$(request.auth.uid)/stores/$(get(/databases/$(database)/documents/products/$(productId)).data.storeId));
-      }
-    }
-
-    /**
-     * @description Grants public read access to all categories, but restricts write access to the owner of the store the category belongs to.
-     * @path /categories/{categoryId}
-     * @allow (get, list): Any user can read category information.
-     * @allow (create): Only the owner of the store associated with the category can create it, and the storeId must match a store owned by the user. The creator must set the category.storeId value to a valid store id.
-     * @allow (update, delete): Only the owner of the store associated with the category can update or delete it.
-     * @deny (create): If the storeId does not match the id of a store owned by the user.
-     * @principle Allows public read access while restricting write access to the store owner.
-     */
-    match /categories/{categoryId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && isValidCategoryCreateRequest();
-      allow update, delete: if isSignedIn() && isCategoryExistingStoreOwner(categoryId);
-
-      function isValidCategoryCreateRequest() {
-        return request.resource.data.storeId is string
-          && exists(/databases/$(database)/documents/users/$(request.auth.uid)/stores/$(request.resource.data.storeId));
-      }
-
-      function isCategoryExistingStoreOwner(categoryId) {
-        return get(/databases/$(database)/documents/categories/$(categoryId)).data.storeId is string && exists(/databases/$(database)/documents/users/$(request.auth.uid)/stores/$(get(/databases/$(database)/documents/categories/$(categoryId)).data.storeId));
-      }
-    }
-
-    /**
-     * @description Grants access to a user to manage their own clients.
-     * @path /users/{userId}/clients/{clientId}
-     * @allow (get, list): Only the owner can read/list their clients.
-     * @allow (create): Only the owner can create clients in their profile.
-     * @allow (update, delete): Only the owner can update/delete their clients.
-     * @deny (create): If the userId in the path does not match the authenticated user's ID.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/clients/{clientId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-
-    }
-
-    /**
-     * @description Grants access to a user to manage their own invoices.
-     * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (get, list): Only the owner can read/list their invoices.
-     * @allow (create): Only the owner can create invoices in their profile.
-     * @allow (update, delete): Only the owner can update/delete their invoices.
-     * @deny (create): If the userId in the path does not match the authenticated user's ID.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/invoices/{invoiceId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Grants access to a user to manage their own stores.
-     * @path /users/{userId}/stores/{storeId}
-     * @allow (get, list): Only the owner can read/list their stores.
-     * @allow (create): Only the owner can create stores in their profile, and the store.ownerId must match the userId.
-     * @allow (update, delete): Only the owner can update/delete their stores.
-     * @deny (create): If the userId in the path does not match the authenticated user's ID, or if the store.ownerId does not match the userId.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/stores/{storeId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidStoreCreateRequest(userId);
-      allow update, delete: if isExistingOwner(userId);
-
-      function isValidStoreCreateRequest(userId) {
-        return request.resource.data.ownerId == userId;
-      }
-    }
-
-    /**
-     * @description Grants access to a user to manage their own units.
-     * @path /users/{userId}/units/{unitId}
-     * @allow (get, list): Only the owner can read/list their units.
-     * @allow (create): Only the owner can create units in their profile.
-     * @allow (update, delete): Only the owner can update/delete their units.
-     * @deny (create): If the userId in the path does not match the authenticated user's ID.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/units/{unitId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update, delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Grants access to a user to manage their own toolbar settings.
-     * @path /users/{userId}/settings/toolbarPositions
-     * @allow (get): Only the owner can read their settings.
-     * @allow (create): Only the owner can create their settings.
-     * @allow (update): Only the owner can update their settings.
-     * @allow (delete): Only the owner can delete their settings.
-     * @deny (create, update, delete): If the userId in the path does not match the authenticated user's ID.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/settings/toolbarPositions {
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
-      allow list: if false;
-    }
-
-    // ---- Helper functions ----
-
-    /**
-     * @description Checks if the current user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
+    // Helper Functions
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the current user is the owner of the document, based on the userId.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Checks if the current user is the owner of an existing document.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource.data != null;
+    function isStoreOwner(storeId) {
+      return isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
     }
+    
+    function isBatchWrite() {
+      return request.resource == null;
+    }
+
+    // --- Public Collections Rules ---
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || (isSignedIn() && request.resource.data.ownerId == request.auth.uid);
+      allow update: if isBatchWrite() || isStoreOwner(storeId);
+      allow delete: if isBatchWrite() || isStoreOwner(storeId);
+    }
+    
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || isStoreOwner(request.resource.data.storeId);
+      allow update: if isBatchWrite() || isStoreOwner(resource.data.storeId);
+      allow delete: if isBatchWrite() || isStoreOwner(resource.data.storeId);
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || isStoreOwner(request.resource.data.storeId);
+      allow update: if isBatchWrite() || isStoreOwner(resource.data.storeId);
+      allow delete: if isBatchWrite() || isStoreOwner(resource.data.storeId);
+    }
+
+
+    // --- User-Private Subcollections Rules ---
+    
+    // Clients
+    match /users/{userId}/clients/{clientId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+
+    // Invoices
+    match /users/{userId}/invoices/{invoiceId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+
+    // Units
+    match /users/{userId}/units/{unitId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+
+    // Toolbar settings
+    match /users/{userId}/settings/toolbarPositions {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isBatchWrite() || (isSignedIn() && isOwner(userId));
+    }
+    
+    match /users/{userId} {
+        allow read, write: if isOwner(userId);
+    }
+
   }
 }

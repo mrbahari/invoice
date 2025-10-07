@@ -86,8 +86,8 @@ const CategoryTree = ({
   onCancelEdit: () => void;
   setEditingCategoryName: (name: string) => void;
   aiLoading: string | null;
-  openItems: string[];
-  onToggle: (itemId: string) => void;
+  openItems: string | undefined;
+  onToggle: (itemId: string | undefined) => void;
 }) => {
   const [addingToParentId, setAddingToParentId] = useState<string | null>(null);
   const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
@@ -111,13 +111,12 @@ const CategoryTree = ({
 
 
   return (
-    <Accordion type="single" collapsible className="w-full" value={openItems.find(item => categories.some(c => c.id === item))} onValueChange={onToggle}>
+    <Accordion type="single" collapsible className="w-full" value={openItems} onValueChange={onToggle}>
       {categories.map((cat, index) => {
         const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
         const hasSubCategories = subCategories.length > 0;
         const isAiLoading = aiLoading === cat.id;
         const isAdding = addingToParentId === cat.id;
-        const isOpen = openItems.includes(cat.id);
 
         return (
           <Draggable draggableId={cat.id} index={index} key={cat.id}>
@@ -132,18 +131,16 @@ const CategoryTree = ({
               >
                 <AccordionItem value={cat.id} className="border-b-0">
                   <div className="p-2 rounded-md hover:bg-muted/50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div {...dragProvided.dragHandleProps} className="p-2 cursor-grab">
+                     <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2" {...dragProvided.dragHandleProps}>
                             <GripVertical className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <AccordionTrigger disabled={!hasSubCategories} className="p-0 hover:no-underline flex-grow justify-start">
-                          <div className="flex items-center gap-2">
-                            {hasSubCategories && <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />}
-                            <h4 className="font-semibold">{cat.name}</h4>
-                          </div>
-                        </AccordionTrigger>
-                      </div>
+                            <AccordionTrigger className="p-0 hover:no-underline flex-grow justify-start">
+                                <div className="flex items-center gap-2">
+                                  {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />}
+                                  <h4 className="font-semibold">{cat.name}</h4>
+                                </div>
+                            </AccordionTrigger>
+                         </div>
                       <div className="flex items-center gap-1">
                           <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
                           <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
@@ -207,7 +204,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
-  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string | undefined>();
 
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -448,11 +445,11 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
-            const finalCatData: Partial<Omit<Category, 'id'>> = {
+            const finalCatData = {
                 name: cat.name,
                 storeId: finalStoreId,
+                ...(parentId && { parentId }),
                 ...(cat.description && { description: cat.description }),
-                ...(parentId && { parentId: parentId }),
             };
             
             if (isNew) {
@@ -581,17 +578,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   };
   
   const handleAccordionToggle = (itemId: string | undefined) => {
-    if (!itemId) {
-      setOpenAccordionItems([]);
-      return;
-    }
-    setOpenAccordionItems(prev => {
-        if (prev.includes(itemId)) {
-            return prev.filter(id => id !== itemId);
-        } else {
-            return [itemId];
-        }
-    });
+    setOpenAccordionItems(itemId);
   };
 
   const handleSaveAsCopy = useCallback(async () => {
@@ -659,7 +646,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     const newParentId = destination.droppableId === 'root' ? undefined : destination.droppableId;
     
     // Prevent dropping a category into itself or one of its children
-    let currentId = newParentId;
+    let currentId: string | undefined = newParentId;
     while(currentId) {
         if (currentId === draggableId) {
             toast({ variant: "destructive", title: "جابجایی نامعتبر", description: "نمی‌توانید یک دسته را به زیردسته خودش منتقل کنید." });
@@ -684,7 +671,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     if (destination) {
         const overId = destination.droppableId;
         hoverTimeoutRef.current = setTimeout(() => {
-            if (overId !== 'root' && !openAccordionItems.includes(overId)) {
+            if (overId !== 'root') {
                 handleAccordionToggle(overId);
             }
         }, 500); // 500ms delay

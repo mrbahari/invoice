@@ -2,10 +2,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // =============================================================
-    // Helper Functions
-    // =============================================================
+
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -17,51 +15,44 @@ service cloud.firestore {
     function isStoreOwner(storeId) {
         return isSignedIn() && get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid;
     }
-    
-    // =============================================================
-    // Public Collections
-    // Everyone can read, but only specific users can write.
-    // =============================================================
-    
+
+    // Public collections (read-only for all, write restricted to owner)
     match /stores/{storeId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if isStoreOwner(storeId);
     }
+    
+    match /categories/{categoryId} {
+        allow read: if true;
+        allow create: if isStoreOwner(request.resource.data.storeId);
+        allow update, delete: if isStoreOwner(resource.data.storeId);
+    }
 
     match /products/{productId} {
-      allow read: if true;
-      allow create: if isStoreOwner(request.resource.data.storeId);
-      allow update, delete: if isStoreOwner(resource.data.storeId);
+        allow read: if true;
+        allow create: if isStoreOwner(request.resource.data.storeId);
+        allow update, delete: if isStoreOwner(resource.data.storeId);
     }
 
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow create: if isStoreOwner(request.resource.data.storeId);
-      allow update, delete: if isStoreOwner(resource.data.storeId);
-    }
-    
-    // =============================================================
-    // User-Specific Private Collections
-    // Only the owner can read or write their own data.
-    // =============================================================
-    
+    // User-specific collections (private to the owner)
     match /users/{userId} {
-      // User can only access their own user document.
+    
+      // All subcollections are private to the user by default
       allow read, write: if isOwner(userId);
-      
+
       match /clients/{clientId} {
-        allow read, write, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
       match /invoices/{invoiceId} {
-        allow read, write, delete: if isOwner(userId);
-      }
-      
-      match /units/{unitId} {
-         allow read, write, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
+      match /units/{unitId} {
+        allow read, write: if isOwner(userId);
+      }
+      
       match /settings/toolbarPositions {
         allow read, write: if isOwner(userId);
       }

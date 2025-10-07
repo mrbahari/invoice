@@ -132,8 +132,11 @@ const CategoryTree = ({
                         <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                           <Accordion type="single" collapsible className="w-full">
                             <AccordionItem value={cat.id} className="border-b-0" ref={el => itemRefs.current[cat.id] = el}>
-                              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50" {...provided.dragHandleProps}>
+                              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                                 <div className="flex items-center gap-1">
+                                  <div {...provided.dragHandleProps} className="cursor-grab p-2">
+                                      <GripVertical className="w-4 h-4 text-muted-foreground" />
+                                  </div>
                                   <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
                                   <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
                                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
@@ -409,37 +412,32 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         // 2. Handle Categories
         const existingCategories = data.categories.filter(c => c.storeId === store?.id);
         const currentCatIds = new Set(storeCategories.map(c => c.id));
-        const newCats = storeCategories.filter(c => c.id.startsWith('temp-'));
+        
         const idMap = new Map<string, string>();
 
-        // Create new categories and build idMap
+        // Process new categories first
+        const newCats = storeCategories.filter(c => c.id.startsWith('temp-'));
         for (const cat of newCats) {
             const newCatRef = doc(collection(firestore, 'users', user.uid, 'categories'));
             idMap.set(cat.id, newCatRef.id);
-            const { id, ...catData } = cat;
-            const dataToSave = { ...catData, storeId: finalStoreId, parentId: cat.parentId || null };
-            batch.set(newCatRef, dataToSave);
+        }
+        
+        // Save or Update all categories in the list
+        for (const cat of storeCategories) {
+            const isNew = cat.id.startsWith('temp-');
+            const realId = isNew ? idMap.get(cat.id)! : cat.id;
+            const parentId = cat.parentId ? (idMap.get(cat.parentId) || cat.parentId) : null;
+            
+            const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
+            
+            if (isNew) {
+                const { id, ...catData } = cat;
+                batch.set(catRef, { ...catData, storeId: finalStoreId, parentId });
+            } else {
+                 batch.update(catRef, { name: cat.name, parentId: parentId || null });
+            }
         }
 
-        // Update existing categories and remap parentIds
-        for (const cat of storeCategories) {
-            if (!cat.id.startsWith('temp-')) {
-                const catRef = doc(firestore, 'users', user.uid, 'categories', cat.id);
-                const parentId = cat.parentId ? (idMap.get(cat.parentId) || cat.parentId) : null;
-                batch.update(catRef, { name: cat.name, parentId });
-            }
-        }
-         // Correctly update parentId for newly created children
-        for (const cat of newCats) {
-            if (cat.parentId) {
-                const realParentId = idMap.get(cat.parentId) || cat.parentId;
-                const realCatId = idMap.get(cat.id);
-                if (realCatId && realParentId) {
-                    const catRef = doc(firestore, 'users', user.uid, 'categories', realCatId);
-                    batch.update(catRef, { parentId: realParentId });
-                }
-            }
-        }
 
         // Delete categories that are no longer in the list
         for (const cat of existingCategories) {
@@ -490,7 +488,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     if (!newCategoryName.trim()) return;
 
     const isDuplicate = storeCategories.some(c => 
-        c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && (!c.parentId && !parentId)
+        c.name.toLowerCase() === newCategoryName.trim().toLowerCase() && !c.parentId
     );
 
     if(isDuplicate) return;

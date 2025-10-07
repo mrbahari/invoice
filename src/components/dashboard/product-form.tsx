@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
+import React, { useState, useEffect, ChangeEvent, useRef, useMemo } from 'react';
 import {
   Card,
   CardContent,

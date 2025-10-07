@@ -376,8 +376,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             if (result && result.categories && result.categories.length > 0) {
                  const newCats: Category[] = [];
                 const processNode = (node: any, pId?: string) => {
+                    if(!node.name) return; // Skip nodes without a name
                     const newCat: Category = {
-                        id: `cat-${Math.random().toString(36).substr(2, 9)}`,
+                        id: `temp-${Math.random().toString(36).substr(2, 9)}`,
                         name: node.name,
                         storeId: store?.id || 'temp', // This will be updated on save
                         parentId: pId,
@@ -440,11 +441,11 @@ const updateCategoriesForStore = async (storeId: string) => {
                 storeId: storeId,
                 parentId: category.parentId,
             });
-        } else {
+        } else if (existingCategoryIds.has(category.id)) {
             // It's an existing category, check for updates
              const originalCat = existingCategories.find(c => c.id === category.id);
-             if (JSON.stringify(originalCat) !== JSON.stringify({ ...category, storeId })) {
-                await updateDocument('categories', category.id, { name: category.name, parentId: category.parentId });
+             if (originalCat && originalCat.name !== category.name) {
+                await updateDocument('categories', category.id, { name: category.name });
              }
         }
     }

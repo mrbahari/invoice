@@ -2,17 +2,21 @@
  * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Each user has a dedicated data tree
- * under `/users/{userId}` where they can store their own data. Access to these data trees
- * is restricted to the owning user.
+ * This ruleset enforces a strict user-ownership model.  Each user has their own
+ * data tree under `/users/{userId}`. Only the authenticated user can read
+ * and write their own data.
  *
  * Data Structure:
- * All data is nested under `/users/{userId}`.  Each user owns a set of documents.
+ * All data is nested under `/users/{userId}`.  This includes stores, products,
+ * categories, clients, invoices, and units. User settings are stored under
+ * `/users/{userId}/settings`.
  *
  * Key Security Decisions:
- * - Users can only access data under their own user ID.
- * - Listing of user documents is allowed only for the owner.
- *
+ * - User listing is explicitly disallowed.
+ * - Data validation is relaxed to allow for rapid prototyping, but authorization
+ *   is strictly enforced based on user ID.
+ * - The `ToolbarSettings` document is treated as user-owned and only accessible
+ *   by the authenticated user.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -20,22 +24,26 @@ service cloud.firestore {
 
     /**
      * @description Checks if the request is authenticated.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user is signed in.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the request is made by the owner of the document.
-     * @param {string} userId - The user ID to compare against the request's auth UID.
+     * @description Checks if the authenticated user is the owner of the resource.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user ID matches the authenticated user's UID.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the request is made by the owner of the existing document.
-     * @param {string} userId - The user ID to compare against the resource data's userId.
+     * @description Checks if the authenticated user is the owner of the resource and the resource exists.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user ID matches the authenticated user's UID and the resource exists.
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
@@ -44,10 +52,8 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific stores.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create) User 'user123' can create a store under their own user ID.
-     * @deny (create) User 'user456' cannot create a store under 'user123' ID.
-     * @allow (get) User 'user123' can get a store under their own user ID.
-     * @deny (get) User 'user456' cannot get a store under 'user123' ID.
+     * @allow (create) User 'user123' can create a store with storeId 'store456' under their user ID.
+     * @deny (create) User 'user456' cannot create a store under user ID 'user123'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/stores/{storeId} {
@@ -61,10 +67,8 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific products.
      * @path /users/{userId}/products/{productId}
-     * @allow (create) User 'user123' can create a product under their own user ID.
-     * @deny (create) User 'user456' cannot create a product under 'user123' ID.
-     * @allow (get) User 'user123' can get a product under their own user ID.
-     * @deny (get) User 'user456' cannot get a product under 'user123' ID.
+     * @allow (create) User 'user123' can create a product with productId 'product456' under their user ID.
+     * @deny (create) User 'user456' cannot create a product under user ID 'user123'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/products/{productId} {
@@ -78,10 +82,8 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User 'user123' can create a category under their own user ID.
-     * @deny (create) User 'user456' cannot create a category under 'user123' ID.
-     * @allow (get) User 'user123' can get a category under their own user ID.
-     * @deny (get) User 'user456' cannot get a category under 'user123' ID.
+     * @allow (create) User 'user123' can create a category with categoryId 'category456' under their user ID.
+     * @deny (create) User 'user456' cannot create a category under user ID 'user123'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/categories/{categoryId} {
@@ -95,10 +97,8 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific clients.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (create) User 'user123' can create a client under their own user ID.
-     * @deny (create) User 'user456' cannot create a client under 'user123' ID.
-     * @allow (get) User 'user123' can get a client under their own user ID.
-     * @deny (get) User 'user456' cannot get a client under 'user123' ID.
+     * @allow (create) User 'user123' can create a client with clientId 'client456' under their user ID.
+     * @deny (create) User 'user456' cannot create a client under user ID 'user123'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/clients/{clientId} {
@@ -112,10 +112,8 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific invoices.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create) User 'user123' can create a invoice under their own user ID.
-     * @deny (create) User 'user456' cannot create a invoice under 'user123' ID.
-     * @allow (get) User 'user123' can get a invoice under their own user ID.
-     * @deny (get) User 'user456' cannot get a invoice under 'user123' ID.
+     * @allow (create) User 'user123' can create a invoice with invoiceId 'invoice456' under their user ID.
+     * @deny (create) User 'user456' cannot create a invoice under user ID 'user123'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/invoices/{invoiceId} {
@@ -129,10 +127,8 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific units.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create) User 'user123' can create a unit under their own user ID.
-     * @deny (create) User 'user456' cannot create a unit under 'user123' ID.
-     * @allow (get) User 'user123' can get a unit under their own user ID.
-     * @deny (get) User 'user456' cannot get a unit under 'user123' ID.
+     * @allow (create) User 'user123' can create a unit with unitId 'unit456' under their user ID.
+     * @deny (create) User 'user456' cannot create a unit under user ID 'user123'.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/units/{unitId} {
@@ -146,15 +142,14 @@ service cloud.firestore {
     /**
      * @description Rules for user-specific toolbar settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (create) User 'user123' can create toolbar settings under their own user ID.
-     * @deny (create) User 'user456' cannot create toolbar settings under 'user123' ID.
-     * @allow (get) User 'user123' can get toolbar settings under their own user ID.
-     * @deny (get) User 'user456' cannot get toolbar settings under 'user123' ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (get) User 'user123' can get their own toolbar settings.
+     * @allow (create) User 'user123' can create their own toolbar settings.
+     * @deny (update) User 'user456' cannot update user 'user123's toolbar settings.
+     * @principle Restricts access to a user's own settings.
      */
     match /users/{userId}/settings/toolbarPositions {
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow list: if false;
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);

@@ -213,6 +213,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoadingCategory, setAiLoadingCategory] = useState<string | null>(null);
+  const [isAiLogoLoading, setIsAiLogoLoading] = useState(false);
   
   const { uploadFile, isUploading, progress } = useUpload();
 
@@ -266,34 +267,37 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         });
         return;
       }
-
-       try {
-            let promptToUse;
-            if (logoPrompts.length === 0) {
-                const { prompts } = await generateLogoPrompts({ storeName: name, description });
-                if (!prompts || prompts.length === 0) throw new Error("Failed to generate prompts.");
-                setLogoPrompts(prompts);
-                promptToUse = prompts[0];
-                setCurrentPromptIndex(1);
-            } else {
-                 promptToUse = logoPrompts[currentPromptIndex];
-                 setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % logoPrompts.length);
-            }
-            
-            const result = await generateLogo({ prompt: promptToUse, storeName: name });
-            if (result.imageUrl) {
-                const response = await fetch(result.imageUrl);
-                const blob = await response.blob();
-                const file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
-                const path = `images/shop/logo/${file.name}`;
-                const downloadedUrl = await uploadFile(file, path);
-                if (downloadedUrl) {
-                    setLogoUrl(downloadedUrl);
-                }
-            }
-        } catch (error) {
-            console.error("Error during logo generation process:", error);
-        }
+      
+      setIsAiLogoLoading(true);
+      try {
+          let promptToUse;
+          if (logoPrompts.length === 0) {
+              const { prompts } = await generateLogoPrompts({ storeName: name, description });
+              if (!prompts || prompts.length === 0) throw new Error("Failed to generate prompts.");
+              setLogoPrompts(prompts);
+              promptToUse = prompts[0];
+              setCurrentPromptIndex(1);
+          } else {
+                promptToUse = logoPrompts[currentPromptIndex];
+                setCurrentPromptIndex((prevIndex) => (prevIndex + 1) % logoPrompts.length);
+          }
+          
+          const result = await generateLogo({ prompt: promptToUse, storeName: name });
+          if (result.imageUrl) {
+              const response = await fetch(result.imageUrl);
+              const blob = await response.blob();
+              const file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
+              const path = `images/shop/logo/${file.name}`;
+              const downloadedUrl = await uploadFile(file, path);
+              if (downloadedUrl) {
+                  setLogoUrl(downloadedUrl);
+              }
+          }
+      } catch (error) {
+          console.error("Error during logo generation process:", error);
+      } finally {
+          setIsAiLogoLoading(false);
+      }
   };
   
     const getCategoryPath = useCallback((categoryId: string, allCats: Category[]): string => {
@@ -440,12 +444,11 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
-            const { id, ...catData } = cat;
-
-            const finalCatData: Omit<Category, 'id'> = {
-                ...catData,
-                storeId: finalStoreId,
+            // Build the data object carefully to avoid 'undefined'
+            const finalCatData: Omit<Category, 'id' | 'parentId'> & { parentId?: string } = {
                 name: cat.name,
+                storeId: finalStoreId,
+                description: cat.description,
             };
 
             if (parentId) {
@@ -767,9 +770,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                                         variant="outline"
                                         className="absolute -bottom-2 -left-2 h-8 w-8 rounded-full bg-background"
                                         onClick={handleGenerateLogo}
-                                        disabled={isUploading}
+                                        disabled={isAiLogoLoading || isUploading}
                                     >
-                                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                                        {isAiLogoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>تولید لوگو با هوش مصنوعی</p></TooltipContent>
@@ -905,3 +908,5 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     </TooltipProvider>
   );
 }
+
+    

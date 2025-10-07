@@ -89,7 +89,7 @@ const CategoryTree = ({
   setEditingCategoryName: (name: string) => void;
   aiLoading: string | null;
   openItems: string[];
-  onToggle: (itemId: string | undefined, level: number) => void;
+  onToggle: (itemId: string, level: number) => void;
 }) => {
   const [addingToParentId, setAddingToParentId] = useState<string | null>(null);
   const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
@@ -113,7 +113,7 @@ const CategoryTree = ({
 
 
   return (
-    <Accordion type="single" collapsible className="w-full" value={openItems[level]} onValueChange={(value) => onToggle(value, level)}>
+    <Accordion type="single" collapsible className="w-full" value={openItems[level]} onValueChange={(value) => onToggle(value || '', level)}>
         <Droppable droppableId={parentId} type="CATEGORY">
             {(dropProvided) => (
             <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="space-y-1">
@@ -132,16 +132,18 @@ const CategoryTree = ({
                             className={cn('relative', dragSnapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg')}
                         >
                             <AccordionItem value={cat.id} className="border-b-0">
-                                <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 w-full" {...dragProvided.dragHandleProps}>
+                                <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 w-full" >
+                                    <div {...dragProvided.dragHandleProps} className="flex-shrink-0">
+                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                    </div>
                                     <AccordionTrigger
                                         className="p-0 hover:no-underline flex-1"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                            <h4 className="font-semibold">{cat.name}</h4>
                                             {hasSubCategories && (
                                                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                                             )}
+                                            <h4 className="font-semibold">{cat.name}</h4>
                                         </div>
                                     </AccordionTrigger>
 
@@ -177,6 +179,7 @@ const CategoryTree = ({
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
+                            
                         </div>
                         )}
                     </Draggable>
@@ -596,14 +599,14 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     handleCancelEditCategory();
   };
   
-  const handleAccordionToggle = useCallback((itemId: string | undefined, level: number) => {
-      setOpenAccordionItems(prev => {
-          const newOpenItems = prev.slice(0, level);
-          if (itemId && prev[level] !== itemId) {
-              newOpenItems.push(itemId);
-          }
-          return newOpenItems;
-      });
+  const handleAccordionToggle = useCallback((itemId: string, level: number) => {
+    setOpenAccordionItems(prev => {
+        const newOpenItems = prev.slice(0, level);
+        if (itemId && prev[level] !== itemId) {
+            newOpenItems.push(itemId);
+        }
+        return newOpenItems;
+    });
   }, []);
 
   const handleSaveAsCopy = useCallback(async () => {

@@ -6,7 +6,7 @@ import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, To
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/firebase'; // Changed from user-context
 import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc, where } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -399,5 +399,3 @@ export function useData() {
   }
   return context;
 }
-
-    

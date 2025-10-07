@@ -144,6 +144,11 @@
         "schema": { "$ref": "#/entities/Category" },
         "description": "Public collection of all categories."
       },
+       {
+        "path": "/stores/{storeId}",
+        "schema": { "$ref": "#/entities/Store" },
+        "description": "Public collection of stores."
+      },
       {
         "path": "/users/{userId}/clients/{clientId}",
         "schema": { "$ref": "#/entities/Client" },
@@ -153,11 +158,6 @@
         "path": "/users/{userId}/invoices/{invoiceId}",
         "schema": { "$ref": "#/entities/Invoice" },
         "description": "User-specific collection of invoices."
-      },
-      {
-        "path": "/users/{userId}/stores/{storeId}",
-        "schema": { "$ref": "#/entities/Store" },
-        "description": "User-specific collection of stores."
       },
       {
         "path": "/users/{userId}/units/{unitId}",
@@ -175,3 +175,5 @@
     "providers": ["password", "google.com"]
   }
 }
+
+    

@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { useSearch } from './search-provider';
 import { useToast } from '@/hooks/use-toast';
 import defaultDb from '@/database/defaultdb.json';
+import { useUser } from '@/firebase';
 
 
 const colorThemes = [
@@ -48,6 +49,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
   const { data, setData, addDocument, deleteDocument, clearAllData, loadDataBatch } = useData();
+  const { user } = useUser();
   const { setSearchVisible } = useSearch();
   const { units = [] } = data; // Use default empty array to prevent error
   const { toast } = useToast();
@@ -120,6 +122,10 @@ export default function SettingsPage() {
   };
 
   const handleClearData = async () => {
+    if(!user) {
+        toast({ variant: 'destructive', title: 'خطا', description: 'برای پاک کردن اطلاعات باید وارد شوید.' });
+        return;
+    }
     setIsProcessing(true);
     try {
       await clearAllData();
@@ -132,12 +138,22 @@ export default function SettingsPage() {
   };
   
   const handleLoadDefaults = async () => {
+    if(!user) {
+        toast({ variant: 'destructive', title: 'خطا', description: 'برای بارگذاری اطلاعات باید وارد شوید.' });
+        return;
+    }
     setIsProcessing(true);
     try {
       // First clear existing user-specific data
       await clearAllData();
-      // Then load the default data
-      await loadDataBatch(defaultDb);
+      // Then load the default data, making sure to add the current user's ID as owner
+      const ownedData = {
+          ...defaultDb,
+          stores: defaultDb.stores.map(store => ({...store, ownerId: user.uid})),
+          products: defaultDb.products.map(product => ({...product, ownerId: user.uid})),
+          categories: defaultDb.categories.map(category => ({...category, ownerId: user.uid})),
+      }
+      await loadDataBatch(ownedData);
       toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
     } catch (error) {
        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در بارگذاری داده‌های پیش‌فرض رخ داد.' });
@@ -170,6 +186,10 @@ export default function SettingsPage() {
     if (!file) {
       return;
     }
+    if(!user) {
+        toast({ variant: 'destructive', title: 'خطا', description: 'برای بازیابی اطلاعات باید وارد شوید.' });
+        return;
+    }
     
     setIsProcessing(true);
     const reader = new FileReader();
@@ -181,13 +201,22 @@ export default function SettingsPage() {
         }
         const restoredData = JSON.parse(text);
         
-        // This is the CRITICAL part. The restore process should ONLY handle user-specific data.
-        // Global data (products, categories) is managed separately and should not be overwritten by a user's backup.
+        // Ensure the restored data has the current user's ID as owner
+        const ownedData = {
+            ...restoredData,
+            stores: restoredData.stores?.map((store: any) => ({...store, ownerId: user.uid})) || [],
+            products: restoredData.products?.map((product: any) => ({...product, ownerId: user.uid})) || [],
+            categories: restoredData.categories?.map((category: any) => ({...category, ownerId: user.uid})) || [],
+            customers: restoredData.customers || [],
+            invoices: restoredData.invoices || [],
+            units: restoredData.units || [],
+            toolbarPositions: restoredData.toolbarPositions || {},
+        }
         
         // First, clear the user's current data from Firestore.
         await clearAllData();
         // Then, load the user-specific data from the backup into Firestore.
-        await loadDataBatch(restoredData);
+        await loadDataBatch(ownedData);
 
         toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات با موفقیت بازیابی شد.' });
           
@@ -360,3 +389,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

@@ -61,7 +61,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Define collection references, memoized to prevent re-renders
   const productsRef = useMemoFirebase(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const categoriesRef = useMemoFirebase(() => firestore ? collection(firestore, 'categories') : null, [firestore]);
-  const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'stores') : null, [firestore, user]);
+  const storesRef = useMemoFirebase(() => firestore ? collection(firestore, 'stores') : null, [firestore]);
   const unitsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
   const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
@@ -271,20 +271,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [toolbarPosRef]);
 
   const clearAllData = useCallback(async () => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const batch = writeBatch(firestore);
 
-    // This function clears ALL data, both user-specific and public collections
-    const collectionsToClear: (CollectionReference | null)[] = [
-      productsRef,
-      categoriesRef,
-      storesRef,
-      unitsRef, 
-      customersRef, 
-      invoicesRef,
+    // Define user-specific collections under the current user's UID
+    const userCollections: CollectionReference[] = [
+        collection(firestore, 'users', user.uid, 'units'),
+        collection(firestore, 'users', user.uid, 'clients'),
+        collection(firestore, 'users', user.uid, 'invoices'),
+    ];
+
+    // Define public collections that are filtered by ownerId
+    const publicOwnedCollections: { ref: CollectionReference, ownerId: string }[] = [
+        { ref: collection(firestore, 'stores'), ownerId: user.uid },
+        { ref: collection(firestore, 'products'), ownerId: user.uid },
+        { ref: collection(firestore, 'categories'), ownerId: user.uid },
     ];
     
-    for (const ref of collectionsToClear) {
+    // Batch delete documents from user-specific collections
+    for (const ref of userCollections) {
       if (ref) {
         const snapshot = await getDocs(query(ref));
         snapshot.docs.forEach(doc => {
@@ -292,9 +297,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
       }
     }
+    
+    // Batch delete documents from public collections owned by the user
+    for (const { ref, ownerId } of publicOwnedCollections) {
+      const q = query(ref, where("ownerId", "==", ownerId));
+      const snapshot = await getDocs(q);
+      snapshot.docs.forEach(doc => {
+          if(doc.id) batch.delete(doc.ref);
+      });
+    }
 
     // Safely reset the toolbar positions by setting it to an empty object
-    if (user && toolbarPosRef) {
+    if (toolbarPosRef) {
       batch.set(toolbarPosRef, {});
     }
 
@@ -311,7 +325,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // Do not clear local state on error
       throw error; // Re-throw so caller knows it failed
     }
-  }, [user, firestore, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }, [user, firestore, toolbarPosRef]);
 
 
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
@@ -330,14 +344,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     for (const { ref, data } of collectionsToLoad) {
         if (ref && data) {
             data.forEach((item: Document) => {
-                if (item.id && typeof item.id === 'string') {
-                    const docRef = doc(ref, item.id);
-                    batch.set(docRef, item);
-                } else {
-                    // If item has no ID, create a new doc in the collection
-                    const newDocRef = doc(ref);
-                    batch.set(newDocRef, item);
-                }
+                const docRef = item.id ? doc(ref, item.id) : doc(ref);
+                batch.set(docRef, item);
             });
         }
     }
@@ -391,3 +399,5 @@ export function useData() {
   }
   return context;
 }
+
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -49,6 +50,8 @@ import { Label } from '../ui/label';
 import { generateProductFromIdea, type GenerateProductFromIdeaOutput } from '@/ai/flows/generate-product-from-idea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 
 type SortOption = 'newest' | 'name' | 'price';
@@ -153,6 +156,9 @@ function AiProductDialog({ onProductGenerated }: { onProductGenerated: (product:
 export default function ProductsPage() {
   const { data, setData } = useData();
   const { products, stores, categories } = data;
+  const { user } = useUser();
+  const { toast } = useToast();
+
   const [activeTab, setActiveTab] = useState('all');
   const { searchTerm, setSearchVisible } = useSearch();
 
@@ -185,6 +191,14 @@ export default function ProductsPage() {
   }, [view]);
 
   const handleAddClick = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای افزودن محصول، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
     setEditingProduct(undefined);
     setSelectedProductId(null);
     setView('form');
@@ -421,3 +435,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+    

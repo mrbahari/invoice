@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
@@ -21,6 +22,8 @@ import { formatCurrency, cn, getStorePrefix } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { FloatingToolbar } from './floating-toolbar';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 
 type View =
@@ -55,6 +58,8 @@ export default function InvoicesPage({
 }: InvoicesPageProps) {
   const { data, updateDocument, deleteDocument } = useData();
   const { customers, invoices: allInvoices } = data;
+  const { user } = useUser();
+  const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
 
   
@@ -76,6 +81,14 @@ export default function InvoicesPage({
   }, [draftInvoice, view.type]);
 
   const handleCreate = useCallback(() => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای افزودن فاکتور، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
     setDraftInvoice({
         date: new Date().toISOString(),
         status: 'Pending',
@@ -89,7 +102,7 @@ export default function InvoicesPage({
         invoiceNumber: `${getStorePrefix('INV')}-${(allInvoices.length + 1).toString().padStart(4, '0')}`,
     }); // Clear any previous draft
     setView({ type: 'editor' });
-  }, [setDraftInvoice, allInvoices.length]);
+  }, [setDraftInvoice, allInvoices.length, user, toast]);
   
   const handleEdit = useCallback(
     (invoice: Invoice) => {
@@ -338,3 +351,5 @@ export default function InvoicesPage({
 
   return renderContent();
 }
+
+    

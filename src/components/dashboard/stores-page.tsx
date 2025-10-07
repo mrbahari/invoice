@@ -16,11 +16,15 @@ import type { Store } from '@/lib/definitions';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { StoreForm } from './store-form';
-import { useData } from '@/context/data-context'; // Import useData
+import { useData } from '@/context/data-context';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StoresPage() {
-  const { data, setData } = useData(); // Use the central data context
+  const { data, setData } = useData();
   const { stores, categories, products } = data;
+  const { user } = useUser();
+  const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
 
   const [view, setView] = useState<'list' | 'form'>('list');
@@ -36,6 +40,14 @@ export default function StoresPage() {
   }, [view, setSearchVisible]);
 
   const handleAddClick = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای افزودن فروشگاه، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
     setEditingStore(undefined);
     setView('form');
   };
@@ -173,3 +185,5 @@ export default function StoresPage() {
     </div>
   );
 }
+
+    

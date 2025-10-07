@@ -26,7 +26,9 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from './customer-form';
 import CustomerDetailPage from './customer-detail-page';
-import { useData } from '@/context/data-context'; // Import useData
+import { useData } from '@/context/data-context';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 type View =
   | { type: 'list' }
@@ -34,8 +36,10 @@ type View =
   | { type: 'detail'; customerId: string };
 
 export default function CustomersPage() {
-  const { data } = useData(); // Use the central data context
+  const { data } = useData();
   const { customers: customerList, invoices } = data;
+  const { user } = useUser();
+  const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
   const scrollPositionRef = useRef(0);
@@ -59,6 +63,14 @@ export default function CustomersPage() {
   }, [view]);
 
   const handleAddClick = () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'ورود لازم است',
+        description: 'برای افزودن مشتری، لطفاً ابتدا وارد حساب خود شوید.',
+      });
+      return;
+    }
     setEditingCustomer(undefined);
     setView({ type: 'form' });
   };
@@ -267,3 +279,5 @@ export default function CustomersPage() {
     </div>
   );
 }
+
+    

@@ -308,25 +308,17 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
   
-  const renderCategoryOptions = (nodes: (Category & { children: Category[] })[], level = 0) => {
-    let items: React.ReactNode[] = [];
-    nodes.forEach(node => {
-      // Main categories are labels
-      items.push(
-        <SelectLabel key={`${node.id}-label`} className="font-bold text-foreground">
-          {node.name}
-        </SelectLabel>
-      );
-      // Children are selectable items
-      node.children.forEach(child => {
-        items.push(
+  const renderCategoryOptions = (nodes: (Category & { children: Category[] })[]) => {
+    return nodes.map(node => (
+      <SelectGroup key={node.id}>
+        <SelectLabel className="font-bold text-foreground">{node.name}</SelectLabel>
+        {node.children.map(child => (
           <SelectItem key={child.id} value={child.id} className="pr-6">
             {child.name}
           </SelectItem>
-        );
-      });
-    });
-    return items;
+        ))}
+      </SelectGroup>
+    ));
   };
 
   return (
@@ -572,3 +564,5 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
+
+    

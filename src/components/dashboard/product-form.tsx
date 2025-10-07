@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search, WandSparkles, LoaderCircle, Copy } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search, WandSparkles, LoaderCircle, Copy, ChevronsUpDown, Package, Check } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -42,7 +42,7 @@ import { Badge } from '../ui/badge';
 import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 
 type ProductFormProps = {
   product?: Product;
@@ -88,10 +88,25 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const { uploadFile, progress, isUploading, error: uploadError } = useUpload();
   
-  const availableSubCategories = categories ? categories.filter(c => c.storeId === storeId && c.parentId) : [];
-  
-  const [newUnitName, setNewUnitName] = useState('');
-  const isDuplicate = newUnitName.trim() !== '' && unitsOfMeasurement.some(u => u.name === newUnitName.trim());
+  // Create a memoized category tree
+  const categoryTree = useMemo(() => {
+    if (!storeId || !categories) return [];
+    
+    const storeCategories = categories.filter(c => c.storeId === storeId);
+    const categoryMap = new Map(storeCategories.map(c => [c.id, { ...c, children: [] as Category[] }]));
+    const tree: (Category & { children: Category[] })[] = [];
+
+    storeCategories.forEach(cat => {
+      if (cat.parentId && categoryMap.has(cat.parentId)) {
+        categoryMap.get(cat.parentId)?.children.push(categoryMap.get(cat.id)!);
+      } else if (!cat.parentId) {
+        tree.push(categoryMap.get(cat.id)!);
+      }
+    });
+
+    return tree;
+  }, [categories, storeId]);
+
   
   // Calculate sub-unit price from main price
   useEffect(() => {
@@ -290,27 +305,29 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     onSave();
   };
 
-  const handleAddUnit = async () => {
-    const name = newUnitName.trim();
-    if (name === '' || isDuplicate) {
-        return;
-    }
-    await addDocument('units', { name, defaultQuantity: 1 });
-    setNewUnitName('');
-  };
-
-  const handleUnitKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      handleAddUnit();
-    }
-  };
-
-  const handleDeleteUnit = async (unitId: string) => {
-    await deleteDocument('units', unitId);
-  };
 
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
+  
+  const renderCategoryOptions = (nodes: (Category & { children: Category[] })[], level = 0) => {
+    let items: React.ReactNode[] = [];
+    nodes.forEach(node => {
+      // Main categories are labels
+      items.push(
+        <SelectLabel key={`${node.id}-label`} className="font-bold text-foreground">
+          {node.name}
+        </SelectLabel>
+      );
+      // Children are selectable items
+      node.children.forEach(child => {
+        items.push(
+          <SelectItem key={child.id} value={child.id} className="pr-6">
+            {child.name}
+          </SelectItem>
+        );
+      });
+    });
+    return items;
+  };
 
   return (
     <TooltipProvider>
@@ -426,7 +443,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         <Select value={subCategoryId} onValueChange={setSubCategoryId} required disabled={!storeId}>
                                             <SelectTrigger id="sub-category"><SelectValue placeholder={storeId ? "انتخاب زیردسته" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
                                             <SelectContent>
-                                                {availableSubCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                                                {categoryTree.length > 0 ? (
+                                                renderCategoryOptions(categoryTree)
+                                                ) : (
+                                                <div className="p-4 text-center text-sm text-muted-foreground">هیچ دسته‌بندی برای این فروشگاه یافت نشد.</div>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -544,50 +565,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                             </div>
                         </CardContent>
                     </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>مدیریت واحدها</CardTitle>
-                            <CardDescription>
-                                واحدهای اندازه‌گیری جدید اضافه کنید.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid gap-1.5 mb-4">
-                              <Label htmlFor="new-unit-name">نام واحد جدید</Label>
-                              <div className="flex items-center gap-2">
-                                   <Input
-                                      id="new-unit-name"
-                                      placeholder="مثال: کارتن"
-                                      value={newUnitName}
-                                      onChange={(e) => setNewUnitName(e.target.value)}
-                                      onKeyDown={handleUnitKeyDown}
-                                  />
-                                  <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={handleAddUnit}
-                                      disabled={newUnitName.trim() === '' || isDuplicate}
-                                  >
-                                      <PlusCircle className="h-4 w-4" />
-                                  </Button>
-                              </div>
-                               {isDuplicate && <p className="text-xs text-destructive">این واحد قبلاً اضافه شده است.</p>}
-                          </div>
-                        <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
-                            {unitsOfMeasurement.length > 0 ? unitsOfMeasurement.map(unit => (
-                                <Badge key={unit.id} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
-                                    <span>{unit.name}</span>
-                                    <button onClick={() => handleDeleteUnit(unit.id)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
-                        </div>
-                        </CardContent>
-                    </Card>
-
                 </div>
             </div>
         </div>

@@ -48,18 +48,13 @@ const colorThemes = [
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, addDocument, deleteDocument, clearAllData, loadDataBatch } = useData();
+  const { data, setData, clearAllData, loadDataBatch } = useData();
   const { user } = useUser();
   const { setSearchVisible } = useSearch();
-  const { units = [] } = data; // Use default empty array to prevent error
   const { toast } = useToast();
 
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
-  const [newUnitName, setNewUnitName] = useState('');
-  
-  const isDuplicate = newUnitName.trim() !== '' && units.some(u => u.name === newUnitName.trim());
-  const isInputEmpty = newUnitName.trim() === '';
   const [isProcessing, setIsProcessing] = useState(false);
 
 
@@ -98,28 +93,6 @@ export default function SettingsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, activeColor]);
 
-
-  const handleAddUnit = async () => {
-    const name = newUnitName.trim();
-
-    if (name === '' || isDuplicate) {
-        return;
-    }
-    
-    await addDocument('units', { name, defaultQuantity: 1 });
-    setNewUnitName('');
-  };
-
-  const handleUnitKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault(); // Prevent form submission if it's inside a form
-      handleAddUnit();
-    }
-  };
-
-  const handleDeleteUnit = async (unitId: string) => {
-    await deleteDocument('units', unitId);
-  };
 
   const handleClearData = async () => {
     if(!user) {

@@ -517,7 +517,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCustomer, setInvoice]);
+  }, [selectedCustomer]);
 
   // Recalculate totals whenever items or financial fields change
   useEffect(() => {
@@ -531,7 +531,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
         setInvoice({ ...invoice, subtotal, total });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax, setInvoice]);
+  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax]);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -771,9 +771,9 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     return processedInvoiceId || null;
   };
   
-  const handleDeleteInvoice = () => {
+  const handleDeleteInvoice = async () => {
     if (!isEditMode || !invoice.id) return;
-    deleteDocument('invoices', invoice.id);
+    await deleteDocument('invoices', invoice.id);
     onCancel();
   };
 

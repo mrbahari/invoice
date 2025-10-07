@@ -57,8 +57,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data, setData } = useData();
-  const { products, stores, categories, units: unitsOfMeasurement } = data;
+  const { data, addDocument, updateDocument, deleteDocument } = useData();
+  const { stores, categories, units: unitsOfMeasurement } = data;
 
   const [name, setName] = useState(product?.name || '');
   const [code, setCode] = useState(product?.code || '');
@@ -230,14 +230,13 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (id: string): Product => {
+  const buildProductData = (): Omit<Product, 'id'> => {
     const numericPrice = Number(price);
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
     return {
-      id,
       name,
       code,
       description,
@@ -252,52 +251,50 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     };
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateForm()) return;
 
     setIsProcessing(true);
+    const productData = buildProductData();
     
     if (isEditMode && product) {
-      const updatedProduct = buildProductData(product.id);
-      setData(prev => ({...prev, products: prev.products.map(p => p.id === product.id ? updatedProduct : p)}));
+      await updateDocument('products', product.id, productData);
     } else {
-      const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-      setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
+      await addDocument('products', productData);
     }
 
     setIsProcessing(false);
     onSave();
   };
   
-  const handleSaveAsCopy = () => {
+  const handleSaveAsCopy = async () => {
     if (!validateForm()) return;
     
     setIsProcessing(true);
-
-    const newProduct = buildProductData(`prod-${Math.random().toString(36).substr(2, 9)}`);
-    setData(prev => ({...prev, products: [newProduct, ...prev.products]}));
+    const productData = buildProductData();
+    await addDocument('products', productData);
     
     setIsProcessing(false);
     onSave();
   }
   
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!product) return;
     
     setIsProcessing(true);
-    setData(prev => ({...prev, products: prev.products.filter(p => p.id !== product.id)}));
+    await deleteDocument('products', product.id);
 
     setIsProcessing(false);
     onSave();
   };
 
-  const handleAddUnit = () => {
+  const handleAddUnit = async () => {
     const name = newUnitName.trim();
     if (name === '' || isDuplicate) {
         return;
     }
-    setData({...data, units: [...unitsOfMeasurement, { name, defaultQuantity: 1 }]});
+    await addDocument('units', { name, defaultQuantity: 1 });
     setNewUnitName('');
   };
 
@@ -308,8 +305,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     }
   };
 
-  const handleDeleteUnit = (unitNameToDelete: string) => {
-    setData({...data, units: unitsOfMeasurement.filter(u => u.name !== unitNameToDelete)});
+  const handleDeleteUnit = async (unitId: string) => {
+    await deleteDocument('units', unitId);
   };
 
   const showSubUnitFields = !!subUnit && subUnit !== 'none';
@@ -457,7 +454,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
                                             <SelectTrigger id="unit"><SelectValue placeholder="واحد" /></SelectTrigger>
                                             <SelectContent>
-                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>))}
+                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -469,7 +466,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                             <SelectTrigger id="sub-unit"><SelectValue placeholder="اختیاری" /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem key="none" value="none">هیچکدام</SelectItem>
-                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.name} value={u.name}>{u.name}</SelectItem>))}
+                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -579,9 +576,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                           </div>
                         <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
                             {unitsOfMeasurement.length > 0 ? unitsOfMeasurement.map(unit => (
-                                <Badge key={unit.name} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
+                                <Badge key={unit.id} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
                                     <span>{unit.name}</span>
-                                    <button onClick={() => handleDeleteUnit(unit.name)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
+                                    <button onClick={() => handleDeleteUnit(unit.id)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
                                         <X className="h-3 w-3" />
                                     </button>
                                 </Badge>

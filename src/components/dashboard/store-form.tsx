@@ -378,7 +378,8 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             if (result && result.categories && result.categories.length > 0) {
                  const newCats: Category[] = [];
                 const processNode = (node: any, pId?: string) => {
-                    if (!node || !node.name) return; // Skip null nodes and nodes without a name
+                    if (!node || !node.name) return; // Skip null/undefined nodes and nodes without a name
+                    
                     const newCat: Category = {
                         id: `temp-${Math.random().toString(36).substr(2, 9)}`,
                         name: node.name,
@@ -386,8 +387,11 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                         parentId: pId,
                     };
                     newCats.push(newCat);
+                    
                     if (node.children && node.children.length > 0) {
-                        node.children.forEach((child: any) => processNode(child, newCat.id));
+                        // Ensure children is always an array
+                        const children = Array.isArray(node.children) ? node.children : [node.children];
+                        children.forEach((child: any) => processNode(child, newCat.id));
                     }
                 };
 
@@ -407,12 +411,8 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     };
 
 
-    const buildStoreData = useCallback((): Omit<Store, 'id'> & { ownerId: string } => {
-        if (!user) {
-            throw new Error("User not authenticated");
-        }
+    const buildStoreData = useCallback((): Omit<Store, 'id'> => {
         return {
-            ownerId: user.uid,
             name,
             description,
             address,
@@ -424,37 +424,33 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             bankIban,
             bankCardNumber,
         }
-    }, [user, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
+    }, [name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber]);
 
 const updateCategoriesForStore = async (storeId: string) => {
     const existingCategories = data.categories.filter(c => c.storeId === storeId);
-    const existingCategoryIds = new Set(existingCategories.map(c => c.id));
+    
+    // Use sets for efficient lookup
+    const existingIds = new Set(existingCategories.map(c => c.id));
+    const currentIds = new Set(storeCategories.map(c => c.id));
 
-    // Delete categories that are in DB but not in local state
-    for (const category of existingCategories) {
-        const stillExistsInState = storeCategories.some(sc => sc.id === category.id);
-        if (!stillExistsInState) {
-            await deleteDocument('categories', category.id);
-        }
+    // Categories to delete: in existing but not in current state
+    const toDelete = existingCategories.filter(c => !currentIds.has(c.id));
+    for (const category of toDelete) {
+        await deleteDocument('categories', category.id);
     }
-
-    // Add or Update categories from local state
+    
+    // Categories to add or update
     for (const category of storeCategories) {
-        if (category.id.startsWith('temp-')) {
-            // It's a new category, add it
-            if (!user) continue; // Should not happen if buildStoreData passed
-            await addDocument('categories', {
-                name: category.name,
-                storeId: storeId,
-                parentId: category.parentId,
-                ownerId: user.uid
-            });
-        } else if (existingCategoryIds.has(category.id)) {
-            // It's an existing category, check for updates
-             const originalCat = existingCategories.find(c => c.id === category.id);
-             if (originalCat && originalCat.name !== category.name) {
-                await updateDocument('categories', category.id, { name: category.name });
-             }
+        if (existingIds.has(category.id)) {
+            // Update if name changed
+            const originalCat = existingCategories.find(c => c.id === category.id);
+            if (originalCat && originalCat.name !== category.name) {
+               await updateDocument('categories', category.id, { name: category.name });
+            }
+        } else {
+            // Add new category (it must be a temp one)
+            const { id, ...catData } = category;
+            await addDocument('categories', { ...catData, storeId });
         }
     }
 };
@@ -635,8 +631,8 @@ const updateCategoriesForStore = async (storeId: string) => {
 
     if (newStoreId) {
         for (const category of storeCategories) {
-            const { id, ownerId, ...catData } = category;
-            await addDocument('categories', { ...catData, ownerId: user!.uid, storeId: newStoreId });
+            const { id, ...catData } = category;
+            await addDocument('categories', { ...catData, storeId: newStoreId });
         }
     }
     

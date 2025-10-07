@@ -136,8 +136,11 @@ const CategoryTree = ({
                         <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
                           <Accordion type="single" collapsible className="w-full">
                             <AccordionItem value={cat.id} className="border-b-0" ref={el => itemRefs.current[cat.id] = el}>
-                              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50" {...provided.dragHandleProps}>
+                              <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                                 <div className="flex items-center gap-1">
+                                  <div {...provided.dragHandleProps} className="p-2 cursor-grab">
+                                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                  </div>
                                   <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
                                   <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
                                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
@@ -422,7 +425,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         
         const idMap = new Map<string, string>();
 
-        // Process new categories first
+        // Process new categories first to get their real IDs
         const newCats = storeCategories.filter(c => c.id.startsWith('temp-'));
         for (const cat of newCats) {
             const newCatRef = doc(collection(firestore, 'users', user.uid, 'categories'));
@@ -437,11 +440,21 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
+            const { id, ...catData } = cat;
+            const finalCatData: any = {
+                ...catData,
+                storeId: finalStoreId,
+                name: cat.name // ensure name is updated
+            };
+
+            if (parentId) {
+                finalCatData.parentId = parentId;
+            }
+
             if (isNew) {
-                const { id, ...catData } = cat;
-                batch.set(catRef, { ...catData, storeId: finalStoreId, parentId });
+                batch.set(catRef, finalCatData);
             } else {
-                 batch.update(catRef, { name: cat.name, parentId: parentId || undefined });
+                 batch.update(catRef, finalCatData);
             }
         }
 

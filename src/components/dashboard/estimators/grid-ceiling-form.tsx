@@ -57,7 +57,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
       { material: 'سپری T120', quantity: t120Pieces, unit: 'شاخه' },
       { material: 'سپری T60', quantity: t60Pieces, unit: 'شاخه' },
       { material: 'آویز', quantity: hangers, unit: 'عدد' },
-      { material: 'پیچ پنل', quantity: screws, unit: 'عدد'},
+      { material: 'پیچ ۲.۵', quantity: screws, unit: 'عدد'},
     ].filter(item => item.quantity > 0);
   }, [length, width]);
   

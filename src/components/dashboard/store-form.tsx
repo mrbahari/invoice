@@ -236,13 +236,13 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }
   }, [store, data.categories]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const path = `images/shop/logo/${Date.now()}-${file.name}`;
       const downloadedUrl = await uploadFile(file, path);
       if (downloadedUrl) {
-          setLogoUrl(downloadedUrl);
+        setLogoUrl(downloadedUrl);
       }
     }
   };
@@ -444,13 +444,18 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
             // Build the data object carefully to avoid 'undefined' values
-            const finalCatData = {
+            const finalCatData: {
+                name: string;
+                storeId: string;
+                description?: string;
+                parentId?: string;
+            } = {
                 name: cat.name,
                 storeId: finalStoreId,
                 ...(cat.description && { description: cat.description }),
                 ...(parentId && { parentId }),
             };
-
+            
             if (isNew) {
                 batch.set(catRef, finalCatData);
             } else {

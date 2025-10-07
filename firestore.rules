@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -10,56 +9,55 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
+    // Checks if the user is the owner of the store associated with a product or category.
     function isStoreOwner(storeId) {
-      return isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+      return request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
     }
     
-    // Batch write operations (used for clearing/restoring data)
+    // Checks if the write is part of a batch operation.
     function isBatchWrite() {
-      return request.method == 'write';
+      return request.method in ['create', 'update', 'delete'] && request.resource == null;
     }
-    
-    // PUBLIC COLLECTIONS
-    // Anyone can read, but only owners can write.
+
+    // Public collections (readable by all)
     match /stores/{storeId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && isStoreOwner(storeId);
-      allow delete: if isSignedIn() && isStoreOwner(storeId);
+      allow update, delete: if isSignedIn() && isStoreOwner(storeId);
     }
-    
+
     match /products/{productId} {
       allow read: if true;
       allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
-      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow update, delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
     }
 
     match /categories/{categoryId} {
       allow read: if true;
       allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
-      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow update, delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
     }
-
-    // USER-SPECIFIC (PRIVATE) COLLECTIONS
+    
+    // User-specific private collections
     match /users/{userId} {
-      // General read/write for user's own top-level doc if needed
+      // General access rule: Only the owner can access their own data.
       allow read, write: if isOwner(userId);
       
-      // Clients, Invoices, Units, and Settings are private to the user
-      match /clients/{clientId} {
-        allow read, write: if isOwner(userId);
-      }
-      
-      match /invoices/{invoiceId} {
-        allow read, write: if isOwner(userId);
-      }
-      
+      // Units collection for each user
       match /units/{unitId} {
+         allow read, write: if isOwner(userId);
+      }
+      
+      // Clients collection for each user
+      match /clients/{clientId} {
+         allow read, write: if isOwner(userId);
+      }
+      
+      // Invoices collection for each user
+      match /invoices/{invoiceId} {
         allow read, write: if isOwner(userId);
       }
       

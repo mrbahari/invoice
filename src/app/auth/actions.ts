@@ -23,7 +23,8 @@ export async function handleSession(idToken: string) {
 
 export async function signOut() {
   cookies().delete(SESSION_COOKIE_NAME);
-  revalidatePath('/', 'layout');
+  // Revalidate the root layout to ensure user state is cleared everywhere
+  revalidatePath('/', 'layout'); 
   redirect('/');
 }
 

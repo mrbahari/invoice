@@ -2,67 +2,67 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
+  
+    // =============================================================
+    // Helper Functions
+    // =============================================================
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Checks if the user is the owner of the store associated with a product or category.
-    function isStoreOwner(storeId) {
-      return request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+      return isSignedIn() && request.auth.uid == userId;
     }
     
-    // Checks if the write is part of a batch operation.
-    function isBatchWrite() {
-      return request.method in ['create', 'update', 'delete'] && request.resource == null;
+    function isStoreOwner(storeId) {
+        return isSignedIn() && get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid;
     }
-
-    // Public collections (readable by all)
+    
+    // =============================================================
+    // Public Collections
+    // Everyone can read, but only specific users can write.
+    // =============================================================
+    
     match /stores/{storeId} {
       allow read: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isSignedIn() && isStoreOwner(storeId);
+      allow update, delete: if isStoreOwner(storeId);
     }
 
     match /products/{productId} {
       allow read: if true;
-      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
-      allow update, delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow create: if isStoreOwner(request.resource.data.storeId);
+      allow update, delete: if isStoreOwner(resource.data.storeId);
     }
 
     match /categories/{categoryId} {
       allow read: if true;
-      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
-      allow update, delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow create: if isStoreOwner(request.resource.data.storeId);
+      allow update, delete: if isStoreOwner(resource.data.storeId);
     }
     
-    // User-specific private collections
+    // =============================================================
+    // User-Specific Private Collections
+    // Only the owner can read or write their own data.
+    // =============================================================
+    
     match /users/{userId} {
-      // General access rule: Only the owner can access their own data.
+      // User can only access their own user document.
       allow read, write: if isOwner(userId);
       
-      // Units collection for each user
-      match /units/{unitId} {
-         allow read, write: if isOwner(userId);
-      }
-      
-      // Clients collection for each user
       match /clients/{clientId} {
-         allow read, write: if isOwner(userId);
+        allow read, write, delete: if isOwner(userId);
       }
-      
-      // Invoices collection for each user
+
       match /invoices/{invoiceId} {
-        allow read, write: if isOwner(userId);
+        allow read, write, delete: if isOwner(userId);
       }
       
-      // Settings sub-collection
-      match /settings/{settingId} {
+      match /units/{unitId} {
+         allow read, write, delete: if isOwner(userId);
+      }
+
+      match /settings/toolbarPositions {
         allow read, write: if isOwner(userId);
       }
     }

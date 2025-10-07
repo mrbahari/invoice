@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback, ChangeEvent } from 'react';
@@ -240,7 +239,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const path = `images/shop/logo/${file.name}`;
+      const path = `images/shop/logo/${Date.now()}-${file.name}`;
       const downloadedUrl = await uploadFile(file, path);
       if (downloadedUrl) {
           setLogoUrl(downloadedUrl);
@@ -444,17 +443,13 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
-            // Build the data object carefully to avoid 'undefined'
-            const finalCatData: Omit<Category, 'id' | 'parentId'> & { parentId?: string } = {
+            // Build the data object carefully to avoid 'undefined' values
+            const finalCatData = {
                 name: cat.name,
                 storeId: finalStoreId,
-                description: cat.description,
+                ...(cat.description && { description: cat.description }),
+                ...(parentId && { parentId }),
             };
-
-            if (parentId) {
-                finalCatData.parentId = parentId;
-            }
-
 
             if (isNew) {
                 batch.set(catRef, finalCatData);
@@ -908,5 +903,3 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     </TooltipProvider>
   );
 }
-
-    

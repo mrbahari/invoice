@@ -71,13 +71,13 @@ const generateCategoriesPrompt = ai.definePrompt({
       {{else}}
         (No existing categories to exclude)
       {{/if}}
-    - Example for parent path "ابزار > ابزار برقی": A valid response could be { "categories": [{ "name": "دریل", "children": [{ "name": "دریل چکشی" }, { "name": "دریل شارژی" }] }, { "name": "فرز" }] }.
+    - Example for parent path "ابزار > ابزار برقی": A valid response could be { "categories": [{ "name": "دریل" }, { "name": "فرز" }] }.
     
     {{else}}
     **CRITICAL Instruction for MAIN CATEGORIES:**
     - You MUST generate a comprehensive list of AT LEAST 10 main, top-level product categories.
-    - Each main category MUST have a deep, nested structure of sub-categories. The hierarchy should be a minimum of 3, and preferably 4, levels deep wherever logical.
-    - The main categories should be general, and sub-categories must become progressively more specific, covering a wide range of product types.
+    - Each main category MUST have a nested structure of sub-categories. The hierarchy should be 2 levels deep wherever logical.
+    - The main categories should be general, and sub-categories must become progressively more specific.
     - You MUST NOT generate any of the following main category names, as they already exist:
       {{#if existingCategoryNames}}
         {{#each existingCategoryNames}}
@@ -86,40 +86,28 @@ const generateCategoriesPrompt = ai.definePrompt({
       {{else}}
         (No existing categories to exclude)
       {{/if}}
-    - **EXTREMELY IMPORTANT EXAMPLE** for a construction material store. Note the depth and breadth:
+    - **EXTREMELY IMPORTANT EXAMPLE** for a construction material store. Note the breadth and depth:
       {
         "categories": [
           {
             "name": "ابزارآلات",
             "children": [
-              {
-                "name": "ابزار برقی",
-                "children": [
-                  { "name": "دریل", "children": [{ "name": "دریل چکشی" }, { "name": "دریل شارژی" }] },
-                  { "name": "فرز", "children": [{ "name": "سنگ فرز" }, { "name": "مینی فرز" }] },
-                  { "name": "اره برقی" }
-                ]
-              },
-              {
-                "name": "ابزار دستی",
-                "children": [
-                  { "name": "آچار", "children": [{ "name": "آچار فرانسه" }, { "name": "آچار آلن" }] },
-                  { "name": "انبر" }
-                ]
-              }
+              { "name": "ابزار برقی" },
+              { "name": "ابزار دستی" },
+              { "name": "ابزار بادی" }
             ]
           },
           {
             "name": "مصالح پایه",
             "children": [
-              { "name": "سیمان و گچ", "children": [{ "name": "سیمان سیاه" }, { "name": "گچ سفیدکاری" }] },
-              { "name": "آجر و بلوک", "children": [{ "name": "بلوک سیمانی" }, { "name": "آجر سفالی" }] }
+              { "name": "سیمان و گچ" },
+              { "name": "آجر و بلوک" }
             ]
           },
           {
             "name": "رنگ و پوشش",
             "children": [
-              { "name": "رنگ ساختمانی", "children": [{"name": "رنگ پلاستیک"}, {"name": "رنگ روغنی"}] },
+              { "name": "رنگ ساختمانی" },
               { "name": "عایق و ضد زنگ" }
             ]
           }

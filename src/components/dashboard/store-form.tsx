@@ -89,7 +89,7 @@ const CategoryTree = ({
   setEditingCategoryName: (name: string) => void;
   aiLoading: string | null;
   openItems: string[];
-  onToggle: (itemId: string, level: number) => void;
+  onToggle: (itemId: string | undefined, level: number) => void;
 }) => {
   const [addingToParentId, setAddingToParentId] = useState<string | null>(null);
   const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
@@ -113,72 +113,79 @@ const CategoryTree = ({
 
 
   return (
-    <Accordion type="single" collapsible className="w-full" defaultValue={openItems.find((_, i) => i === level)}>
-        {categories.map((cat, index) => {
-            const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
-            const hasSubCategories = subCategories.length > 0;
-            const isAiLoading = aiLoading === cat.id;
-            const isAdding = addingToParentId === cat.id;
-            
-            return (
-            <Draggable draggableId={cat.id} index={index} key={cat.id}>
-                {(dragProvided, dragSnapshot) => (
-                <div
-                    ref={dragProvided.innerRef}
-                    {...dragProvided.draggableProps}
-                    className={cn('relative', dragSnapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg')}
-                >
-                     <AccordionItem value={cat.id} className="border-b-0">
-                         <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 w-full">
-                            <AccordionTrigger className="p-0 hover:no-underline flex-1" {...dragProvided.dragHandleProps}>
-                                <div className="flex items-center gap-2">
-                                    <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                    {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />}
-                                    <h4 className="font-semibold">{cat.name}</h4>
+    <Accordion type="single" collapsible className="w-full" value={openItems[level]} onValueChange={(value) => onToggle(value, level)}>
+        <Droppable droppableId={parentId} type="CATEGORY">
+            {(dropProvided) => (
+            <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="space-y-1">
+                {categories.map((cat, index) => {
+                    const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
+                    const hasSubCategories = subCategories.length > 0;
+                    const isAiLoading = aiLoading === cat.id;
+                    const isAdding = addingToParentId === cat.id;
+                    
+                    return (
+                    <Draggable draggableId={cat.id} index={index} key={cat.id}>
+                        {(dragProvided, dragSnapshot) => (
+                        <div
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            className={cn('relative', dragSnapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg')}
+                        >
+                            <AccordionItem value={cat.id} className="border-b-0">
+                                <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 w-full" {...dragProvided.dragHandleProps}>
+                                    <AccordionTrigger
+                                        className="p-0 hover:no-underline flex-1"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                            <h4 className="font-semibold">{cat.name}</h4>
+                                            {hasSubCategories && (
+                                                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                            )}
+                                        </div>
+                                    </AccordionTrigger>
+
+                                    <div className="flex items-center gap-1">
+                                        <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
+                                        <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
+                                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
+                                        <AlertDialog><AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                                    </div>
                                 </div>
-                            </AccordionTrigger>
-                            <div className="flex items-center gap-1 ml-auto">
-                                <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
-                                <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
-                                <AlertDialog><AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-                            </div>
+                                {editingCategoryId === cat.id ? (<div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8"><Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} /><Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button><Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button></div>) : null}
+                                {isAdding && (<div className="flex gap-2 p-2 ml-8"><Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder={`نام زیردسته برای «${cat.name}»...`} onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)} autoFocus /><Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button></div>)}
+                                
+                                <AccordionContent>
+                                    <div className="p-4 pt-2 border-l pr-4 ml-4 space-y-4">
+                                        <CategoryTree 
+                                            categories={subCategories} 
+                                            parentId={cat.id}
+                                            level={level + 1}
+                                            allCategories={allCategories} 
+                                            onAddSubCategory={onAddSubCategory} 
+                                            onDelete={onDelete} 
+                                            onStartEdit={onStartEdit} 
+                                            onAiGenerate={onAiGenerate} 
+                                            editingCategoryId={editingCategoryId} 
+                                            editingCategoryName={editingCategoryName} 
+                                            onSaveEdit={onSaveEdit} 
+                                            onCancelEdit={onCancelEdit} 
+                                            setEditingCategoryName={setEditingCategoryName} 
+                                            aiLoading={aiLoading} 
+                                            openItems={openItems}
+                                            onToggle={onToggle}/>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
                         </div>
-                        {editingCategoryId === cat.id ? (<div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8"><Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} /><Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button><Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button></div>) : null}
-                        {isAdding && (<div className="flex gap-2 p-2 ml-8"><Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder={`نام زیردسته برای «${cat.name}»...`} onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)} autoFocus /><Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button></div>)}
-                        
-                        <AccordionContent>
-                           <Droppable droppableId={cat.id} type="CATEGORY">
-                                {(dropProvided) => (
-                                <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="p-4 pt-2 border-l pr-4 ml-4 space-y-4">
-                                    <CategoryTree 
-                                        categories={subCategories} 
-                                        parentId={cat.id}
-                                        level={level + 1}
-                                        allCategories={allCategories} 
-                                        onAddSubCategory={onAddSubCategory} 
-                                        onDelete={onDelete} 
-                                        onStartEdit={onStartEdit} 
-                                        onAiGenerate={onAiGenerate} 
-                                        editingCategoryId={editingCategoryId} 
-                                        editingCategoryName={editingCategoryName} 
-                                        onSaveEdit={onSaveEdit} 
-                                        onCancelEdit={onCancelEdit} 
-                                        setEditingCategoryName={setEditingCategoryName} 
-                                        aiLoading={aiLoading} 
-                                        openItems={openItems}
-                                        onToggle={onToggle}/>
-                                     {dropProvided.placeholder}
-                                </div>
-                                )}
-                            </Droppable>
-                        </AccordionContent>
-                    </AccordionItem>
-                </div>
-                )}
-            </Draggable>
-            )
-        })}
+                        )}
+                    </Draggable>
+                    )
+                })}
+                {dropProvided.placeholder}
+            </div>
+            )}
+        </Droppable>
     </Accordion>
   );
 };
@@ -589,7 +596,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     handleCancelEditCategory();
   };
   
-  const handleAccordionToggle = useCallback((itemId: string, level: number) => {
+  const handleAccordionToggle = useCallback((itemId: string | undefined, level: number) => {
       setOpenAccordionItems(prev => {
           const newOpenItems = prev.slice(0, level);
           if (itemId && prev[level] !== itemId) {
@@ -929,33 +936,28 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                 <Separator />
                 <DragDropContext onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart}>
                     <div className="grid gap-4">
-                        <Droppable droppableId="root" type="CATEGORY">
-                            {(provided) => (
-                                <div ref={provided.innerRef} {...provided.droppableProps}>
-                                    {parentCategories.length > 0 ? (
-                                        <CategoryTree 
-                                            categories={parentCategories}
-                                            parentId="root"
-                                            level={0}
-                                            allCategories={storeCategories}
-                                            onAddSubCategory={handleAddSubCategory}
-                                            onDelete={handleDeleteCategory}
-                                            onStartEdit={handleStartEditCategory}
-                                            onAiGenerate={handleAiGenerateSubCategories}
-                                            editingCategoryId={editingCategoryId}
-                                            editingCategoryName={editingCategoryName}
-                                            onSaveEdit={handleSaveCategoryEdit}
-                                            onCancelEdit={handleCancelEditCategory}
-                                            setEditingCategoryName={setEditingCategoryName}
-                                            aiLoading={aiLoadingCategory}
-                                            openItems={openAccordionItems}
-                                            onToggle={handleAccordionToggle}
-                                        />
-                                    ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
+                       
+                        {parentCategories.length > 0 ? (
+                            <CategoryTree 
+                                categories={parentCategories}
+                                parentId="root"
+                                level={0}
+                                allCategories={storeCategories}
+                                onAddSubCategory={handleAddSubCategory}
+                                onDelete={handleDeleteCategory}
+                                onStartEdit={handleStartEditCategory}
+                                onAiGenerate={handleAiGenerateSubCategories}
+                                editingCategoryId={editingCategoryId}
+                                editingCategoryName={editingCategoryName}
+                                onSaveEdit={handleSaveCategoryEdit}
+                                onCancelEdit={handleCancelEditCategory}
+                                setEditingCategoryName={setEditingCategoryName}
+                                aiLoading={aiLoadingCategory}
+                                openItems={openAccordionItems}
+                                onToggle={handleAccordionToggle}
+                            />
+                        ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
+                        
                     </div>
                 </DragDropContext>
             </CardContent>

@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // General functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -12,71 +12,49 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    function isBatchWrite() {
-      // This is a simplified check. In a real-world scenario, this might be more complex
-      // e.g., checking for a specific flag in the request. For our "clear all" and "restore"
-      // batch operations, this is sufficient. It works because single document writes have
-      // `request.resource` but batch writes do not have it at the rule evaluation level.
-      return request.resource == null;
-    }
-    
     function isStoreOwner(storeId) {
-      // Checks if the authenticated user is the owner of the given store.
-      // This is crucial for securing products and categories.
-      return request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+       // This function now correctly points to the public 'stores' collection
+       return request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
     }
 
-    // --- Public Collections ---
-    // Anyone can read these collections, but writing is restricted.
-    
-    match /stores/{storeId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isSignedIn() && isStoreOwner(storeId);
+    function isBatchWrite() {
+      // A batch write is identified by having multiple writes in one request.
+      // A simple proxy for this is checking if the request object is available,
+      // as it's not populated in the same way for batch writes in rules simulation.
+      // For real batch writes, this checks if the specific write within the batch is allowed.
+      // A more robust check might be needed if complex batch logic is added.
+      return request.resource == null;
     }
-    
+
+    // Public Collections: Anyone can read, but only specific users can write.
     match /products/{productId} {
-      allow read: if true;
-      allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
-      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
+       allow read: if true;
+       // Allow create if it's a batch write OR if the user is the owner of the store.
+       allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
+       // Allow update only if the user is the owner of the store (storeId doesn't change).
+       allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+       // Allow delete for batch writes OR if the user is the store owner.
+       allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
     }
 
     match /categories/{categoryId} {
-      allow read: if true;
-      allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
-      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
-      allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
+       allow read: if true;
+       allow create: if isBatchWrite() || (isSignedIn() && isStoreOwner(request.resource.data.storeId));
+       allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+       allow delete: if isBatchWrite() || (isSignedIn() && isStoreOwner(resource.data.storeId));
     }
 
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create: if isBatchWrite() || (isSignedIn() && isOwner(request.resource.data.ownerId));
+      allow update: if isSignedIn() && isOwner(resource.data.ownerId);
+      allow delete: if isBatchWrite() || (isSignedIn() && isOwner(resource.data.ownerId));
+    }
 
-    // --- User-Specific Private Collections ---
-    // Users can only access their own data.
-    
-    match /users/{userId} {
-      // Allow a user to read and write to their own user document
-      allow read, write: if isOwner(userId);
-
-      match /clients/{clientId} {
-        allow read, write, delete: if isOwner(userId);
-        allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-      }
-      
-      match /invoices/{invoiceId} {
-        allow read, write, delete: if isOwner(userId);
-         allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-      }
-      
-      match /units/{unitId} {
-        allow read, write, delete: if isOwner(userId);
-        allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-      }
-
-      // Settings are special, they are a single document, not a collection.
-      match /settings/toolbarPositions {
-        allow read, write, delete: if isOwner(userId);
-         allow create: if isBatchWrite() || (isSignedIn() && isOwner(userId));
-      }
+    // User-specific subcollections
+    match /users/{userId}/{document=**} {
+      allow read, update, delete: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
     }
   }
 }

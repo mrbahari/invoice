@@ -23,32 +23,25 @@ async function ensureUploadDirExists() {
 export async function POST(req: NextRequest) {
   await ensureUploadDirExists();
 
-  const form = formidable({
-    uploadDir,
-    keepExtensions: true,
-    filename: (name, ext, part) => {
-        // Create a unique filename
-        return `${Date.now()}-${part.originalFilename}`;
-    }
-  });
+  const formData = await req.formData();
+  const file = formData.get('file') as File | null;
+
+  if (!file) {
+    return new NextResponse(JSON.stringify({ error: "No file uploaded." }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
-    const file = await new Promise<formidable.File>((resolve, reject) => {
-      form.parse(req.body as any, (err, fields, files) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
-        if (!uploadedFile) {
-            reject(new Error("No file uploaded."));
-            return;
-        }
-        resolve(uploadedFile);
-      });
-    });
+    const uniqueFilename = `${Date.now()}-${file.name}`;
+    const filePath = path.join(uploadDir, uniqueFilename);
 
-    const publicUrl = `/uploads/${file.newFilename}`;
+    // Stream the file to the filesystem
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(filePath, fileBuffer);
+
+    const publicUrl = `/uploads/${uniqueFilename}`;
     
     return NextResponse.json({ url: publicUrl });
 
@@ -56,9 +49,7 @@ export async function POST(req: NextRequest) {
     console.error('File upload error:', error);
     return new NextResponse(JSON.stringify({ error: `Upload failed: ${error.message}` }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }

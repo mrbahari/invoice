@@ -1,26 +1,22 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Each user has complete control over their own data (stores, products, categories, clients, invoices, units) and no access to other users' data.
- *
- * Data Structure:
- * All data is nested under /users/{userId}, creating a clear separation between user data. This includes subcollections for stores, products, categories, clients, invoices and units.
- *
- * Key Security Decisions:
- * - User listing is disallowed for privacy.
- * - The default security posture is strict: if a relationship is ambiguous or not explicitly allowed, access is denied.
+ * @file Firestore Security Rules
+ * @core-philosophy This ruleset enforces a strict user-ownership model. Only the authenticated user
+ * can create, read, update, or delete data within their own user path.
+ * @data-structure All data is nested under /users/{userId}, creating a clear separation of user data.
+ * @key-security-decisions
+ *   - User listing is explicitly disallowed.
+ *   - Data validation is relaxed in prototyping mode, focusing on authorization.
+ *   - Read-only collections are not used in this data model.
+ *   - All write operations require authentication.
+ * @denormalization-for-authorization
+ *   - User ownership is enforced by matching the `userId` in the path to the authenticated user's `uid`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Verifies user authentication.
+     * @description Checks if the user is signed in.
      */
     function isSignedIn() {
       return request.auth != null;
@@ -28,137 +24,121 @@ service cloud.firestore {
 
     /**
      * @description Checks if the authenticated user ID matches the provided user ID.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces user-specific data access.
      */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user ID matches the provided user ID and the resource exists.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces user-specific data access and document existence.
+     * @description Checks if the authenticated user is the owner of an existing document.
      */
     function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+      return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Rules for user-specific stores.
+     * @description Enforces ownership for stores.
      * @path /users/{userId}/stores/{storeId}
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates a new store with ID 'store456' under /users/user123/stores/store456.
-     * @allow Signed-in user (get, list) - e.g., A user with ID 'user123' retrieves their store with ID 'store456' from /users/user123/stores/store456.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access store 'store456' under /users/user123/stores/store456.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create a store under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/someStoreId.
+     * @deny (create) User "DIFFERENT_UID" cannot create a store under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/someStoreId.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/stores/{storeId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific products.
+     * @description Enforces ownership for products.
      * @path /users/{userId}/products/{productId}
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates a new product with ID 'product789' under /users/user123/products/product789.
-     * @allow Signed-in user (get, list) - e.g., A user with ID 'user123' retrieves their product with ID 'product789' from /users/user123/products/product789.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access product 'product789' under /users/user123/products/product789.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create a product under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/someProductId.
+     * @deny (create) User "DIFFERENT_UID" cannot create a product under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/someProductId.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/products/{productId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific categories.
+     * @description Enforces ownership for categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates a new category with ID 'category101' under /users/user123/categories/category101.
-     * @allow Signed-in user (get, list) - e.g., A user with ID 'user123' retrieves their category with ID 'category101' from /users/user123/categories/category101.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access category 'category101' under /users/user123/categories/category101.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create a category under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/someCategoryId.
+     * @deny (create) User "DIFFERENT_UID" cannot create a category under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/someCategoryId.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/categories/{categoryId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific clients.
+     * @description Enforces ownership for clients.
      * @path /users/{userId}/clients/{clientId}
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates a new client with ID 'client222' under /users/user123/clients/client222.
-     * @allow Signed-in user (get, list) - e.g., A user with ID 'user123' retrieves their client with ID 'client222' from /users/user123/clients/client222.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access client 'client222' under /users/user123/clients/client222.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create a client under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/clients/someClientId.
+     * @deny (create) User "DIFFERENT_UID" cannot create a client under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/clients/someClientId.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/clients/{clientId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific invoices.
+     * @description Enforces ownership for invoices.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates a new invoice with ID 'invoice333' under /users/user123/invoices/invoice333.
-     * @allow Signed-in user (get, list) - e.g., A user with ID 'user123' retrieves their invoice with ID 'invoice333' from /users/user123/invoices/invoice333.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access invoice 'invoice333' under /users/user123/invoices/invoice333.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create an invoice under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/someInvoiceId.
+     * @deny (create) User "DIFFERENT_UID" cannot create an invoice under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/someInvoiceId.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/invoices/{invoiceId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific units.
+     * @description Enforces ownership for units.
      * @path /users/{userId}/units/{unitId}
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates a new unit with ID 'unit444' under /users/user123/units/unit444.
-     * @allow Signed-in user (get, list) - e.g., A user with ID 'user123' retrieves their unit with ID 'unit444' from /users/user123/units/unit444.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access unit 'unit444' under /users/user123/units/unit444.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create a unit under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/someUnitId.
+     * @deny (create) User "DIFFERENT_UID" cannot create a unit under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/someUnitId.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/units/{unitId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific toolbar settings.
+     * @description Enforces ownership for toolbar settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow Signed-in user (create, update, delete) - e.g., A user with ID 'user123' creates new toolbar settings under /users/user123/settings/toolbarPositions.
-     * @allow Signed-in user (get) - e.g., A user with ID 'user123' retrieves their toolbar settings from /users/user123/settings/toolbarPositions.
-     * @allow Signed-in user (list) - e.g., A user with ID 'user123' lists toolbar setting (only 1) from /users/user123/settings/toolbarPositions.
-     * @deny Any other user (create, update, delete, get, list) - e.g., A user with ID 'user456' attempts to access toolbar settings under /users/user123/settings/toolbarPositions.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User "xHYjOZByDvVoCdllW9YbyGU9ZKb2" can create toolbar settings under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions.
+     * @deny (create) User "DIFFERENT_UID" cannot create toolbar settings under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/settings/toolbarPositions {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

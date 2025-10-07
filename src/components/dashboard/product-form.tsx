@@ -42,6 +42,7 @@ import { formatNumber, parseFormattedNumber } from '@/lib/utils';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser } from '@/firebase';
 
 
 type ProductFormProps = {
@@ -56,6 +57,7 @@ type AIFeature = 'description' | 'price' | 'image';
 export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const isEditMode = !!product;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useUser();
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { stores, categories, units: unitsOfMeasurement } = data;
@@ -230,13 +232,15 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (): Omit<Product, 'id'> => {
+  const buildProductData = (): Omit<Product, 'id'> & { ownerId: string } => {
+    if (!user) throw new Error("User not logged in");
     const numericPrice = Number(price);
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
     return {
+      ownerId: user.uid,
       name,
       code,
       description,
@@ -253,7 +257,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || !user) return;
 
     setIsProcessing(true);
     const productData = buildProductData();
@@ -269,7 +273,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   };
   
   const handleSaveAsCopy = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || !user) return;
     
     setIsProcessing(true);
     const productData = buildProductData();
@@ -348,7 +352,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         </Tooltip>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>انصراف</AlertDialogCancel>
                             <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>

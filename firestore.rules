@@ -2,21 +2,20 @@
  * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model.  Each user has their own
- * data tree under `/users/{userId}`. Only the authenticated user can read
- * and write their own data.
+ * This ruleset enforces a strict user-ownership model. Each user has their own
+ * data tree under `/users/{userId}` and can only access data within their own tree.
  *
  * Data Structure:
- * All data is nested under `/users/{userId}`.  This includes stores, products,
- * categories, clients, invoices, and units. User settings are stored under
- * `/users/{userId}/settings`.
+ * All data is nested under `/users/{userId}`, creating a clear separation of data
+ * between users. This includes stores, products, categories, clients, invoices,
+ * and units. User settings are stored under `/users/{userId}/settings`.
  *
  * Key Security Decisions:
- * - User listing is explicitly disallowed.
- * - Data validation is relaxed to allow for rapid prototyping, but authorization
- *   is strictly enforced based on user ID.
- * - The `ToolbarSettings` document is treated as user-owned and only accessible
- *   by the authenticated user.
+ * - User listing is disallowed.
+ * - All write operations are validated to ensure that the user owns the data
+ *   they are trying to modify.
+ * - Data validation is limited to authorization-critical fields during the
+ *   prototyping phase.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -24,127 +23,120 @@ service cloud.firestore {
 
     /**
      * @description Checks if the request is authenticated.
-     * @param {string} userId The user ID to check against.
-     * @return {bool} True if the user is signed in.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user is the owner of the resource.
-     * @param {string} userId The user ID to check against.
-     * @return {bool} True if the user ID matches the authenticated user's UID.
+     * @description Checks if the user ID matches the authenticated user's ID.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user is the owner of the resource and the resource exists.
-     * @param {string} userId The user ID to check against.
-     * @return {bool} True if the user ID matches the authenticated user's UID and the resource exists.
+     * @description Checks if the user ID matches the authenticated user's ID and the resource exists.
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Rules for user-specific stores.
+     * @description Rules for user-specific store documents.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create) User 'user123' can create a store with storeId 'store456' under their user ID.
-     * @deny (create) User 'user456' cannot create a store under user ID 'user123'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a store document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/store1.
+     * @deny (create) User otherUser cannot create a store document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/store1.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/stores/{storeId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == storeId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific products.
+     * @description Rules for user-specific product documents.
      * @path /users/{userId}/products/{productId}
-     * @allow (create) User 'user123' can create a product with productId 'product456' under their user ID.
-     * @deny (create) User 'user456' cannot create a product under user ID 'user123'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a product document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/product1.
+     * @deny (create) User otherUser cannot create a product document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/product1.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/products/{productId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == productId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific categories.
+     * @description Rules for user-specific category documents.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) User 'user123' can create a category with categoryId 'category456' under their user ID.
-     * @deny (create) User 'user456' cannot create a category under user ID 'user123'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a category document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/category1.
+     * @deny (update) User otherUser cannot update a category document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/category1.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == categoryId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific clients.
+     * @description Rules for user-specific client documents.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (create) User 'user123' can create a client with clientId 'client456' under their user ID.
-     * @deny (create) User 'user456' cannot create a client under user ID 'user123'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a client document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/clients/client1.
+     * @deny (create) User otherUser cannot create a client document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/clients/client1.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/clients/{clientId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == clientId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific invoices.
+     * @description Rules for user-specific invoice documents.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create) User 'user123' can create a invoice with invoiceId 'invoice456' under their user ID.
-     * @deny (create) User 'user456' cannot create a invoice under user ID 'user123'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create an invoice document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/invoice1.
+     * @deny (create) User otherUser cannot create an invoice document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/invoice1.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/invoices/{invoiceId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == invoiceId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific units.
+     * @description Rules for user-specific unit documents.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create) User 'user123' can create a unit with unitId 'unit456' under their user ID.
-     * @deny (create) User 'user456' cannot create a unit under user ID 'user123'.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a unit document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/unit1.
+     * @deny (create) User otherUser cannot create a unit document under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/unit1.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/units/{unitId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == unitId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
      * @description Rules for user-specific toolbar settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (get) User 'user123' can get their own toolbar settings.
-     * @allow (create) User 'user123' can create their own toolbar settings.
-     * @deny (update) User 'user456' cannot update user 'user123's toolbar settings.
+     * @allow (get) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can get their own toolbar settings.
+     * @deny (get) User otherUser cannot get user xHYjOZByDvVoCdllW9YbyGU9ZKb2's toolbar settings.
      * @principle Restricts access to a user's own settings.
      */
     match /users/{userId}/settings/toolbarPositions {

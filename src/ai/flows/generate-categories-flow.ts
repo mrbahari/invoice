@@ -56,6 +56,7 @@ const generateCategoriesPrompt = ai.definePrompt({
     **Instruction for SUB-CATEGORIES:**
     - You MUST generate specific sub-categories that logically fit under the parent category path: "{{parentCategoryPath}}".
     - The generated categories should be more specific and detailed as they go deeper into the hierarchy.
+    - IMPORTANT: Your response MUST ONLY contain the NEW sub-categories for the given parent path. DO NOT include the parent categories themselves in the output. The output should be a flat list of new direct children for "{{parentCategoryPath}}".
     - You MUST NOT generate any of the following category names, as they already exist under this parent:
       {{#if existingCategoryNames}}
         {{#each existingCategoryNames}}

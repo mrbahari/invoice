@@ -65,8 +65,8 @@ export function useDoc<T = any>(
         if (snapshot.exists()) {
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
-          // Document does not exist
-          setData(null);
+          // Document does not exist, treat it as empty data instead of an error state.
+          setData({} as WithId<T>);
         }
         setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
         setIsLoading(false);

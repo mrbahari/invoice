@@ -24,7 +24,7 @@ export async function handleSession(idToken: string) {
 export async function signOut() {
   cookies().delete(SESSION_COOKIE_NAME);
   revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  redirect('/');
 }
 
 export async function sendPasswordResetLink(state: any, formData: FormData) {

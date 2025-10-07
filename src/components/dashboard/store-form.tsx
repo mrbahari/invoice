@@ -42,7 +42,7 @@ import { FloatingToolbar } from './floating-toolbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser, useFirestore } from '@/firebase';
 import { writeBatch, doc, collection } from 'firebase/firestore';
-import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, type DropResult, type DragUpdate } from '@hello-pangea/dnd';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 
@@ -58,20 +58,20 @@ type StoreFormProps = {
 // =================================================================
 const CategoryTree = ({
   categories,
-  parentId = undefined,
+  parentId = 'root',
   allCategories,
   onAddSubCategory,
   onDelete,
   onStartEdit,
   onAiGenerate,
-  onToggle,
-  onDrop,
   editingCategoryId,
   editingCategoryName,
   onSaveEdit,
   onCancelEdit,
   setEditingCategoryName,
   aiLoading,
+  openItems,
+  onToggle,
 }: {
   categories: Category[];
   parentId?: string;
@@ -80,18 +80,17 @@ const CategoryTree = ({
   onDelete: (categoryId: string) => void;
   onStartEdit: (category: Category) => void;
   onAiGenerate: (parentCategory: Category) => void;
-  onToggle: (categoryId: string, element: HTMLDivElement | null) => void;
-  onDrop: (sourceId: string, destinationId: string | null) => void;
   editingCategoryId: string | null;
   editingCategoryName: string;
   onSaveEdit: (categoryId: string) => void;
   onCancelEdit: () => void;
   setEditingCategoryName: (name: string) => void;
   aiLoading: string | null;
+  openItems: string[];
+  onToggle: (itemId: string) => void;
 }) => {
   const [addingToParentId, setAddingToParentId] = useState<string | null>(null);
   const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
-  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   if (categories.length === 0) {
     return null;
@@ -112,10 +111,10 @@ const CategoryTree = ({
 
 
   return (
-    <Droppable droppableId={parentId || 'root'} type="CATEGORY">
+    <Droppable droppableId={parentId} type="CATEGORY">
       {(provided) => (
         <div {...provided.droppableProps} ref={provided.innerRef}>
-           <Accordion type="single" collapsible className="w-full">
+           <Accordion type="single" collapsible className="w-full" value={openItems.find(item => categories.some(c => c.id === item))} onValueChange={onToggle}>
               {categories.map((cat, index) => {
                 const subCategories = allCategories.filter(sc => sc.parentId === cat.id);
                 const hasSubCategories = subCategories.length > 0;
@@ -136,18 +135,18 @@ const CategoryTree = ({
                         <Droppable droppableId={cat.id} type="CATEGORY">
                           {(dropProvided) => (
                             <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                                <AccordionItem value={cat.id} className="border-b-0" ref={el => itemRefs.current[cat.id] = el}>
+                                <AccordionItem value={cat.id} className="border-b-0">
                                   <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                                    <div {...provided.dragHandleProps} className="p-2 cursor-grab">
+                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                    </div>
                                     <div className="flex items-center gap-1">
-                                      <div {...provided.dragHandleProps} className="p-2 cursor-grab">
-                                          <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                      </div>
                                       <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
                                       <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
                                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button>
                                       <AlertDialog><AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                                     </div>
-                                    <AccordionTrigger className="p-2 flex-1 justify-end hover:no-underline" onClick={(e) => { if (!hasSubCategories) { e.preventDefault(); return; } if (itemRefs.current[cat.id]) { onToggle(cat.id, itemRefs.current[cat.id]); } }}>
+                                    <AccordionTrigger className="p-2 flex-1 justify-end hover:no-underline" disabled={!hasSubCategories}>
                                       <div className="flex items-center gap-2">
                                         <h4 className="font-semibold">{cat.name}</h4>
                                         {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
@@ -158,7 +157,7 @@ const CategoryTree = ({
                                   {isAdding && (<div className="flex gap-2 p-2 ml-8"><Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder={`نام زیردسته برای «${cat.name}»...`} onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)} autoFocus /><Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button></div>)}
                                   <AccordionContent>
                                     <div className="p-4 pt-2 border-l pr-4 ml-4 space-y-4">
-                                      <CategoryTree categories={subCategories} parentId={cat.id} allCategories={allCategories} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onStartEdit={onStartEdit} onAiGenerate={onAiGenerate} onToggle={onToggle} onDrop={onDrop} editingCategoryId={editingCategoryId} editingCategoryName={editingCategoryName} onSaveEdit={onSaveEdit} onCancelEdit={onCancelEdit} setEditingCategoryName={setEditingCategoryName} aiLoading={aiLoading} />
+                                      <CategoryTree categories={subCategories} parentId={cat.id} allCategories={allCategories} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onStartEdit={onStartEdit} onAiGenerate={onAiGenerate} editingCategoryId={editingCategoryId} editingCategoryName={editingCategoryName} onSaveEdit={onSaveEdit} onCancelEdit={onCancelEdit} setEditingCategoryName={setEditingCategoryName} aiLoading={aiLoading} openItems={openItems} onToggle={onToggle}/>
                                     </div>
                                   </AccordionContent>
                                 </AccordionItem>
@@ -186,6 +185,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
@@ -211,6 +211,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -239,6 +240,10 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }
   }, [store, data.categories]);
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -248,10 +253,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         setLogoUrl(downloadedUrl);
       }
     }
-  };
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
   };
 
   const handleGenerateLogo = async () => {
@@ -587,12 +588,22 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     handleCancelEditCategory();
   };
   
-  const handleAccordionToggle = (categoryId: string, element: HTMLDivElement | null) => {
-    if(element) {
-        setTimeout(() => {
-            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 300); // Delay to allow accordion animation to finish
-    }
+  const handleAccordionToggle = (itemId: string) => {
+      setOpenAccordionItems(prev => {
+          const newOpenItems = [itemId];
+          // Find parent and add it to the list
+          let currentId = itemId;
+          while(currentId) {
+              const cat = storeCategories.find(c => c.id === currentId);
+              if (cat && cat.parentId && !newOpenItems.includes(cat.parentId)) {
+                  newOpenItems.push(cat.parentId);
+                  currentId = cat.parentId;
+              } else {
+                  break;
+              }
+          }
+          return newOpenItems;
+      });
   };
 
   const handleSaveAsCopy = useCallback(async () => {
@@ -638,6 +649,9 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [store, data.products, data.categories, deleteDocument, toast, onCancel]);
 
   const handleDragEnd = (result: DropResult) => {
+    if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+    }
     const { destination, source, draggableId, type } = result;
 
     if (!destination || type !== 'CATEGORY') {
@@ -666,6 +680,27 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             cat.id === draggableId ? { ...cat, parentId: newParentId } : cat
         );
     });
+  };
+
+  const handleDragUpdate = (update: DragUpdate) => {
+    const { destination } = update;
+    if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+    }
+    if (destination) {
+        const overId = destination.droppableId;
+        hoverTimeoutRef.current = setTimeout(() => {
+            if (overId !== 'root' && !openAccordionItems.includes(overId)) {
+                handleAccordionToggle(overId);
+            }
+        }, 500); // 500ms delay
+    }
+  };
+  
+  const handleDragStart = () => {
+    if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+    }
   };
 
   const parentCategories = useMemo(() => storeCategories.filter(c => !c.parentId), [storeCategories]);
@@ -891,7 +926,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                     </Button>
                 </div>
                 <Separator />
-                <DragDropContext onDragEnd={handleDragEnd}>
+                <DragDropContext onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart}>
                     <div className="grid gap-4">
                         {parentCategories.length > 0 ? (
                             <CategoryTree 
@@ -901,14 +936,14 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                                 onDelete={handleDeleteCategory}
                                 onStartEdit={handleStartEditCategory}
                                 onAiGenerate={handleAiGenerateSubCategories}
-                                onToggle={handleAccordionToggle}
-                                onDrop={(sourceId, destId) => {}}
                                 editingCategoryId={editingCategoryId}
                                 editingCategoryName={editingCategoryName}
                                 onSaveEdit={handleSaveCategoryEdit}
                                 onCancelEdit={handleCancelEditCategory}
                                 setEditingCategoryName={setEditingCategoryName}
                                 aiLoading={aiLoadingCategory}
+                                openItems={openAccordionItems}
+                                onToggle={handleAccordionToggle}
                             />
                         ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
                     </div>

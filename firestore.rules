@@ -1,58 +1,101 @@
 /**
  * @file Firestore Security Rules
- * @core_philosophy This ruleset enforces a strict user-ownership model. Only the authenticated user
- * can read, create, update, or delete data under their own user ID.
- * @data_structure All data is nested under /users/{userId}, ensuring clear ownership and isolation.
- * @key_security_decisions User listing is disallowed. Data validation is relaxed for prototyping,
- * but ownership is strictly enforced.
- * @denormalization Data required for authorization (e.g., ownership) is assumed to be present
- * directly within the documents to avoid costly `get()` calls.
+ * @version 2
+ *
+ * @description
+ * This ruleset enforces a strict user-ownership model where each user can only
+ * access data explicitly associated with their user ID.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, creating a private data tree for each user.
+ * Within each user's data tree, there are collections for stores, products,
+ * categories, clients, invoices, units, and settings.
+ *
+ * Key Security Decisions:
+ * - All data is private to the user. There are no shared or public collections.
+ * - User listing is disallowed to prevent enumeration attacks.
+ * - Strong ownership validation is enforced on all write operations.
+ *
+ * Denormalization for Authorization:
+ * No denormalization is necessary in this ruleset, as all authorization decisions
+ * are based on the user ID, which is already present in the path.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @return {boolean} True if the user is signed in, false otherwise.
+     * @description Checks if the current user is signed in.
+     * @returns {boolean} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {boolean} True if the user IDs match, false otherwise.
-     * @example isOwner("someUserId") will return true if request.auth.uid == "someUserId".
+     * @description Checks if the given userId matches the authenticated user's ID.
+     * @param {string} userId - The user ID to check.
+     * @returns {boolean} True if the user ID matches the authenticated user's ID, false otherwise.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user is the owner of an existing document.
-     * @param {string} userId The user ID of the supposed owner.
-     * @return {boolean} True if the user is signed in, the user IDs match, and the resource exists.
+     * @description Checks if the given userId matches the authenticated user's ID and the resource exists.
+     * @param {string} userId - The user ID to check.
+     * @returns {boolean} True if the user ID matches the authenticated user's ID and resource exists, false otherwise.
      */
     function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
     }
-
+    
+    /**
+     * @description
+     * Protects the root `/users` collection and prevents listing.
+     * This prevents potential enumeration attacks and ensures user privacy.
+     * @path /users
+     * @allow (get) A request to get a specific user document.
+     * @deny (list) A request to list all user documents.
+     * @principle Prevents user enumeration and protects user privacy.
+     */
+    match /users {
+      allow get: if false;
+      allow list: if false;
+    }
 
     /**
-     * @description Enforces user-ownership for the stores collection.
+     * @description
+     * Enforces strict user-ownership for all documents under `/users/{userId}`.
+     * This ensures that only the authenticated user can access their own data.
+     * @path /users/{userId}
+     * @allow (create) A user can create their own document if the userId matches their auth UID.
+     * @allow (get) A user can read their own document.
+     * @allow (update) A user can update their own document.
+     * @allow (delete) A user can delete their own document.
+     * @deny (create) A user cannot create a document for another user.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description
+     * Enforces strict user-ownership for stores under `/users/{userId}/stores/{storeId}`.
+     * Only the authenticated user can create, read, update, or delete their own stores.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create) An authenticated user can create a store document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/someStoreId.
-     * @allow (get) An authenticated user can read their own store document.
-     * @allow (list) An authenticated user can list stores under their user ID.
-     * @allow (update) An authenticated user can update their own existing store document.
-     * @allow (delete) An authenticated user can delete their own existing store document.
-     * @deny (create) A user cannot create a store under another user's ID.
-     * @deny (update) A user cannot update a store under another user's ID.
-     * @deny (delete) A user cannot delete a store under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create a store if the userId matches their auth UID.
+     * @allow (get) A user can read their own store.
+     * @allow (update) A user can update their own store.
+     * @allow (delete) A user can delete their own store.
+     * @deny (create) A user cannot create a store for another user.
+     * @deny (update) A user cannot update another user's store.
+     * @principle Enforces document ownership for all operations on stores.
      */
     match /users/{userId}/stores/{storeId} {
       allow get: if isOwner(userId);
@@ -63,18 +106,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for the products collection.
+     * @description
+     * Enforces strict user-ownership for products under `/users/{userId}/products/{productId}`.
+     * Only the authenticated user can create, read, update, or delete their own products.
      * @path /users/{userId}/products/{productId}
-     * @allow (create) An authenticated user can create a product document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/someProductId.
-     * @allow (get) An authenticated user can read their own product document.
-     * @allow (list) An authenticated user can list products under their user ID.
-     * @allow (update) An authenticated user can update their own existing product document.
-     * @allow (delete) An authenticated user can delete their own existing product document.
-     * @deny (create) A user cannot create a product under another user's ID.
-     * @deny (update) A user cannot update a product under another user's ID.
-     * @deny (delete) A user cannot delete a product under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create a product if the userId matches their auth UID.
+     * @allow (get) A user can read their own product.
+     * @allow (update) A user can update their own product.
+     * @allow (delete) A user can delete their own product.
+     * @deny (create) A user cannot create a product for another user.
+     * @deny (update) A user cannot update another user's product.
+     * @principle Enforces document ownership for all operations on products.
      */
     match /users/{userId}/products/{productId} {
       allow get: if isOwner(userId);
@@ -85,18 +127,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for the categories collection.
+     * @description
+     * Enforces strict user-ownership for categories under `/users/{userId}/categories/{categoryId}`.
+     * Only the authenticated user can create, read, update, or delete their own categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) An authenticated user can create a category document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/someCategoryId.
-     * @allow (get) An authenticated user can read their own category document.
-     * @allow (list) An authenticated user can list categories under their user ID.
-     * @allow (update) An authenticated user can update their own existing category document.
-     * @allow (delete) An authenticated user can delete their own existing category document.
-     * @deny (create) A user cannot create a category under another user's ID.
-     * @deny (update) A user cannot update a category under another user's ID.
-     * @deny (delete) A user cannot delete a category under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create a category if the userId matches their auth UID.
+     * @allow (get) A user can read their own category.
+     * @allow (update) A user can update their own category.
+     * @allow (delete) A user can delete their own category.
+     * @deny (create) A user cannot create a category for another user.
+     * @deny (update) A user cannot update another user's category.
+     * @principle Enforces document ownership for all operations on categories.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
@@ -107,18 +148,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for the clients collection.
+     * @description
+     * Enforces strict user-ownership for clients under `/users/{userId}/clients/{clientId}`.
+     * Only the authenticated user can create, read, update, or delete their own clients.
      * @path /users/{userId}/clients/{clientId}
-     * @allow (create) An authenticated user can create a client document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/clients/someClientId.
-     * @allow (get) An authenticated user can read their own client document.
-     * @allow (list) An authenticated user can list clients under their user ID.
-     * @allow (update) An authenticated user can update their own existing client document.
-     * @allow (delete) An authenticated user can delete their own existing client document.
-     * @deny (create) A user cannot create a client under another user's ID.
-     * @deny (update) A user cannot update a client under another user's ID.
-     * @deny (delete) A user cannot delete a client under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create a client if the userId matches their auth UID.
+     * @allow (get) A user can read their own client.
+     * @allow (update) A user can update their own client.
+     * @allow (delete) A user can delete their own client.
+     * @deny (create) A user cannot create a client for another user.
+     * @deny (update) A user cannot update another user's client.
+     * @principle Enforces document ownership for all operations on clients.
      */
     match /users/{userId}/clients/{clientId} {
       allow get: if isOwner(userId);
@@ -129,18 +169,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for the invoices collection.
+     * @description
+     * Enforces strict user-ownership for invoices under `/users/{userId}/invoices/{invoiceId}`.
+     * Only the authenticated user can create, read, update, or delete their own invoices.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create) An authenticated user can create a invoice document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/someInvoiceId.
-     * @allow (get) An authenticated user can read their own invoice document.
-     * @allow (list) An authenticated user can list invoices under their user ID.
-     * @allow (update) An authenticated user can update their own existing invoice document.
-     * @allow (delete) An authenticated user can delete their own existing invoice document.
-     * @deny (create) A user cannot create a invoice under another user's ID.
-     * @deny (update) A user cannot update a invoice under another user's ID.
-     * @deny (delete) A user cannot delete a invoice under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create an invoice if the userId matches their auth UID.
+     * @allow (get) A user can read their own invoice.
+     * @allow (update) A user can update their own invoice.
+     * @allow (delete) A user can delete their own invoice.
+     * @deny (create) A user cannot create an invoice for another user.
+     * @deny (update) A user cannot update another user's invoice.
+     * @principle Enforces document ownership for all operations on invoices.
      */
     match /users/{userId}/invoices/{invoiceId} {
       allow get: if isOwner(userId);
@@ -151,18 +190,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces user-ownership for the units collection.
+     * @description
+     * Enforces strict user-ownership for units under `/users/{userId}/units/{unitId}`.
+     * Only the authenticated user can create, read, update, or delete their own units.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create) An authenticated user can create a unit document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/someUnitId.
-     * @allow (get) An authenticated user can read their own unit document.
-     * @allow (list) An authenticated user can list units under their user ID.
-     * @allow (update) An authenticated user can update their own existing unit document.
-     * @allow (delete) An authenticated user can delete their own existing unit document.
-     * @deny (create) A user cannot create a unit under another user's ID.
-     * @deny (update) A user cannot update a unit under another user's ID.
-     * @deny (delete) A user cannot delete a unit under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create a unit if the userId matches their auth UID.
+     * @allow (get) A user can read their own unit.
+     * @allow (update) A user can update their own unit.
+     * @allow (delete) A user can delete their own unit.
+     * @deny (create) A user cannot create a unit for another user.
+     * @deny (update) A user cannot update another user's unit.
+     * @principle Enforces document ownership for all operations on units.
      */
     match /users/{userId}/units/{unitId} {
       allow get: if isOwner(userId);
@@ -172,19 +210,18 @@ service cloud.firestore {
       allow delete: if isExistingOwner(userId);
     }
 
-       /**
-     * @description Enforces user-ownership for the toolbarPositions document.
+    /**
+     * @description
+     * Enforces strict user-ownership for settings under `/users/{userId}/settings/toolbarPositions`.
+     * Only the authenticated user can create, read, update, or delete their own settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (create) An authenticated user can create a toolbarPositions document under their own user ID,
-     *        e.g., /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions.
-     * @allow (get) An authenticated user can read their own toolbarPositions document.
-     * @allow (list) An authenticated user can list toolbarPositions under their user ID.
-     * @allow (update) An authenticated user can update their own existing toolbarPositions document.
-     * @allow (delete) An authenticated user can delete their own existing toolbarPositions document.
-     * @deny (create) A user cannot create a toolbarPositions under another user's ID.
-     * @deny (update) A user cannot update a toolbarPositions under another user's ID.
-     * @deny (delete) A user cannot delete a toolbarPositions under another user's ID.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) A user can create settings if the userId matches their auth UID.
+     * @allow (get) A user can read their own settings.
+     * @allow (update) A user can update their own settings.
+     * @allow (delete) A user can delete their own settings.
+     * @deny (create) A user cannot create settings for another user.
+     * @deny (update) A user cannot update another user's settings.
+     * @principle Enforces document ownership for all operations on settings.
      */
     match /users/{userId}/settings/toolbarPositions {
       allow get: if isOwner(userId);

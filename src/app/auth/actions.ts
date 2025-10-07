@@ -21,7 +21,7 @@ export async function handleSession(idToken: string) {
   cookies().set(SESSION_COOKIE_NAME, sessionCookie, { maxAge: expiresIn, httpOnly: true, secure: true });
 }
 
-export async function signOut() {
+export async function signOut(state: any, formData: FormData) {
   cookies().delete(SESSION_COOKIE_NAME);
   // Revalidate the root layout to ensure user state is cleared everywhere
   revalidatePath('/', 'layout'); 

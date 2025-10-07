@@ -29,11 +29,15 @@ import { initializeFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import type { AuthFormValues } from '@/lib/definitions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { useActionState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [signOutState, signOutAction, isSignOutPending] = useActionState(signOut, null);
+
 
   const handleClientGoogleSignIn = async () => {
     try {
@@ -87,12 +91,6 @@ export function UserNav() {
         return { message, success: false };
     }
   };
-
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
 
   if (isUserLoading) {
     return <div className="w-24 h-8 bg-muted rounded-md animate-pulse" />;
@@ -172,8 +170,15 @@ export function UserNav() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>انصراف</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSignOut} className="bg-destructive hover:bg-destructive/90">تایید و خروج</AlertDialogAction>
+            <form action={signOutAction}>
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2">
+                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                    <Button type="submit" variant="destructive" disabled={isSignOutPending}>
+                        {isSignOutPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                        تایید و خروج
+                    </Button>
+                </div>
+            </form>
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>

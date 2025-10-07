@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback, ChangeEvent } from 'react';
@@ -90,7 +89,7 @@ const CategoryTree = ({
   setEditingCategoryName: (name: string) => void;
   aiLoading: string | null;
   openItems: string[];
-  onToggle: (itemId: string, level: number) => void;
+  onToggle: (itemId: string | undefined, level: number) => void;
 }) => {
   const [addingToParentId, setAddingToParentId] = useState<string | null>(null);
   const [newSubCategoryNames, setNewSubCategoryNames] = useState<Record<string, string>>({});
@@ -120,6 +119,7 @@ const CategoryTree = ({
             const hasSubCategories = subCategories.length > 0;
             const isAiLoading = aiLoading === cat.id;
             const isAdding = addingToParentId === cat.id;
+            const isOpen = openItems[level] === cat.id;
 
             return (
             <Draggable draggableId={cat.id} index={index} key={cat.id}>
@@ -129,12 +129,12 @@ const CategoryTree = ({
                     {...dragProvided.draggableProps}
                     className={cn(dragSnapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg')}
                 >
-                    <AccordionItem value={cat.id} className="border-b-0">
+                     <AccordionItem value={cat.id} className="border-b-0">
                          <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 w-full" {...dragProvided.dragHandleProps}>
                             <AccordionTrigger className="p-0 hover:no-underline flex-1">
                                 <div className="flex items-center gap-2">
                                     <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                    {hasSubCategories && <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />}
+                                     {hasSubCategories && <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />}
                                     <h4 className="font-semibold">{cat.name}</h4>
                                 </div>
                             </AccordionTrigger>
@@ -147,8 +147,9 @@ const CategoryTree = ({
                         </div>
                         {editingCategoryId === cat.id ? (<div className="flex-grow flex gap-2 items-center p-2 pt-0 ml-8"><Input value={editingCategoryName} onClick={(e) => e.stopPropagation()} onChange={(e) => setEditingCategoryName(e.target.value)} /><Button size="icon" variant="ghost" onClick={() => onSaveEdit(cat.id)}><Save className="w-4 h-4" /></Button><Button size="icon" variant="ghost" onClick={onCancelEdit}><X className="w-4 h-4" /></Button></div>) : null}
                         {isAdding && (<div className="flex gap-2 p-2 ml-8"><Input value={newSubCategoryNames[cat.id] || ''} onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [cat.id]: e.target.value }))} placeholder={`نام زیردسته برای «${cat.name}»...`} onKeyDown={(e) => e.key === 'Enter' && handleAdd(cat.id)} autoFocus /><Button variant="outline" size="sm" onClick={() => handleAdd(cat.id)}><PlusCircle className="ml-2 h-4 h-4" /> افزودن</Button></div>)}
+                        
                         <AccordionContent>
-                            <Droppable droppableId={cat.id} type="CATEGORY">
+                           <Droppable droppableId={cat.id} type="CATEGORY">
                                 {(dropProvided) => (
                                 <div ref={dropProvided.innerRef} {...dropProvided.droppableProps} className="p-4 pt-2 border-l pr-4 ml-4 space-y-4">
                                     <CategoryTree 
@@ -168,7 +169,7 @@ const CategoryTree = ({
                                         aiLoading={aiLoading} 
                                         openItems={openItems}
                                         onToggle={onToggle}/>
-                                    {dropProvided.placeholder}
+                                     {dropProvided.placeholder}
                                 </div>
                                 )}
                             </Droppable>
@@ -457,7 +458,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
-            const finalCatData: { name: string; storeId: string; parentId?: string; description?: string } = {
+            const finalCatData = {
                 name: cat.name,
                 storeId: finalStoreId,
                 ...(parentId && { parentId }),
@@ -592,7 +593,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const handleAccordionToggle = (itemId: string | undefined, level: number) => {
       setOpenAccordionItems(prev => {
           const newOpenItems = prev.slice(0, level);
-          if (itemId) {
+          if (itemId && prev[level] !== itemId) {
               newOpenItems.push(itemId);
           }
           return newOpenItems;
@@ -963,5 +964,3 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     </TooltipProvider>
   );
 }
-
-    

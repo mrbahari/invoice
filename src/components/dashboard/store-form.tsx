@@ -183,6 +183,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const isEditMode = !!store;
   const { user } = useUser();
   const firestore = useFirestore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { products } = data;
@@ -245,6 +246,10 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         setLogoUrl(downloadedUrl);
       }
     }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleGenerateLogo = async () => {
@@ -443,7 +448,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             
             const catRef = doc(firestore, 'users', user.uid, 'categories', realId);
             
-            // Build the data object carefully to avoid 'undefined' values
             const finalCatData: {
                 name: string;
                 storeId: string;
@@ -781,13 +785,13 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
                           <div className='flex-1 grid gap-4'>
                               <div className="flex items-center justify-center w-full">
-                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <Button type="button" variant="outline" className="w-full h-24 border-dashed" onClick={handleUploadClick}>
+                                    <div className="flex flex-col items-center justify-center">
                                         <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
                                         <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
                                     </div>
-                                    <Input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
-                                </label>
+                                </Button>
+                                <Input id="dropzone-file" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
                               </div> 
                           </div>
                         </div>

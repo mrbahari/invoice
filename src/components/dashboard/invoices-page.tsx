@@ -145,8 +145,9 @@ export default function InvoicesPage({
 
   const handleDelete = useCallback(
     (invoiceId: string) => {
-      deleteDocument('invoices', invoiceId);
+      // Switch to list view BEFORE deleting to avoid showing the preview of a non-existent item
       setView({ type: 'list' });
+      deleteDocument('invoices', invoiceId);
     },
     [deleteDocument]
   );

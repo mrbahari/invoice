@@ -155,10 +155,8 @@ export default function InvoicesPage({
 
   const confirmDelete = useCallback(() => {
     if (!invoiceToDelete) return;
-
-    setIsDeleteAlertOpen(false);
-    setView({ type: 'list' });
     deleteDocument('invoices', invoiceToDelete.id);
+    setIsDeleteAlertOpen(false);
     setInvoiceToDelete(null);
   }, [invoiceToDelete, deleteDocument]);
   
@@ -407,4 +405,3 @@ export default function InvoicesPage({
     </>
   );
 }
-

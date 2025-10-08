@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const { data } = useData();
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const editingProduct = editingProductId ? data.products.find(p => p.id === editingProductId) : undefined;
+  const scrollPositionRef = useRef(0);
 
 
   useEffect(() => {
@@ -41,6 +42,16 @@ export default function DashboardPage() {
         router.replace('/dashboard?tab=dashboard', { scroll: false });
     }
   }, [searchParams, router]);
+
+  // Restore scroll position when returning to the product list
+  useEffect(() => {
+    if (activeTab === 'products' && editingProductId === null && scrollPositionRef.current > 0 && typeof window !== 'undefined') {
+        setTimeout(() => {
+            window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
+            scrollPositionRef.current = 0; // Reset after restoring
+        }, 100); // A small delay can help ensure the list is rendered
+    }
+  }, [activeTab, editingProductId]);
 
   const handleNavigation = (tab: DashboardTab, data?: { invoice: Partial<Invoice>}) => {
     if (tab === 'invoices' && data?.invoice) {
@@ -51,6 +62,10 @@ export default function DashboardPage() {
   
   // Handlers for ProductForm
   const handleEditProduct = (productId: string) => {
+    if (typeof window !== 'undefined') {
+        scrollPositionRef.current = window.scrollY; // Save current scroll position
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top for the form
+    }
     setEditingProductId(productId);
   };
 
@@ -60,9 +75,7 @@ export default function DashboardPage() {
 
   const handleProductFormSave = () => {
     setEditingProductId(null);
-    if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    // Scroll restoration will be handled by the useEffect
   };
 
 

@@ -564,7 +564,7 @@ export default function ProductsPage() {
                                  </SelectContent>
                             </Select>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="grid grid-cols-2 gap-2">
                             <Button variant="destructive" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
                             <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore} className="bg-green-600 hover:bg-green-700">
                                 {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}

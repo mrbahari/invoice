@@ -20,6 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store } from 'lucide-react';
@@ -226,7 +227,7 @@ export default function SettingsPage() {
 
     if (needsStoreSelection && !targetStoreId) {
         if (data.stores.length === 0) {
-            toast({ variant: 'destructive', title: 'فروشگاه مقصد وجود ندارد', description: 'لطفاً ابتدا یک فروشگاه ایجاد کنید.' });
+            toast({ variant: 'destructive', title: 'فروشگاه مقصد وجود ندارد', description: 'لطفاً ابتدا یک فروشگاه ایجاد کنید یا از فایل پشتیبان فروشگاه‌ها را نیز وارد کنید.' });
             return;
         }
         setIsSelectingStore(true);

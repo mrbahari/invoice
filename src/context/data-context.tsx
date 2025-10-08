@@ -329,8 +329,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 }
 
                 // If importing products or categories to a specific store
-                if (targetStoreId && (key === 'products' || key === 'categories')) {
-                  (itemData as Product | Category).storeId = targetStoreId;
+                if (targetStoreId && (key === 'products' || key === 'categories' || key === 'units')) {
+                  (itemData as Product | Category | UnitOfMeasurement).storeId = targetStoreId;
                 }
                 
                 const docRef = id && !id.startsWith('temp-') ? doc(collectionRef, id) : doc(collectionRef);

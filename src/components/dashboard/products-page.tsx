@@ -218,7 +218,7 @@ export default function ProductsPage() {
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [scrollPositionRef = useRef(0);
+  const scrollPositionRef = useRef(0);
   const storesScrollRef = useRef<HTMLDivElement>(null);
   useDraggableScroll(storesScrollRef, { direction: 'horizontal' });
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -605,7 +605,7 @@ export default function ProductsPage() {
                         این عمل غیرقابل بازگشت است و {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده را برای همیشه حذف می‌کند.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
                       <AlertDialogCancel>انصراف</AlertDialogCancel>
                       <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
                         {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
@@ -678,7 +678,7 @@ export default function ProductsPage() {
                                                 onClick={() => handleEditClick(product)} 
                                                 className="cursor-pointer"
                                             >
-                                                <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
+                                                <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
                                                     <Checkbox
                                                         checked={selectedProducts.includes(product.id)}
                                                         onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
@@ -720,5 +720,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-    

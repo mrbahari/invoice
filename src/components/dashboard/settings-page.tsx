@@ -20,7 +20,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store } from 'lucide-react';
@@ -37,6 +36,7 @@ import defaultDb from '@/database/defaultdb.json';
 import { useUser } from '@/firebase';
 import { Checkbox } from '../ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { AnimatePresence, motion } from 'framer-motion';
 
 
 const colorThemes = [
@@ -81,13 +81,21 @@ export default function SettingsPage() {
     toolbarPositions: false,
   });
 
-  const [isSelectingStore, setIsSelectingStore] = useState(false);
+  const [showStoreSelector, setShowStoreSelector] = useState(false);
   const [targetStoreId, setTargetStoreId] = useState('');
 
   useEffect(() => {
     setSearchVisible(false);
     return () => setSearchVisible(true);
   }, [setSearchVisible]);
+
+  useEffect(() => {
+      const needsSelection = (selectedSections.products || selectedSections.categories || selectedSections.units) && !selectedSections.stores;
+      setShowStoreSelector(needsSelection);
+      if (!needsSelection) {
+        setTargetStoreId(''); // Reset if condition is no longer met
+      }
+  }, [selectedSections]);
 
 
   const handleThemeColorChange = (colorValue: string) => {
@@ -196,7 +204,7 @@ export default function SettingsPage() {
             stores: false, categories: false, products: false,
             customers: false, invoices: false, units: false, toolbarPositions: false
         });
-        setIsSelectingStore(false);
+        setShowStoreSelector(false);
         setTargetStoreId('');
 
       } catch (error: any) {
@@ -223,14 +231,12 @@ export default function SettingsPage() {
         return;
     }
     
-    const needsStoreSelection = (sectionsToRestore.includes('products') || sectionsToRestore.includes('categories')) && !sectionsToRestore.includes('stores');
-
-    if (needsStoreSelection && !targetStoreId) {
+    if (showStoreSelector && !targetStoreId) {
         if (data.stores.length === 0) {
             toast({ variant: 'destructive', title: 'فروشگاه مقصد وجود ندارد', description: 'لطفاً ابتدا یک فروشگاه ایجاد کنید یا از فایل پشتیبان فروشگاه‌ها را نیز وارد کنید.' });
-            return;
+        } else {
+             toast({ variant: 'destructive', title: 'فروشگاه مقصد انتخاب نشده', description: 'لطفاً یک فروشگاه را برای وارد کردن اطلاعات انتخاب کنید.' });
         }
-        setIsSelectingStore(true);
         return;
     }
 
@@ -244,7 +250,7 @@ export default function SettingsPage() {
             }
         }
         
-        await loadDataBatch(dataToLoad, true, needsStoreSelection ? targetStoreId : undefined);
+        await loadDataBatch(dataToLoad, true, showStoreSelector ? targetStoreId : undefined);
 
         toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات انتخاب شده با موفقیت به داده‌های فعلی اضافه شد.' });
         setDataToRestore(null);
@@ -253,7 +259,7 @@ export default function SettingsPage() {
         toast({ variant: 'destructive', title: 'خطا در بازیابی', description: 'مشکلی در فرآیند بازیابی اطلاعات رخ داد.'});
     } finally {
         setIsProcessing(false);
-        setIsSelectingStore(false);
+        setShowStoreSelector(false);
         setTargetStoreId('');
     }
   };
@@ -263,11 +269,11 @@ export default function SettingsPage() {
     fileInputRef.current?.click();
   };
 
-  const isRestoreConfirmDisabled = Object.values(selectedSections).every(v => !v);
+  const isRestoreConfirmDisabled = Object.values(selectedSections).every(v => !v) || (showStoreSelector && !targetStoreId);
   
   const handleCloseDialog = () => {
     setDataToRestore(null);
-    setIsSelectingStore(false);
+    setShowStoreSelector(false);
     setTargetStoreId('');
   }
 
@@ -278,65 +284,73 @@ export default function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>بازیابی اطلاعات از فایل</AlertDialogTitle>
              <AlertDialogDescription>
-              {isSelectingStore 
-                ? "برای وارد کردن محصولات/دسته‌بندی‌ها، یک فروشگاه مقصد انتخاب کنید."
-                : "بخش‌هایی را که می‌خواهید بازیابی شوند، انتخاب کنید. داده‌های جدید به داده‌های فعلی اضافه شده و از موارد تکراری جلوگیری می‌شود."
-              }
+              بخش‌هایی را که می‌خواهید بازیابی شوند، انتخاب کنید. داده‌های جدید به داده‌های فعلی اضافه شده و از موارد تکراری جلوگیری می‌شود.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto p-1">
-            {isSelectingStore ? (
-                 <div className="grid gap-4 py-8">
-                    <div className="flex items-center gap-3 p-4 border rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-300">
-                        <Store className="h-6 w-6"/>
-                        <p className="font-semibold">
-                            انتخاب فروشگاه مقصد
-                        </p>
+          <div className="max-h-[60vh] overflow-y-auto p-1 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                {(Object.keys(sectionLabels) as DataSection[]).map((key) => {
+                    const items = dataToRestore ? (dataToRestore[key] as any[]) : [];
+                    const count = Array.isArray(items) ? items.length : (items ? 1 : 0);
+                    if (count === 0) return null; // Don't show empty sections
+                    
+                    return (
+                        <div key={key} className="flex items-center space-x-2 space-x-reverse rounded-md border p-3 hover:bg-accent has-[:checked]:bg-accent/50 has-[:checked]:border-primary/50">
+                            <Checkbox
+                                id={`check-${key}`}
+                                checked={selectedSections[key]}
+                                onCheckedChange={(checked) => {
+                                    setSelectedSections(prev => ({...prev, [key]: !!checked}))
+                                }}
+                            />
+                            <Label htmlFor={`check-${key}`} className="flex-1 cursor-pointer">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-semibold">{sectionLabels[key]}</span>
+                                    <Badge variant="secondary">{count.toLocaleString('fa-IR')} مورد</Badge>
+                                </div>
+                            </Label>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <AnimatePresence>
+              {showStoreSelector && (
+                 <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                 >
+                    <div className="grid gap-4 py-4 border-t">
+                        <div className="flex items-center gap-3 p-3 border rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-300">
+                            <Store className="h-5 w-5"/>
+                            <p className="font-semibold text-sm">
+                                لطفاً فروشگاه مقصد را برای وارد کردن محصولات/دسته‌بندی‌ها انتخاب کنید.
+                            </p>
+                        </div>
+                        <Select value={targetStoreId} onValueChange={setTargetStoreId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="یک فروشگاه را برای وارد کردن اطلاعات انتخاب کنید..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {data.stores.map(store => (
+                                    <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <Select value={targetStoreId} onValueChange={setTargetStoreId}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="یک فروشگاه را برای وارد کردن اطلاعات انتخاب کنید..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {data.stores.map(store => (
-                                <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                 </div>
-            ) : (
-                <div className="grid grid-cols-2 gap-4">
-                    {(Object.keys(sectionLabels) as DataSection[]).map((key) => {
-                        const items = dataToRestore ? (dataToRestore[key] as any[]) : [];
-                        const count = Array.isArray(items) ? items.length : (items ? 1 : 0);
-                        if (count === 0) return null; // Don't show empty sections
-                        
-                        return (
-                            <div key={key} className="flex items-center space-x-2 space-x-reverse rounded-md border p-3 hover:bg-accent">
-                                <Checkbox
-                                    id={`check-${key}`}
-                                    checked={selectedSections[key]}
-                                    onCheckedChange={(checked) => {
-                                        setSelectedSections(prev => ({...prev, [key]: !!checked}))
-                                    }}
-                                />
-                                <Label htmlFor={`check-${key}`} className="flex-1 cursor-pointer">
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-semibold">{sectionLabels[key]}</span>
-                                        <Badge variant="secondary">{count.toLocaleString('fa-IR')} مورد</Badge>
-                                    </div>
-                                </Label>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                  </motion.div>
+              )}
+            </AnimatePresence>
+
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCloseDialog}>انصراف</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled || (isSelectingStore && !targetStoreId)}>
+            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || Object.values(selectedSections).every(v => !v)}>
               {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
-              {isSelectingStore ? "تایید و بازیابی" : "ادامه"}
+              {showStoreSelector ? 'تایید و بازیابی' : 'بازیابی'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

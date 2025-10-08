@@ -324,18 +324,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
             for (const item of collectionData) {
                 const { id, ...itemData } = item;
-                if (merge && existingIds.has(id)) {
-                    continue;
+                if (merge && id && existingIds.has(id)) { // Check for ID existence
+                    continue; // Skip if merging and ID already exists
                 }
 
-                // If importing products or categories to a specific store
+                let finalItemData: any = itemData;
+                // If importing products, categories, or units to a specific store
                 if (targetStoreId && (key === 'products' || key === 'categories' || key === 'units')) {
-                  (itemData as Product | Category | UnitOfMeasurement).storeId = targetStoreId;
+                  finalItemData = { ...itemData, storeId: targetStoreId };
                 }
                 
+                // Use existing ID if available and not merging, otherwise create new
                 const docRef = id && !id.startsWith('temp-') ? doc(collectionRef, id) : doc(collectionRef);
-                batch.set(docRef, itemData);
-                itemsToAdd.push({ id: docRef.id, ...itemData } as Document);
+                batch.set(docRef, finalItemData);
+                itemsToAdd.push({ id: docRef.id, ...finalItemData } as Document);
             }
 
             if (itemsToAdd.length > 0) {

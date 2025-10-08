@@ -72,6 +72,7 @@ type InvoiceEditorProps = {
     onSaveSuccess: (invoiceId: string) => void;
     onPreview: (invoiceId: string) => void;
     onCancel: () => void;
+    onDirtyChange: (isDirty: boolean) => void;
 };
 
 type FlyingProduct = {
@@ -321,29 +322,34 @@ const AddProductsComponent = React.memo(({
 }) => {
     const draggableScrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
-    const [isPressing, setIsPressing] = useState<null | 'add' | 'remove'>(null);
-    const [activeProduct, setActiveProduct] = useState<string | null>(null);
+    
+    // States to detect click vs. drag
+    const isDraggingRef = useRef(false);
+    const startPos = useRef({ x: 0, y: 0 });
 
-    const handlePress = (action: 'add' | 'remove', product: Product) => {
-        setIsPressing(action);
-        setActiveProduct(product.id);
-        if (action === 'add') onAddProduct(product);
-        else onRemoveProduct(product);
+    const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+        isDraggingRef.current = false;
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        startPos.current = { x: clientX, y: clientY };
+    };
+
+    const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        const dx = Math.abs(clientX - startPos.current.x);
+        const dy = Math.abs(clientY - startPos.current.y);
+        if (dx > 5 || dy > 5) {
+            isDraggingRef.current = true;
+        }
     };
     
-    const stopPressing = () => {
-        setIsPressing(null);
-        setActiveProduct(null);
-    };
-
-    useInterval(() => {
-        const product = filteredProducts.find(p => p.id === activeProduct);
-        if (isPressing && product) {
-            if (isPressing === 'add') onAddProduct(product);
+    const handleMouseUp = (action: 'add' | 'remove', product: Product) => {
+        if (!isDraggingRef.current) {
+            if (action === 'add') onAddProduct(product);
             else onRemoveProduct(product);
         }
-    }, isPressing ? 150 : null);
-
+    };
 
     return (
         <Card className="sticky top-20">
@@ -398,22 +404,22 @@ const AddProductsComponent = React.memo(({
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
                                         <div 
                                           className="absolute inset-0 flex"
-                                          onMouseUp={stopPressing}
-                                          onMouseLeave={stopPressing}
-                                          onTouchEnd={stopPressing}
-                                          onTouchCancel={stopPressing}
+                                          onMouseDown={handleMouseDown}
+                                          onTouchStart={handleMouseDown}
+                                          onMouseMove={handleMouseMove}
+                                          onTouchMove={handleMouseMove}
                                         >
                                             <div 
                                                 className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/40"
-                                                onMouseDown={() => handlePress('remove', product)}
-                                                onTouchStart={() => handlePress('remove', product)}
+                                                onMouseUp={() => handleMouseUp('remove', product)}
+                                                onTouchEnd={() => handleMouseUp('remove', product)}
                                             >
                                                 <Minus className="h-6 w-6 text-white" />
                                             </div>
                                             <div 
                                                 className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-green-500/20 hover:bg-green-500/40"
-                                                onMouseDown={() => handlePress('add', product)}
-                                                onTouchStart={() => handlePress('add', product)}
+                                                onMouseUp={() => handleMouseUp('add', product)}
+                                                onTouchEnd={() => handleMouseUp('add', product)}
                                             >
                                                 <Plus className="h-6 w-6 text-white" />
                                             </div>
@@ -446,7 +452,7 @@ const AddProductsComponent = React.memo(({
 AddProductsComponent.displayName = 'AddProductsComponent';
 
 
-export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, onCancel }: InvoiceEditorProps) {
+export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, onCancel, onDirtyChange }: InvoiceEditorProps) {
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const isClient = useIsClient();
@@ -456,6 +462,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   const productsScrollRef = useRef<HTMLDivElement>(null);
   
   const isEditMode = !!invoice.id;
+  const [initialState, setInitialState] = useState<string | null>(null);
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [storeId, setStoreId] = useState<string>('');
@@ -472,11 +479,23 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   const [customerDialogView, setCustomerDialogView] = useState<'select' | 'create'>('select');
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  const isDirty = useMemo(() => {
+    if (initialState === null) return false;
+    return JSON.stringify(invoice) !== initialState;
+  }, [invoice, initialState]);
+
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    setInitialState(JSON.stringify(invoice));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   useEffect(() => {
@@ -766,7 +785,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     } else {
         processedInvoiceId = await addDocument('invoices', finalInvoiceData);
     }
-
+    setInitialState(JSON.stringify({ ...invoice, id: processedInvoiceId }));
     setIsProcessing(false);
     return processedInvoiceId || null;
   };

@@ -478,10 +478,18 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="unit" className="text-right">واحد اصلی</Label>
                                     <div className="col-span-2">
-                                        <Select value={unit} onValueChange={(value: string) => setUnit(value)} required disabled={!storeId}>
+                                        <Select
+                                            value={unit ? storeUnits.find(u => u.name === unit)?.id || '' : ''}
+                                            onValueChange={(value: string) => {
+                                                const selectedUnit = storeUnits.find(u => u.id === value);
+                                                if (selectedUnit) setUnit(selectedUnit.name);
+                                            }}
+                                            required
+                                            disabled={!storeId}
+                                        >
                                             <SelectTrigger id="unit"><SelectValue placeholder={storeId ? "انتخاب واحد" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
                                             <SelectContent>
-                                                {storeUnits.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
+                                                {storeUnits.map((u) => (<SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -489,11 +497,23 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="sub-unit" className="text-right">واحد فرعی</Label>
                                     <div className="col-span-2">
-                                        <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }} disabled={!storeId}>
+                                        <Select
+                                            value={subUnit ? storeUnits.find(u => u.name === subUnit)?.id || 'none' : 'none'}
+                                            onValueChange={(value: string) => {
+                                                if (value === 'none') {
+                                                    setSubUnit(undefined);
+                                                    setSubUnitQuantity('');
+                                                } else {
+                                                    const selectedUnit = storeUnits.find(u => u.id === value);
+                                                    if (selectedUnit) setSubUnit(selectedUnit.name);
+                                                }
+                                            }}
+                                            disabled={!storeId}
+                                        >
                                             <SelectTrigger id="sub-unit"><SelectValue placeholder={storeId ? "اختیاری" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem key="none" value="none">هیچکدام</SelectItem>
-                                                {storeUnits.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
+                                                <SelectItem value="none">هیچکدام</SelectItem>
+                                                {storeUnits.map((u) => (<SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                     </div>

@@ -66,6 +66,8 @@ export default function InvoicesPage({
   
   const [view, setView] = useState<View>(() => draftInvoice ? { type: 'editor', isDirty: false } : { type: 'list' });
   const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   
   useBeforeUnload(
     view.type === 'editor' && view.isDirty,
@@ -144,13 +146,21 @@ export default function InvoicesPage({
   );
 
   const handleDelete = useCallback(
-    (invoiceId: string) => {
-      // Switch to list view BEFORE deleting to avoid showing the preview of a non-existent item
-      setView({ type: 'list' });
-      deleteDocument('invoices', invoiceId);
+    (invoice: Invoice) => {
+      setInvoiceToDelete(invoice);
+      setIsDeleteAlertOpen(true);
     },
-    [deleteDocument]
+    []
   );
+
+  const confirmDelete = useCallback(() => {
+    if (!invoiceToDelete) return;
+
+    setIsDeleteAlertOpen(false);
+    setView({ type: 'list' });
+    deleteDocument('invoices', invoiceToDelete.id);
+    setInvoiceToDelete(null);
+  }, [invoiceToDelete, deleteDocument]);
   
   const handleStatusChange = (e: React.MouseEvent, invoiceId: string, currentStatus: InvoiceStatus) => {
     e.stopPropagation();
@@ -322,35 +332,14 @@ export default function InvoicesPage({
                                   </TooltipTrigger>
                                   <TooltipContent><p>پیش‌نمایش</p></TooltipContent>
                                 </Tooltip>
-                                 <AlertDialog>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon-sm" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => e.stopPropagation()}>
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>حذف</p></TooltipContent>
-                                    </Tooltip>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                این عمل غیرقابل بازگشت است و فاکتور شماره {invoice.invoiceNumber} را برای همیشه حذف می‌کند.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                            <AlertDialogAction
-                                                onClick={() => handleDelete(invoice.id)}
-                                                className="bg-destructive hover:bg-destructive/90"
-                                            >
-                                                حذف
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                                 <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon-sm" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => {e.stopPropagation(); handleDelete(invoice);}}>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>حذف</p></TooltipContent>
+                                </Tooltip>
                             </div>
                         </CardFooter>
                       </Card>
@@ -393,7 +382,29 @@ export default function InvoicesPage({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              این عمل غیرقابل بازگشت است و فاکتور شماره {invoiceToDelete?.invoiceNumber} را برای همیشه حذف می‌کند.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setInvoiceToDelete(null)}>انصراف</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {renderContent()}
     </>
   );
 }
+

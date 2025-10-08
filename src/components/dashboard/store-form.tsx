@@ -46,6 +46,7 @@ import { DragDropContext, Droppable, Draggable, type DropResult, type DragStart 
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import useBeforeUnload from '@/hooks/use-before-unload';
 
 
 type StoreFormProps = {
@@ -115,6 +116,15 @@ const CategoryTree = ({
         const isAiLoading = aiLoading === cat.id;
         const isAdding = addingToParentId === cat.id;
 
+        const TriggerContent = (
+          <div className="flex items-center gap-2">
+            {hasSubCategories && (
+              <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", openAccordionItems.includes(cat.id) && "rotate-180")} />
+            )}
+            <h4 className="font-semibold">{cat.name}</h4>
+          </div>
+        );
+
         return (
           <Draggable draggableId={cat.id} index={index} key={cat.id}>
             {(dragProvided, dragSnapshot) => (
@@ -123,21 +133,22 @@ const CategoryTree = ({
                 {...dragProvided.draggableProps}
                 className={cn('relative group/item', dragSnapshot.isDragging && 'bg-accent/50 rounded-lg shadow-lg opacity-90')}
               >
-                <Accordion type="single" collapsible value={openAccordionItems.includes(cat.id) ? cat.id : ""} onValueChange={() => onToggle(cat.id, level)}>
+                <Accordion type="single" collapsible value={openAccordionItems.includes(cat.id) ? cat.id : ""}>
                   <AccordionItem value={cat.id} className="border-b-0">
                      <div className="flex items-center p-2 rounded-md hover:bg-muted/50 w-full" >
                         <div className="flex flex-grow items-center gap-2" {...dragProvided.dragHandleProps}>
-                            <GripVertical className="h-5 w-5 text-muted-foreground" />
-                            <AccordionTrigger
-                                className="p-0 hover:no-underline flex-grow justify-start"
-                            >
-                                <div className="flex items-center gap-2">
-                                    {hasSubCategories && (
-                                        <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", openAccordionItems.includes(cat.id) && "rotate-180")} />
-                                    )}
-                                    <h4 className="font-semibold">{cat.name}</h4>
+                             {hasSubCategories ? (
+                                <AccordionTrigger
+                                    onClick={() => onToggle(cat.id, level)}
+                                    className="p-0 hover:no-underline flex-grow justify-start"
+                                >
+                                    {TriggerContent}
+                                </AccordionTrigger>
+                            ) : (
+                                <div className="p-0 flex-grow justify-start flex">
+                                    {TriggerContent}
                                 </div>
-                            </AccordionTrigger>
+                            )}
                         </div>
                        
                         <div className="flex items-center gap-1 shrink-0">
@@ -195,9 +206,11 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const firestore = useFirestore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data, addDocument, deleteDocument } = useData();
-  const { products, units: unitsOfMeasurement } = data;
+  const { data, addDocument, deleteDocument, setData: setGlobalData } = useData();
+  const { products, categories, units: unitsOfMeasurement } = data;
   
+  // Store fields
+  const [initialState, setInitialState] = useState<string | null>(null);
   const [name, setName] = useState(store?.name || '');
   const [description, setDescription] = useState(store?.description || '');
   const [address, setAddress] = useState(store?.address || '');
@@ -233,7 +246,17 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   
   const [newUnitName, setNewUnitName] = useState('');
-  const isDuplicateUnit = newUnitName.trim() !== '' && unitsOfMeasurement.some(u => u.name === newUnitName.trim());
+  const [localUnits, setLocalUnits] = useState<UnitOfMeasurement[]>([]);
+
+  useEffect(() => {
+    if (store) {
+      setLocalUnits(unitsOfMeasurement.filter(u => u.storeId === store.id));
+    } else {
+      setLocalUnits([]);
+    }
+  }, [store, unitsOfMeasurement]);
+
+  const isDuplicateUnit = newUnitName.trim() !== '' && localUnits.some(u => u.name === newUnitName.trim());
 
   
   const isDuplicateCategory = useMemo(() => {
@@ -242,15 +265,59 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [newCategoryName, storeCategories]);
 
   const isCategoryInputEmpty = newCategoryName.trim() === '';
+  
+  const isDirty = useMemo(() => {
+    const currentState = JSON.stringify({
+      name, description, address, phone, logoUrl,
+      bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber,
+      storeCategories, localUnits
+    });
+    return initialState !== null && currentState !== initialState;
+  }, [initialState, name, description, address, phone, logoUrl, bankAccountHolder, bankName, bankAccountNumber, bankIban, bankCardNumber, storeCategories, localUnits]);
 
+  useBeforeUnload(isDirty, "تغییرات ذخیره نشده است. آیا مطمئن هستید که می‌خواهید خارج شوید؟");
+
+  const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
+  
+  const handleCancel = () => {
+    if (isDirty) {
+      setIsCancelAlertOpen(true);
+    } else {
+      onCancel();
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    onCancel();
+    setIsCancelAlertOpen(false);
+  };
 
   useEffect(() => {
     if (store) {
       setStoreCategories(data.categories.filter(c => c.storeId === store.id));
+      setLocalUnits(data.units.filter(u => u.storeId === store.id));
     } else {
       setStoreCategories([]);
+      setLocalUnits([]);
     }
-  }, [store, data.categories]);
+    // Set initial state for dirty check
+    const currentData = {
+      name: store?.name || '',
+      description: store?.description || '',
+      address: store?.address || '',
+      phone: store?.phone || '',
+      logoUrl: store?.logoUrl || null,
+      bankAccountHolder: store?.bankAccountHolder || '',
+      bankName: store?.bankName || '',
+      bankAccountNumber: store?.bankAccountNumber || '',
+      bankIban: store?.bankIban || '',
+      bankCardNumber: store?.bankCardNumber || '',
+      storeCategories: store ? data.categories.filter(c => c.storeId === store.id) : [],
+      localUnits: store ? data.units.filter(u => u.storeId === store.id) : [],
+    };
+    setInitialState(JSON.stringify(currentData));
+  }, [store, data.categories, data.units]);
+
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -426,10 +493,10 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
 
     try {
         const batch = writeBatch(firestore);
-        const storeData = buildStoreData();
         let finalStoreId = store?.id;
 
         // 1. Handle Store Document
+        const storeData = buildStoreData();
         if (isEditMode && finalStoreId) {
             const storeRef = doc(firestore, 'users', user.uid, 'stores', finalStoreId);
             batch.update(storeRef, storeData);
@@ -487,7 +554,30 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
             }
         }
 
-        // 3. Commit the batch
+        // 3. Handle Units
+        const existingUnits = unitsOfMeasurement.filter(u => u.storeId === store?.id);
+        const currentUnitIds = new Set(localUnits.map(u => u.id));
+        
+        for (const unit of localUnits) {
+            const unitRef = doc(firestore, 'users', user.uid, 'units', unit.id);
+            if (unit.id.startsWith('temp-')) {
+                const { id, ...unitData } = unit;
+                const newUnitRef = doc(collection(firestore, 'users', user.uid, 'units'));
+                batch.set(newUnitRef, { ...unitData, storeId: finalStoreId });
+            } else {
+                 batch.update(unitRef, { name: unit.name, storeId: finalStoreId });
+            }
+        }
+
+        for (const unit of existingUnits) {
+            if (!currentUnitIds.has(unit.id)) {
+                const unitRef = doc(firestore, 'users', user.uid, 'units', unit.id);
+                batch.delete(unitRef);
+            }
+        }
+
+
+        // 4. Commit the batch
         await batch.commit();
         
         toast({ variant: 'success', title: isEditMode ? 'فروشگاه با موفقیت ویرایش شد' : 'فروشگاه با موفقیت ایجاد شد' });
@@ -499,7 +589,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     } finally {
         setIsProcessing(false);
     }
-  }, [name, user, firestore, isEditMode, store, buildStoreData, storeCategories, data.categories, toast, onSave]);
+  }, [name, user, firestore, isEditMode, store, buildStoreData, storeCategories, data.categories, unitsOfMeasurement, localUnits, toast, onSave]);
   
   const handleDeleteAllCategories = useCallback(() => {
     const allCategoryIds = new Set(storeCategories.map(c => c.id));
@@ -669,15 +759,15 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
         }
 
         const newItems = Array.from(storeCategories);
-        const draggedItem = newItems.find(item => item.id === draggableId);
-        if (!draggedItem) return;
+        const draggedItemIndex = newItems.findIndex(item => item.id === draggableId);
+        if (draggedItemIndex === -1) return;
 
+        const [draggedItem] = newItems.splice(draggedItemIndex, 1);
+        
         // Update Parent
         const newParentId = destination.droppableId === 'root' ? undefined : destination.droppableId;
         draggedItem.parentId = newParentId;
 
-        // Reorder
-        newItems.splice(newItems.indexOf(draggedItem), 1);
         newItems.splice(destination.index, 0, draggedItem);
         
         setStoreCategories(newItems);
@@ -698,12 +788,18 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       .sort((a, b) => storeCategories.indexOf(a) - storeCategories.indexOf(b));
   }, [storeCategories]);
 
-  const handleAddUnit = async () => {
+  const handleAddUnit = () => {
     const name = newUnitName.trim();
     if (name === '' || isDuplicateUnit) {
         return;
     }
-    await addDocument('units', { name, defaultQuantity: 1 });
+    const newUnit: UnitOfMeasurement = {
+      id: `temp-${Date.now()}`,
+      name,
+      storeId: store?.id || 'temp',
+      defaultQuantity: 1,
+    };
+    setLocalUnits(prev => [...prev, newUnit]);
     setNewUnitName('');
   };
 
@@ -714,182 +810,198 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }
   };
 
-  const handleDeleteUnit = async (unitId: string) => {
-    await deleteDocument('units', unitId);
+  const handleDeleteUnit = (unitId: string) => {
+     setLocalUnits(prev => prev.filter(u => u.id !== unitId));
   };
 
   return (
     <TooltipProvider>
-    <div className="max-w-4xl mx-auto grid gap-6 pb-28">
-         <FloatingToolbar pageKey="store-form">
-            <div className="flex flex-col items-center gap-1">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={onCancel} className="text-muted-foreground w-8 h-8">
-                            <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
-                </Tooltip>
-                {isEditMode && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                disabled={isProcessing} 
-                                className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
-                        </Tooltip>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                )}
-                {isEditMode && (
-                    <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
-                            <Copy className="h-4 w-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
-                    </Tooltip>
-                )}
-            </div>
-            <Separator orientation="horizontal" className="w-6" />
-            <div className="flex flex-col items-center gap-1">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
-                            <Save className="h-5 w-5" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
-                </Tooltip>
-            </div>
-        </FloatingToolbar>
-        <Card>
-            <CardHeader>
-                <div className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>
-                            {isEditMode ? `ویرایش فروشگاه: ${store?.name}` : 'افزودن فروشگاه جدید'}
-                        </CardTitle>
-                        <CardDescription>
-                           اطلاعات اصلی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
-                        </CardDescription>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-3">
-                        <Label htmlFor="store-name">نام فروشگاه</Label>
-                        <Input id="store-name" value={name} onChange={(e) => {setName(e.target.value); setNameError(false);}} placeholder="مثال: دکوربند" required className={cn(nameError && 'border-destructive')} />
-                    </div>
-                     <div className="grid gap-3">
-                        <Label htmlFor="store-phone">تلفن</Label>
-                        <Input id="store-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴" />
-                    </div>
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="store-description">توضیحات فروشگاه</Label>
-                    <Textarea id="store-description" value={description} onChange={(e) => {setDescription(e.target.value); setDescriptionError(false);}} placeholder="توضیح مختصری درباره زمینه فعالیت فروشگاه..." className={cn(descriptionError && 'border-destructive')} />
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="store-address">آدرس</Label>
-                    <Input id="store-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="مثال: میدان ولیعصر، برج فناوری" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="grid gap-4">
-                        <Label>لوگوی فروشگاه</Label>
-                        <div className='flex items-start gap-6'>
-                          <div className="relative w-24 h-24">
-                              {isUploading && <Progress value={progress} className="absolute top-0 left-0 w-full h-1" />}
-                              {logoUrl ? (
-                                <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2 bg-white" key={logoUrl} unoptimized />
-                              ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-                                      <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
-                                  </div>}
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="outline"
-                                        className="absolute -bottom-2 -left-2 h-8 w-8 rounded-full bg-background"
-                                        onClick={handleGenerateLogo}
-                                        disabled={isAiLogoLoading || isUploading}
-                                    >
-                                        {isAiLogoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>تولید لوگو با هوش مصنوعی</p></TooltipContent>
-                              </Tooltip>
-                          </div>
+      <AlertDialog open={isCancelAlertOpen} onOpenChange={setIsCancelAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>لغو تغییرات</AlertDialogTitle>
+            <AlertDialogDescription>
+              تغییرات ذخیره نشده از بین خواهند رفت. آیا مطمئن هستید؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ادامه ویرایش</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} variant="destructive">
+              بله، لغو کن
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="max-w-4xl mx-auto grid gap-6 pb-28">
+          <FloatingToolbar pageKey="store-form">
+              <div className="flex flex-col items-center gap-1">
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button type="button" variant="ghost" size="icon" onClick={handleCancel} className="text-muted-foreground w-8 h-8">
+                              <ArrowRight className="h-4 w-4" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
+                  </Tooltip>
+                  {isEditMode && (
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  disabled={isProcessing} 
+                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                                  >
+                                      <Trash2 className="h-4 w-4" />
+                                  </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
+                          </Tooltip>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                  )}
+                  {isEditMode && (
+                      <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
+                              <Copy className="h-4 w-4" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
+                      </Tooltip>
+                  )}
+              </div>
+              <Separator orientation="horizontal" className="w-6" />
+              <div className="flex flex-col items-center gap-1">
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button onClick={handleSaveAll} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                              <Save className="h-5 w-5" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left"><p>ذخیره کل تغییرات</p></TooltipContent>
+                  </Tooltip>
+              </div>
+          </FloatingToolbar>
+          <Card>
+              <CardHeader>
+                  <div className="flex flex-row items-center justify-between">
+                      <div>
+                          <CardTitle>
+                              {isEditMode ? `ویرایش فروشگاه: ${store?.name}` : 'افزودن فروشگاه جدید'}
+                          </CardTitle>
+                          <CardDescription>
+                            اطلاعات اصلی و دسته‌بندی‌های فروشگاه را مدیریت کنید.
+                          </CardDescription>
+                      </div>
+                  </div>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid gap-3">
+                          <Label htmlFor="store-name">نام فروشگاه</Label>
+                          <Input id="store-name" value={name} onChange={(e) => {setName(e.target.value); setNameError(false);}} placeholder="مثال: دکوربند" required className={cn(nameError && 'border-destructive')} />
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="store-phone">تلفن</Label>
+                          <Input id="store-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="مثال: ۰۲۱-۸۸۸۸۴۴۴۴" />
+                      </div>
+                  </div>
+                  <div className="grid gap-3">
+                      <Label htmlFor="store-description">توضیحات فروشگاه</Label>
+                      <Textarea id="store-description" value={description} onChange={(e) => {setDescription(e.target.value); setDescriptionError(false);}} placeholder="توضیح مختصری درباره زمینه فعالیت فروشگاه..." className={cn(descriptionError && 'border-destructive')} />
+                  </div>
+                  <div className="grid gap-3">
+                      <Label htmlFor="store-address">آدرس</Label>
+                      <Input id="store-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="مثال: میدان ولیعصر، برج فناوری" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid gap-4">
+                          <Label>لوگوی فروشگاه</Label>
+                          <div className='flex items-start gap-6'>
+                            <div className="relative w-24 h-24">
+                                {isUploading && <Progress value={progress} className="absolute top-0 left-0 w-full h-1" />}
+                                {logoUrl ? (
+                                  <Image src={logoUrl} alt="پیش‌نمایش لوگو" layout="fill" objectFit="contain" className="rounded-md border p-2 bg-white" key={logoUrl} unoptimized />
+                                ) : <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+                                        <span className="text-xs text-muted-foreground">پیش‌نمایش</span>
+                                    </div>}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button
+                                          type="button"
+                                          size="icon"
+                                          variant="outline"
+                                          className="absolute -bottom-2 -left-2 h-8 w-8 rounded-full bg-background"
+                                          onClick={handleGenerateLogo}
+                                          disabled={isAiLogoLoading || isUploading}
+                                      >
+                                          {isAiLogoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>تولید لوگو با هوش مصنوعی</p></TooltipContent>
+                                </Tooltip>
+                            </div>
 
-                          <div className='flex-1 grid gap-4'>
-                              <div className="flex items-center justify-center w-full">
-                                <Button type="button" variant="outline" className="w-full h-24 border-dashed" onClick={handleUploadClick}>
-                                    <div className="flex flex-col items-center justify-center">
-                                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                                        <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
-                                    </div>
-                                </Button>
-                                <Input id="dropzone-file" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
-                              </div> 
+                            <div className='flex-1 grid gap-4'>
+                                <div className="flex items-center justify-center w-full">
+                                  <Button type="button" variant="outline" className="w-full h-24 border-dashed" onClick={handleUploadClick}>
+                                      <div className="flex flex-col items-center justify-center">
+                                          <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                                          <p className="text-xs text-muted-foreground"><span className="font-semibold">آپلود لوگوی سفارشی</span></p>
+                                      </div>
+                                  </Button>
+                                  <Input id="dropzone-file" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+                                </div> 
+                            </div>
                           </div>
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle>اطلاعات حساب بانکی</CardTitle>
-                <CardDescription>این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-3">
-                        <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
-                        <Input id="bank-account-holder" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="مثال: اسماعیل بهاری" />
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="bank-name">نام بانک</Label>
-                        <Input id="bank-name" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="مثال: بانک سامان" />
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="bank-account-number">شماره حساب</Label>
-                        <Input id="bank-account-number" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} placeholder="اختیاری" />
-                    </div>
-                    <div className="grid gap-3">
-                        <Label htmlFor="bank-card-number">شماره کارت</Label>
-                        <Input id="bank-card-number" value={bankCardNumber} onChange={(e) => setBankCardNumber(e.target.value)} placeholder="اختیاری" />
-                    </div>
-                    <div className="grid gap-3 col-span-2">
-                        <Label htmlFor="bank-iban">شماره شبا (IBAN)</Label>
-                        <Input id="bank-iban" value={bankIban} onChange={(e) => setBankIban(e.target.value)} placeholder="مثال: IR..." dir="ltr" className="text-left" />
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
+          
+          <Card>
+              <CardHeader>
+                  <CardTitle>اطلاعات حساب بانکی</CardTitle>
+                  <CardDescription>این اطلاعات به صورت خودکار در فاکتورهای این فروشگاه نمایش داده می‌شود.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-3">
+                          <Label htmlFor="bank-account-holder">نام صاحب حساب</Label>
+                          <Input id="bank-account-holder" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} placeholder="مثال: اسماعیل بهاری" />
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="bank-name">نام بانک</Label>
+                          <Input id="bank-name" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="مثال: بانک سامان" />
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="bank-account-number">شماره حساب</Label>
+                          <Input id="bank-account-number" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} placeholder="اختیاری" />
+                      </div>
+                      <div className="grid gap-3">
+                          <Label htmlFor="bank-card-number">شماره کارت</Label>
+                          <Input id="bank-card-number" value={bankCardNumber} onChange={(e) => setBankCardNumber(e.target.value)} placeholder="اختیاری" />
+                      </div>
+                      <div className="grid gap-3 col-span-2">
+                          <Label htmlFor="bank-iban">شماره شبا (IBAN)</Label>
+                          <Input id="bank-iban" value={bankIban} onChange={(e) => setBankIban(e.target.value)} placeholder="مثال: IR..." dir="ltr" className="text-left" />
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
 
-        <Card>
+          <Card>
             <CardHeader>
                 <CardTitle>مدیریت واحدها</CardTitle>
                 <CardDescription>
-                    واحدهای اندازه‌گیری جدید اضافه کنید یا واحدهای موجود را حذف کنید.
+                    واحدهای اندازه‌گیری جدید برای این فروشگاه اضافه کنید یا واحدهای موجود را حذف کنید.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -916,103 +1028,103 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                     {isDuplicateUnit && <p className="text-xs text-destructive">این واحد قبلاً اضافه شده است.</p>}
                 </div>
                 <div className="flex flex-wrap gap-2 rounded-lg border p-4 min-h-[6rem]">
-                    {unitsOfMeasurement.length > 0 ? unitsOfMeasurement.map(unit => (
+                    {localUnits.length > 0 ? localUnits.map(unit => (
                         <Badge key={unit.id} variant="secondary" className="text-base font-normal pl-2 pr-3 py-1">
                             <span>{unit.name}</span>
                             <button onClick={() => handleDeleteUnit(unit.id)} className="mr-2 rounded-full p-0.5 hover:bg-destructive/20 text-destructive">
                                 <X className="h-3 w-3" />
                             </button>
                         </Badge>
-                    )) : <p className="text-sm text-muted-foreground">هیچ واحدی تعریف نشده است.</p>}
+                    )) : <p className="text-sm text-muted-foreground">هیچ واحدی برای این فروشگاه تعریف نشده است.</p>}
                 </div>
             </CardContent>
-        </Card>
+          </Card>
 
-        <Card>
-            <CardHeader className="flex flex-row justify-between items-start">
-                 <div>
-                    <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
-                    <CardDescription>دسته‌ها و زیردسته‌های محصولات این فروشگاه را تعریف کنید.</CardDescription>
-                 </div>
-                 <div className='flex items-center gap-2'>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                onClick={() => handleAiGenerateSubCategories()}
-                                disabled={aiLoadingCategory === 'main'}
-                            >
-                                {aiLoadingCategory === 'main' ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>تولید دسته‌بندی با هوش مصنوعی</p></TooltipContent>
-                    </Tooltip>
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="icon" disabled={isProcessing}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>حذف همه دسته‌بندی‌ها</AlertDialogTitle><AlertDialogDescription>آیا مطمئن هستید که می‌خواهید تمام دسته‌بندی‌های این فروشگاه را حذف کنید؟ این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDeleteAllCategories} className="bg-destructive hover:bg-destructive/90">حذف همه</AlertDialogAction></AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                 </div>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-                <div className="relative">
-                    <Input 
-                        value={newCategoryName} 
-                        onChange={(e) => setNewCategoryName(e.target.value)} 
-                        placeholder="نام دسته اصلی جدید..."
-                        className="pl-24"
-                    />
-                    <Button 
-                        onClick={() => handleAddCategory()}
-                        disabled={isCategoryInputEmpty || isDuplicateCategory}
-                        className={cn(
-                            "absolute left-1 top-1/2 -translate-y-1/2 h-8 w-20",
-                            isCategoryInputEmpty && "bg-muted-foreground",
-                            !isCategoryInputEmpty && !isDuplicateCategory && "bg-green-600 hover:bg-green-700",
-                            isDuplicateCategory && "bg-red-600 hover:bg-red-700"
-                        )}
-                    >
-                        {isCategoryInputEmpty ? 'افزودن' : (isDuplicateCategory ? 'تکراری' : 'افزودن')}
-                    </Button>
-                </div>
-                <Separator />
-                <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-                    <Droppable droppableId="root" type="CATEGORY">
-                        {(provided) => (
-                             <div ref={provided.innerRef} {...provided.droppableProps} className="grid gap-4">
-                       
-                                {parentCategories.length > 0 ? (
-                                    <CategoryTree 
-                                        categories={parentCategories}
-                                        allCategories={storeCategories}
-                                        onAddSubCategory={handleAddSubCategory}
-                                        onDelete={handleDeleteCategory}
-                                        onStartEdit={handleStartEditCategory}
-                                        onAiGenerate={handleAiGenerateSubCategories}
-                                        editingCategoryId={editingCategoryId}
-                                        editingCategoryName={editingCategoryName}
-                                        onSaveEdit={handleSaveCategoryEdit}
-                                        onCancelEdit={handleCancelEditCategory}
-                                        setEditingCategoryName={setEditingCategoryName}
-                                        aiLoading={aiLoadingCategory}
-                                        openAccordionItems={openAccordionItems}
-                                        onToggle={handleAccordionToggle}
-                                    />
-                                ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
-                                {provided.placeholder}
-                            </div>
-                        )}
-                    </Droppable>
-                </DragDropContext>
-            </CardContent>
-        </Card>
-    </div>
+          <Card>
+              <CardHeader className="flex flex-row justify-between items-start">
+                  <div>
+                      <CardTitle>مدیریت دسته‌بندی‌ها</CardTitle>
+                      <CardDescription>دسته‌ها و زیردسته‌های محصولات این فروشگاه را تعریف کنید.</CardDescription>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="outline"
+                                  onClick={() => handleAiGenerateSubCategories()}
+                                  disabled={aiLoadingCategory === 'main'}
+                              >
+                                  {aiLoadingCategory === 'main' ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>تولید دسته‌بندی با هوش مصنوعی</p></TooltipContent>
+                      </Tooltip>
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="icon" disabled={isProcessing}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>حذف همه دسته‌بندی‌ها</AlertDialogTitle><AlertDialogDescription>آیا مطمئن هستید که می‌خواهید تمام دسته‌بندی‌های این فروشگاه را حذف کنید؟ این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDeleteAllCategories} className="bg-destructive hover:bg-destructive/90">حذف همه</AlertDialogAction></AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                  </div>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                  <div className="relative">
+                      <Input 
+                          value={newCategoryName} 
+                          onChange={(e) => setNewCategoryName(e.target.value)} 
+                          placeholder="نام دسته اصلی جدید..."
+                          className="pl-24"
+                      />
+                      <Button 
+                          onClick={() => handleAddCategory()}
+                          disabled={isCategoryInputEmpty || isDuplicateCategory}
+                          className={cn(
+                              "absolute left-1 top-1/2 -translate-y-1/2 h-8 w-20",
+                              isCategoryInputEmpty && "bg-muted-foreground",
+                              !isCategoryInputEmpty && !isDuplicateCategory && "bg-green-600 hover:bg-green-700",
+                              isDuplicateCategory && "bg-red-600 hover:bg-red-700"
+                          )}
+                      >
+                          {isCategoryInputEmpty ? 'افزودن' : (isDuplicateCategory ? 'تکراری' : 'افزودن')}
+                      </Button>
+                  </div>
+                  <Separator />
+                  <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+                      <Droppable droppableId="root" type="CATEGORY">
+                          {(provided) => (
+                              <div ref={provided.innerRef} {...provided.droppableProps} className="grid gap-4">
+                        
+                                  {parentCategories.length > 0 ? (
+                                      <CategoryTree 
+                                          categories={parentCategories}
+                                          allCategories={storeCategories}
+                                          onAddSubCategory={handleAddSubCategory}
+                                          onDelete={handleDeleteCategory}
+                                          onStartEdit={handleStartEditCategory}
+                                          onAiGenerate={handleAiGenerateSubCategories}
+                                          editingCategoryId={editingCategoryId}
+                                          editingCategoryName={editingCategoryName}
+                                          onSaveEdit={handleSaveCategoryEdit}
+                                          onCancelEdit={handleCancelEditCategory}
+                                          setEditingCategoryName={setEditingCategoryName}
+                                          aiLoading={aiLoadingCategory}
+                                          openAccordionItems={openAccordionItems}
+                                          onToggle={handleAccordionToggle}
+                                      />
+                                  ) : <p className="text-sm text-muted-foreground text-center py-4">هنوز دسته‌ای برای این فروشگاه تعریف نشده است.</p>}
+                                  {provided.placeholder}
+                              </div>
+                          )}
+                      </Droppable>
+                  </DragDropContext>
+              </CardContent>
+          </Card>
+      </div>
     </TooltipProvider>
   );
 }

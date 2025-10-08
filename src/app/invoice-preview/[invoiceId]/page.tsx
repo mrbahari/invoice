@@ -228,7 +228,11 @@ export default function PublicInvoicePreviewPage() {
 
             <footer className="border-t mt-4 pt-2 text-xs text-gray-600 space-y-1">
               <p>۱. اعتبار پیش فاکتور ۲۴ ساعت می‌باشد.</p>
-              {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder} <span className="font-mono mx-2">{store.bankCardNumber}</span> {store.bankName}</p>}
+              {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
+              {store.bankName && <p><strong>بانک:</strong> {store.bankName}</p>}
+              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono">{store.bankCardNumber}</span></p>}
+              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono">{store.bankAccountNumber}</span></p>}
+              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono">{store.bankIban}</span></p>}
             </footer>
         </div>
       </div>

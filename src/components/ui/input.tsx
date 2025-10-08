@@ -7,7 +7,14 @@ export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onFocus, ...props }, ref) => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      e.target.select();
+      if (onFocus) {
+        onFocus(e);
+      }
+    };
+    
     return (
       <input
         type={type}
@@ -16,6 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className
         )}
         ref={ref}
+        onFocus={handleFocus}
         {...props}
       />
     )
@@ -24,5 +32,3 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input"
 
 export { Input }
-
-    

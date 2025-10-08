@@ -6,7 +6,14 @@ export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, onFocus, ...props }, ref) => {
+    const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      e.target.select();
+      if (onFocus) {
+        onFocus(e);
+      }
+    };
+
     return (
       <textarea
         className={cn(
@@ -14,6 +21,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           className
         )}
         ref={ref}
+        onFocus={handleFocus}
         {...props}
       />
     )

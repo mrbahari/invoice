@@ -7,7 +7,7 @@
   :root {
     --background-hsl: 0 0% 100%;
     --foreground-hsl: 222.2 84% 4.9%;
-    --primary-hsl: 222.2 47.4% 11.2%;
+    --primary-hsl: 248 82% 50%;
     --ring-hsl: 222.2 84% 4.9%;
 
     --background: hsl(var(--background-hsl));
@@ -113,9 +113,18 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
   }
   body.dragging-invoice-item {
     @apply scale-90 transition-transform duration-300 ease-in-out;
+  }
+
+  input, textarea {
+    -webkit-user-select: auto; /* Safari */
+    -ms-user-select: auto; /* IE 10+ */
+    user-select: auto; /* Standard syntax */
   }
 
 }

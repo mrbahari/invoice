@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import type { Invoice } from '@/lib/definitions';
+import type { Invoice, Product } from '@/lib/definitions';
+import { ProductForm } from '@/components/dashboard/product-form';
+import { useData } from '@/context/data-context';
+
 
 // Define types for dynamic components and props
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
@@ -27,6 +30,12 @@ export default function DashboardPage() {
   
   const [draftInvoice, setDraftInvoice] = useState<Partial<Invoice> | null>(null);
 
+  // State for Product Form
+  const { data } = useData();
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const editingProduct = editingProductId ? data.products.find(p => p.id === editingProductId) : undefined;
+
+
   useEffect(() => {
     if (!searchParams.get('tab')) {
         router.replace('/dashboard?tab=dashboard', { scroll: false });
@@ -40,17 +49,47 @@ export default function DashboardPage() {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
+  // Handlers for ProductForm
+  const handleEditProduct = (productId: string) => {
+    setEditingProductId(productId);
+  };
+
+  const handleProductFormCancel = () => {
+    setEditingProductId(null);
+  };
+
+  const handleProductFormSave = () => {
+    setEditingProductId(null);
+    if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+
+  // Special handling for products tab to show the form
+  if (activeTab === 'products' && editingProductId !== null) {
+      return (
+          <ProductForm
+              product={editingProduct}
+              onSave={handleProductFormSave}
+              onCancel={handleProductFormCancel}
+          />
+      );
+  }
+
   // Get the component for the active tab
   const ActiveComponent = componentMap[activeTab] || componentMap.dashboard;
 
   // Prepare props for the active component
-  const componentProps = {
+  const componentProps: any = {
     onNavigate: handleNavigation,
     draftInvoice: draftInvoice,
     setDraftInvoice: setDraftInvoice,
   };
 
-  // Render only the active component directly.
-  // This avoids conditional hook calls that cause the "Rendered fewer hooks than expected" error.
+  if (activeTab === 'products') {
+      componentProps.onEdit = handleEditProduct;
+  }
+
   return <ActiveComponent {...componentProps} />;
 }

@@ -636,9 +636,9 @@ export default function ProductsPage() {
                                <Table>
                                     <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[50px]">
+                                        <TableHead className="w-[80px] text-center">
                                             <Checkbox
-                                                checked={categoryProducts.every(p => selectedProducts.includes(p.id))}
+                                                checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
                                                 onCheckedChange={(checked) => {
                                                     const categoryProductIds = categoryProducts.map(p => p.id);
                                                     setSelectedProducts(prev => {
@@ -661,7 +661,7 @@ export default function ProductsPage() {
                                                 onClick={() => handleEditClick(product)} 
                                                 className="cursor-pointer"
                                             >
-                                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                                <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                                                     <Checkbox
                                                         checked={selectedProducts.includes(product.id)}
                                                         onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}

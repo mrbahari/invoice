@@ -228,6 +228,22 @@ export default function ProductsPage() {
   const [bulkTargetStore, setBulkTargetStore] = useState<string>('');
   const [bulkTargetCategory, setBulkTargetCategory] = useState<string>('');
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+  
+  const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
+  const handleAccordionChange = useCallback((value: string) => {
+    // Timeout to allow the accordion to open before scrolling
+    setTimeout(() => {
+        const node = itemRefs.current.get(value);
+        if (node) {
+            node.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }, 100); // 100ms delay might need adjustment
+  }, []);
+
 
 
   useEffect(() => {
@@ -604,14 +620,14 @@ export default function ProductsPage() {
       )}
 
       {Object.keys(groupedProducts).length > 0 ? (
-        <Accordion type="single" collapsible className="w-full space-y-4">
+        <Accordion type="single" collapsible onValueChange={handleAccordionChange} className="w-full space-y-4">
             {categoryOrder.map(categoryId => {
                 const categoryProducts = groupedProducts[categoryId];
                 const firstProduct = categoryProducts[0];
                 if (!firstProduct) return null;
 
                 return (
-                    <AccordionItem value={categoryId} key={categoryId}>
+                    <AccordionItem value={categoryId} key={categoryId} ref={(node) => itemRefs.current.set(categoryId, node)}>
                         <Card>
                              <AccordionTrigger className="w-full p-4 hover:no-underline">
                                 <div className="flex items-center justify-between w-full">

@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2 } from 'lucide-react';
+import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,11 +32,11 @@ import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogTrigger,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -56,6 +56,8 @@ import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { writeBatch, doc, collection } from 'firebase/firestore';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 
 
 type SortOption = 'newest' | 'name' | 'price';
@@ -196,7 +198,7 @@ function AiMultipleProductsDialog({ onProductsGenerated }: { onProductsGenerated
 
 
 export default function ProductsPage() {
-  const { data, setData } = useData();
+  const { data, setData, deleteDocuments } = useData();
   const { products, stores, categories } = data;
   const { user } = useUser();
   const { toast } = useToast();
@@ -212,7 +214,8 @@ export default function ProductsPage() {
   useDraggableScroll(storesScrollRef, { direction: 'horizontal' });
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { itemsToShow, sentinelRef } = useVirtualScroll(30);
 
@@ -234,6 +237,11 @@ export default function ProductsPage() {
     }
   }, [view]);
 
+  useEffect(() => {
+    // Clear selection when filters change
+    setSelectedProducts([]);
+  }, [searchTerm, activeTab, categoryFilter, sortOption]);
+
   const handleAddClick = () => {
     if (!user) {
       toast({
@@ -249,16 +257,15 @@ export default function ProductsPage() {
   };
 
   const handleAiProductGenerated = useCallback((aiProduct: GenerateProductFromIdeaOutput) => {
-    // Create a product object that matches the form's expectations
     const newProduct: Product = {
-      id: '', // ID will be generated on save
+      id: '',
       name: aiProduct.name,
       description: aiProduct.description,
       price: aiProduct.price,
       imageUrl: aiProduct.imageUrl,
       storeId: aiProduct.storeId,
       subCategoryId: aiProduct.subCategoryId,
-      unit: 'عدد', // Default unit, can be changed in the form
+      unit: 'عدد',
     };
     const newId = `prod-${Math.random().toString(36).substr(2, 9)}`;
     const newProductWithId = { ...newProduct, id: newId };
@@ -291,13 +298,6 @@ export default function ProductsPage() {
     setSelectedProductId(null);
   };
 
-  const filteredCategories = useMemo(() => {
-    if (activeTab === 'all') {
-      return categories;
-    }
-    return categories.filter(c => c.storeId === activeTab);
-  }, [categories, activeTab]);
-
   const sortedAndFilteredProducts = useMemo(() => {
     if (!products) return [];
     let filtered = products.filter((product) =>
@@ -319,7 +319,6 @@ export default function ProductsPage() {
         return filtered.sort((a, b) => b.price - a.price);
       case 'newest':
       default:
-        // 'newest' is default as new products are prepended
         return filtered;
     }
   }, [products, activeTab, searchTerm, sortOption, categoryFilter]);
@@ -341,12 +340,41 @@ export default function ProductsPage() {
   };
   
   const handleProductsGenerated = () => {
-    // This function can be used to refetch data if needed, but the listener should handle it.
     toast({
         title: "در حال همگام‌سازی...",
         description: "محصولات جدید در حال اضافه شدن به لیست شما هستند."
     })
-  }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(sortedAndFilteredProducts.map(p => p.id));
+    } else {
+      setSelectedProducts([]);
+    }
+  };
+
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(prev => [...prev, productId]);
+    } else {
+      setSelectedProducts(prev => prev.filter(id => id !== productId));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedProducts.length === 0) return;
+    setIsDeleting(true);
+    try {
+      await deleteDocuments('products', selectedProducts);
+      toast({ variant: 'success', title: 'محصولات با موفقیت حذف شدند.' });
+      setSelectedProducts([]);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'خطا در حذف محصولات' });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (view === 'form') {
     return (
@@ -378,9 +406,9 @@ export default function ProductsPage() {
   const renderCategoryOptions = (nodes: (Category & { children: Category[] })[]) => {
     return nodes.map(node => (
         <SelectGroup key={node.id}>
-            <SelectLabel className="font-bold text-foreground">{node.name}</SelectLabel>
+            <SelectLabel className="font-bold text-foreground text-right">{node.name}</SelectLabel>
             {node.children.map(child => (
-                <SelectItem key={child.id} value={child.id} className="pr-6">
+                <SelectItem key={child.id} value={child.id} className="pr-6 text-right">
                     {child.name}
                 </SelectItem>
             ))}
@@ -442,11 +470,11 @@ export default function ProductsPage() {
       
       <div className="flex flex-col sm:flex-row items-center gap-2">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[240px]">
+            <SelectTrigger className="w-full sm:w-auto sm:min-w-[240px]">
                 <SelectValue placeholder="فیلتر بر اساس دسته‌بندی..." />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                <SelectItem value="all" className="text-right">همه دسته‌بندی‌ها</SelectItem>
                  {categoryTree.length > 0 ? (
                     renderCategoryOptions(categoryTree)
                 ) : (
@@ -455,18 +483,49 @@ export default function ProductsPage() {
             </SelectContent>
         </Select>
         <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-auto sm:min-w-[180px]">
             <div className="flex items-center gap-2">
               <SortAsc className="h-4 w-4 text-muted-foreground" />
               <SelectValue placeholder="مرتب‌سازی بر اساس..." />
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">جدیدترین</SelectItem>
-            <SelectItem value="name">نام محصول</SelectItem>
-            <SelectItem value="price">گران‌ترین</SelectItem>
+            <SelectItem value="newest" className="text-right">جدیدترین</SelectItem>
+            <SelectItem value="name" className="text-right">نام محصول</SelectItem>
+            <SelectItem value="price" className="text-right">گران‌ترین</SelectItem>
           </SelectContent>
         </Select>
+        <div className="flex-1" />
+        {selectedProducts.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
+            </span>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={isDeleting}>
+                  <Trash2 className="ml-2 h-4 w-4" />
+                  حذف
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    این عمل غیرقابل بازگشت است و {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده را برای همیشه حذف می‌کند.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>انصراف</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+                    {isDeleting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                    حذف
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
       </div>
 
       <Card>
@@ -474,6 +533,16 @@ export default function ProductsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={
+                      selectedProducts.length > 0 &&
+                      selectedProducts.length === sortedAndFilteredProducts.length
+                    }
+                    onCheckedChange={handleSelectAll}
+                    aria-label="انتخاب همه"
+                  />
+                </TableHead>
                 <TableHead>نام</TableHead>
                 <TableHead>زیردسته</TableHead>
                 <TableHead className="hidden md:table-cell">توضیحات</TableHead>
@@ -485,13 +554,16 @@ export default function ProductsPage() {
                 productsToShow.map((product) => (
                   <TableRow
                     key={product.id}
-                    onClick={() => handleEditClick(product)}
-                    className={cn(
-                      'cursor-pointer',
-                      selectedProductId === product.id ? 'bg-muted' : 'hover:bg-muted/50'
-                    )}
+                    data-state={selectedProducts.includes(product.id) && "selected"}
                   >
-                    <TableCell className="font-medium">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedProducts.includes(product.id)}
+                        onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                        aria-label="انتخاب محصول"
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium" onClick={() => handleEditClick(product)} style={{ cursor: 'pointer' }}>
                       <div className="flex items-center gap-3">
                         <Image
                           alt={product.name}
@@ -504,22 +576,21 @@ export default function ProductsPage() {
                         <span>{product.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={() => handleEditClick(product)} style={{ cursor: 'pointer' }}>
                       <Badge variant="outline">{getCategoryName(product.subCategoryId)}</Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell max-w-xs truncate">{product.description}</TableCell>
-                    <TableCell className="text-left">{formatCurrency(product.price)}</TableCell>
+                    <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => handleEditClick(product)} style={{ cursor: 'pointer' }}>{product.description}</TableCell>
+                    <TableCell className="text-left" onClick={() => handleEditClick(product)} style={{ cursor: 'pointer' }}>{formatCurrency(product.price)}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">هیچ محصولی یافت نشد.</TableCell>
+                  <TableCell colSpan={5} className="h-24 text-center">هیچ محصولی یافت نشد.</TableCell>
                 </TableRow>
               )}
-               {/* Sentinel element for infinite scroll */}
               {productsToShow.length < sortedAndFilteredProducts.length && (
                 <TableRow ref={sentinelRef}>
-                  <TableCell colSpan={4} className="p-4 text-center">
+                  <TableCell colSpan={5} className="p-4 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>

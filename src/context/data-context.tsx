@@ -22,6 +22,7 @@ interface DataContextType {
   addDocument: <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => Promise<string | undefined>;
   updateDocument: (collectionName: CollectionName, docId: string, data: Partial<Document>) => Promise<void>;
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
+  deleteDocuments: (collectionName: CollectionName, docIds: string[]) => Promise<void>;
   setData: React.Dispatch<React.SetStateAction<AppData>>; // Expose setData
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
   loadDataBatch: (dataToLoad: Partial<AppData>, merge: boolean, targetStoreId?: string) => Promise<void>;
@@ -242,6 +243,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
         errorEmitter.emit('permission-error', permissionError);
     }
   }, [firestore, user, getCollectionRef, data]);
+
+  const deleteDocuments = useCallback(async (collectionName: CollectionName, docIds: string[]) => {
+    if (!firestore || !user || docIds.length === 0) return;
+    const collectionRef = getCollectionRef(collectionName);
+    
+    if (!collectionRef) {
+      console.error('Invalid collection reference or user not logged in.');
+      return;
+    }
+    
+    const originalItems = data[collectionName].filter(item => docIds.includes(item.id));
+    if (originalItems.length === 0) return;
+
+    // Optimistic update
+    setData(prev => ({
+      ...prev,
+      [collectionName]: prev[collectionName].filter(item => !docIds.includes(item.id)),
+    }));
+    
+    const batch = writeBatch(firestore);
+    docIds.forEach(id => {
+      if (id && !id.startsWith('temp-')) {
+        batch.delete(doc(collectionRef, id));
+      }
+    });
+
+    try {
+      await batch.commit();
+    } catch (error: any) {
+        // Revert optimistic update
+        setData(prev => ({...prev, [collectionName]: [...prev[collectionName], ...originalItems]}));
+        const permissionError = new FirestorePermissionError({
+            path: collectionRef.path,
+            operation: 'delete', // This is a simplification for the error
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
+  }, [firestore, user, getCollectionRef, data]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
     // Optimistic update for local state
@@ -382,6 +421,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     addDocument,
     updateDocument,
     deleteDocument,
+    deleteDocuments,
     setData,
     setToolbarPosition,
     loadDataBatch,

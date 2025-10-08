@@ -166,61 +166,59 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
 
-    const productMap: Record<string, { aliases: string[], category: string }> = {
-      'پنل والیز': { aliases: ['پنل والیز', 'پانل گچی', 'panel'], category: 'پنل' },
-      'پنل جی برد': { aliases: ['پنل جی برد', 'پانل گچی', 'panel'], category: 'پنل' },
-      'تایل پی وی سی': { aliases: ['تایل', 'pvc'], category: 'تایل' },
-      'سازه f47': { aliases: ['f47'], category: 'سازه سقف' },
-      'سازه u36': { aliases: ['u36'], category: 'سازه سقف' },
-      'نبشی l25': { aliases: ['l25'], category: 'سازه سقف' },
-      'نبشی l24': { aliases: ['l24'], category: 'سپری' },
-      'سپری t360': { aliases: ['t360', '3.60'], category: 'سپری' },
-      'سپری t120': { aliases: ['t120', '1.20'], category: 'سپری' },
-      'سپری t60': { aliases: ['t60', '0.60'], category: 'سپری' },
-      'رانر': { aliases: ['runner'], category: 'سازه دیوار' },
-      'استاد': { aliases: ['stud'], category: 'سازه دیوار' },
-      'پیچ ۲.۵': { aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'], category: 'پیچ' },
-      'پیچ سازه': { aliases: ['پیچ سازه', 'ln9', 'پیچ LN'], category: 'پیچ' },
-      'آویز': { aliases: ['آویز', 'hanger'], category: 'ملزومات نصب' },
-      'میخ و چاشنی': { aliases: ['میخ', 'چاشنی'], category: 'میخ و چاشنی' },
-      'پشم سنگ': { aliases: ['پشم سنگ', 'rockwool'], category: 'پشم سنگ' },
-      'اتصال W': { aliases: ['اتصال w', 'w clip', 'دبلیو'], category: 'ملزومات نصب' },
-      'کلیپس': { aliases: ['کلیپس', 'clip'], category: 'ملزومات نصب' },
-      'براکت': { aliases: ['براکت', 'bracket'], category: 'ملزومات نصب' },
+    const productMap: Record<string, { keyword: string[], aliases: string[] }> = {
+      'پنل والیز': { keyword: ['پنل'], aliases: ['پنل والیز', 'پانل گچی', 'panel'] },
+      'پنل جی برد': { keyword: ['پنل'], aliases: ['پنل جی برد', 'پانل گچی', 'panel'] },
+      'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'] },
+      'سازه f47': { keyword: ['f47'], aliases: ['f47'] },
+      'سازه u36': { keyword: ['u36'], aliases: ['u36'] },
+      'نبشی l25': { keyword: ['l25', 'نبشی'], aliases: ['l25'] },
+      'نبشی l24': { keyword: ['l24', 'نبشی'], aliases: ['l24', 'سپری'] },
+      'سپری t360': { keyword: ['t360', '3.60', 'سپری'], aliases: ['t360', '3.60'] },
+      'سپری t120': { keyword: ['t120', '1.20', 'سپری'], aliases: ['t120', '1.20'] },
+      'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'] },
+      'رانر': { keyword: ['رانر'], aliases: ['runner'] },
+      'استاد': { keyword: ['استاد'], aliases: ['stud'] },
+      'پیچ ۲.۵': { keyword: ['پیچ'], aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
+      'پیچ سازه': { keyword: ['پیچ'], aliases: ['پیچ سازه', 'ln9', 'پیچ LN'] },
+      'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'] },
+      'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'] },
+      'پشم سنگ': { keyword: ['پشم سنگ'], aliases: ['پشم سنگ', 'rockwool'] },
+      'اتصال W': { keyword: ['w', 'اتصال'], aliases: ['اتصال w', 'w clip', 'دبلیو'] },
+      'کلیپس': { keyword: ['کلیپس'], aliases: ['کلیپس', 'clip'] },
+      'براکت': { keyword: ['براکت'], aliases: ['براکت', 'bracket'] },
     };
 
     aggregatedResults.forEach(item => {
         let matchedProduct: Product | undefined;
         const materialNameLower = item.material.toLowerCase();
 
-        // Find the category and aliases for the current material
-        let bestMatchKey: string | undefined;
+        // Step 1: Find an exact match using aliases.
         for (const key in productMap) {
             if (productMap[key].aliases.some(alias => materialNameLower.includes(alias.toLowerCase()))) {
-                bestMatchKey = key;
-                break;
+                matchedProduct = products.find(p => p.name.toLowerCase().includes(key.toLowerCase()));
+                if (matchedProduct) break;
             }
         }
         
-        const searchAliases = bestMatchKey ? productMap[bestMatchKey].aliases : [materialNameLower];
-
-        // 1. Try to find an exact match using aliases
-        matchedProduct = products.find(p => 
-            searchAliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase()))
-        );
-
-        // 2. If no exact match, find a substitute from the same category
-        if (!matchedProduct && bestMatchKey) {
-            const categoryName = productMap[bestMatchKey].category;
-            const category = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
-            if (category) {
-                // Find the first available product in that category as a substitute
-                const substituteProduct = products.find(p => p.subCategoryId === category.id);
-                if (substituteProduct) {
-                    matchedProduct = substituteProduct;
-                }
+        // Step 2: If no exact match, find a substitute using keywords.
+        if (!matchedProduct) {
+            let foundSubstitute = false;
+            for (const key in productMap) {
+                 if (materialNameLower.includes(key.toLowerCase())) {
+                     for (const keyword of productMap[key].keyword) {
+                        const substitute = products.find(p => p.name.toLowerCase().includes(keyword.toLowerCase()));
+                        if (substitute) {
+                            matchedProduct = substitute;
+                            foundSubstitute = true;
+                            break;
+                        }
+                     }
+                 }
+                 if(foundSubstitute) break;
             }
         }
+
 
         let quantity = item.quantity;
         let unit = item.unit;

@@ -20,7 +20,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store } from 'lucide-react';
@@ -72,13 +71,13 @@ export default function SettingsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [dataToRestore, setDataToRestore] = useState<AppData | null>(null);
   const [selectedSections, setSelectedSections] = useState<Record<DataSection, boolean>>({
-    stores: true,
-    categories: true,
-    products: true,
-    customers: true,
-    invoices: true,
-    units: true,
-    toolbarPositions: true,
+    stores: false,
+    categories: false,
+    products: false,
+    customers: false,
+    invoices: false,
+    units: false,
+    toolbarPositions: false,
   });
 
   const [isSelectingStore, setIsSelectingStore] = useState(false);
@@ -191,10 +190,10 @@ export default function SettingsPage() {
         }
         const restoredData = JSON.parse(text) as AppData;
         setDataToRestore(restoredData);
-        // Reset selections
+        // Reset selections to all false
         setSelectedSections({
-            stores: true, categories: true, products: true,
-            customers: true, invoices: true, units: true, toolbarPositions: true
+            stores: false, categories: false, products: false,
+            customers: false, invoices: false, units: false, toolbarPositions: false
         });
         setIsSelectingStore(false);
         setTargetStoreId('');

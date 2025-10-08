@@ -314,6 +314,23 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                         </Card>
                         
                         <div className="grid grid-cols-1 gap-6 mt-8">
+                             <Card 
+                                onClick={() => handleEstimatorSelect('smart-order')}
+                                className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg bg-gradient-to-tr from-primary/10 to-transparent"
+                            >
+                                <div className="p-6 flex flex-col md:flex-row items-center gap-6">
+                                    <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-primary/20 border-2 border-primary/30">
+                                         <Building className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <div className="text-center md:text-right">
+                                        <CardTitle className="text-xl font-bold text-primary">سفارش هوشمند</CardTitle>
+                                        <p className="text-muted-foreground mt-2">
+                                        لیست مصالح خود را از روی فایل اکسل، تصویر یا متن وارد کنید تا به صورت هوشمند به فاکتور تبدیل شود.
+                                        </p>
+                                    </div>
+                                </div>
+                            </Card>
+
                              <Card>
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
@@ -344,23 +361,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                         </Card>
                                     ))}
                                 </CardContent>
-                            </Card>
-
-                             <Card 
-                                onClick={() => handleEstimatorSelect('smart-order')}
-                                className="group overflow-hidden cursor-pointer transition-all hover:shadow-lg bg-gradient-to-tr from-primary/10 to-transparent"
-                            >
-                                <div className="p-6 flex flex-col md:flex-row items-center gap-6">
-                                    <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-primary/20 border-2 border-primary/30">
-                                         <Building className="h-10 w-10 text-primary" />
-                                    </div>
-                                    <div className="text-center md:text-right">
-                                        <CardTitle className="text-xl font-bold text-primary">سفارش هوشمند</CardTitle>
-                                        <p className="text-muted-foreground mt-2">
-                                        لیست مصالح خود را از روی فایل اکسل، تصویر یا متن وارد کنید تا به صورت هوشمند به فاکتور تبدیل شود.
-                                        </p>
-                                    </div>
-                                </div>
                             </Card>
 
                         </div>

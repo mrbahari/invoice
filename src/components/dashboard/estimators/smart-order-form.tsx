@@ -3,62 +3,96 @@
 import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, Loader2, CheckCircle } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, CheckCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { useToast } from '@/hooks/use-toast';
+import { extractMaterialsFromFile } from '@/ai/flows/extract-materials-flow';
+import type { MaterialResult } from '../estimators-page';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type SmartOrderFormProps = {
+  onAddToList: (description: string, results: MaterialResult[]) => void;
   onBack: () => void;
 };
 
-export function SmartOrderForm({ onBack }: SmartOrderFormProps) {
-  const [files, setFiles] = useState<File[]>([]);
+export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
+  const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [extractedResults, setExtractedResults] = useState<MaterialResult[]>([]);
+  const { toast } = useToast();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    // For now, we'll just handle one file, but this setup allows multiple.
-    setFiles(acceptedFiles);
-    setIsSuccess(false);
+    setFile(acceptedFiles[0] || null);
+    setExtractedResults([]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'text/csv': ['.csv'],
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
       'application/pdf': ['.pdf'],
-      'image/*': ['.jpeg', '.jpg', '.png'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'text/plain': ['.txt'],
     },
     maxFiles: 1,
   });
+  
+  const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+  }
 
   const handleProcessFile = async () => {
-    if (files.length === 0) return;
+    if (!file) return;
     setIsLoading(true);
+    setExtractedResults([]);
 
-    // ===============================================================
-    // TODO: AI Processing Logic Will Go Here
-    // 1. Read the file (using FileReader for client-side preview, or send to server)
-    // 2. Send the file content (or file itself) to a Genkit flow.
-    // 3. The flow will process the text/image/pdf and extract items.
-    // 4. The flow will return a structured list of potential invoice items.
-    // 5. This component will then likely pass those items to the invoice editor.
-    // ===============================================================
-    
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const fileDataUri = await fileToDataUri(file);
+      
+      const result = await extractMaterialsFromFile({ fileDataUri });
 
-    setIsLoading(false);
-    setIsSuccess(true);
+      if (result.materials && result.materials.length > 0) {
+        setExtractedResults(result.materials);
+        toast({
+          variant: 'success',
+          title: 'پردازش موفق',
+          description: `${result.materials.length} مورد با موفقیت از فایل استخراج شد.`,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'نتیجه‌ای یافت نشد',
+          description: 'هوش مصنوعی نتوانست موردی را از فایل استخراج کند. لطفاً از یک فایل واضح‌تر استفاده کنید.',
+        });
+      }
 
-    // In a real implementation, you would navigate or pass data here.
-    // For now, we just show a success message.
+    } catch (error) {
+      console.error("Error processing file with AI:", error);
+      toast({
+        variant: 'destructive',
+        title: 'خطا در پردازش فایل',
+        description: 'مشکلی در ارتباط با هوش مصنوعی پیش آمد. لطفاً دوباره تلاش کنید.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleAddClick = () => {
+    if (extractedResults.length === 0 || !file) {
+      return;
+    }
+    const description = `استخراج شده از فایل: ${file.name}`;
+    onAddToList(description, extractedResults);
   };
   
   const removeFile = () => {
-    setFiles([]);
-    setIsSuccess(false);
+    setFile(null);
+    setExtractedResults([]);
   }
 
   return (
@@ -66,7 +100,7 @@ export function SmartOrderForm({ onBack }: SmartOrderFormProps) {
       <CardHeader>
         <CardTitle>سفارش هوشمند با AI</CardTitle>
         <CardDescription>
-          فایل لیست مصالح خود (اکسل، عکس، PDF یا متن) را آپلود کنید. هوش مصنوعی آن را تحلیل کرده و به صورت خودکار به آیتم‌های فاکتور تبدیل می‌کند.
+          فایل لیست مصالح خود (عکس، PDF یا متن) را آپلود کنید. هوش مصنوعی آن را تحلیل کرده و به صورت خودکار به آیتم‌های فاکتور تبدیل می‌کند.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -86,38 +120,31 @@ export function SmartOrderForm({ onBack }: SmartOrderFormProps) {
                   فایل خود را اینجا بکشید یا برای انتخاب کلیک کنید
                 </p>
                 <p className="text-xs text-muted-foreground/80 mt-1">
-                  (PDF, Excel, CSV, JPG, PNG, TXT)
+                  (PDF, TXT, JPG, PNG)
                 </p>
               </>
             )}
           </div>
         </div>
 
-        {files.length > 0 && (
+        {file && (
           <div className="p-3 border rounded-lg flex items-center justify-between bg-muted/30">
             <div className="flex items-center gap-3">
               <FileText className="w-6 h-6 text-primary" />
               <div className="grid gap-0.5">
-                <span className="text-sm font-medium">{files[0].name}</span>
+                <span className="text-sm font-medium">{file.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {(files[0].size / 1024).toFixed(2)} KB
+                  {(file.size / 1024).toFixed(2)} KB
                 </span>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={removeFile}>حذف</Button>
           </div>
         )}
-
-        {isSuccess && (
-            <div className="p-4 border rounded-lg flex items-center gap-3 bg-green-500/10 text-green-700">
-                <CheckCircle className="h-5 w-5" />
-                <p className="text-sm font-medium">فایل با موفقیت پردازش شد! (شبیه‌سازی)</p>
-            </div>
-        )}
-
+        
         <Button 
           onClick={handleProcessFile} 
-          disabled={files.length === 0 || isLoading || isSuccess} 
+          disabled={!file || isLoading} 
           className="w-full"
           size="lg"
         >
@@ -130,6 +157,40 @@ export function SmartOrderForm({ onBack }: SmartOrderFormProps) {
             'شروع پردازش فایل'
           )}
         </Button>
+
+        {extractedResults.length > 0 && (
+          <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-lg font-semibold">نتایج استخراج شده:</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>نوع مصالح</TableHead>
+                    <TableHead className="text-center">مقدار</TableHead>
+                    <TableHead>واحد</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extractedResults.map((item, index) => (
+                    <TableRow key={`${item.material}-${index}`}>
+                      <TableCell className="font-medium">{item.material}</TableCell>
+                      <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div 
+                className="pt-4"
+              >
+                <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                    <PlusCircle className="ml-2 h-5 w-5" />
+                    افزودن به لیست برآورد
+                </Button>
+              </div>
+          </div>
+        )}
+
       </CardContent>
     </Card>
   );

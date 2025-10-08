@@ -48,53 +48,97 @@ import {
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { generateProductFromIdea, type GenerateProductFromIdeaOutput } from '@/ai/flows/generate-product-from-idea';
+import { generateFiveProducts } from '@/ai/flows/generate-five-products';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { writeBatch, doc, collection } from 'firebase/firestore';
 
 
 type SortOption = 'newest' | 'name' | 'price';
 
-function AiProductDialog({ onProductGenerated }: { onProductGenerated: (product: GenerateProductFromIdeaOutput) => void }) {
+function AiMultipleProductsDialog({ onProductsGenerated }: { onProductsGenerated: () => void }) {
   const { data } = useData();
-  const { stores, categories } = data;
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const { stores, categories, products } = data;
+  
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [idea, setIdea] = useState('');
   const [storeId, setStoreId] = useState('');
   const [subCategoryId, setSubCategoryId] = useState('');
 
   const availableSubCategories = useMemo(() => {
     if (!storeId) return [];
-    return categories.filter(c => c.storeId === storeId && c.parentId);
+    const mainCategories = categories.filter(c => c.storeId === storeId && !c.parentId);
+    return mainCategories.flatMap(mainCat => 
+        categories.filter(subCat => subCat.parentId === mainCat.id)
+    );
   }, [categories, storeId]);
 
-  const canGenerate = idea && storeId && subCategoryId;
+  const canGenerate = storeId && subCategoryId;
 
   const handleGenerate = async () => {
-    if (!canGenerate) return;
+    if (!canGenerate || !user) return;
+
     setIsLoading(true);
+    
     try {
-      const categoryName = categories.find(c => c.id === subCategoryId)?.name || '';
-      const result = await generateProductFromIdea({
-        productIdea: idea,
-        storeId,
-        subCategoryId,
-        categoryName
+      const store = stores.find(s => s.id === storeId);
+      const category = categories.find(c => c.id === subCategoryId);
+
+      if (!store || !category) {
+        throw new Error("Store or category not found.");
+      }
+
+      const existingProductNames = products
+        .filter(p => p.subCategoryId === subCategoryId)
+        .map(p => p.name);
+
+      const result = await generateFiveProducts({
+        storeName: store.name,
+        storeDescription: store.description || '',
+        categoryName: category.name,
+        existingProductNames,
       });
-      if (result) {
-        onProductGenerated(result);
+
+      if (result && result.products) {
+        const batch = writeBatch(firestore);
+        
+        for (const aiProduct of result.products) {
+            const productRef = doc(collection(firestore, 'users', user.uid, 'products'));
+            const newProductData: Omit<Product, 'id'> = {
+                name: aiProduct.name,
+                description: aiProduct.description,
+                price: aiProduct.price,
+                storeId: storeId,
+                subCategoryId: subCategoryId,
+                unit: 'عدد',
+                imageUrl: `https://picsum.photos/seed/${encodeURIComponent(aiProduct.name)}/400/300`,
+            };
+            batch.set(productRef, newProductData);
+        }
+        
+        await batch.commit();
+
+        toast({
+          variant: 'success',
+          title: 'محصولات جدید ایجاد شدند',
+          description: `${result.products.length} محصول جدید با موفقیت به فروشگاه شما اضافه شد.`
+        });
+        onProductsGenerated();
         setIsOpen(false);
-        // Reset form
-        setIdea('');
-        setStoreId('');
-        setSubCategoryId('');
       }
     } catch (error) {
-      console.error("Failed to generate product with AI", error);
-      // You can add a toast message here
+      console.error("Failed to generate multiple products with AI", error);
+      toast({
+        variant: 'destructive',
+        title: 'خطا در تولید محصول',
+        description: 'مشکلی در ارتباط با هوش مصنوعی پیش آمد.'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -106,22 +150,18 @@ function AiProductDialog({ onProductGenerated }: { onProductGenerated: (product:
         <Button size="sm" variant="outline" className="h-8 gap-1">
           <WandSparkles className="h-3.5 w-3.5" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            افزودن با AI
+            تولید 5 محصول با AI
           </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>تولید محصول با هوش مصنوعی</DialogTitle>
+          <DialogTitle>تولید 5 محصول با هوش مصنوعی</DialogTitle>
           <DialogDescription>
-            ایده خود را توصیف کنید. هوش مصنوعی نام، قیمت، توضیحات و تصویر محصول را برای شما تولید می‌کند.
+            فروشگاه و دسته‌بندی مورد نظر را انتخاب کنید تا هوش مصنوعی 5 محصول مرتبط را برای شما ایجاد کند.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="idea" className="text-right">ایده محصول</Label>
-            <Input id="idea" value={idea} onChange={e => setIdea(e.target.value)} className="col-span-3" placeholder="مثلا: پیچ گوشتی شارژی باکیفیت" />
-          </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="store" className="text-right">فروشگاه</Label>
             <Select value={storeId} onValueChange={setStoreId}>
@@ -144,7 +184,7 @@ function AiProductDialog({ onProductGenerated }: { onProductGenerated: (product:
         <DialogFooter>
           <Button onClick={handleGenerate} disabled={!canGenerate || isLoading}>
             {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-            تولید محصول
+            تولید 5 محصول
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -284,6 +324,14 @@ export default function ProductsPage() {
     const headers = { name: 'نام محصول', description: 'توضیحات', price: 'قیمت', storeName: 'فروشگاه', categoryName: 'زیردسته' };
     downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
+  
+  const handleProductsGenerated = () => {
+    // This function can be used to refetch data if needed, but the listener should handle it.
+    toast({
+        title: "در حال همگام‌سازی...",
+        description: "محصولات جدید در حال اضافه شدن به لیست شما هستند."
+    })
+  }
 
   if (view === 'form') {
     return (
@@ -309,7 +357,7 @@ export default function ProductsPage() {
                 </CardDescription>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <AiProductDialog onProductGenerated={handleAiProductGenerated} />
+              <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
               <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
@@ -435,5 +483,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-    

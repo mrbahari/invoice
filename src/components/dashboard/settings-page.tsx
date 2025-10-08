@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRef, ChangeEvent, useState, useEffect } from 'react';
@@ -20,6 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store } from 'lucide-react';
@@ -348,7 +348,7 @@ export default function SettingsPage() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCloseDialog}>انصراف</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || Object.values(selectedSections).every(v => !v)}>
+            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled} className="bg-green-600 hover:bg-green-700">
               {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
               {showStoreSelector ? 'تایید و بازیابی' : 'بازیابی'}
             </AlertDialogAction>

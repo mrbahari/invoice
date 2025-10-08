@@ -136,7 +136,10 @@ const CategoryTree = ({
                 <Accordion type="single" collapsible value={openAccordionItems.includes(cat.id) ? cat.id : ""}>
                   <AccordionItem value={cat.id} className="border-b-0">
                      <div className="flex items-center p-2 rounded-md hover:bg-muted/50 w-full" >
-                        <div className="flex flex-grow items-center gap-2" {...dragProvided.dragHandleProps}>
+                        <div {...dragProvided.dragHandleProps} className="flex items-center pr-2 cursor-grab">
+                            <GripVertical className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex flex-grow items-center gap-2">
                              {hasSubCategories ? (
                                 <AccordionTrigger
                                     onClick={() => onToggle(cat.id, level)}

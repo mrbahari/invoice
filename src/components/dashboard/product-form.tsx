@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product, Store, Category, UnitOfMeasurement } from '@/lib/definitions';
-import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search, WandSparkles, LoaderCircle, Copy, ChevronsUpDown, Package, Check } from 'lucide-react';
+import { Upload, Trash2, ArrowRight, PlusCircle, Pencil, Save, GripVertical, X, Search, WandSparkles, LoaderCircle, Copy, ChevronsUpDown, Package, Check, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import {
@@ -43,6 +43,7 @@ import { formatNumber, parseFormattedNumber, formatCurrency, parseCurrency } fro
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 type ProductFormProps = {
   product?: Product;
@@ -565,11 +566,15 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         <CardContent>
                             <div className="grid gap-2">
                                 <div className="relative aspect-video w-full rounded-md border bg-muted flex items-center justify-center overflow-hidden">
-                                    {isUploading && <Progress value={progress} className="absolute top-0 left-0 w-full h-1" />}
+                                    {isUploading && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                                            <Loader2 className="h-8 w-8 animate-spin text-white" />
+                                        </div>
+                                    )}
                                     {imageUrl ? (
-                                        <Image src={imageUrl} alt={name || "Product Image"} fill className="object-cover" key={imageUrl} />
+                                        <Image src={imageUrl} alt={name || "Product Image"} fill className={cn("object-cover", isUploading && "opacity-50")} key={imageUrl} />
                                     ) : (
-                                        <span className="text-sm text-muted-foreground">پیش‌نمایش تصویر</span>
+                                        !isUploading && <span className="text-sm text-muted-foreground">پیش‌نمایش تصویر</span>
                                     )}
                                 </div>
                                 <div className="grid gap-3">
@@ -588,7 +593,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                         className="hidden"
                                         accept="image/*"
                                     />
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image}>
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => handleAiGeneration('image')} disabled={aiLoading.image || isUploading}>
                                         {aiLoading.image ? <LoaderCircle className="animate-spin" /> : <WandSparkles className="ml-2 h-4 w-4" />}
                                         تولید
                                     </Button>
@@ -608,3 +613,5 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
+
+    

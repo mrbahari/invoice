@@ -218,18 +218,25 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
   const { searchTerm, setSearchVisible } = useSearch();
 
   const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
 
   const handleAccordionChange = useCallback((value: string) => {
-    setTimeout(() => {
-        const node = itemRefs.current.get(value);
-        if (node) {
-            node.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    }, 100);
-  }, []);
+    const newOpenId = openAccordionId === value ? null : value;
+    setOpenAccordionId(newOpenId);
+    
+    // Smooth scroll to the item when it opens
+    if (newOpenId) {
+        setTimeout(() => {
+            const node = itemRefs.current.get(newOpenId);
+            if (node) {
+                node.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, 100);
+    }
+  }, [openAccordionId]);
 
 
 
@@ -550,7 +557,7 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
         )}
 
         {Object.keys(groupedProducts).length > 0 ? (
-            <Accordion type="single" collapsible onValueChange={handleAccordionChange} className="w-full space-y-4">
+            <Accordion type="single" collapsible value={openAccordionId ?? undefined} onValueChange={handleAccordionChange} className="w-full space-y-4">
                 {categoryOrder.map(categoryId => {
                     const categoryProducts = groupedProducts[categoryId];
                     const firstProduct = categoryProducts[0];

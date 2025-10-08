@@ -32,7 +32,6 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { useData } from '@/context/data-context';
 import { cn } from '@/lib/utils';
-import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +61,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { ProductForm } from './product-form';
+
 
 type AiMultipleProductsDialogProps = {
   onProductsGenerated: () => void;
@@ -201,24 +202,58 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
   );
 }
 
-
-type ProductsPageProps = {
-  onEdit: (productId: string) => void;
-};
-
 type BulkAction = 'move' | 'copy';
 
-export default function ProductsPage({ onEdit }: ProductsPageProps) {
+export default function ProductsPage() {
   const { data, addDocuments, updateDocuments, deleteDocuments } = useData();
   const { products, stores, categories } = data;
   const { user } = useUser();
   const { toast } = useToast();
-
-  const [activeTab, setActiveTab] = useState('all');
   const { searchTerm, setSearchVisible } = useSearch();
 
+  const [view, setView] = useState<'list' | 'form'>('list');
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const scrollPositionRef = useRef(0);
+
+  const [activeTab, setActiveTab] = useState('all');
   const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Show search only when in list view
+    setSearchVisible(view === 'list');
+  }, [view, setSearchVisible]);
+
+  // Restore scroll position when returning to list
+  useEffect(() => {
+    if (view === 'list' && scrollPositionRef.current > 0 && typeof window !== 'undefined') {
+        setTimeout(() => {
+            window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
+            scrollPositionRef.current = 0; // Reset after restoring
+        }, 100);
+    }
+  }, [view]);
+
+  const handleEdit = (product?: Product) => {
+    if (typeof window !== 'undefined') {
+      scrollPositionRef.current = window.scrollY; // Save current scroll position
+    }
+    setEditingProduct(product);
+    setView('form');
+    if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleFormSave = () => {
+    setView('list');
+    setEditingProduct(undefined);
+  };
+  
+  const handleFormCancel = () => {
+    setView('list');
+    setEditingProduct(undefined);
+  };
 
   const handleAccordionChange = useCallback((value: string) => {
     const newOpenId = openAccordionId === value ? null : value;
@@ -238,14 +273,6 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
     }
   }, [openAccordionId]);
 
-
-
-  useEffect(() => {
-    setSearchVisible(true);
-    // Cleanup on unmount
-    return () => setSearchVisible(false);
-  }, [setSearchVisible]);
-
   const handleAddClick = () => {
     if (!user) {
       toast({
@@ -255,10 +282,8 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
       });
       return;
     }
-    // onEdit is called with an empty string to signify creation
-    onEdit('');
+    handleEdit(undefined);
   };
-
 
   const groupedProducts = useMemo(() => {
     if (!products) return {};
@@ -281,7 +306,6 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
     }, {} as Record<string, Product[]>);
 
   }, [products, activeTab, searchTerm]);
-
 
   const getCategoryName = (categoryId: string) => {
     if (!categories) return 'بدون زیردسته';
@@ -417,6 +441,10 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
         </SelectGroup>
     ));
   };
+  
+  if (view === 'form') {
+    return <ProductForm product={editingProduct} onSave={handleFormSave} onCancel={handleFormCancel} />;
+  }
 
   return (
     <div className="grid gap-6" data-main-page="true">
@@ -434,7 +462,7 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
                     <File className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
                 </Button>
-                <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={() => onEdit('')}>
+                <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
                 </Button>
@@ -611,7 +639,7 @@ export default function ProductsPage({ onEdit }: ProductsPageProps) {
                                                 <TableRow 
                                                     key={product.id}
                                                     data-state={selectedProducts.includes(product.id) ? "selected" : ""}
-                                                    onClick={() => onEdit(product.id)} 
+                                                    onClick={() => handleEdit(product)} 
                                                     className="cursor-pointer"
                                                 >
                                                     <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">

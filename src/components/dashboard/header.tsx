@@ -17,6 +17,7 @@ const tabToNameMapping: Record<DashboardTab, string> = {
   categories: 'فروشگاه‌ها',
   estimators: 'برآورد مصالح',
   settings: 'تنظیمات',
+  profile: 'پروفایل کاربری',
 };
 
 // Only show search bar on these specific tabs

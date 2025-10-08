@@ -9,10 +9,11 @@ import {
   Store,
   Calculator,
   Settings,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DashboardTab } from '@/app/dashboard/page';
-import { useUser } from '@/firebase';
+import { useUser as useAuthUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] = [
@@ -20,7 +21,7 @@ const navItems: { tab: DashboardTab; icon: React.ElementType; label: string }[] 
   { tab: 'products', icon: Package, label: 'محصولات' },
   { tab: 'customers', icon: Users, label: 'مشتریان' },
   // Central button placeholder
-  { tab: 'categories', icon: Store, label: 'فروشگاه‌ها' },
+  { tab: 'profile', icon: User, label: 'پروفایل' },
   { tab: 'estimators', icon: Calculator, label: 'برآورد' },
   { tab: 'settings', icon: Settings, label: 'تنظیمات' },
 ];
@@ -31,7 +32,7 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
-  const { user } = useUser();
+  const { user } = useAuthUser();
   const { toast } = useToast();
   
   const handleTabClick = (tab: DashboardTab) => {

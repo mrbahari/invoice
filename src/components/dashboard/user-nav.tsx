@@ -157,6 +157,9 @@ export function UserNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => router.push('/dashboard?tab=profile')}>
+              پروفایل کاربری
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/dashboard?tab=settings')}>
               تنظیمات
             </DropdownMenuItem>

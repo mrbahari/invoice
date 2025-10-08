@@ -10,7 +10,7 @@ import { useData } from '@/context/data-context';
 
 
 // Define types for dynamic components and props
-export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators' | 'profile';
 
 const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
   dashboard: dynamic(() => import('@/components/dashboard/reports-page'), { loading: () => <LoadingSpinner />, ssr: false }),
@@ -20,6 +20,7 @@ const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
   categories: dynamic(() => import('@/components/dashboard/stores-page'), { loading: () => <LoadingSpinner /> }),
   estimators: dynamic(() => import('@/components/dashboard/estimators-page'), { loading: () => <LoadingSpinner /> }),
   settings: dynamic(() => import('@/components/dashboard/settings-page'), { loading: () => <LoadingSpinner /> }),
+  profile: dynamic(() => import('@/components/dashboard/profile-page'), { loading: () => <LoadingSpinner /> }),
 };
 
 

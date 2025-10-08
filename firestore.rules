@@ -1,63 +1,61 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
+ * @fileoverview Firestore Security Rules for Prototyping.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user-specific data
- * and allows public read access to visitor logs.
+ * This ruleset enforces a strict user-ownership model for most data, ensuring that users can only access their own data.
+ * Public read access is granted to visitor logs for analytics purposes.
  *
  * Data Structure:
- * - All user-related data (stores, products, categories, profiles, invoices, units, settings)
- *   is nested under `/users/{userId}`.
- * - Visitor logs are stored in the top-level `/visitorLogs` collection.
+ * - All user-specific data is nested under /users/{userId}, including stores, products, categories, user profiles, invoices, and units.
+ * - Visitor logs are stored in the top-level /visitorLogs collection.
  *
  * Key Security Decisions:
- * - Users can only access their own data.
- * - User listing is disallowed.
- * - Visitor logs are publicly readable but only the server can create them.
+ * - User listing is disallowed to prevent unauthorized access to user data.
+ * - The rules do not validate the specific schema of the data being written, allowing for rapid iteration. However, critical fields like ownership IDs are validated.
  *
  * Denormalization for Authorization:
- * - User ownership is enforced by matching the `userId` path segment against the `request.auth.uid`.
+ * - The current data model already supports owner-based rules. No additional denormalization is required.
+ *
+ * Structural Segregation:
+ * - Private user data is stored under /users/{userId}, while public visitor logs are stored in a top-level collection.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
+     * @description Checks if the current user is signed in.
+     * @return {bool} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the user is the owner of the document.
-     * @param {string} userId The user ID to compare against the request's auth UID.
-     * @return {boolean} True if the user is the owner, false otherwise.
+     * @description Checks if the current user is the owner of the resource.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user is the owner, false otherwise.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the user is the owner of an existing document.
-     * @param {string} userId The user ID to compare against the request's auth UID.
-     * @return {boolean} True if the user is the owner and the document exists.
+     * @description Checks if the current user is the owner of the resource and the resource exists.
+     * @param {string} userId The user ID to check against.
+     * @return {bool} True if the user is the owner and the resource exists, false otherwise.
      */
     function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+        return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description
-     * Rules for user-specific stores.
+     * @description Rules for user-specific stores.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create) A user can create a store under their own user ID.
-     * @allow (update) A user can update a store under their own user ID if they are the owner and the document exists.
-     * @allow (delete) A user can delete a store under their own user ID if they are the owner and the document exists.
-     * @deny (create) A user cannot create a store under another user's ID.
-     * @deny (update) A user cannot update a store under another user's ID.
-     * @deny (delete) A user cannot delete a store under another user's ID.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a store with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/store1.
+     * @deny (create) User anotherUser cannot create a store under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update a store they own.
+     * @deny (update) User anotherUser cannot update a store owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/stores/{storeId} {
@@ -69,15 +67,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for user-specific products.
+     * @description Rules for user-specific products.
      * @path /users/{userId}/products/{productId}
-     * @allow (create) A user can create a product under their own user ID.
-     * @allow (update) A user can update a product under their own user ID if they are the owner and the document exists.
-     * @allow (delete) A user can delete a product under their own user ID if they are the owner and the document exists.
-     * @deny (create) A user cannot create a product under another user's ID.
-     * @deny (update) A user cannot update a product under another user's ID.
-     * @deny (delete) A user cannot delete a product under another user's ID.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a product with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/product1.
+     * @deny (create) User anotherUser cannot create a product under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update a product they own.
+     * @deny (update) User anotherUser cannot update a product owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/products/{productId} {
@@ -89,15 +84,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for user-specific categories.
+     * @description Rules for user-specific categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) A user can create a category under their own user ID.
-     * @allow (update) A user can update a category under their own user ID if they are the owner and the document exists.
-     * @allow (delete) A user can delete a category under their own user ID if they are the owner and the document exists.
-     * @deny (create) A user cannot create a category under another user's ID.
-     * @deny (update) A user cannot update a category under another user's ID.
-     * @deny (delete) A user cannot delete a category under another user's ID.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a category with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/category1.
+     * @deny (create) User anotherUser cannot create a category under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update a category they own.
+     * @deny (update) User anotherUser cannot update a category owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/categories/{categoryId} {
@@ -109,16 +101,13 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for user-specific user profiles.
+     * @description Rules for user-specific user profiles.
      * @path /users/{userId}/userProfiles/{profileId}
-     * @allow (create) A user can create a user profile under their own user ID.
-     * @allow (update) A user can update their own profile, and userId and profileId must match.
-     * @allow (delete) A user can delete their own profile.
-     * @deny (create) A user cannot create a profile under another user's ID.
-     * @deny (update) A user cannot update another user's profile.
-     * @deny (delete) A user cannot delete another user's profile.
-     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a user profile with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/userProfiles/profile1.
+     * @deny (create) User anotherUser cannot create a user profile under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update their own user profile.
+     * @deny (update) User anotherUser cannot update a user profile owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/userProfiles/{profileId} {
       allow get: if isOwner(userId);
@@ -129,15 +118,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for user-specific invoices.
+     * @description Rules for user-specific invoices.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create) A user can create an invoice under their own user ID.
-     * @allow (update) A user can update an invoice under their own user ID if they are the owner and the document exists.
-     * @allow (delete) A user can delete an invoice under their own user ID if they are the owner and the document exists.
-     * @deny (create) A user cannot create an invoice under another user's ID.
-     * @deny (update) A user cannot update an invoice under another user's ID.
-     * @deny (delete) A user cannot delete an invoice under another user's ID.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create an invoice with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/invoice1.
+     * @deny (create) User anotherUser cannot create an invoice under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update an invoice they own.
+     * @deny (update) User anotherUser cannot update an invoice owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/invoices/{invoiceId} {
@@ -149,15 +135,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for user-specific units.
+     * @description Rules for user-specific units.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create) A user can create a unit under their own user ID.
-     * @allow (update) A user can update a unit under their own user ID if they are the owner and the document exists.
-     * @allow (delete) A user can delete a unit under their own user ID if they are the owner and the document exists.
-     * @deny (create) A user cannot create a unit under another user's ID.
-     * @deny (update) A user cannot update a unit under another user's ID.
-     * @deny (delete) A user cannot delete a unit under another user's ID.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create a unit with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/unit1.
+     * @deny (create) User anotherUser cannot create a unit under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update a unit they own.
+     * @deny (update) User anotherUser cannot update a unit owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/units/{unitId} {
@@ -169,15 +152,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for user-specific toolbar settings.
+     * @description Rules for user-specific toolbar settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (create) A user can create toolbar settings under their own user ID.
-     * @allow (update) A user can update toolbar settings under their own user ID if they are the owner and the document exists.
-     * @allow (delete) A user can delete toolbar settings under their own user ID if they are the owner and the document exists.
-     * @deny (create) A user cannot create toolbar settings under another user's ID.
-     * @deny (update) A user cannot update toolbar settings under another user's ID.
-     * @deny (delete) A user cannot delete toolbar settings under another user's ID.
+     * @allow (create) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can create toolbar settings with ID xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions.
+     * @deny (create) User anotherUser cannot create toolbar settings under user xHYjOZByDvVoCdllW9YbyGU9ZKb2's path.
+     * @allow (update) User xHYjOZByDvVoCdllW9YbyGU9ZKb2 can update their own toolbar settings.
+     * @deny (update) User anotherUser cannot update toolbar settings owned by user xHYjOZByDvVoCdllW9YbyGU9ZKb2.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/settings/toolbarPositions {
@@ -189,22 +169,21 @@ service cloud.firestore {
     }
 
     /**
-     * @description
-     * Rules for visitor logs.  Logs are publicly readable, but only the backend can create, update, or delete them.
+     * @description Rules for visitor logs. Allows public read access, but restricts writes.
      * @path /visitorLogs/{logId}
-     * @allow (get) All users, signed in or not, can read visitor logs.
-     * @allow (list) All users, signed in or not, can list visitor logs.
-     * @deny (create) Only the backend can create visitor logs.
-     * @deny (update) Only the backend can update visitor logs.
-     * @deny (delete) Only the backend can delete visitor logs.
-     * @principle Allows public read access but restricts write access to the server.
+     * @allow (get) Any user can read a visitor log.
+     * @allow (list) Any user can list visitor logs.
+     * @deny (create) No one can create visitor logs directly through the client.
+     * @deny (update) No one can update visitor logs directly through the client.
+     * @deny (delete) No one can delete visitor logs directly through the client.
+     * @principle Allows public read access to visitor logs.
      */
     match /visitorLogs/{logId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false; // TODO: Add server-only validation using custom claims
-      allow update: if false; // TODO: Add server-only validation using custom claims
-      allow delete: if false; // TODO: Add server-only validation using custom claims
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

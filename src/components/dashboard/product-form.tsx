@@ -76,7 +76,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [unit, setUnit] = useState<string>(product?.unit || '');
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
-  const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
+  const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit || '-');
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
   const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity));
 
@@ -130,11 +130,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const mainPriceNum = Number(price);
     const subUnitQtyNum = Number(subUnitQuantity);
 
-    if (mainPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
+    if (mainPriceNum > 0 && subUnitQtyNum > 0 && subUnit && subUnit !== '-') {
       const calculatedSubPrice = Math.round(mainPriceNum / subUnitQtyNum);
       setSubUnitPrice(calculatedSubPrice);
       setDisplaySubUnitPrice(formatCurrency(calculatedSubPrice, { currencyDisplay: 'code' }).replace('IRR', '').trim());
-    } else if (!subUnit) {
+    } else if (!subUnit || subUnit === '-') {
        setSubUnitPrice('');
        setDisplaySubUnitPrice('');
     }
@@ -286,7 +286,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       subCategoryId,
       unit,
       imageUrl: finalImage,
-      subUnit: (subUnit && subUnit !== 'none') ? subUnit : '',
+      subUnit: (subUnit && subUnit !== 'none' && subUnit !== '-') ? subUnit : '-',
       subUnitQuantity: Number(subUnitQuantity) || 0,
       subUnitPrice: Number(subUnitPrice) || 0,
     };
@@ -338,7 +338,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   };
 
 
-  const showSubUnitFields = !!subUnit && subUnit !== 'none';
+  const showSubUnitFields = !!subUnit && subUnit !== 'none' && subUnit !== '-';
   
   const renderCategoryOptions = (nodes: (Category & { children: Category[] })[]) => {
     return nodes.map(node => (
@@ -518,10 +518,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     <Label htmlFor="sub-unit" className="text-right">واحد فرعی</Label>
                                     <div className="col-span-2">
                                         <Select
-                                            value={subUnit ? storeUnits.find(u => u.name === subUnit)?.id || 'none' : 'none'}
+                                            value={subUnit && subUnit !== '-' ? storeUnits.find(u => u.name === subUnit)?.id || 'none' : 'none'}
                                             onValueChange={(value: string) => {
                                                 if (value === 'none') {
-                                                    setSubUnit(undefined);
+                                                    setSubUnit('-');
                                                     setSubUnitQuantity('');
                                                 } else {
                                                     const selectedUnit = storeUnits.find(u => u.id === value);

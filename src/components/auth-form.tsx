@@ -163,7 +163,7 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
                   {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
                 </div>
                 {formState?.message && !isPending && <p className={`text-sm text-center ${formState.success ? 'text-green-600' : 'text-destructive'}`}>{formState.message}</p>}
-                <Button type="submit" className="w-full" disabled={isPending}>
+                <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" disabled={isPending}>
                   {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                   {buttonLabels.login}
                 </Button>

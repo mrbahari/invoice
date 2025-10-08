@@ -72,7 +72,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const [storeId, setStoreId] = useState(product?.storeId || '');
   const [subCategoryId, setSubCategoryId] = useState(product?.subCategoryId || '');
-  const [unit, setUnit] = useState<string>(product?.unit || (unitsOfMeasurement[0]?.name || ''));
+  const [unit, setUnit] = useState<string>(product?.unit || '');
   const [imageUrl, setImageUrl] = useState<string | null>(product?.imageUrl || null);
   
   const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
@@ -88,7 +88,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const { uploadFile, progress, isUploading, error: uploadError } = useUpload();
   
-  // Create a memoized category tree
+  // Memoize the category tree
   const categoryTree = useMemo(() => {
     if (!storeId || !categories) return [];
     
@@ -106,6 +106,18 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
     return tree;
   }, [categories, storeId]);
+
+  const storeUnits = useMemo(() => {
+      if (!storeId) return [];
+      return unitsOfMeasurement.filter(u => u.storeId === storeId);
+  }, [unitsOfMeasurement, storeId]);
+
+  useEffect(() => {
+    if (!unit && storeUnits.length > 0) {
+      setUnit(storeUnits[0].name);
+    }
+  }, [unit, storeUnits]);
+
 
   
   // Calculate sub-unit price from main price
@@ -310,16 +322,17 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const renderCategoryOptions = (nodes: (Category & { children: Category[] })[]) => {
     return nodes.map(node => (
-      <SelectGroup key={node.id}>
-        <SelectLabel className="font-bold text-foreground">{node.name}</SelectLabel>
-        {node.children.map(child => (
-          <SelectItem key={child.id} value={child.id} className="pr-6">
-            {child.name}
-          </SelectItem>
-        ))}
-      </SelectGroup>
+        <SelectGroup key={node.id}>
+            <SelectLabel className="font-bold text-foreground">{node.name}</SelectLabel>
+            {node.children.map(child => (
+                <SelectItem key={child.id} value={child.id} className="pr-6">
+                    {child.name}
+                </SelectItem>
+            ))}
+        </SelectGroup>
     ));
   };
+
 
   return (
     <TooltipProvider>
@@ -465,10 +478,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="unit" className="text-right">واحد اصلی</Label>
                                     <div className="col-span-2">
-                                        <Select value={unit} onValueChange={(value: string) => setUnit(value)} required>
-                                            <SelectTrigger id="unit"><SelectValue placeholder="واحد" /></SelectTrigger>
+                                        <Select value={unit} onValueChange={(value: string) => setUnit(value)} required disabled={!storeId}>
+                                            <SelectTrigger id="unit"><SelectValue placeholder={storeId ? "انتخاب واحد" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
                                             <SelectContent>
-                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
+                                                {storeUnits.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -476,11 +489,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="sub-unit" className="text-right">واحد فرعی</Label>
                                     <div className="col-span-2">
-                                        <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }}>
-                                            <SelectTrigger id="sub-unit"><SelectValue placeholder="اختیاری" /></SelectTrigger>
+                                        <Select value={subUnit || 'none'} onValueChange={(value: string) => { if (value === 'none') { setSubUnit(undefined); setSubUnitQuantity(''); } else { setSubUnit(value); } }} disabled={!storeId}>
+                                            <SelectTrigger id="sub-unit"><SelectValue placeholder={storeId ? "اختیاری" : "ابتدا فروشگاه را انتخاب کنید"} /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem key="none" value="none">هیچکدام</SelectItem>
-                                                {unitsOfMeasurement.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
+                                                {storeUnits.map((u) => (<SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>))}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -564,5 +577,3 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
-
-    

@@ -44,6 +44,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -209,6 +211,8 @@ export default function ProductsPage() {
   const storesScrollRef = useRef<HTMLDivElement>(null);
   useDraggableScroll(storesScrollRef, { direction: 'horizontal' });
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
 
   const { itemsToShow, sentinelRef } = useVirtualScroll(30);
 
@@ -287,6 +291,13 @@ export default function ProductsPage() {
     setSelectedProductId(null);
   };
 
+  const filteredCategories = useMemo(() => {
+    if (activeTab === 'all') {
+      return categories;
+    }
+    return categories.filter(c => c.storeId === activeTab);
+  }, [categories, activeTab]);
+
   const sortedAndFilteredProducts = useMemo(() => {
     if (!products) return [];
     let filtered = products.filter((product) =>
@@ -295,6 +306,10 @@ export default function ProductsPage() {
 
     if (activeTab !== 'all') {
       filtered = filtered.filter((p) => p.storeId === activeTab);
+    }
+    
+    if (categoryFilter !== 'all') {
+        filtered = filtered.filter(p => p.subCategoryId === categoryFilter);
     }
     
     switch (sortOption) {
@@ -307,7 +322,7 @@ export default function ProductsPage() {
         // 'newest' is default as new products are prepended
         return filtered;
     }
-  }, [products, activeTab, searchTerm, sortOption]);
+  }, [products, activeTab, searchTerm, sortOption, categoryFilter]);
 
   const getCategoryName = (categoryId: string) => {
     if (!categories) return 'بدون زیردسته';
@@ -345,6 +360,34 @@ export default function ProductsPage() {
 
   const productsToShow = sortedAndFilteredProducts.slice(0, itemsToShow);
 
+  const categoryTree = useMemo(() => {
+    const relevantCategories = categories.filter(c => activeTab === 'all' || c.storeId === activeTab);
+    const categoryMap = new Map(relevantCategories.map(c => [c.id, { ...c, children: [] as Category[] }]));
+    const tree: (Category & { children: Category[] })[] = [];
+
+    relevantCategories.forEach(cat => {
+      if (cat.parentId && categoryMap.has(cat.parentId)) {
+        categoryMap.get(cat.parentId)?.children.push(categoryMap.get(cat.id)!);
+      } else if (!cat.parentId) {
+        tree.push(categoryMap.get(cat.id)!);
+      }
+    });
+    return tree;
+  }, [categories, activeTab]);
+
+  const renderCategoryOptions = (nodes: (Category & { children: Category[] })[]) => {
+    return nodes.map(node => (
+        <SelectGroup key={node.id}>
+            <SelectLabel className="font-bold text-foreground">{node.name}</SelectLabel>
+            {node.children.map(child => (
+                <SelectItem key={child.id} value={child.id} className="pr-6">
+                    {child.name}
+                </SelectItem>
+            ))}
+        </SelectGroup>
+    ));
+  };
+
   return (
     <div className="grid gap-6" data-main-page="true">
       <Card>
@@ -370,7 +413,7 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
+            <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v); setCategoryFilter('all')}} className="w-full" dir="rtl">
                 <TabsList className="h-auto bg-transparent p-0">
                     <TabsTrigger value="all" asChild>
                        <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
@@ -399,7 +442,20 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
       
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[240px]">
+                <SelectValue placeholder="فیلتر بر اساس دسته‌بندی..." />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">همه دسته‌بندی‌ها</SelectItem>
+                 {categoryTree.length > 0 ? (
+                    renderCategoryOptions(categoryTree)
+                ) : (
+                    <div className="p-4 text-center text-sm text-muted-foreground">هیچ دسته‌بندی برای این فروشگاه یافت نشد.</div>
+                )}
+            </SelectContent>
+        </Select>
           <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
             <SelectTrigger className="w-[180px]">
               <div className="flex items-center gap-2">

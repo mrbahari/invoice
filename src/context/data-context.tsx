@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition, AppData } from '@/lib/definitions';
+import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition, AppData, UserProfile } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/firebase'; // Changed from user-context
 import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
@@ -57,7 +57,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const categoriesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'categories') : null, [firestore, user]);
   const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
   const unitsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
-  const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
+  const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'customers') : null, [firestore, user]);
   const userProfilesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'userProfiles') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
@@ -79,7 +79,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { data: storesData, isLoading: storesLoading } = useCollection<Store>(storesRef);
   const { data: unitsData, isLoading: unitsLoading } = useCollection<UnitOfMeasurement>(unitsRef);
   const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersRef);
-  const { data: userProfilesData, isLoading: userProfilesLoading } = useCollection<Customer>(userProfilesRef);
+  const { data: userProfilesData, isLoading: userProfilesLoading } = useCollection<UserProfile>(userProfilesRef);
   const { data: invoicesData, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesRef);
   const { data: toolbarData, isLoading: toolbarLoading } = useDoc<any>(toolbarPosRef);
   

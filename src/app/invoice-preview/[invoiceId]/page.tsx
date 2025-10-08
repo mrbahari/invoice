@@ -226,13 +226,19 @@ export default function PublicInvoicePreviewPage() {
               </div>
             </section>
 
-            <footer className="border-t mt-4 pt-2 text-xs text-gray-600 space-y-1">
+            <footer className="border-t mt-4 pt-2 text-xs text-gray-600">
               <p>{toPersianDigits(1)}. اعتبار پیش فاکتور {toPersianDigits(24)} ساعت می‌باشد.</p>
-              {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
-              {store.bankName && <p><strong>بانک:</strong> {store.bankName}</p>}
-              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
-              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
-              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
+               <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {store.bankAccountHolder && <span><strong>صاحب حساب:</strong> {store.bankAccountHolder}</span>}
+                  {store.bankName && <span className="hidden sm:inline">|</span>}
+                  {store.bankName && <span><strong>بانک:</strong> {store.bankName}</span>}
+                   {store.bankCardNumber && <span className="hidden sm:inline">|</span>}
+                  {store.bankCardNumber && <span><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></span>}
+                  {store.bankAccountNumber && <span className="hidden sm:inline">|</span>}
+                  {store.bankAccountNumber && <span><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></span>}
+                  {store.bankIban && <span className="hidden sm:inline">|</span>}
+                  {store.bankIban && <span><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></span>}
+              </p>
             </footer>
         </div>
       </div>

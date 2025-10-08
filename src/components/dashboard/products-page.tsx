@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -235,15 +234,19 @@ export default function ProductsPage() {
     }
   }, [view]);
 
+  // Scroll to top when form view is shown
+  useEffect(() => {
+    if (view === 'form') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [view]);
+
   const handleEdit = (product?: Product) => {
     if (typeof window !== 'undefined') {
       scrollPositionRef.current = window.scrollY; // Save current scroll position
     }
     setEditingProduct(product);
     setView('form');
-    if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   };
 
   const handleFormSave = () => {

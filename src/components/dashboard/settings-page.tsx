@@ -400,7 +400,7 @@ export default function SettingsPage() {
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
               <CardHeader>
               <CardTitle>ظاهر برنامه</CardTitle>
@@ -431,36 +431,35 @@ export default function SettingsPage() {
               </CardContent>
           </Card>
           
+          <Card>
+            <CardHeader>
+              <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
+              <CardDescription>
+                از داده‌های برنامه خود نسخه پشتیبان تهیه کرده یا آن‌ها را بازیابی کنید.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+                <Button onClick={handleBackupData} variant="outline" disabled={isProcessing}>
+                    <Download className="ml-2 h-4 w-4" />
+                    دانلود فایل پشتیبان (Backup)
+                </Button>
+                <div>
+                  <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isProcessing}>
+                    <Upload className="ml-2 h-4 w-4" />
+                    بازیابی از فایل (Restore)
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleRestoreChange}
+                    accept=".json"
+                    className="hidden"
+                  />
+                </div>
+            </CardContent>
+          </Card>
         </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
-            <CardDescription>
-              از داده‌های برنامه خود نسخه پشتیبان تهیه کرده یا آن‌ها را بازیابی کنید.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-              <Button onClick={handleBackupData} variant="outline" disabled={isProcessing}>
-                  <Download className="ml-2 h-4 w-4" />
-                  دانلود فایل پشتیبان (Backup)
-              </Button>
-              <div>
-                <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isProcessing}>
-                  <Upload className="ml-2 h-4 w-4" />
-                  بازیابی از فایل (Restore)
-                </Button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleRestoreChange}
-                  accept=".json"
-                  className="hidden"
-                />
-              </div>
-          </CardContent>
-        </Card>
-
         <Card>
             <CardHeader>
                 <CardTitle>نگهداری و تعمیرات</CardTitle>

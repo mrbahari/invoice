@@ -168,7 +168,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const invoiceItems: InvoiceItem[] = [];
 
     const productMap: Record<string, { keyword: string[], aliases: string[] }> = {
-      'پنل': { keyword: ['پنل'], aliases: ['پنل RG', 'پنل والیز', 'پانل گچی', 'panel', 'پنل جی برد'] },
+      'پنل RG': { keyword: ['پنل'], aliases: ['پنل RG', 'پنل والیز', 'پانل گچی', 'panel', 'پنل جی برد'] },
       'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'] },
       'سازه f47': { keyword: ['f47'], aliases: ['f47'] },
       'سازه u36': { keyword: ['u36'], aliases: ['u36'] },
@@ -179,7 +179,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'] },
       'رانر': { keyword: ['رانر'], aliases: ['runner'] },
       'استاد': { keyword: ['استاد'], aliases: ['stud'] },
-      'پیچ ۲.۵': { keyword: ['پیچ'], aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
+      'پیچ ۲.۵': { keyword: ['پیچ', '2.5'], aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
       'پیچ سازه': { keyword: ['پیچ'], aliases: ['پیچ سازه', 'ln9', 'پیچ LN'] },
       'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'] },
       'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'] },
@@ -196,9 +196,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
         // Step 1: Find an exact or alias match.
         for (const key in productMap) {
-            if (productMap[key].aliases.some(alias => materialNameLower.includes(alias.toLowerCase()))) {
-                // Find a product whose name includes the key (e.g., key is 'پنل', product name is 'پنل RG')
-                matchedProduct = products.find(p => p.name.toLowerCase().includes(key.toLowerCase()));
+            const productKeywords = productMap[key].aliases.map(alias => alias.toLowerCase());
+            if (productKeywords.some(alias => materialNameLower.includes(alias))) {
+                matchedProduct = products.find(p => {
+                    const productNameLower = p.name.toLowerCase();
+                    return productMap[key].keyword.some(kw => productNameLower.includes(kw.toLowerCase()));
+                });
                 if (matchedProduct) {
                     foundMatch = true;
                     break;
@@ -206,19 +209,19 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             }
         }
         
-        // Step 2: If no match, find a substitute using the main keyword.
+        // Step 2: If no match, find a substitute using the main keyword from the material name itself.
         if (!foundMatch) {
-            for (const key in productMap) {
-                 if (materialNameLower.includes(key.toLowerCase())) {
-                     const mainKeyword = productMap[key].keyword[0];
-                     const substitute = products.find(p => p.name.toLowerCase().includes(mainKeyword.toLowerCase()));
+            const materialKeywords = item.material.split(/\s+/);
+             for (const keyword of materialKeywords) {
+                if (keyword.length > 2) { // Avoid very short keywords
+                    const substitute = products.find(p => p.name.toLowerCase().includes(keyword.toLowerCase()));
                      if (substitute) {
                          matchedProduct = substitute;
                          foundMatch = true;
                          break;
                      }
-                 }
-            }
+                }
+             }
         }
 
 

@@ -72,7 +72,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
       { material: 'پنل RG', quantity: panelsNeeded, unit: 'برگ' },
       { material: 'رانر', quantity: totalRunners, unit: 'شاخه' },
       { material: 'استاد', quantity: studsNeeded, unit: 'شاخه' },
-      { material: 'پیچ ۲.۵', quantity: totalScrews, unit: 'عدد' },
+      { material: 'پیچ پنل', quantity: totalScrews, unit: 'عدد' },
     ];
     
     if (includeWool) {

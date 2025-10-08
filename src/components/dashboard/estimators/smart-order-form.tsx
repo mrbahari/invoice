@@ -152,7 +152,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
                 <Button 
                 onClick={handleProcessFile} 
                 disabled={!file || isLoading} 
-                className="w-full"
+                className="w-full bg-green-600 hover:bg-green-700"
                 size="lg"
                 >
                 {isLoading ? (

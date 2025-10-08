@@ -906,7 +906,12 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
         <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 grid auto-rows-max gap-4">
-                <Collapsible open={isCustomerSelectorOpen} onOpenChange={setIsCustomerSelectorOpen}>
+                <Collapsible open={isCustomerSelectorOpen} onOpenChange={(isOpen) => {
+                    setIsCustomerSelectorOpen(isOpen);
+                    if (isOpen) {
+                        setCustomerDialogView('select');
+                    }
+                }}>
                     <Card>
                         <CardHeader>
                            <CardTitle>اطلاعات مشتری</CardTitle>
@@ -925,7 +930,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                                         </div>
                                     </div>
                                     <CollapsibleTrigger asChild>
-                                        <Button variant="outline" onClick={() => setCustomerDialogView('select')}>
+                                        <Button variant="outline">
                                             <Pencil className="ml-1 h-3 w-3" />
                                             تغییر
                                         </Button>

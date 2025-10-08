@@ -35,9 +35,11 @@ export default function RootLayout({
           <FirebaseClientProvider>
             <DataProvider>
                 <VisitorTracker />
-                <main className="relative z-10">
-                  {children}
-                </main>
+                <div className="max-w-7xl mx-auto w-full">
+                  <main className="relative z-10">
+                    {children}
+                  </main>
+                </div>
                 <Toaster />
             </DataProvider>
           </FirebaseClientProvider>

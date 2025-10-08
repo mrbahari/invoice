@@ -9,7 +9,7 @@ import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
 import { FlatCeilingForm } from './estimators/flat-ceiling-form';
 import { DrywallForm } from './estimators/drywall-form';
-import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
+import type { Invoice, InvoiceItem, Product, Category } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStorePrefix, formatNumber } from '@/lib/utils';
 import { useData } from '@/context/data-context';
@@ -85,7 +85,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   const [selectedEstimator, setSelectedEstimator] = useState<EstimatorType | null>(null);
   const [estimationList, setEstimationList] = useState<Estimation[]>([]);
   const { data: appData } = useData();
-  const { products, invoices } = appData;
+  const { products, invoices, categories } = appData;
   const { setSearchVisible } = useSearch();
   const { user } = useUser();
   const { toast } = useToast();
@@ -161,55 +161,66 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       return;
     }
     if (aggregatedResults.length === 0) {
-      // No items to create an invoice from.
       return;
     }
 
     const invoiceItems: InvoiceItem[] = [];
-    
-    // Improved product mapping with aliases
-    const productMap: Record<string, string[]> = {
-      'پنل والیز': ['پنل والیز', 'پانل گچی', 'panel'],
-      'پنل جی برد': ['پنل جی برد', 'پانل گچی', 'panel'],
-      'تایل پی وی سی': ['تایل', 'pvc'],
-      'سازه f47': ['f47'],
-      'سازه u36': ['u36'],
-      'نبشی l25': ['l25'],
-      'نبشی l24': ['l24'],
-      'سپری t360': ['t360', '3.60'],
-      'سپری t120': ['t120', '1.20'],
-      'سپری t60': ['t60', '0.60'],
-      'رانر': ['runner'],
-      'استاد': ['stud'],
-      'پیچ ۲.۵': ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'],
-      'پیچ سازه': ['پیچ سازه', 'ln9', 'پیچ LN'],
-      'آویز': ['آویز', 'hanger'],
-      'میخ و چاشنی': ['میخ', 'چاشنی'],
-      'پشم سنگ': ['پشم سنگ', 'rockwool'],
-      'اتصال W': ['اتصال w', 'w clip', 'دبلیو'],
-      'کلیپس': ['کلیپس', 'clip'],
-      'براکت': ['براکت', 'bracket'],
+
+    const productMap: Record<string, { aliases: string[], category: string }> = {
+      'پنل والیز': { aliases: ['پنل والیز', 'پانل گچی', 'panel'], category: 'پنل' },
+      'پنل جی برد': { aliases: ['پنل جی برد', 'پانل گچی', 'panel'], category: 'پنل' },
+      'تایل پی وی سی': { aliases: ['تایل', 'pvc'], category: 'تایل' },
+      'سازه f47': { aliases: ['f47'], category: 'سازه سقف' },
+      'سازه u36': { aliases: ['u36'], category: 'سازه سقف' },
+      'نبشی l25': { aliases: ['l25'], category: 'سازه سقف' },
+      'نبشی l24': { aliases: ['l24'], category: 'سپری' },
+      'سپری t360': { aliases: ['t360', '3.60'], category: 'سپری' },
+      'سپری t120': { aliases: ['t120', '1.20'], category: 'سپری' },
+      'سپری t60': { aliases: ['t60', '0.60'], category: 'سپری' },
+      'رانر': { aliases: ['runner'], category: 'سازه دیوار' },
+      'استاد': { aliases: ['stud'], category: 'سازه دیوار' },
+      'پیچ ۲.۵': { aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'], category: 'پیچ' },
+      'پیچ سازه': { aliases: ['پیچ سازه', 'ln9', 'پیچ LN'], category: 'پیچ' },
+      'آویز': { aliases: ['آویز', 'hanger'], category: 'ملزومات نصب' },
+      'میخ و چاشنی': { aliases: ['میخ', 'چاشنی'], category: 'میخ و چاشنی' },
+      'پشم سنگ': { aliases: ['پشم سنگ', 'rockwool'], category: 'پشم سنگ' },
+      'اتصال W': { aliases: ['اتصال w', 'w clip', 'دبلیو'], category: 'ملزومات نصب' },
+      'کلیپس': { aliases: ['کلیپس', 'clip'], category: 'ملزومات نصب' },
+      'براکت': { aliases: ['براکت', 'bracket'], category: 'ملزومات نصب' },
     };
 
     aggregatedResults.forEach(item => {
         let matchedProduct: Product | undefined;
         const materialNameLower = item.material.toLowerCase();
 
-        // Find the best match from productMap
+        // Find the category and aliases for the current material
         let bestMatchKey: string | undefined;
         for (const key in productMap) {
-            if (productMap[key].some(alias => materialNameLower.includes(alias.toLowerCase()))) {
+            if (productMap[key].aliases.some(alias => materialNameLower.includes(alias.toLowerCase()))) {
                 bestMatchKey = key;
                 break;
             }
         }
+        
+        const searchAliases = bestMatchKey ? productMap[bestMatchKey].aliases : [materialNameLower];
 
-        const aliases = bestMatchKey ? productMap[bestMatchKey] : [materialNameLower];
-
-        // Find product in database that matches any of the aliases
+        // 1. Try to find an exact match using aliases
         matchedProduct = products.find(p => 
-            aliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase()))
+            searchAliases.some(alias => p.name.toLowerCase().includes(alias.toLowerCase()))
         );
+
+        // 2. If no exact match, find a substitute from the same category
+        if (!matchedProduct && bestMatchKey) {
+            const categoryName = productMap[bestMatchKey].category;
+            const category = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+            if (category) {
+                // Find the first available product in that category as a substitute
+                const substituteProduct = products.find(p => p.subCategoryId === category.id);
+                if (substituteProduct) {
+                    matchedProduct = substituteProduct;
+                }
+            }
+        }
 
         let quantity = item.quantity;
         let unit = item.unit;

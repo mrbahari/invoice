@@ -49,13 +49,14 @@ type ProductFormProps = {
   product?: Product;
   onSave: () => void;
   onCancel: () => void;
+  isCopy?: boolean;
 };
 
 type AIFeature = 'description' | 'price' | 'image';
 
 
-export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
-  const isEditMode = !!product;
+export function ProductForm({ product, onSave, onCancel, isCopy = false }: ProductFormProps) {
+  const isEditMode = !!product && !isCopy;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
@@ -274,27 +275,23 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (): Partial<Product> => {
+  const buildProductData = (): Omit<Product, 'id'> => {
     const numericPrice = Number(price);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
-    const productData: any = {
+    const productData: Omit<Product, 'id'> = {
       name,
-      code,
-      description,
+      code: code || '',
+      description: description || '',
       price: isNaN(numericPrice) ? 0 : numericPrice,
+      storeId: storeId,
       subCategoryId,
       unit,
       imageUrl: finalImage,
-      subUnit: (subUnit && subUnit !== 'none' && subUnit !== '-') ? subUnit : '-',
+      subUnit: (subUnit && subUnit !== 'none' && subUnit !== '-') ? subUnit : '',
       subUnitQuantity: Number(subUnitQuantity) || 0,
       subUnitPrice: Number(subUnitPrice) || 0,
     };
-    
-    // Only include storeId when creating a new product
-    if (!isEditMode) {
-      productData.storeId = storeId;
-    }
 
     return productData;
   };
@@ -304,31 +301,24 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     if (!validateForm()) return;
 
     setIsProcessing(true);
-    const productData = buildProductData();
     
     if (isEditMode && product) {
-      await updateDocument('products', product.id, productData);
+      // In edit mode, we build the data BUT exclude storeId to prevent changing it.
+      const { storeId: _storeId, ...updateData } = buildProductData();
+      await updateDocument('products', product.id, updateData);
     } else {
-      await addDocument('products', productData as Omit<Product, 'id'>);
+      // In create or copy mode, we send the full data object.
+      const productData = buildProductData();
+      await addDocument('products', productData);
     }
 
     setIsProcessing(false);
     onSave();
   };
   
-  const handleSaveAsCopy = async () => {
-    if (!validateForm()) return;
-    
-    setIsProcessing(true);
-    const productData = buildProductData();
-    await addDocument('products', productData as Omit<Product, 'id'>);
-    
-    setIsProcessing(false);
-    onSave();
-  }
   
   const handleDelete = async () => {
-    if (!product) return;
+    if (!product || isCopy) return; // Cannot delete in copy mode
     
     setIsProcessing(true);
     await deleteDocument('products', product.id);
@@ -399,16 +389,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                     </AlertDialogContent>
                 </AlertDialog>
               )}
-              {isEditMode && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" onClick={handleSaveAsCopy} disabled={isProcessing} className="w-8 h-8">
-                        <Copy className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left"><p>ذخیره با عنوان جدید</p></TooltipContent>
-                </Tooltip>
-              )}
           </div>
           <Separator orientation="horizontal" className="w-6" />
           <div className="flex flex-col items-center gap-1">
@@ -431,7 +411,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         <div className="mx-auto grid max-w-6xl flex-1 auto-rows-max gap-4 pb-28">
              <div className="flex items-center gap-4">
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                    {isEditMode ? `ویرایش محصول: ${product?.name}` : 'افزودن محصول جدید'}
+                    {isEditMode ? `ویرایش محصول: ${product?.name}` : (isCopy ? `کپی از محصول: ${product?.name}`: 'افزودن محصول جدید')}
                 </h1>
             </div>
             <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">

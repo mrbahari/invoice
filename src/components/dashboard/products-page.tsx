@@ -1,8 +1,7 @@
-
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2, Move, ChevronDown } from 'lucide-react';
+import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2, Move, ChevronDown, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -129,6 +128,9 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
                 subCategoryId: subCategoryId,
                 unit: 'عدد',
                 imageUrl: `https://picsum.photos/seed/${encodeURIComponent(aiProduct.name)}/400/300`,
+                subUnit: '',
+                subUnitQuantity: 0,
+                subUnitPrice: 0
             };
             batch.set(productRef, newProductData);
         }
@@ -214,6 +216,7 @@ export default function ProductsPage() {
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const [isCopyMode, setIsCopyMode] = useState(false);
   
   const [activeTab, setActiveTab] = useState('all');
   const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
@@ -234,17 +237,26 @@ export default function ProductsPage() {
 
   const handleEdit = (product?: Product) => {
     setEditingProduct(product);
+    setIsCopyMode(false);
     setView('form');
   };
+
+  const handleCopy = (product: Product) => {
+    setEditingProduct(product);
+    setIsCopyMode(true);
+    setView('form');
+  }
 
   const handleFormSave = () => {
     setView('list');
     setEditingProduct(undefined);
+    setIsCopyMode(false);
   };
   
   const handleFormCancel = () => {
     setView('list');
     setEditingProduct(undefined);
+    setIsCopyMode(false);
   };
 
   const handleAccordionChange = useCallback((value: string) => {
@@ -444,7 +456,7 @@ export default function ProductsPage() {
   };
   
   if (view === 'form') {
-    return <ProductForm product={editingProduct} onSave={handleFormSave} onCancel={handleFormCancel} />;
+    return <ProductForm product={editingProduct} onSave={handleFormSave} onCancel={handleFormCancel} isCopy={isCopyMode} />;
   }
 
   return (
@@ -633,6 +645,7 @@ export default function ProductsPage() {
                                             <TableHead>نام</TableHead>
                                             <TableHead className="hidden md:table-cell">توضیحات</TableHead>
                                             <TableHead className="text-left">قیمت</TableHead>
+                                            <TableHead><span className="sr-only">Actions</span></TableHead>
                                         </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -640,7 +653,6 @@ export default function ProductsPage() {
                                                 <TableRow 
                                                     key={product.id}
                                                     data-state={selectedProducts.includes(product.id) ? "selected" : ""}
-                                                    onClick={() => handleEdit(product)} 
                                                     className="cursor-pointer"
                                                 >
                                                     <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
@@ -649,7 +661,7 @@ export default function ProductsPage() {
                                                             onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="font-medium">
+                                                    <TableCell className="font-medium" onClick={() => handleEdit(product)}>
                                                         <div className="flex items-center gap-3">
                                                             <Image
                                                                 alt={product.name}
@@ -661,8 +673,13 @@ export default function ProductsPage() {
                                                             <span>{product.name}</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="hidden md:table-cell max-w-xs truncate">{product.description}</TableCell>
-                                                    <TableCell className="text-left">{formatCurrency(product.price)}</TableCell>
+                                                    <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => handleEdit(product)}>{product.description}</TableCell>
+                                                    <TableCell className="text-left" onClick={() => handleEdit(product)}>{formatCurrency(product.price)}</TableCell>
+                                                    <TableCell className="text-left">
+                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCopy(product)}}>
+                                                            <Copy className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>

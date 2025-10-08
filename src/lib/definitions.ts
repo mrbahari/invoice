@@ -9,6 +9,17 @@ export type Customer = {
   purchaseHistory: string; // Simplified for AI prompt
 };
 
+export type UserProfile = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    avatarUrl?: string;
+    purchaseHistory: string;
+    stars: number;
+}
+
 export type Store = {
   id: string;
   name: string;
@@ -105,6 +116,7 @@ export interface AppData {
   products: Product[];
   categories: Category[];
   customers: Customer[];
+  userProfiles: UserProfile[];
   invoices: Invoice[];
   units: UnitOfMeasurement[];
   stores: Store[];

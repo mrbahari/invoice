@@ -14,7 +14,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 type DocumentWithoutId = Omit<Product, 'id'> | Omit<Category, 'id'> | Omit<Customer, 'id'> | Omit<Invoice, 'id'> | Omit<UnitOfMeasurement, 'id'> | Omit<Store, 'id'>;
 type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
-type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
+type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores' | 'userProfiles';
 
 interface DataContextType {
   data: AppData;
@@ -42,6 +42,7 @@ const emptyData: AppData = {
   units: [],
   stores: [],
   toolbarPositions: {},
+  userProfiles: [],
 };
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -57,6 +58,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const storesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'stores') : null, [firestore, user]);
   const unitsRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'units') : null, [firestore, user]);
   const customersRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'clients') : null, [firestore, user]);
+  const userProfilesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'userProfiles') : null, [firestore, user]);
   const invoicesRef = useMemoFirebase(() => user && firestore ? collection(firestore, 'users', user.uid, 'invoices') : null, [firestore, user]);
   const toolbarPosRef = useMemoFirebase(() => user && firestore ? doc(firestore, 'users', user.uid, 'settings', 'toolbarPositions') : null, [firestore, user]);
 
@@ -66,9 +68,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     stores: storesRef,
     units: unitsRef,
     customers: customersRef,
+    userProfiles: userProfilesRef,
     invoices: invoicesRef,
     toolbarPositions: toolbarPosRef,
-  }), [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }), [productsRef, categoriesRef, storesRef, unitsRef, customersRef, userProfilesRef, invoicesRef, toolbarPosRef]);
 
   // Fetch collections from Firestore
   const { data: productsData, isLoading: productsLoading } = useCollection<Product>(productsRef);
@@ -76,6 +79,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { data: storesData, isLoading: storesLoading } = useCollection<Store>(storesRef);
   const { data: unitsData, isLoading: unitsLoading } = useCollection<UnitOfMeasurement>(unitsRef);
   const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersRef);
+  const { data: userProfilesData, isLoading: userProfilesLoading } = useCollection<Customer>(userProfilesRef);
   const { data: invoicesData, isLoading: invoicesLoading } = useCollection<Invoice>(invoicesRef);
   const { data: toolbarData, isLoading: toolbarLoading } = useDoc<any>(toolbarPosRef);
   
@@ -89,7 +93,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   
   // Combine all data sources into a single AppData object
   useEffect(() => {
-    const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || invoicesLoading || toolbarLoading;
+    const isDataLoading = productsLoading || categoriesLoading || storesLoading || unitsLoading || customersLoading || userProfilesLoading || invoicesLoading || toolbarLoading;
     
     if (!isDataLoading && (user || !isUserLoading)) {
       setData({
@@ -98,6 +102,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         stores: storesData || [],
         units: unitsData || [],
         customers: customersData || [],
+        userProfiles: userProfilesData || [],
         invoices: invoicesData?.sort((a,b) => (new Date(b.date) as any) - (new Date(a.date) as any)) || [],
         toolbarPositions: toolbarData || {},
       });
@@ -109,8 +114,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [
     user, isUserLoading,
-    productsData, categoriesData, storesData, unitsData, customersData, invoicesData, toolbarData,
-    productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading, toolbarLoading
+    productsData, categoriesData, storesData, unitsData, customersData, userProfilesData, invoicesData, toolbarData,
+    productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, userProfilesLoading, invoicesLoading, toolbarLoading
   ]);
 
   const getCollectionRef = useCallback((collectionName: keyof AppData) => {
@@ -120,11 +125,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       stores: storesRef,
       units: unitsRef,
       customers: customersRef,
+      userProfiles: userProfilesRef,
       invoices: invoicesRef,
       toolbarPositions: null, // Not a collection
     };
     return refs[collectionName];
-  }, [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
+  }, [productsRef, categoriesRef, storesRef, unitsRef, customersRef, userProfilesRef, invoicesRef]);
 
 
   const addDocument = useCallback(async (collectionName: CollectionName, docData: DocumentWithoutId) => {

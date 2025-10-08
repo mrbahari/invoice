@@ -36,18 +36,24 @@
       },
       "required": ["id", "name", "storeId"]
     },
-    "Client": {
+    "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Client",
+      "title": "UserProfile",
       "type": "object",
-      "description": "Represents a customer profile.",
+      "description": "Represents a customer's user profile.",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "phone": { "type": "string" },
         "address": { "type": "string" },
-        "purchaseHistory": { "type": "string" }
+        "purchaseHistory": { "type": "string" },
+        "stars": { 
+          "type": "number",
+          "description": "User rating from 1 to 5.",
+          "minimum": 1,
+          "maximum": 5
+        }
       },
       "required": ["id", "name", "phone"]
     },
@@ -129,6 +135,23 @@
       "type": "object",
       "description": "Stores positions of floating toolbars.",
       "properties": {}
+    },
+    "VisitorLog": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "VisitorLog",
+        "type": "object",
+        "description": "Logs a visit to the application.",
+        "properties": {
+            "id": { "type": "string" },
+            "userId": { "type": "string", "description": "ID of the logged-in user, if any." },
+            "ipAddress": { "type": "string", "format": "ipv4" },
+            "userAgent": { "type": "string" },
+            "screenResolution": { "type": "string", "pattern": "^\\d+x\\d+$" },
+            "startTime": { "type": "string", "format": "date-time" },
+            "endTime": { "type": "string", "format": "date-time" },
+            "duration": { "type": "number", "description": "Session duration in seconds." }
+        },
+        "required": ["id", "ipAddress", "userAgent", "startTime"]
     }
   },
   "firestore": {
@@ -149,9 +172,9 @@
         "description": "User-specific collection of categories."
       },
       {
-        "path": "/users/{userId}/clients/{clientId}",
-        "schema": { "$ref": "#/entities/Client" },
-        "description": "User-specific collection of clients."
+        "path": "/users/{userId}/userProfiles/{profileId}",
+        "schema": { "$ref": "#/entities/UserProfile" },
+        "description": "User-specific collection of user profiles."
       },
       {
         "path": "/users/{userId}/invoices/{invoiceId}",
@@ -167,6 +190,11 @@
         "path": "/users/{userId}/settings/toolbarPositions",
         "schema": { "$ref": "#/entities/ToolbarSettings" },
         "description": "Stores settings for a user, like toolbar positions."
+      },
+      {
+        "path": "/visitorLogs/{logId}",
+        "schema": { "$ref": "#/entities/VisitorLog" },
+        "description": "Collection of all visitor sessions."
       }
     ]
   },

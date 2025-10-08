@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/context/user-context';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { VisitorTracker } from '@/components/VisitorTracker';
 
 
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <DataProvider>
+                <VisitorTracker />
                 <main className="relative z-10">
                   {children}
                 </main>

@@ -42,6 +42,9 @@ const nextConfig: NextConfig = {
     ],
     domains: ['localhost'],
   },
+  devIndicators: {
+    allowedDevOrigins: ['**'],
+  },
 };
 
 export default nextConfig;

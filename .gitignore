@@ -40,3 +40,4 @@ pnpm-debug.log*
 
 # Firebase
 firebase-debug.log
+src/firebase/admin/service-account.json

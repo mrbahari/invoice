@@ -36,12 +36,7 @@ export default function DashboardPage() {
   const handleNavigation = (tab: DashboardTab, data?: { invoice: Partial<Invoice>}) => {
     if (tab === 'invoices' && data?.invoice) {
         setDraftInvoice(data.invoice);
-    } else if (tab !== 'invoices') {
-      // Clear draft when navigating away from invoices tab if needed,
-      // but the user wants to preserve it, so we comment this out.
-      // setDraftInvoice(null);
     }
-    // We need to push to trigger a re-render that shows the correct tab
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
   
@@ -49,24 +44,13 @@ export default function DashboardPage() {
   const ActiveComponent = componentMap[activeTab] || componentMap.dashboard;
 
   // Prepare props for the active component
-  const componentProps: any = {
+  const componentProps = {
     onNavigate: handleNavigation,
     draftInvoice: draftInvoice,
     setDraftInvoice: setDraftInvoice,
   };
 
-
-  return (
-    <>
-      {Object.keys(componentMap).map(tabKey => {
-        const tab = tabKey as DashboardTab;
-        const Component = componentMap[tab];
-        return (
-          <div key={tab} className={activeTab === tab ? '' : 'hidden'}>
-            {activeTab === tab && <Component {...componentProps} />}
-          </div>
-        );
-      })}
-    </>
-  );
+  // Render only the active component directly.
+  // This avoids conditional hook calls that cause the "Rendered fewer hooks than expected" error.
+  return <ActiveComponent {...componentProps} />;
 }

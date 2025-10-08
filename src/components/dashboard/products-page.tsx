@@ -34,7 +34,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
 import {
@@ -390,7 +389,7 @@ export default function ProductsPage() {
   return (
     <div className="grid gap-6" data-main-page="true">
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <CardHeader className="flex flex-col sm:flex-row-reverse sm:items-start sm:justify-between gap-4">
           <div>
             <CardTitle>محصولات</CardTitle>
             <CardDescription>
@@ -439,9 +438,9 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
       
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center gap-2">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="flex-1">
+            <SelectTrigger className="w-full sm:w-[240px]">
                 <SelectValue placeholder="فیلتر بر اساس دسته‌بندی..." />
             </SelectTrigger>
             <SelectContent>
@@ -454,7 +453,7 @@ export default function ProductsPage() {
             </SelectContent>
         </Select>
         <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-          <SelectTrigger className="w-auto sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <div className="flex items-center gap-2">
               <SortAsc className="h-4 w-4 text-muted-foreground" />
               <SelectValue placeholder="مرتب‌سازی بر اساس..." />

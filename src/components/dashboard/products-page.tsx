@@ -236,7 +236,7 @@ export default function ProductsPage() {
 
   // Scroll to top when form view is shown
   useEffect(() => {
-    if (view === 'form') {
+    if (view === 'form' && typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [view]);
@@ -300,6 +300,9 @@ export default function ProductsPage() {
       filtered = filtered.filter((p) => p.storeId === activeTab);
     }
     
+    // Sort products by name, respecting Persian alphabet
+    filtered.sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+
     return filtered.reduce((acc, product) => {
       const categoryId = product.subCategoryId || 'uncategorized';
       if (!acc[categoryId]) {

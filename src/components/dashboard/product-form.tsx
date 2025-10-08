@@ -286,23 +286,14 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       subCategoryId,
       unit,
       imageUrl: finalImage,
+      subUnit: subUnit && subUnit !== 'none' ? subUnit : undefined,
+      subUnitQuantity: Number(subUnitQuantity) || 0,
+      subUnitPrice: Number(subUnitPrice) || 0,
     };
     
     // Only include storeId when creating a new product
     if (!isEditMode) {
       productData.storeId = storeId;
-    }
-    
-    if (subUnit && subUnit !== 'none') {
-        const numericSubUnitQuantity = Number(subUnitQuantity);
-        const numericSubUnitPrice = Number(subUnitPrice);
-        productData.subUnit = subUnit;
-        productData.subUnitQuantity = isNaN(numericSubUnitQuantity) ? undefined : numericSubUnitQuantity;
-        productData.subUnitPrice = isNaN(numericSubUnitPrice) ? undefined : numericSubUnitPrice;
-    } else {
-        productData.subUnit = undefined;
-        productData.subUnitQuantity = undefined;
-        productData.subUnitPrice = undefined;
     }
 
     return productData;

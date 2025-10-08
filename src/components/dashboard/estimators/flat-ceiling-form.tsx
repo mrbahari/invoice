@@ -238,7 +238,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     }
 
     const materialList: MaterialResult[] = [
-      { material: 'پنل RG', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
+      { material: 'پنل RG باتیس', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'سازه F47', quantity: f47MainProfiles + f47SecondaryProfiles, unit: 'شاخه' },
     ];
@@ -248,7 +248,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     }
 
     materialList.push(
-        { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
+        { material: 'پیچ ۲.۵', quantity: totalPanelScrews, unit: 'عدد' },
         { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
         { material: 'میخ و چاشنی', quantity: nailAndChargeCount, unit: 'عدد' },
         { material: 'اتصال W', quantity: wConnectors, unit: 'عدد' },

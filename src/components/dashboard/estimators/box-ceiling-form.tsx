@@ -34,7 +34,7 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
 
 
     return [
-      { material: 'پنل RG', quantity: panels, unit: 'برگ' },
+      { material: 'پنل RG باتیس', quantity: panels, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پیچ ۲.۵', quantity: screws, unit: 'عدد' },
     ].filter(item => item.quantity > 0);

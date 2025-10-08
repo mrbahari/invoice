@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -167,8 +168,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const invoiceItems: InvoiceItem[] = [];
 
     const productMap: Record<string, { keyword: string[], aliases: string[] }> = {
-      'پنل والیز': { keyword: ['پنل'], aliases: ['پنل والیز', 'پانل گچی', 'panel'] },
-      'پنل جی برد': { keyword: ['پنل'], aliases: ['پنل جی برد', 'پانل گچی', 'panel'] },
+      'پنل': { keyword: ['پنل'], aliases: ['پنل RG', 'پنل والیز', 'پانل گچی', 'panel', 'پنل جی برد'] },
       'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'] },
       'سازه f47': { keyword: ['f47'], aliases: ['f47'] },
       'سازه u36': { keyword: ['u36'], aliases: ['u36'] },
@@ -192,30 +192,32 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     aggregatedResults.forEach(item => {
         let matchedProduct: Product | undefined;
         const materialNameLower = item.material.toLowerCase();
+        let foundMatch = false;
 
-        // Step 1: Find an exact match using aliases.
+        // Step 1: Find an exact or alias match.
         for (const key in productMap) {
             if (productMap[key].aliases.some(alias => materialNameLower.includes(alias.toLowerCase()))) {
+                // Find a product whose name includes the key (e.g., key is 'پنل', product name is 'پنل RG')
                 matchedProduct = products.find(p => p.name.toLowerCase().includes(key.toLowerCase()));
-                if (matchedProduct) break;
+                if (matchedProduct) {
+                    foundMatch = true;
+                    break;
+                }
             }
         }
         
-        // Step 2: If no exact match, find a substitute using keywords.
-        if (!matchedProduct) {
-            let foundSubstitute = false;
+        // Step 2: If no match, find a substitute using the main keyword.
+        if (!foundMatch) {
             for (const key in productMap) {
                  if (materialNameLower.includes(key.toLowerCase())) {
-                     for (const keyword of productMap[key].keyword) {
-                        const substitute = products.find(p => p.name.toLowerCase().includes(keyword.toLowerCase()));
-                        if (substitute) {
-                            matchedProduct = substitute;
-                            foundSubstitute = true;
-                            break;
-                        }
+                     const mainKeyword = productMap[key].keyword[0];
+                     const substitute = products.find(p => p.name.toLowerCase().includes(mainKeyword.toLowerCase()));
+                     if (substitute) {
+                         matchedProduct = substitute;
+                         foundMatch = true;
+                         break;
                      }
                  }
-                 if(foundSubstitute) break;
             }
         }
 

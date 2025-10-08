@@ -238,7 +238,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     }
 
     const materialList: MaterialResult[] = [
-      { material: 'پنل والیز', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
+      { material: 'پنل RG', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'سازه F47', quantity: f47MainProfiles + f47SecondaryProfiles, unit: 'شاخه' },
     ];

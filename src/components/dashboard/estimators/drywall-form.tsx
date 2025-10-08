@@ -69,7 +69,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
     const woolPacks = includeWool ? Math.ceil(woolSheetsNeeded / 6) : 0; // Assuming 6 sheets per pack
 
     const materialList: MaterialResult[] = [
-      { material: 'پنل والیز', quantity: panelsNeeded, unit: 'برگ' },
+      { material: 'پنل RG', quantity: panelsNeeded, unit: 'برگ' },
       { material: 'رانر', quantity: totalRunners, unit: 'شاخه' },
       { material: 'استاد', quantity: studsNeeded, unit: 'شاخه' },
       { material: 'پیچ ۲.۵', quantity: totalScrews, unit: 'عدد' },

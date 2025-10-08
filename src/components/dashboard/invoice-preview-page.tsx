@@ -5,7 +5,7 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toPersianDigits } from '@/lib/utils';
 import { ArrowRight, Pencil, Camera, GripVertical, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -242,7 +242,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                   <h1 className="text-xl font-bold">پیش فاکتور فروش</h1>
                   <h2 className="text-lg font-semibold">{store?.name}</h2>
                   <div className="flex justify-center gap-8 mt-2 text-sm">
-                    <span>شماره: <span className="font-mono">{invoice.invoiceNumber}</span></span>
+                    <span>شماره: <span className="font-mono">{toPersianDigits(invoice.invoiceNumber)}</span></span>
                     <span>تاریخ: <span className="font-mono">{new Date(invoice.date).toLocaleDateString('fa-IR')}</span></span>
                   </div>
               </div>
@@ -255,12 +255,12 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               <div className="border rounded-md p-2">
                 <h3 className="font-bold border-b pb-1 mb-1">فروشنده</h3>
                 <p><strong>فروشگاه:</strong> {store.name}</p>
-                <p><strong>تلفن:</strong> {store.phone}</p>
+                <p><strong>تلفن:</strong> {toPersianDigits(store.phone)}</p>
                 <p><strong>آدرس:</strong> {store.address}</p>
               </div>
               <div className="border rounded-md p-2">
                 <h3 className="font-bold border-b pb-1 mb-1">خریدار</h3>
-                <p><strong>تلفن:</strong> {customer.phone}</p>
+                <p><strong>تلفن:</strong> {toPersianDigits(customer.phone)}</p>
                 <p><strong>نام:</strong> {customer.name}</p>
                 <p><strong>آدرس:</strong> {customer.address}</p>
               </div>
@@ -285,7 +285,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                    const imageUrl = product?.imageUrl || item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.productName)}/40/40`;
                    return (
                   <tr key={index}>
-                    <td className="border p-1 text-center">{index + 1}</td>
+                    <td className="border p-1 text-center">{toPersianDigits(index + 1)}</td>
                      <td className="border p-1">
                         {imageUrl && (
                             <Image 
@@ -298,7 +298,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                         )}
                     </td>
                     <td className="border p-1">{item.productName}</td>
-                    <td className="border p-1 text-center font-mono">{item.quantity.toLocaleString('fa-IR')}</td>
+                    <td className="border p-1 text-center font-mono">{toPersianDigits(item.quantity)}</td>
                     <td className="border p-1 text-center">{item.unit}</td>
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.unitPrice)}</td>
                     <td className="border p-1 text-center font-mono">{formatCurrency(item.totalPrice)}</td>
@@ -324,12 +324,12 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </section>
 
             <footer className="border-t mt-4 pt-2 text-xs text-gray-600 space-y-1">
-              <p>۱. اعتبار پیش فاکتور ۲۴ ساعت می‌باشد.</p>
+              <p>{toPersianDigits(1)}. اعتبار پیش فاکتور {toPersianDigits(24)} ساعت می‌باشد.</p>
               {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
               {store.bankName && <p><strong>بانک:</strong> {store.bankName}</p>}
-              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono">{store.bankCardNumber}</span></p>}
-              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono">{store.bankAccountNumber}</span></p>}
-              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono">{store.bankIban}</span></p>}
+              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
+              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
             </footer>
 
         </div>

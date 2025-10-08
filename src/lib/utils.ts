@@ -11,8 +11,7 @@ export function formatCurrency(amount: number | '' | null | undefined, options?:
   if (amount === '' || amount === null || amount === undefined || isNaN(numericAmount)) return '';
 
   return new Intl.NumberFormat('fa-IR', {
-    style: 'currency',
-    currency: 'IRR',
+    style: 'decimal', // Use decimal style to avoid currency symbol if not desired everywhere
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
     ...options
@@ -81,6 +80,14 @@ export const formatNumber = (num: number | '' | null | undefined): string => {
         minimumFractionDigits: 0, 
         maximumFractionDigits: 2 
     }).format(Number(num));
+};
+
+export const toPersianDigits = (n: any): string => {
+    const persian = {
+        '0': '۰', '1': '۱', '2': '۲', '3': '۳', '4': '۴',
+        '5': '۵', '6': '۶', '7': '۷', '8': '۸', '9': '۹'
+    };
+    return String(n).replace(/[0-9]/g, (w) => persian[w as keyof typeof persian]);
 };
   
 const convertPersianToArabic = (str: string): string => {

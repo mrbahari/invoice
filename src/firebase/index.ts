@@ -1,16 +1,26 @@
 
 'use client';
 
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 import { useUser } from '../context/user-context';
 
+let firebaseApp: FirebaseApp;
+
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  return getSdks(app);
+  if (!getApps().length) {
+    const firebaseConfigStr = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
+    if (!firebaseConfigStr) {
+      throw new Error("Firebase config not found in environment variables.");
+    }
+    const firebaseConfig: FirebaseOptions = JSON.parse(firebaseConfigStr);
+    firebaseApp = initializeApp(firebaseConfig);
+  } else {
+    firebaseApp = getApp();
+  }
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {

@@ -17,8 +17,6 @@ import { z } from 'zod';
 import { useActionState, useState, useEffect } from 'react';
 import type { AuthFormValues } from '@/lib/definitions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RecaptchaVerifier } from 'firebase/auth';
-import { initializeFirebase } from '@/firebase';
 import { useUser } from '@/context/user-context';
 import { Loader2 } from 'lucide-react';
 
@@ -126,21 +124,6 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
     signup: 'ایجاد حساب',
     'forgot-password': 'ارسال لینک بازیابی',
   };
-  
-  // This is a placeholder for the reCAPTCHA container
-  useEffect(() => {
-    if (currentTab === 'signup' && isOpen) {
-      const { auth } = initializeFirebase();
-      if (document.getElementById('recaptcha-container')?.childElementCount === 0) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible',
-          'callback': (response: any) => {
-            // reCAPTCHA solved, allow sign-up.
-          }
-        });
-      }
-    }
-  }, [currentTab, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -211,7 +194,6 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
                   <Input id="password-signup" type="password" {...register('password')} />
                   {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
                 </div>
-                <div id="recaptcha-container"></div>
                 {formState?.message && !isPending && <p className={`text-sm text-center ${formState.success ? 'text-green-600' : 'text-destructive'}`}>{formState.message}</p>}
                 <Button type="submit" className="w-full" disabled={isPending}>
                   {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
@@ -224,8 +206,7 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
               <form action={resetAction} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="email-forgot">ایمیل</Label>
-                  <Input id="email-forgot" type="email" placeholder="m@example.com" {...register('email')} />
-                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                  <Input id="email-forgot" type="email" placeholder="m@example.com" name="email" />
                 </div>
                 {resetState?.message && !isResetPending && <p className={`text-sm text-center ${resetState.success ? 'text-green-600' : 'text-destructive'}`}>{resetState.message}</p>}
                 <Button type="submit" className="w-full" disabled={isResetPending}>
@@ -256,11 +237,4 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
       </DialogContent>
     </Dialog>
   );
-}
-
-// Add a declaration for the recaptchaVerifier on the window object
-declare global {
-  interface Window {
-    recaptchaVerifier?: RecaptchaVerifier;
-  }
 }

@@ -8,11 +8,12 @@ import { firebaseConfig } from './config'; // Import config directly
 
 let firebaseApp: FirebaseApp;
 
-// IMPORTANT: This function is now simplified to use a direct import.
+// This function now uses the imported config object directly.
 export function initializeFirebase() {
   if (!getApps().length) {
     if (!firebaseConfig.apiKey) {
-        throw new Error("Firebase config is missing or incomplete. Check src/firebase/config.ts");
+      // This check is a safeguard.
+      throw new Error("Firebase config is missing or incomplete. Check src/firebase/config.ts");
     }
     firebaseApp = initializeApp(firebaseConfig);
   } else {

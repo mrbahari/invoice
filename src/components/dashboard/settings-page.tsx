@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRef, ChangeEvent, useState, useEffect } from 'react';
@@ -180,18 +181,14 @@ export default function SettingsPage() {
     
   };
 
-  const handleRestoreChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+  const processFile = (file: File) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'خطا', description: 'برای بازیابی اطلاعات باید وارد شوید.' });
       return;
     }
-    if(!user) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'برای بازیابی اطلاعات باید وارد شوید.' });
-        return;
-    }
-    
+
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       try {
         const text = e.target?.result;
         if (typeof text !== 'string') {
@@ -199,24 +196,30 @@ export default function SettingsPage() {
         }
         const restoredData = JSON.parse(text) as AppData;
         setDataToRestore(restoredData);
-        // Reset selections to all false
         setSelectedSections({
-            stores: false, categories: false, products: false,
-            customers: false, invoices: false, units: false, toolbarPositions: false
+          stores: false, categories: false, products: false,
+          customers: false, invoices: false, units: false, toolbarPositions: false
         });
         setShowStoreSelector(false);
         setTargetStoreId('');
-
       } catch (error: any) {
         console.error("Error parsing backup file:", error);
         toast({ variant: 'destructive', title: 'خطا در خواندن فایل', description: error.message || 'فایل پشتیبان نامعتبر است.' });
       } finally {
-        if(fileInputRef.current) {
-            fileInputRef.current.value = '';
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
         }
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleRestoreChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Use a timeout to ensure the file dialog is closed before processing
+      setTimeout(() => processFile(file), 100);
+    }
   };
 
   const handleConfirmRestore = async () => {
@@ -350,7 +353,7 @@ export default function SettingsPage() {
             <AlertDialogCancel onClick={handleCloseDialog}>انصراف</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled} className="bg-green-600 hover:bg-green-700">
               {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
-              {showStoreSelector ? 'تایید و بازیابی' : 'بازیابی'}
+              تایید و بازیابی
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

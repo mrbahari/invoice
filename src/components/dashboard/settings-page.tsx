@@ -58,6 +58,7 @@ const sectionLabels: Record<DataSection, string> = {
     invoices: 'فاکتورها',
     units: 'واحدها',
     toolbarPositions: 'تنظیمات نوار ابزار',
+    userProfiles: 'پروفایل کاربران',
 };
 
 export default function SettingsPage() {
@@ -80,6 +81,7 @@ export default function SettingsPage() {
     invoices: false,
     units: false,
     toolbarPositions: false,
+    userProfiles: false,
   });
 
   const [showStoreSelector, setShowStoreSelector] = useState(false);
@@ -198,7 +200,7 @@ export default function SettingsPage() {
         setDataToRestore(restoredData);
         setSelectedSections({
           stores: false, categories: false, products: false,
-          customers: false, invoices: false, units: false, toolbarPositions: false
+          customers: false, invoices: false, units: false, toolbarPositions: false, userProfiles: false
         });
         setShowStoreSelector(false);
         setTargetStoreId('');
@@ -350,7 +352,7 @@ export default function SettingsPage() {
 
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCloseDialog}>انصراف</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCloseDialog} variant="destructive">انصراف</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled} className="bg-green-600 hover:bg-green-700">
               {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
               تایید و بازیابی

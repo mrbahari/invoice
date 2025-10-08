@@ -188,7 +188,7 @@ function AiMultipleProductsDialog({ onProductsGenerated }: { onProductsGenerated
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleGenerate} disabled={!canGenerate || isLoading}>
+          <Button onClick={handleGenerate} disabled={!canGenerate || isLoading} className="bg-green-600 hover:bg-green-700">
             {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
             تولید 5 محصول
           </Button>
@@ -605,8 +605,8 @@ export default function ProductsPage() {
                         </Select>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
-                        <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore}>
+                        <Button variant="destructive" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
+                        <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore} className="bg-green-600 hover:bg-green-700">
                             {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                             تایید
                         </Button>

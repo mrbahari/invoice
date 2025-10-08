@@ -77,7 +77,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
-  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity, {minimumFractionDigits: 0, maximumFractionDigits: 2}));
+  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity));
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState({
@@ -179,7 +179,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const value = e.target.value;
       const numericValue = parseFormattedNumber(value);
       setSubUnitQuantity(numericValue);
-      setDisplaySubUnitQuantity(formatNumber(numericValue, {minimumFractionDigits: 0, maximumFractionDigits: 2}));
+      setDisplaySubUnitQuantity(value); // Keep the user's input for better UX
   };
   
   const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -608,3 +608,5 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
+
+    

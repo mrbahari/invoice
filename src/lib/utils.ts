@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -73,9 +74,13 @@ export function getStorePrefix(storeName: string): string {
   return 'INV';
 }
 
-export const formatNumber = (num: number | '' | null | undefined, options?: Intl.NumberFormatOptions): string => {
+export const formatNumber = (num: number | '' | null | undefined): string => {
     if (num === '' || num === null || num === undefined || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR', { useGrouping: false, ...options }).format(Number(num));
+    return new Intl.NumberFormat('fa-IR', { 
+        useGrouping: false, 
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 2 
+    }).format(Number(num));
 };
   
 const convertPersianToArabic = (str: string): string => {
@@ -91,14 +96,9 @@ const convertPersianToArabic = (str: string): string => {
 export const parseFormattedNumber = (str: string): number | '' => {
     if (!str) return '';
     const numericString = convertPersianToArabic(str).replace(/[^0-9.]/g, '');
+    if (numericString === '' || numericString === '.') return '';
     
-    // Handle multiple dots by keeping only the first one
-    const parts = numericString.split('.');
-    const integerPart = parts[0];
-    const fractionalPart = parts.slice(1).join('');
-    const finalString = fractionalPart ? `${integerPart}.${fractionalPart}` : integerPart;
-
-    const number = parseFloat(finalString);
+    const number = parseFloat(numericString);
     return isNaN(number) ? '' : number;
 };
 
@@ -109,3 +109,5 @@ export const parseCurrency = (str: string): number | '' => {
     const number = parseFloat(numericString);
     return isNaN(number) ? '' : number;
 }
+
+    

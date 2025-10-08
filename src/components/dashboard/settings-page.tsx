@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store, Wrench as WrenchIcon } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -64,7 +64,7 @@ const sectionLabels: Record<DataSection, string> = {
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, clearCollections, loadDataBatch } = useData();
+  const { data, setData, clearCollections, loadDataBatch, repairDatabase } = useData();
   const { user } = useUser();
   const { setSearchVisible } = useSearch();
   const { toast } = useToast();
@@ -274,6 +274,28 @@ export default function SettingsPage() {
     fileInputRef.current?.click();
   };
 
+  const handleRepairDatabase = async () => {
+    setIsProcessing(true);
+    try {
+        const report = await repairDatabase();
+        const reportLines = Object.entries(report)
+            .map(([key, value]) => `${value.label}: ${value.repaired} مورد اصلاح شد (از ${value.total} مورد)`)
+            .join('\n');
+        
+        toast({
+            variant: 'success',
+            title: 'تعمیر پایگاه داده انجام شد',
+            description: <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4"><code className="text-white">{reportLines}</code></pre>,
+            duration: 10000,
+        });
+
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'خطا در تعمیر', description: 'مشکلی در فرآیند تعمیر پایگاه داده رخ داد.' });
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
   const isRestoreConfirmDisabled = Object.values(selectedSections).every(v => !v) || (showStoreSelector && !targetStoreId);
   
   const handleCloseDialog = () => {
@@ -430,6 +452,48 @@ export default function SettingsPage() {
                 />
               </div>
           </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>نگهداری و تعمیرات</CardTitle>
+                <CardDescription>
+                    ابزارهایی برای اطمینان از صحت و یکپارچگی داده‌های شما.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-between p-4 border border-blue-500/20 rounded-lg bg-blue-500/5">
+                    <div>
+                        <h3 className="font-semibold text-blue-800 dark:text-blue-300">تعمیر پایگاه داده</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            مغایرت‌های احتمالی در داده‌ها (مانند محصولات بدون فروشگاه) را بررسی و به طور خودکار اصلاح می‌کند.
+                        </p>
+                    </div>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="outline" disabled={isProcessing}>
+                                <WrenchIcon className='ml-2 h-4 w-4' />
+                                شروع بررسی
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>آیا از تعمیر پایگاه داده مطمئن هستید؟</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    این عملیات داده‌های شما را برای یافتن و اصلاح مغایرت‌ها بررسی می‌کند. این کار ممکن است چند لحظه طول بکشد و غیرقابل بازگشت است.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleRepairDatabase} className="bg-blue-600 hover:bg-blue-700" disabled={isProcessing}>
+                                     {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
+                                    بله، بررسی کن
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </CardContent>
         </Card>
 
         <Card className="border-destructive">

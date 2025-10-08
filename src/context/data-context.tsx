@@ -16,6 +16,15 @@ type DocumentWithoutId = Omit<Product, 'id'> | Omit<Category, 'id'> | Omit<Custo
 type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
 type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores' | 'userProfiles';
 
+export type RepairReport = {
+    [key in keyof Omit<AppData, 'toolbarPositions' | 'userProfiles'>]: {
+        label: string;
+        total: number;
+        repaired: number;
+    }
+};
+
+
 interface DataContextType {
   data: AppData;
   isInitialized: boolean;
@@ -29,6 +38,7 @@ interface DataContextType {
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
   loadDataBatch: (dataToLoad: Partial<AppData>, merge: boolean, targetStoreId?: string) => Promise<void>;
   clearCollections: (collectionNames: (keyof AppData)[]) => Promise<void>;
+  repairDatabase: () => Promise<RepairReport>;
 }
 
 
@@ -469,6 +479,99 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [firestore, user, getCollectionRef, toolbarPosRef, clearCollections, data]);
 
+  const repairDatabase = useCallback(async (): Promise<RepairReport> => {
+    if (!firestore || !user) {
+        throw new Error("User not authenticated or Firestore not available.");
+    }
+
+    const { stores, categories, products, invoices, units, customers } = data;
+    const batch = writeBatch(firestore);
+    const report: RepairReport = {
+        stores: { label: "فروشگاه‌ها", total: stores.length, repaired: 0 },
+        categories: { label: "دسته‌بندی‌ها", total: categories.length, repaired: 0 },
+        products: { label: "محصولات", total: products.length, repaired: 0 },
+        invoices: { label: "فاکتورها", total: invoices.length, repaired: 0 },
+        units: { label: "واحدها", total: units.length, repaired: 0 },
+        customers: { label: "مشتریان", total: customers.length, repaired: 0 }, // 'customers' is used for user-facing report
+    };
+
+    const storeIds = new Set(stores.map(s => s.id));
+    const categoryIds = new Set(categories.map(c => c.id));
+    const customerIds = new Set(customers.map(c => c.id));
+    const firstStoreId = stores[0]?.id;
+    const firstCategoryId = categories.find(c => c.storeId === firstStoreId)?.id;
+
+    // Repair Categories
+    for (const category of categories) {
+        let changed = false;
+        const updateData: Partial<Category> = {};
+        if (!storeIds.has(category.storeId)) {
+            if (!firstStoreId) continue;
+            updateData.storeId = firstStoreId;
+            changed = true;
+        }
+        if (category.parentId && !categoryIds.has(category.parentId)) {
+            updateData.parentId = undefined;
+            changed = true;
+        }
+        if (changed) {
+            const docRef = doc(categoriesRef!, category.id);
+            batch.update(docRef, updateData);
+            report.categories.repaired++;
+        }
+    }
+
+    // Repair Products
+    for (const product of products) {
+        let changed = false;
+        const updateData: Partial<Product> = {};
+        if (!storeIds.has(product.storeId)) {
+            if (!firstStoreId) continue;
+            updateData.storeId = firstStoreId;
+            changed = true;
+        }
+        const effectiveStoreId = updateData.storeId || product.storeId;
+        const storeCategoryIds = new Set(categories.filter(c => c.storeId === effectiveStoreId).map(c => c.id));
+
+        if (!storeCategoryIds.has(product.subCategoryId)) {
+            const firstCatIdForStore = categories.find(c => c.storeId === effectiveStoreId)?.id;
+            if (firstCatIdForStore) {
+                updateData.subCategoryId = firstCatIdForStore;
+                changed = true;
+            } else if (firstCategoryId) { // fallback to any category if store has none
+                 updateData.subCategoryId = firstCategoryId;
+                 changed = true;
+            }
+        }
+        if (changed) {
+            const docRef = doc(productsRef!, product.id);
+            batch.update(docRef, updateData);
+            report.products.repaired++;
+        }
+    }
+    
+    // Repair Units
+    for (const unit of units) {
+        if (!storeIds.has(unit.storeId)) {
+            if (!firstStoreId) continue;
+            const docRef = doc(unitsRef!, unit.id);
+            batch.update(docRef, { storeId: firstStoreId });
+            report.units.repaired++;
+        }
+    }
+
+    // Check Invoices (read-only check for now)
+     for (const invoice of invoices) {
+        if (!customerIds.has(invoice.customerId)) {
+            report.invoices.repaired++; // Using 'repaired' to mean 'found issue'
+        }
+    }
+
+    await batch.commit();
+    return report;
+
+  }, [data, firestore, user, categoriesRef, productsRef, unitsRef]);
+
 
   const isInitialized = !isUserLoading && isSynced;
 
@@ -485,6 +588,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setToolbarPosition,
     loadDataBatch,
     clearCollections,
+    repairDatabase,
   };
   
   if (!isInitialized) {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -391,60 +390,58 @@ export default function ProductsPage() {
   return (
     <div className="grid gap-6" data-main-page="true">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-                <CardTitle>محصولات</CardTitle>
-                <CardDescription>
-                محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                </CardDescription>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
-              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
-              </Button>
-              <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
-              </Button>
-            </div>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <CardTitle>محصولات</CardTitle>
+            <CardDescription>
+              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+            </CardDescription>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+              <File className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
+            </Button>
+            <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-            <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v); setCategoryFilter('all')}} className="w-full" dir="rtl">
-                <TabsList className="h-auto bg-transparent p-0">
-                    <TabsTrigger value="all" asChild>
-                       <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
-                            <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
-                                <Store className="h-6 w-6" />
-                                <span className="text-xs">همه محصولات</span>
-                            </div>
-                        </div>
-                    </TabsTrigger>
-                    {stores?.map((store) => (
-                    <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
-                        <Image
-                          alt={store.name}
-                          className="object-cover"
-                          fill
-                          src={store.logoUrl || '/placeholder.svg'}
-                          unoptimized
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
-                            <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
-                        </div>
-                    </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v); setCategoryFilter('all')}} className="w-full" dir="rtl">
+            <TabsList className="h-auto bg-transparent p-0">
+              <TabsTrigger value="all" asChild>
+                <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
+                  <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
+                    <Store className="h-6 w-6" />
+                    <span className="text-xs">همه محصولات</span>
+                  </div>
+                </div>
+              </TabsTrigger>
+              {stores?.map((store) => (
+                <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
+                  <Image
+                    alt={store.name}
+                    className="object-cover"
+                    fill
+                    src={store.logoUrl || '/placeholder.svg'}
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
+                    <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
+                  </div>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </CardContent>
       </Card>
       
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-2">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[240px]">
+            <SelectTrigger className="w-full sm:w-auto sm:min-w-[10rem] sm:max-w-xs flex-1">
                 <SelectValue placeholder="فیلتر بر اساس دسته‌بندی..." />
             </SelectTrigger>
             <SelectContent>
@@ -456,19 +453,19 @@ export default function ProductsPage() {
                 )}
             </SelectContent>
         </Select>
-          <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <SortAsc className="h-4 w-4 text-muted-foreground" />
-                <SelectValue placeholder="مرتب‌سازی بر اساس..." />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">جدیدترین</SelectItem>
-              <SelectItem value="name">نام محصول</SelectItem>
-              <SelectItem value="price">گران‌ترین</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <div className="flex items-center gap-2">
+              <SortAsc className="h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="مرتب‌سازی بر اساس..." />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">جدیدترین</SelectItem>
+            <SelectItem value="name">نام محصول</SelectItem>
+            <SelectItem value="price">گران‌ترین</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>

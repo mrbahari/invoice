@@ -168,7 +168,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const invoiceItems: InvoiceItem[] = [];
 
     const productMap: Record<string, { keyword: string[], aliases: string[] }> = {
-      'پنل RG': { keyword: ['پنل'], aliases: ['پنل RG', 'پنل والیز', 'پانل گچی', 'panel', 'پنل جی برد'] },
+      'پنل RG باتیس': { keyword: ['پنل', 'RG', 'باتیس'], aliases: ['پنل RG باتیس', 'پنل', 'پانل گچی', 'panel'] },
       'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'] },
       'سازه f47': { keyword: ['f47'], aliases: ['f47'] },
       'سازه u36': { keyword: ['u36'], aliases: ['u36'] },
@@ -200,7 +200,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             if (productKeywords.some(alias => materialNameLower.includes(alias))) {
                 matchedProduct = products.find(p => {
                     const productNameLower = p.name.toLowerCase();
-                    return productMap[key].keyword.some(kw => productNameLower.includes(kw.toLowerCase()));
+                    return productMap[key].keyword.every(kw => productNameLower.includes(kw.toLowerCase()));
                 });
                 if (matchedProduct) {
                     foundMatch = true;

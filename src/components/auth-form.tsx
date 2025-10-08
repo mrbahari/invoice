@@ -209,7 +209,7 @@ export function AuthForm({ formType: initialFormType, onSubmit, onGoogleSignIn, 
                   <Input id="email-forgot" type="email" placeholder="m@example.com" name="email" />
                 </div>
                 {resetState?.message && !isResetPending && <p className={`text-sm text-center ${resetState.success ? 'text-green-600' : 'text-destructive'}`}>{resetState.message}</p>}
-                <Button type="submit" className="w-full" disabled={isResetPending}>
+                <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={isResetPending}>
                   {isResetPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                   {buttonLabels['forgot-password']}
                 </Button>

@@ -109,5 +109,3 @@ export const parseCurrency = (str: string): number | '' => {
     const number = parseFloat(numericString);
     return isNaN(number) ? '' : number;
 }
-
-    

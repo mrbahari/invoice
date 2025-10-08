@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -753,7 +754,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     value: string
   ) => {
     const numericValue = parseFormattedNumber(value);
-    const displayValue = value === '' ? '' : formatNumber(numericValue);
+    const displayValue = formatNumber(numericValue);
     
     switch(field) {
         case 'discount': setDisplayDiscount(displayValue); break;

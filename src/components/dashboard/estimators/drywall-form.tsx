@@ -96,7 +96,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
     }
     const typeText = wallType === 'partition' ? 'جداکننده' : 'پوششی';
     const woolText = includeWool ? 'با پشم سنگ' : 'بدون پشم سنگ';
-    const description = `دیوار ${typeText}: ${formatNumber(length)} * ${formatNumber(height)} متر (${woolText})`;
+    const description = `دیوار ${typeText}: ${displayLength} * ${displayHeight} متر (${woolText})`;
     onAddToList(description, results);
   };
 
@@ -197,7 +197,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
                   {results.map((item) => (
                     <TableRow key={item.material}>
                       <TableCell className="font-medium">{item.material}</TableCell>
-                      <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                      <TableCell className="text-center font-mono text-lg">{formatNumber(item.quantity)}</TableCell>
                       <TableCell>{item.unit}</TableCell>
                     </TableRow>
                   ))}

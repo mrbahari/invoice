@@ -125,7 +125,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
                   {results.map((item) => (
                     <TableRow key={item.material}>
                       <TableCell className="font-medium">{item.material}</TableCell>
-                      <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                      <TableCell className="text-center font-mono text-lg">{formatNumber(item.quantity)}</TableCell>
                       <TableCell>{item.unit}</TableCell>
                     </TableRow>
                   ))}

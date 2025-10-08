@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -11,7 +12,7 @@ import { FlatCeilingForm } from './estimators/flat-ceiling-form';
 import { DrywallForm } from './estimators/drywall-form';
 import type { Invoice, InvoiceItem, Product } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getStorePrefix } from '@/lib/utils';
+import { getStorePrefix, formatNumber } from '@/lib/utils';
 import { useData } from '@/context/data-context';
 import type { DashboardTab } from '@/app/dashboard/page';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -420,7 +421,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                                         {item.results.map(res => (
                                                             <TableRow key={res.material}>
                                                                 <TableCell className="text-xs">{res.material}</TableCell>
-                                                                <TableCell className="text-center text-xs font-mono">{res.quantity.toLocaleString('fa-IR')}</TableCell>
+                                                                <TableCell className="text-center text-xs font-mono">{formatNumber(res.quantity)}</TableCell>
                                                                 <TableCell className="text-xs">{res.unit}</TableCell>
                                                             </TableRow>
                                                         ))}
@@ -443,7 +444,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                         {aggregatedResults.map((item) => (
                                         <TableRow key={`${item.material}-${item.unit}`}>
                                             <TableCell className="font-medium">{item.material}</TableCell>
-                                            <TableCell className="text-center font-mono text-lg">{`${Math.ceil(item.quantity).toLocaleString('fa-IR')}`}</TableCell>
+                                            <TableCell className="text-center font-mono text-lg">{`${formatNumber(Math.ceil(item.quantity))}`}</TableCell>
                                             <TableCell>{item.unit}</TableCell>
                                         </TableRow>
                                         ))}

@@ -279,7 +279,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) return;
-    const description = `سقف فلت تیپ ${ceilingType}: ${formatNumber(length)} * ${formatNumber(width)} متر`;
+    const description = `سقف فلت تیپ ${ceilingType}: ${displayLength} * ${displayWidth} متر`;
     onAddToList(description, results);
   };
 
@@ -347,7 +347,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                   {results.map((item) => (
                     <TableRow key={item.material}>
                       <TableCell className="font-medium">{item.material}</TableCell>
-                      <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
+                      <TableCell className="text-center font-mono text-lg">{formatNumber(item.quantity)}</TableCell>
                       <TableCell>{item.unit}</TableCell>
                     </TableRow>
                   ))}
@@ -361,13 +361,13 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                 <Separator className="my-6" />
                 <h3 className="text-lg font-semibold mb-4 text-primary">۳. جزئیات و پرت مصالح</h3>
                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>مساحت کل:</strong> {(details.area.toFixed(2)).toLocaleString('fa-IR')} متر مربع</p>
-                    <p><strong>محیط:</strong> {(details.perimeter.toFixed(2)).toLocaleString('fa-IR')} متر</p>
-                    <p><strong>نبشی L25:</strong> به {details.l25Profiles.count.toLocaleString('fa-IR')} شاخه {details.l25Profiles.length.toLocaleString('fa-IR')} متری نیاز است.</p>
-                    <p><strong>سازه F47 اصلی:</strong> برای {details.f47MainProfiles.rows.toLocaleString('fa-IR')} ردیف، به {details.f47MainProfiles.count.toLocaleString('fa-IR')} شاخه نیاز است. پرت تقریبی: {(details.f47MainProfiles.waste.toFixed(2)).toLocaleString('fa-IR')} متر.</p>
-                    <p><strong>پنل‌ها:</strong> به {details.panelLayout.panelsNeeded.toLocaleString('fa-IR')} برگ پنل نیاز است. پرت کل: {(details.panelLayout.waste.toFixed(2)).toLocaleString('fa-IR')} متر مربع.</p>
+                    <p><strong>مساحت کل:</strong> {formatNumber(details.area.toFixed(2))} متر مربع</p>
+                    <p><strong>محیط:</strong> {formatNumber(details.perimeter.toFixed(2))} متر</p>
+                    <p><strong>نبشی L25:</strong> به {formatNumber(details.l25Profiles.count)} شاخه {formatNumber(details.l25Profiles.length)} متری نیاز است.</p>
+                    <p><strong>سازه F47 اصلی:</strong> برای {formatNumber(details.f47MainProfiles.rows)} ردیف، به {formatNumber(details.f47MainProfiles.count)} شاخه نیاز است. پرت تقریبی: {formatNumber(details.f47MainProfiles.waste.toFixed(2))} متر.</p>
+                    <p><strong>پنل‌ها:</strong> به {formatNumber(details.panelLayout.panelsNeeded)} برگ پنل نیاز است. پرت کل: {formatNumber(details.panelLayout.waste.toFixed(2))} متر مربع.</p>
                     {details.panelLayout.wastePieces.map((p, i) => (
-                       <p key={i} className="pr-4"> - قطعه پرت {formatNumber(i+1)}: {p.count.toLocaleString('fa-IR')} عدد به ابعاد {(p.length.toFixed(2)).toLocaleString('fa-IR')} در {(p.width.toFixed(2)).toLocaleString('fa-IR')} متر</p>
+                       <p key={i} className="pr-4"> - قطعه پرت {formatNumber(i+1)}: {formatNumber(p.count)} عدد به ابعاد {formatNumber(p.length.toFixed(2))} در {formatNumber(p.width.toFixed(2))} متر</p>
                     ))}
                 </div>
             </div>

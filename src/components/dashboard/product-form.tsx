@@ -179,7 +179,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const value = e.target.value;
       const numericValue = parseFormattedNumber(value);
       setSubUnitQuantity(numericValue);
-      setDisplaySubUnitQuantity(value); // Keep the user's input for better UX
+      setDisplaySubUnitQuantity(formatNumber(numericValue));
   };
   
   const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -608,5 +608,3 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
-
-    

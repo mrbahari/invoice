@@ -100,3 +100,13 @@ export type DailySales = {
 export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
 
 export type ToolbarPosition = { x: number, y: number };
+
+export interface AppData {
+  products: Product[];
+  categories: Category[];
+  customers: Customer[];
+  invoices: Invoice[];
+  units: UnitOfMeasurement[];
+  stores: Store[];
+  toolbarPositions: { [key: string]: ToolbarPosition };
+}

@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import type { UnitOfMeasurement } from '@/lib/definitions';
+import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
 import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,7 @@ import { useSearch } from './search-provider';
 import { useToast } from '@/hooks/use-toast';
 import defaultDb from '@/database/defaultdb.json';
 import { useUser } from '@/firebase';
+import { Checkbox } from '../ui/checkbox';
 
 
 const colorThemes = [
@@ -45,10 +46,22 @@ const colorThemes = [
     { name: 'Purple', value: '262 84% 58%'},
 ];
 
+type DataSection = keyof AppData;
+
+const sectionLabels: Record<DataSection, string> = {
+    stores: 'فروشگاه‌ها',
+    categories: 'دسته‌بندی‌ها',
+    products: 'محصولات',
+    customers: 'مشتریان',
+    invoices: 'فاکتورها',
+    units: 'واحدها',
+    toolbarPositions: 'تنظیمات نوار ابزار',
+};
+
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
-  const { data, setData, clearAllData, loadDataBatch } = useData();
+  const { data, setData, clearCollections, loadDataBatch } = useData();
   const { user } = useUser();
   const { setSearchVisible } = useSearch();
   const { toast } = useToast();
@@ -56,7 +69,16 @@ export default function SettingsPage() {
   const [activeColor, setActiveColor] = useState(colorThemes[0].value);
   
   const [isProcessing, setIsProcessing] = useState(false);
-
+  const [dataToRestore, setDataToRestore] = useState<AppData | null>(null);
+  const [selectedSections, setSelectedSections] = useState<Record<DataSection, boolean>>({
+    stores: true,
+    categories: true,
+    products: true,
+    customers: true,
+    invoices: true,
+    units: true,
+    toolbarPositions: true,
+  });
 
   useEffect(() => {
     setSearchVisible(false);
@@ -101,7 +123,8 @@ export default function SettingsPage() {
     }
     setIsProcessing(true);
     try {
-      await clearAllData();
+      const allCollections = Object.keys(sectionLabels) as DataSection[];
+      await clearCollections(allCollections);
       toast({ variant: 'success', title: 'اطلاعات پاک شد', description: 'تمام داده‌های شما با موفقیت حذف شد.' });
     } catch (error) {
        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در پاک کردن اطلاعات رخ داد.' });
@@ -117,8 +140,9 @@ export default function SettingsPage() {
     }
     setIsProcessing(true);
     try {
-      await clearAllData();
-      await loadDataBatch(defaultDb);
+      const allCollections = Object.keys(sectionLabels) as DataSection[];
+      await clearCollections(allCollections);
+      await loadDataBatch(defaultDb as AppData);
       toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
     } catch (error) {
        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در بارگذاری داده‌های پیش‌فرض رخ داد.' });
@@ -156,7 +180,6 @@ export default function SettingsPage() {
         return;
     }
     
-    setIsProcessing(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
@@ -164,18 +187,18 @@ export default function SettingsPage() {
         if (typeof text !== 'string') {
           throw new Error("فایل پشتیبان معتبر نیست.");
         }
-        const restoredData = JSON.parse(text);
-        
-        await clearAllData();
-        await loadDataBatch(restoredData);
+        const restoredData = JSON.parse(text) as AppData;
+        setDataToRestore(restoredData);
+        // Reset selections
+        setSelectedSections({
+            stores: true, categories: true, products: true,
+            customers: true, invoices: true, units: true, toolbarPositions: true
+        });
 
-        toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات با موفقیت بازیابی شد.' });
-          
       } catch (error: any) {
-        console.error("Error restoring data:", error);
-        toast({ variant: 'destructive', title: 'خطا در بازیابی', description: error.message || 'فایل پشتیبان نامعتبر است.' });
+        console.error("Error parsing backup file:", error);
+        toast({ variant: 'destructive', title: 'خطا در خواندن فایل', description: error.message || 'فایل پشتیبان نامعتبر است.' });
       } finally {
-        setIsProcessing(false);
         if(fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -184,158 +207,246 @@ export default function SettingsPage() {
     reader.readAsText(file);
   };
 
+  const handleConfirmRestore = async () => {
+    if (!dataToRestore || !user) return;
+
+    const sectionsToRestore = (Object.keys(selectedSections) as DataSection[]).filter(
+        key => selectedSections[key]
+    );
+
+    if (sectionsToRestore.length === 0) {
+        toast({ variant: 'default', title: 'بخشی انتخاب نشده است', description: 'لطفاً حداقل یک بخش را برای بازیابی انتخاب کنید.'});
+        return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+        // 1. Clear only the selected collections
+        await clearCollections(sectionsToRestore);
+
+        // 2. Prepare the partial data to load
+        const dataToLoad: Partial<AppData> = {};
+        for (const section of sectionsToRestore) {
+            if (dataToRestore[section]) {
+                (dataToLoad as any)[section] = dataToRestore[section];
+            }
+        }
+        
+        // 3. Load the new data
+        await loadDataBatch(dataToLoad);
+
+        toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات انتخاب شده با موفقیت بازیابی شد.' });
+        setDataToRestore(null);
+
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'خطا در بازیابی', description: 'مشکلی در فرآیند بازیابی اطلاعات رخ داد.'});
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
 
   const handleRestoreClick = () => {
     fileInputRef.current?.click();
   };
 
+  const isRestoreConfirmDisabled = Object.values(selectedSections).every(v => !v);
+
   return (
-    <div className="grid gap-6" data-main-page="true">
-      <Card>
-        <CardHeader>
-          <CardTitle>تنظیمات</CardTitle>
-          <CardDescription>
-            تنظیمات کلی برنامه را مدیریت کنید.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <>
+      <AlertDialog open={!!dataToRestore} onOpenChange={(open) => !open && setDataToRestore(null)}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>بازیابی اطلاعات از فایل</AlertDialogTitle>
+            <AlertDialogDescription>
+              بخش‌هایی را که می‌خواهید از فایل پشتیبان بازیابی شوند، انتخاب کنید. توجه: داده‌های فعلی در بخش‌های انتخاب شده بازنویسی خواهند شد.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto p-1">
+            <div className="grid grid-cols-2 gap-4">
+                {(Object.keys(sectionLabels) as DataSection[]).map((key) => {
+                    const items = dataToRestore ? (dataToRestore[key] as any[]) : [];
+                    const count = Array.isArray(items) ? items.length : (items ? 1 : 0);
+                    if (count === 0) return null; // Don't show empty sections
+                    
+                    return (
+                        <div key={key} className="flex items-center space-x-2 space-x-reverse rounded-md border p-3 hover:bg-accent">
+                            <Checkbox
+                                id={`check-${key}`}
+                                checked={selectedSections[key]}
+                                onCheckedChange={(checked) => {
+                                    setSelectedSections(prev => ({...prev, [key]: !!checked}))
+                                }}
+                            />
+                            <Label htmlFor={`check-${key}`} className="flex-1 cursor-pointer">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-semibold">{sectionLabels[key]}</span>
+                                    <Badge variant="secondary">{count.toLocaleString('fa-IR')} مورد</Badge>
+                                </div>
+                            </Label>
+                        </div>
+                    );
+                })}
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDataToRestore(null)}>انصراف</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled}>
+              {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
+              تایید و بازیابی
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid gap-6" data-main-page="true">
         <Card>
-            <CardHeader>
-            <CardTitle>ظاهر برنامه</CardTitle>
+          <CardHeader>
+            <CardTitle>تنظیمات</CardTitle>
             <CardDescription>
-                حالت نمایش روشن, تاریک یا هماهنگ با سیستم را انتخاب کنید.
+              تنظیمات کلی برنامه را مدیریت کنید.
             </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <RadioGroup value={theme} onValueChange={setTheme}>
-                    <div className="grid grid-cols-3 gap-4">
-                        <Label htmlFor="theme-light" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
-                            <RadioGroupItem value="light" id="theme-light" className="sr-only" />
-                            <Sun className="h-6 w-6" />
-                            <span>روشن</span>
-                        </Label>
-                         <Label htmlFor="theme-dark" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
-                            <RadioGroupItem value="dark" id="theme-dark" className="sr-only" />
-                            <Moon className="h-6 w-6" />
-                            <span>تاریک</span>
-                        </Label>
-                         <Label htmlFor="theme-system" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
-                            <RadioGroupItem value="system" id="theme-system" className="sr-only" />
-                            <Monitor className="h-6 w-6" />
-                            <span>سیستم</span>
-                        </Label>
-                    </div>
-                </RadioGroup>
-            </CardContent>
+          </CardHeader>
         </Card>
-        
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
-          <CardDescription>
-            از داده‌های برنامه خود نسخه پشتیبان تهیه کرده یا آن‌ها را بازیابی کنید.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-            <Button onClick={handleBackupData} variant="outline" disabled={isProcessing}>
-                <Download className="ml-2 h-4 w-4" />
-                دانلود فایل پشتیبان (Backup)
-            </Button>
-            <div>
-              <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isProcessing}>
-                <Upload className="ml-2 h-4 w-4" />
-                بازیابی از فایل (Restore)
-              </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleRestoreChange}
-                accept=".json"
-                className="hidden"
-              />
-            </div>
-        </CardContent>
-      </Card>
 
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">منطقه خطر</CardTitle>
-          <CardDescription>
-            این عملیات غیرقابل بازگشت هستند. لطفا با احتیاط عمل کنید.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          {isProcessing ? (
-             <div className="flex items-center justify-center p-4 min-h-[160px]">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <p className="mr-4 text-muted-foreground">در حال پردازش...</p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
-                <div>
-                  <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
-                  <p className="text-sm text-muted-foreground">
-                    تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف شده و برنامه به حالت اولیه باز می‌گردد.
-                  </p>
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isProcessing}>
-                        <Trash2 className='ml-2 h-4 w-4' />
-                        پاک کردن اطلاعات
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>آیا کاملاً مطمئن هستید؟</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        این عمل غیرقابل بازگشت است و تمام داده‌های شما را برای همیشه حذف خواهد کرد.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                      <AlertDialogCancel>انصراف</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearData} className='bg-destructive hover:bg-destructive/90'>بله، همه چیز را پاک کن</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+              <CardHeader>
+              <CardTitle>ظاهر برنامه</CardTitle>
+              <CardDescription>
+                  حالت نمایش روشن, تاریک یا هماهنگ با سیستم را انتخاب کنید.
+              </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <RadioGroup value={theme} onValueChange={setTheme}>
+                      <div className="grid grid-cols-3 gap-4">
+                          <Label htmlFor="theme-light" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                              <RadioGroupItem value="light" id="theme-light" className="sr-only" />
+                              <Sun className="h-6 w-6" />
+                              <span>روشن</span>
+                          </Label>
+                           <Label htmlFor="theme-dark" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                              <RadioGroupItem value="dark" id="theme-dark" className="sr-only" />
+                              <Moon className="h-6 w-6" />
+                              <span>تاریک</span>
+                          </Label>
+                           <Label htmlFor="theme-system" className="flex flex-col items-center justify-center gap-2 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-primary">
+                              <RadioGroupItem value="system" id="theme-system" className="sr-only" />
+                              <Monitor className="h-6 w-6" />
+                              <span>سیستم</span>
+                          </Label>
+                      </div>
+                  </RadioGroup>
+              </CardContent>
+          </Card>
+          
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>پشتیبان‌گیری و بازیابی</CardTitle>
+            <CardDescription>
+              از داده‌های برنامه خود نسخه پشتیبان تهیه کرده یا آن‌ها را بازیابی کنید.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+              <Button onClick={handleBackupData} variant="outline" disabled={isProcessing}>
+                  <Download className="ml-2 h-4 w-4" />
+                  دانلود فایل پشتیبان (Backup)
+              </Button>
+              <div>
+                <Button onClick={handleRestoreClick} variant="outline" className="w-full" disabled={isProcessing}>
+                  <Upload className="ml-2 h-4 w-4" />
+                  بازیابی از فایل (Restore)
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleRestoreChange}
+                  accept=".json"
+                  className="hidden"
+                />
               </div>
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/50">
-                <div>
-                  <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
-                  <p className="text-sm text-muted-foreground">
-                    اطلاعات فعلی با داده‌های اولیه برنامه جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
-                  </p>
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" disabled={isProcessing}>
-                        <RefreshCw className='ml-2 h-4 w-4' />
-                        بارگذاری پیش‌فرض
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>بارگذاری داده‌های پیش‌فرض؟</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        این عمل تمام اطلاعات فعلی شما را پاک کرده و داده‌های اولیه برنامه را بارگذاری می‌کند. آیا مطمئن هستید؟
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                      <AlertDialogCancel>انصراف</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleLoadDefaults} className="bg-green-600 hover:bg-green-700">بله، بارگذاری کن</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">منطقه خطر</CardTitle>
+            <CardDescription>
+              این عملیات غیرقابل بازگشت هستند. لطفا با احتیاط عمل کنید.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {isProcessing ? (
+               <div className="flex items-center justify-center p-4 min-h-[160px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <p className="mr-4 text-muted-foreground">در حال پردازش...</p>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                  <div>
+                    <h3 className="font-semibold text-destructive">پاک کردن تمام اطلاعات</h3>
+                    <p className="text-sm text-muted-foreground">
+                      تمام داده‌های برنامه (مشتریان، محصولات، فاکتورها، و غیره) برای همیشه حذف شده و برنامه به حالت اولیه باز می‌گردد.
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={isProcessing}>
+                          <Trash2 className='ml-2 h-4 w-4' />
+                          پاک کردن اطلاعات
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>آیا کاملاً مطمئن هستید؟</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          این عمل غیرقابل بازگشت است و تمام داده‌های شما را برای همیشه حذف خواهد کرد.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClearData} className='bg-destructive hover:bg-destructive/90'>بله، همه چیز را پاک کن</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+                <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/50">
+                  <div>
+                    <h3 className="font-semibold">بارگذاری داده‌های پیش‌فرض</h3>
+                    <p className="text-sm text-muted-foreground">
+                      اطلاعات فعلی با داده‌های اولیه برنامه جایگزین می‌شود. این عمل داده‌های فعلی را بازنویسی می‌کند.
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" disabled={isProcessing}>
+                          <RefreshCw className='ml-2 h-4 w-4' />
+                          بارگذاری پیش‌فرض
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>بارگذاری داده‌های پیش‌فرض؟</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          این عمل تمام اطلاعات فعلی شما را پاک کرده و داده‌های اولیه برنامه را بارگذاری می‌کند. آیا مطمئن هستید؟
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleLoadDefaults} className="bg-green-600 hover:bg-green-700">بله، بارگذاری کن</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

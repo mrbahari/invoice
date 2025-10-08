@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition } from '@/lib/definitions';
+import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition, AppData } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/firebase'; // Changed from user-context
 import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
@@ -16,16 +16,6 @@ type DocumentWithoutId = Omit<Product, 'id'> | Omit<Category, 'id'> | Omit<Custo
 type Document = Product | Category | Customer | Invoice | UnitOfMeasurement | Store;
 type CollectionName = 'products' | 'categories' | 'customers' | 'invoices' | 'units' | 'stores';
 
-interface AppData {
-  products: Product[];
-  categories: Category[];
-  customers: Customer[];
-  invoices: Invoice[];
-  units: UnitOfMeasurement[];
-  stores: Store[];
-  toolbarPositions: { [key: string]: ToolbarPosition };
-}
-
 interface DataContextType {
   data: AppData;
   isInitialized: boolean;
@@ -35,7 +25,7 @@ interface DataContextType {
   setData: React.Dispatch<React.SetStateAction<AppData>>; // Expose setData
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
   loadDataBatch: (dataToLoad: Partial<AppData>) => Promise<void>;
-  clearAllData: () => Promise<void>;
+  clearCollections: (collectionNames: (keyof AppData)[]) => Promise<void>;
 }
 
 
@@ -120,7 +110,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     productsLoading, categoriesLoading, storesLoading, unitsLoading, customersLoading, invoicesLoading, toolbarLoading
   ]);
 
-  const getCollectionRef = useCallback((collectionName: CollectionName) => {
+  const getCollectionRef = useCallback((collectionName: keyof AppData) => {
     const refs = {
       products: productsRef,
       categories: categoriesRef,
@@ -128,6 +118,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       units: unitsRef,
       customers: customersRef,
       invoices: invoicesRef,
+      toolbarPositions: null, // Not a collection
     };
     return refs[collectionName];
   }, [productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
@@ -276,30 +267,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [toolbarPosRef]);
 
-  const clearAllData = useCallback(async () => {
+  const clearCollections = useCallback(async (collectionNames: (keyof AppData)[]) => {
     if (!firestore || !user) return;
     const batch = writeBatch(firestore);
 
-    const collectionsToClear: (CollectionReference | null)[] = [
-      productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef
-    ];
-    
-    for (const ref of collectionsToClear) {
+    for (const name of collectionNames) {
+      const ref = getCollectionRef(name);
       if (ref) {
         const snapshot = await getDocs(query(ref));
         snapshot.docs.forEach(doc => {
           if (doc.id) batch.delete(doc.ref);
         });
+      } else if (name === 'toolbarPositions' && toolbarPosRef) {
+        batch.set(toolbarPosRef, {});
       }
-    }
-
-    if (toolbarPosRef) {
-      batch.set(toolbarPosRef, {});
     }
 
     try {
       await batch.commit();
-      setData(emptyData);
+      setData(prev => {
+        const newData = { ...prev };
+        collectionNames.forEach(name => {
+          (newData as any)[name] = Array.isArray(prev[name]) ? [] : {};
+        });
+        return newData;
+      });
     } catch (error: any) {
       const permissionError = new FirestorePermissionError({
         path: 'multiple paths',
@@ -308,34 +300,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       errorEmitter.emit('permission-error', permissionError);
       throw error; // Re-throw so caller knows it failed
     }
-  }, [user, firestore, toolbarPosRef, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef]);
+  }, [user, firestore, getCollectionRef, toolbarPosRef]);
 
 
   const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
     if (!firestore || !user) return;
     const batch = writeBatch(firestore);
     
-    const collectionsToLoad: { name: CollectionName, ref: CollectionReference | null, data: any[] | undefined }[] = [
-        { name: 'products', ref: productsRef, data: dataToLoad.products },
-        { name: 'categories', ref: categoriesRef, data: dataToLoad.categories },
-        { name: 'stores', ref: storesRef, data: dataToLoad.stores },
-        { name: 'units', ref: unitsRef, data: dataToLoad.units },
-        { name: 'customers', ref: customersRef, data: dataToLoad.customers },
-        { name: 'invoices', ref: invoicesRef, data: dataToLoad.invoices },
-    ];
+    for (const key of Object.keys(dataToLoad) as (keyof AppData)[]) {
+        const collectionData = dataToLoad[key];
+        const collectionRef = getCollectionRef(key);
 
-    for (const { name, ref, data } of collectionsToLoad) {
-        if (ref && data) {
-            data.forEach((item: Document) => {
-                const docRef = item.id ? doc(ref, item.id) : doc(ref);
+        if (collectionRef && Array.isArray(collectionData)) {
+             collectionData.forEach((item: Document) => {
+                const docRef = item.id && !item.id.startsWith('temp-') ? doc(collectionRef, item.id) : doc(collectionRef);
                 const { id, ...itemData } = item;
                 batch.set(docRef, itemData);
             });
+        } else if (key === 'toolbarPositions' && toolbarPosRef && collectionData) {
+             batch.set(toolbarPosRef, collectionData);
         }
-    }
-
-    if (toolbarPosRef && dataToLoad.toolbarPositions) {
-        batch.set(toolbarPosRef, dataToLoad.toolbarPositions);
     }
 
     try {
@@ -348,7 +332,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, user, productsRef, categoriesRef, storesRef, unitsRef, customersRef, invoicesRef, toolbarPosRef]);
+  }, [firestore, user, getCollectionRef, toolbarPosRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;
@@ -362,7 +346,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setData,
     setToolbarPosition,
     loadDataBatch,
-    clearAllData,
+    clearCollections,
   };
   
   if (!isInitialized) {
@@ -383,5 +367,3 @@ export function useData() {
   }
   return context;
 }
-
-    

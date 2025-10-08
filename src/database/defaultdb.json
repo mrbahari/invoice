@@ -24,11 +24,11 @@
   ],
   "products": [],
   "units": [
-      { "id": "unit-1", "name": "عدد", "defaultQuantity": 1 },
-      { "id": "unit-2", "name": "متر", "defaultQuantity": 1 },
-      { "id": "unit-3", "name": "شاخه", "defaultQuantity": 1 },
-      { "id": "unit-4", "name": "برگ", "defaultQuantity": 1 },
-      { "id": "unit-5", "name": "بسته", "defaultQuantity": 1 }
+      { "id": "unit-1", "name": "عدد", "storeId": "store-default", "defaultQuantity": 1 },
+      { "id": "unit-2", "name": "متر", "storeId": "store-default", "defaultQuantity": 1 },
+      { "id": "unit-3", "name": "شاخه", "storeId": "store-default", "defaultQuantity": 1 },
+      { "id": "unit-4", "name": "برگ", "storeId": "store-default", "defaultQuantity": 1 },
+      { "id": "unit-5", "name": "بسته", "storeId": "store-default", "defaultQuantity": 1 }
   ],
   "customers": [],
   "invoices": [],

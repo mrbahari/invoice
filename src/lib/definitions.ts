@@ -70,6 +70,7 @@ export type Invoice = {
 export type UnitOfMeasurement = {
   id: string;
   name: string;
+  storeId: string; // Link unit to a specific store
   defaultQuantity: number;
 };
 

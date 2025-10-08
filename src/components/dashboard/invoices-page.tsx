@@ -24,11 +24,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FloatingToolbar } from './floating-toolbar';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import useBeforeUnload from '@/hooks/use-before-unload';
 
 
 type View =
   | { type: 'list' }
-  | { type: 'editor' }
+  | { type: 'editor'; isDirty: boolean }
   | { type: 'preview'; invoiceId: string; from: 'list' | 'editor' };
 
 type InvoicesPageProps = {
@@ -64,6 +65,13 @@ export default function InvoicesPage({
 
   
   const [view, setView] = useState<View>({ type: 'list' });
+  const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
+  
+  useBeforeUnload(
+    view.type === 'editor' && view.isDirty,
+    "تغییرات ذخیره نشده است. آیا مطمئن هستید که می‌خواهید خارج شوید؟"
+  );
+
 
   useEffect(() => {
     // Invoices page (list or editor) should not show the main search bar
@@ -76,7 +84,7 @@ export default function InvoicesPage({
   // Effect to handle the initial invoice prop from estimators or other pages
   useEffect(() => {
     if (draftInvoice && view.type !== 'editor') {
-      setView({ type: 'editor' });
+      setView({ type: 'editor', isDirty: false });
     }
   }, [draftInvoice, view.type]);
 
@@ -101,13 +109,13 @@ export default function InvoicesPage({
         description: '',
         invoiceNumber: `${getStorePrefix('INV')}-${(allInvoices.length + 1).toString().padStart(4, '0')}`,
     }); // Clear any previous draft
-    setView({ type: 'editor' });
+    setView({ type: 'editor', isDirty: false });
   }, [setDraftInvoice, allInvoices.length, user, toast]);
   
   const handleEdit = useCallback(
     (invoice: Invoice) => {
         setDraftInvoice(invoice);
-        setView({ type: 'editor' });
+        setView({ type: 'editor', isDirty: false });
     },
     [setDraftInvoice]
   );
@@ -127,7 +135,7 @@ export default function InvoicesPage({
   const handleBackFromPreview = useCallback(
     (invoiceId?: string) => {
       if (view.type === 'preview' && view.from === 'editor' && invoiceId) {
-        setView({ type: 'editor' });
+        setView({ type: 'editor', isDirty: false });
       } else {
         setView({ type: 'list' });
       }
@@ -157,9 +165,19 @@ export default function InvoicesPage({
   }, [setDraftInvoice]);
 
   const handleCancel = useCallback(() => {
+    if (view.type === 'editor' && view.isDirty) {
+      setIsCancelAlertOpen(true);
+    } else {
+      setView({ type: 'list' });
+      setDraftInvoice(null);
+    }
+  }, [view, setDraftInvoice]);
+
+  const handleConfirmCancel = () => {
     setView({ type: 'list' });
     setDraftInvoice(null);
-  }, [setDraftInvoice]);
+    setIsCancelAlertOpen(false);
+  };
 
   const filteredInvoices = useMemo(() => {
     if (!allInvoices) return [];
@@ -190,6 +208,7 @@ export default function InvoicesPage({
               onSaveSuccess={handleSaveSuccess}
               onPreview={handlePreviewFromEditor}
               onCancel={handleCancel}
+              onDirtyChange={(isDirty) => setView({ type: 'editor', isDirty })}
             />
           </div>
         );
@@ -202,7 +221,7 @@ export default function InvoicesPage({
                 const invoiceToEdit = allInvoices.find(inv => inv.id === id);
                 if (invoiceToEdit) {
                     setDraftInvoice(invoiceToEdit);
-                    setView({ type: 'editor' });
+                    setView({ type: 'editor', isDirty: false });
                 }
             }}
           />
@@ -349,7 +368,25 @@ export default function InvoicesPage({
     }
   };
 
-  return renderContent();
+  return (
+    <>
+      <AlertDialog open={isCancelAlertOpen} onOpenChange={setIsCancelAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>لغو تغییرات</AlertDialogTitle>
+            <AlertDialogDescription>
+              تغییرات ذخیره نشده از بین خواهند رفت. آیا مطمئن هستید؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ادامه ویرایش</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} variant="destructive">
+              بله، لغو کن
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {renderContent()}
+    </>
+  );
 }
-
-    

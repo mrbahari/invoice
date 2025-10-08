@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Extracts a list of materials from a file using AI.
+ * @fileOverview Extracts a list of materials from a file or text using AI.
  *
- * - extractMaterialsFromFile: A function that analyzes a file (image, pdf, text).
+ * - extractMaterialsFromFile: A function that analyzes a file (image, pdf, text) or a string.
  * - ExtractMaterialsInput: The input type for the function.
  * - ExtractMaterialsOutput: The return type for the function.
  */
@@ -18,7 +18,8 @@ const MaterialSchema = z.object({
 });
 
 const ExtractMaterialsInputSchema = z.object({
-  fileDataUri: z.string().describe("A file (image, PDF, text) encoded as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  fileDataUri: z.string().optional().describe("A file (image, PDF, text) encoded as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  textInput: z.string().optional().describe("A string of text containing the list of materials."),
   existingProducts: z.array(z.custom<Product>()).describe("A list of existing products in the store for matching."),
   existingCategories: z.array(z.custom<Category>()).describe("A list of existing categories in the store."),
 });
@@ -62,8 +63,16 @@ const extractMaterialsPrompt = ai.definePrompt({
       (No existing products)
     {{/if}}
 
-    Analyze the following file content:
+    Analyze the following content:
+    {{#if textInput}}
+    Text content:
+    ---
+    {{textInput}}
+    ---
+    {{else}}
+    File content:
     {{media url=fileDataUri}}
+    {{/if}}
     `,
 });
 
@@ -87,6 +96,9 @@ const extractMaterialsFlow = ai.defineFlow(
 // Exported wrapper function
 export async function extractMaterialsFromFile(input: ExtractMaterialsInput): Promise<ExtractMaterialsOutput> {
     try {
+        if (!input.fileDataUri && !input.textInput) {
+            throw new Error("Either fileDataUri or textInput must be provided.");
+        }
         const result = await extractMaterialsFlow(input);
         return result || { materials: [] };
     } catch (error) {

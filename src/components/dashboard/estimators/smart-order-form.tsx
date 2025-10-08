@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, Loader2, CheckCircle, PlusCircle, Trash2, ListTree } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, ListTree, Mic, MicOff } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { extractMaterialsFromFile } from '@/ai/flows/extract-materials-flow';
@@ -15,6 +15,9 @@ import { Badge } from '@/components/ui/badge';
 import type { Product, Category } from '@/lib/definitions';
 import { useUser, useFirestore } from '@/firebase';
 import { writeBatch, doc, collection } from 'firebase/firestore';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 
 
 type ExtractedProduct = {
@@ -32,14 +35,18 @@ type SmartOrderFormProps = {
 
 export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [textInput, setTextInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [extractedResults, setExtractedResults] = useState<ExtractedProduct[]>([]);
   const { toast } = useToast();
-  const { data: appData, addDocument } = useData();
+  const { data: appData } = useData();
   const { products, categories, stores } = appData;
   const { user } = useUser();
   const firestore = useFirestore();
-
+  const { transcript, isListening, startListening, stopListening } = useSpeechRecognition({
+      onResult: (result) => setTextInput(prev => prev ? `${prev} ${result}`: result),
+      onError: (error) => toast({ variant: 'destructive', title: 'خطای گفتار', description: error })
+  });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFile(acceptedFiles[0] || null);
@@ -65,16 +72,28 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
     });
   }
 
-  const handleProcessFile = async () => {
-    if (!file || !user) return;
+  const handleProcess = async (source: 'file' | 'text') => {
+    if (!user) return;
+    
+    let inputForAI = {};
+    let fileName = 'ورودی متنی';
+
+    if (source === 'file' && file) {
+        fileName = file.name;
+        const fileDataUri = await fileToDataUri(file);
+        inputForAI = { fileDataUri };
+    } else if (source === 'text' && textInput) {
+        inputForAI = { textInput };
+    } else {
+        return; // Nothing to process
+    }
+
     setIsLoading(true);
     setExtractedResults([]);
 
     try {
-      const fileDataUri = await fileToDataUri(file);
-      
       const result = await extractMaterialsFromFile({ 
-          fileDataUri,
+          ...inputForAI,
           existingProducts: products,
           existingCategories: categories,
       });
@@ -84,21 +103,21 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
         toast({
           variant: 'success',
           title: 'پردازش موفق',
-          description: `${result.materials.length} مورد با موفقیت از فایل استخراج و مقایسه شد.`,
+          description: `${result.materials.length} مورد با موفقیت استخراج و مقایسه شد.`,
         });
       } else {
         toast({
           variant: 'destructive',
           title: 'نتیجه‌ای یافت نشد',
-          description: 'هوش مصنوعی نتوانست موردی را از فایل استخراج کند. لطفاً از یک فایل واضح‌تر استفاده کنید.',
+          description: 'هوش مصنوعی نتوانست موردی را استخراج کند. لطفاً ورودی خود را بررسی کنید.',
         });
       }
 
     } catch (error) {
-      console.error("Error processing file with AI:", error);
+      console.error("Error processing with AI:", error);
       toast({
         variant: 'destructive',
-        title: 'خطا در پردازش فایل',
+        title: 'خطا در پردازش',
         description: 'مشکلی در ارتباط با هوش مصنوعی پیش آمد. لطفاً دوباره تلاش کنید.',
       });
     } finally {
@@ -107,7 +126,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   };
   
   const handleAddClick = async () => {
-    if (extractedResults.length === 0 || !file || !user || !firestore) {
+    if (extractedResults.length === 0 || !user || !firestore) {
       return;
     }
 
@@ -135,7 +154,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
         const newProductData: Omit<Product, 'id'> = {
             name: newProd.name,
             price: 0, // Default price
-            description: `ایجاد شده توسط سفارش هوشمند از فایل ${file.name}`,
+            description: `ایجاد شده توسط سفارش هوشمند`,
             storeId: storeId,
             subCategoryId: draftCategoryId,
             unit: newProd.unit,
@@ -161,7 +180,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
         return; // Stop if batch fails
     }
 
-    const description = `استخراج شده از فایل: ${file.name}`;
+    const description = `استخراج شده از ورودی هوشمند`;
     onAddToList(description, materialResults);
   };
   
@@ -175,68 +194,96 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
       <CardHeader>
         <CardTitle>سفارش هوشمند با AI</CardTitle>
         <CardDescription>
-          فایل لیست مصالح خود (عکس، PDF یا متن) را آپلود کنید. هوش مصنوعی آن را تحلیل کرده و به صورت خودکار به آیتم‌های فاکتور تبدیل می‌کند.
+          لیست مصالح خود را از طریق فایل، متن یا گفتار وارد کنید تا هوش مصنوعی آن را تحلیل کرده و به صورت خودکار به آیتم‌های قابل استفاده تبدیل کند.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8">
             {/* Input Column */}
             <div className="space-y-6">
-                <div
-                {...getRootProps()}
-                className={`flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors
-                    ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50 hover:bg-muted/50'}`}
-                >
-                <input {...getInputProps()} />
-                <div className="text-center">
-                    <UploadCloud className="w-12 h-12 mx-auto text-muted-foreground" />
-                    {isDragActive ? (
-                    <p className="mt-4 text-primary font-semibold">فایل را اینجا رها کنید...</p>
-                    ) : (
-                    <>
-                        <p className="mt-4 text-sm text-muted-foreground">
-                        فایل خود را اینجا بکشید یا برای انتخاب کلیک کنید
-                        </p>
-                        <p className="text-xs text-muted-foreground/80 mt-1">
-                        (PDF, TXT, JPG, PNG)
-                        </p>
-                    </>
-                    )}
-                </div>
-                </div>
+                <Tabs defaultValue="file" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="file">آپلود فایل</TabsTrigger>
+                        <TabsTrigger value="text">ورودی متن</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="file" className="pt-4">
+                       <div
+                        {...getRootProps()}
+                        className={`flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors
+                            ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50 hover:bg-muted/50'}`}
+                        >
+                            <input {...getInputProps()} />
+                            <div className="text-center">
+                                <UploadCloud className="w-12 h-12 mx-auto text-muted-foreground" />
+                                {isDragActive ? (
+                                <p className="mt-4 text-primary font-semibold">فایل را اینجا رها کنید...</p>
+                                ) : (
+                                <>
+                                    <p className="mt-4 text-sm text-muted-foreground">
+                                    فایل خود را اینجا بکشید یا برای انتخاب کلیک کنید
+                                    </p>
+                                    <p className="text-xs text-muted-foreground/80 mt-1">
+                                    (PDF, TXT, JPG, PNG)
+                                    </p>
+                                </>
+                                )}
+                            </div>
+                        </div>
 
-                {file && (
-                <div className="p-3 border rounded-lg flex items-center justify-between bg-muted/30">
-                    <div className="flex items-center gap-3">
-                    <FileText className="w-6 h-6 text-primary" />
-                    <div className="grid gap-0.5">
-                        <span className="text-sm font-medium">{file.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                        {(file.size / 1024).toFixed(2)} KB
-                        </span>
-                    </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={removeFile}>
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-                )}
-                
-                <Button 
-                onClick={handleProcessFile} 
-                disabled={!file || isLoading} 
-                className="w-full bg-green-600 hover:bg-green-700"
-                size="lg"
-                >
-                {isLoading ? (
-                    <>
-                    <Loader2 className="ml-2 h-5 w-5 animate-spin" />
-                    در حال پردازش با هوش مصنوعی...
-                    </>
-                ) : (
-                    'شروع پردازش فایل'
-                )}
-                </Button>
+                        {file && (
+                        <div className="mt-4 p-3 border rounded-lg flex items-center justify-between bg-muted/30">
+                            <div className="flex items-center gap-3">
+                            <FileText className="w-6 h-6 text-primary" />
+                            <div className="grid gap-0.5">
+                                <span className="text-sm font-medium">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                {(file.size / 1024).toFixed(2)} KB
+                                </span>
+                            </div>
+                            </div>
+                        </div>
+                        )}
+                        
+                        <Button 
+                            onClick={() => handleProcess('file')} 
+                            disabled={!file || isLoading} 
+                            className="w-full mt-4 bg-green-600 hover:bg-green-700"
+                            size="lg"
+                        >
+                            {isLoading ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : null}
+                            پردازش فایل
+                        </Button>
+                    </TabsContent>
+                    <TabsContent value="text" className="pt-4">
+                        <div className="relative">
+                            <Textarea 
+                                placeholder="لیست مصالح خود را اینجا تایپ یا جایگذاری کنید...&#10;مثال:&#10;پروفیل F47 - ۶۰ شاخه&#10;پانل کناف - ۲۵ برگ"
+                                className="w-full min-h-[220px] p-4 pr-12"
+                                value={textInput}
+                                onChange={(e) => setTextInput(e.target.value)}
+                            />
+                            <Button
+                                type="button"
+                                variant={isListening ? 'destructive' : 'outline'}
+                                size="icon"
+                                className="absolute top-3 right-3 h-8 w-8"
+                                onClick={isListening ? stopListening : startListening}
+                            >
+                                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                                <span className="sr-only">{isListening ? 'توقف ضبط' : 'شروع ضبط'}</span>
+                            </Button>
+                        </div>
+                         <Button 
+                            onClick={() => handleProcess('text')} 
+                            disabled={!textInput || isLoading} 
+                            className="w-full mt-4 bg-green-600 hover:bg-green-700"
+                            size="lg"
+                        >
+                            {isLoading ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : null}
+                            پردازش متن
+                        </Button>
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* Output Column */}
@@ -273,7 +320,6 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
 
                         <div className="pt-4">
                             <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
-                                <PlusCircle className="ml-2 h-5 w-5" />
                                 افزودن به لیست برآورد
                             </Button>
                         </div>
@@ -281,7 +327,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center py-10">
                         <ListTree className="w-12 h-12 mb-4" />
-                        <p>نتایج پس از پردازش فایل در اینجا نمایش داده می‌شوند.</p>
+                        <p>نتایج پس از پردازش در اینجا نمایش داده می‌شوند.</p>
                     </div>
                 )}
             </div>

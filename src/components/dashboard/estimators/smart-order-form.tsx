@@ -159,6 +159,9 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
             subCategoryId: draftCategoryId,
             unit: newProd.unit,
             imageUrl: `https://picsum.photos/seed/${encodeURIComponent(newProd.name)}/400/300`,
+            subUnit: '',
+            subUnitQuantity: 0,
+            subUnitPrice: 0,
         };
         batch.set(productRef, newProductData);
         materialResults.push({ material: newProd.name, quantity: newProd.quantity, unit: newProd.unit });

@@ -48,9 +48,9 @@ const extractMaterialsPrompt = ai.definePrompt({
     Your task is to analyze the provided document (which could be an image of a handwritten list, a PDF, or a text file) and extract a list of all construction materials mentioned.
     For each material, you must identify its name, quantity, and unit of measurement.
 
-    CRITICAL: You MUST compare each extracted material name with the list of 'existingProducts' provided.
-    - If you find a close match (considering synonyms, typos, and common variations in Persian), you MUST use the existing product's data (id, name, unit). Set 'isNew' to false.
-    - If there is NO reasonable match in the existing products, you MUST treat it as a new product. Set 'isNew' to true and use the extracted name as a temporary 'productId' and 'name'.
+    CRITICAL: You MUST compare each extracted material name with the list of 'existingProducts' provided. Your matching should be very accurate and consider synonyms, typos, and common variations in Persian (e.g., "پیچ کناف" should match "پیچ پنل").
+    - If you find a close match in the 'existingProducts' list, you MUST use the existing product's data (id, name, unit). Set 'isNew' to false.
+    - If there is NO reasonable match in the existing products, you MUST treat it as a new product. Set 'isNew' to true, and use the extracted name as a temporary 'productId' and 'name'.
 
     The final response MUST be in PERSIAN.
 

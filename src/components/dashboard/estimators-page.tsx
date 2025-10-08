@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft, ChevronsUpDown, User, Wrench, Building } from 'lucide-react';
+import { ArrowRight, Trash2, FilePlus, ClipboardList, ChevronLeft, ChevronsUpDown, User, Wrench, Building, Bot } from 'lucide-react';
 import { Button } from '../ui/button';
 import { GridCeilingForm } from './estimators/grid-ceiling-form';
 import { BoxCeilingForm } from './estimators/box-ceiling-form';
@@ -320,12 +319,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                             >
                                 <div className="p-6 flex flex-col md:flex-row items-center gap-6">
                                     <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-primary/20 border-2 border-primary/30">
-                                         <Building className="h-10 w-10 text-primary" />
+                                         <Bot className="h-10 w-10 text-primary" />
                                     </div>
                                     <div className="text-center md:text-right">
                                         <CardTitle className="text-xl font-bold text-primary">سفارش هوشمند</CardTitle>
                                         <p className="text-muted-foreground mt-2">
-                                        لیست مصالح خود را از روی فایل اکسل، تصویر یا متن وارد کنید تا به صورت هوشمند به فاکتور تبدیل شود.
+                                        لیست مصالح خود را از روی فایل، عکس یا متن وارد کنید تا به صورت هوشمند به فاکتور تبدیل شود.
                                         </p>
                                     </div>
                                 </div>

@@ -24,7 +24,7 @@ interface DataContextType {
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
   setData: React.Dispatch<React.SetStateAction<AppData>>; // Expose setData
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
-  loadDataBatch: (dataToLoad: Partial<AppData>) => Promise<void>;
+  loadDataBatch: (dataToLoad: Partial<AppData>, merge: boolean) => Promise<void>;
   clearCollections: (collectionNames: (keyof AppData)[]) => Promise<void>;
 }
 
@@ -303,27 +303,51 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [user, firestore, getCollectionRef, toolbarPosRef]);
 
 
-  const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>) => {
+  const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>, merge: boolean = false) => {
     if (!firestore || !user) return;
-    const batch = writeBatch(firestore);
+
+    // First, clear collections if merge is false
+    if (!merge) {
+        const collectionsToClear = Object.keys(dataToLoad) as (keyof AppData)[];
+        await clearCollections(collectionsToClear);
+    }
     
+    const batch = writeBatch(firestore);
+    const localDataUpdates: Partial<AppData> = {};
+
     for (const key of Object.keys(dataToLoad) as (keyof AppData)[]) {
         const collectionData = dataToLoad[key];
         const collectionRef = getCollectionRef(key);
-
+        
         if (collectionRef && Array.isArray(collectionData)) {
-             collectionData.forEach((item: Document) => {
-                const docRef = item.id && !item.id.startsWith('temp-') ? doc(collectionRef, item.id) : doc(collectionRef);
+            const existingIds = new Set(data[key].map((item: any) => item.id));
+            const itemsToAdd: Document[] = [];
+
+            for (const item of collectionData) {
                 const { id, ...itemData } = item;
+                // If merging, only add if ID doesn't already exist.
+                if (merge && existingIds.has(id)) {
+                    continue; // Skip duplicate
+                }
+
+                const docRef = id && !id.startsWith('temp-') ? doc(collectionRef, id) : doc(collectionRef);
                 batch.set(docRef, itemData);
-            });
+                itemsToAdd.push({ id: docRef.id, ...itemData } as Document);
+            }
+
+            if (itemsToAdd.length > 0) {
+                 localDataUpdates[key] = merge ? [...data[key], ...itemsToAdd] as any : itemsToAdd as any;
+            }
         } else if (key === 'toolbarPositions' && toolbarPosRef && collectionData) {
-             batch.set(toolbarPosRef, collectionData);
+            batch.set(toolbarPosRef, collectionData, { merge });
+            localDataUpdates.toolbarPositions = { ...(merge ? data.toolbarPositions : {}), ...collectionData };
         }
     }
-
+    
     try {
         await batch.commit();
+        // Optimistically update local state after successful commit
+        setData(prev => ({...prev, ...localDataUpdates}));
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({
             path: 'multiple paths',
@@ -332,7 +356,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
         errorEmitter.emit('permission-error', permissionError);
     }
-  }, [firestore, user, getCollectionRef, toolbarPosRef]);
+  }, [firestore, user, getCollectionRef, toolbarPosRef, clearCollections, data]);
 
 
   const isInitialized = !isUserLoading && isSynced;

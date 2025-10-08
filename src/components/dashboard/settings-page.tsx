@@ -140,9 +140,7 @@ export default function SettingsPage() {
     }
     setIsProcessing(true);
     try {
-      const allCollections = Object.keys(sectionLabels) as DataSection[];
-      await clearCollections(allCollections);
-      await loadDataBatch(defaultDb as AppData);
+      await loadDataBatch(defaultDb as AppData, false);
       toast({ variant: 'success', title: 'بارگذاری موفق', description: 'داده‌های پیش‌فرض با موفقیت بارگذاری شد.' });
     } catch (error) {
        toast({ variant: 'destructive', title: 'خطا', description: 'مشکلی در بارگذاری داده‌های پیش‌فرض رخ داد.' });
@@ -222,10 +220,6 @@ export default function SettingsPage() {
     setIsProcessing(true);
     
     try {
-        // 1. Clear only the selected collections
-        await clearCollections(sectionsToRestore);
-
-        // 2. Prepare the partial data to load
         const dataToLoad: Partial<AppData> = {};
         for (const section of sectionsToRestore) {
             if (dataToRestore[section]) {
@@ -233,10 +227,9 @@ export default function SettingsPage() {
             }
         }
         
-        // 3. Load the new data
-        await loadDataBatch(dataToLoad);
+        await loadDataBatch(dataToLoad, true); // Use merge strategy
 
-        toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات انتخاب شده با موفقیت بازیابی شد.' });
+        toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات انتخاب شده با موفقیت به داده‌های فعلی اضافه شد.' });
         setDataToRestore(null);
 
     } catch (error) {
@@ -260,7 +253,7 @@ export default function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>بازیابی اطلاعات از فایل</AlertDialogTitle>
             <AlertDialogDescription>
-              بخش‌هایی را که می‌خواهید از فایل پشتیبان بازیابی شوند، انتخاب کنید. توجه: داده‌های فعلی در بخش‌های انتخاب شده بازنویسی خواهند شد.
+              بخش‌هایی را که می‌خواهید بازیابی شوند، انتخاب کنید. داده‌های جدید به داده‌های فعلی اضافه شده و از موارد تکراری جلوگیری می‌شود.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="max-h-[60vh] overflow-y-auto p-1">

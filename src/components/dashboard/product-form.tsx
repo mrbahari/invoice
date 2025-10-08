@@ -286,7 +286,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       subCategoryId,
       unit,
       imageUrl: finalImage,
-      subUnit: subUnit && subUnit !== 'none' ? subUnit : undefined,
+      subUnit: (subUnit && subUnit !== 'none') ? subUnit : '',
       subUnitQuantity: Number(subUnitQuantity) || 0,
       subUnitPrice: Number(subUnitPrice) || 0,
     };

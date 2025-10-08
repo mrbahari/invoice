@@ -319,22 +319,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const collectionRef = getCollectionRef(key);
         
         if (collectionRef && Array.isArray(collectionData)) {
-            const existingIds = new Set(data[key].map((item: any) => item.id));
+            const existingItems = data[key] as any[];
             const itemsToAdd: Document[] = [];
 
             for (const item of collectionData) {
                 const { id, ...itemData } = item;
-                if (merge && id && existingIds.has(id)) { // Check for ID existence
-                    continue; // Skip if merging and ID already exists
+
+                let isDuplicate = false;
+                if (merge) {
+                    if (key === 'units' || key === 'stores' || key === 'categories' || key === 'products') {
+                         isDuplicate = existingItems.some(existing => 
+                            existing.name === item.name && 
+                            (!targetStoreId || existing.storeId === targetStoreId)
+                        );
+                    } else if (id) {
+                        isDuplicate = existingItems.some(existing => existing.id === id);
+                    }
+                }
+
+                if (isDuplicate) {
+                    continue; // Skip if merging and item is a duplicate
                 }
 
                 let finalItemData: any = itemData;
-                // If importing products, categories, or units to a specific store
                 if (targetStoreId && (key === 'products' || key === 'categories' || key === 'units')) {
                   finalItemData = { ...itemData, storeId: targetStoreId };
                 }
                 
-                // Use existing ID if available and not merging, otherwise create new
                 const docRef = id && !id.startsWith('temp-') ? doc(collectionRef, id) : doc(collectionRef);
                 batch.set(docRef, finalItemData);
                 itemsToAdd.push({ id: docRef.id, ...finalItemData } as Document);

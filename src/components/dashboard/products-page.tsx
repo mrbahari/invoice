@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -35,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -390,12 +392,6 @@ export default function ProductsPage() {
     <div className="grid gap-6" data-main-page="true">
       <Card>
         <CardHeader className="flex flex-col sm:flex-row-reverse sm:items-start sm:justify-between gap-4">
-          <div>
-            <CardTitle>محصولات</CardTitle>
-            <CardDescription>
-              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-            </CardDescription>
-          </div>
           <div className="flex shrink-0 items-center gap-2">
             <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
             <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
@@ -406,6 +402,12 @@ export default function ProductsPage() {
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
             </Button>
+          </div>
+          <div>
+            <CardTitle>محصولات</CardTitle>
+            <CardDescription>
+              محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>

@@ -89,6 +89,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const { uploadFile, progress, isUploading, error: uploadError } = useUpload();
   
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   // Memoize the category tree
   const categoryTree = useMemo(() => {
     if (!storeId || !categories) return [];
@@ -613,5 +618,3 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     </TooltipProvider>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -234,13 +235,6 @@ export default function ProductsPage() {
     }
   }, [view]);
 
-  // Scroll to top when form view is shown
-  useEffect(() => {
-    if (view === 'form' && typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [view]);
-
   const handleEdit = (product?: Product) => {
     if (typeof window !== 'undefined') {
       scrollPositionRef.current = window.scrollY; // Save current scroll position
@@ -395,7 +389,7 @@ export default function ProductsPage() {
       try {
         if (bulkAction === 'move') {
             await updateDocuments('products', selectedProducts, dataToUpdate);
-            toast({variant: 'success', title: 'انتقال موفق', description: `${selectedProducts.length} محصول با موفقیت منتقل شدند.`});
+            toast({variant: 'success', title: 'انتقال موفق', description: `${selectedProducts.length.toLocaleString('fa-IR')} محصول با موفقیت منتقل شدند.`});
         } else { // copy
             const productsToCopy = products.filter(p => selectedProducts.includes(p.id));
             const newDocs = productsToCopy.map(({ id, ...prodData }) => ({
@@ -403,7 +397,7 @@ export default function ProductsPage() {
                 ...dataToUpdate
             }));
             await addDocuments('products', newDocs);
-            toast({variant: 'success', title: 'کپی موفق', description: `${selectedProducts.length} محصول با موفقیت کپی شدند.`});
+            toast({variant: 'success', title: 'کپی موفق', description: `${selectedProducts.length.toLocaleString('fa-IR')} محصول با موفقیت کپی شدند.`});
         }
         setSelectedProducts([]);
         setIsBulkActionModalOpen(false);

@@ -1,8 +1,7 @@
-
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2 } from 'lucide-react';
+import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2, Move } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,9 +57,11 @@ import { useToast } from '@/hooks/use-toast';
 import { writeBatch, doc, collection } from 'firebase/firestore';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 type SortOption = 'newest' | 'name' | 'price';
+type BulkAction = 'move' | 'copy';
 
 function AiMultipleProductsDialog({ onProductsGenerated }: { onProductsGenerated: () => void }) {
   const { data } = useData();
@@ -198,7 +199,7 @@ function AiMultipleProductsDialog({ onProductsGenerated }: { onProductsGenerated
 
 
 export default function ProductsPage() {
-  const { data, setData, deleteDocuments } = useData();
+  const { data, setData, deleteDocuments, updateDocuments, addDocuments } = useData();
   const { products, stores, categories } = data;
   const { user } = useUser();
   const { toast } = useToast();
@@ -215,7 +216,14 @@ export default function ProductsPage() {
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // State for bulk operations
+  const [isBulkActionModalOpen, setIsBulkActionModalOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<BulkAction>('move');
+  const [bulkTargetStore, setBulkTargetStore] = useState<string>('');
+  const [bulkTargetCategory, setBulkTargetCategory] = useState<string>('');
+  const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+
 
   const { itemsToShow, sentinelRef } = useVirtualScroll(30);
 
@@ -319,6 +327,7 @@ export default function ProductsPage() {
         return filtered.sort((a, b) => b.price - a.price);
       case 'newest':
       default:
+        // Already sorted by newest in DataContext
         return filtered;
     }
   }, [products, activeTab, searchTerm, sortOption, categoryFilter]);
@@ -355,16 +364,14 @@ export default function ProductsPage() {
   };
 
   const handleSelectProduct = (productId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(prev => [...prev, productId]);
-    } else {
-      setSelectedProducts(prev => prev.filter(id => id !== productId));
-    }
+    setSelectedProducts(prev => 
+      checked ? [...prev, productId] : prev.filter(id => id !== productId)
+    );
   };
-
+  
   const handleDeleteSelected = async () => {
     if (selectedProducts.length === 0) return;
-    setIsDeleting(true);
+    setIsProcessingBulk(true);
     try {
       await deleteDocuments('products', selectedProducts);
       toast({ variant: 'success', title: 'محصولات با موفقیت حذف شدند.' });
@@ -372,9 +379,50 @@ export default function ProductsPage() {
     } catch (error) {
       toast({ variant: 'destructive', title: 'خطا در حذف محصولات' });
     } finally {
-      setIsDeleting(false);
+      setIsProcessingBulk(false);
     }
   };
+  
+  const handleBulkAction = async () => {
+      if (selectedProducts.length === 0 || !bulkTargetCategory || !bulkTargetStore) {
+        toast({variant: 'destructive', title: 'اطلاعات ناقص', description: 'لطفا فروشگاه و دسته بندی مقصد را انتخاب کنید.'});
+        return;
+      }
+
+      setIsProcessingBulk(true);
+
+      const dataToUpdate = {
+          storeId: bulkTargetStore,
+          subCategoryId: bulkTargetCategory
+      };
+
+      try {
+        if (bulkAction === 'move') {
+            await updateDocuments('products', selectedProducts, dataToUpdate);
+            toast({variant: 'success', title: 'انتقال موفق', description: `${selectedProducts.length} محصول با موفقیت منتقل شدند.`});
+        } else { // copy
+            const productsToCopy = products.filter(p => selectedProducts.includes(p.id));
+            const newDocs = productsToCopy.map(({ id, ...prodData }) => ({
+                ...prodData,
+                ...dataToUpdate
+            }));
+            await addDocuments('products', newDocs);
+            toast({variant: 'success', title: 'کپی موفق', description: `${selectedProducts.length} محصول با موفقیت کپی شدند.`});
+        }
+        setSelectedProducts([]);
+        setIsBulkActionModalOpen(false);
+      } catch (error) {
+          toast({variant: 'destructive', title: 'خطا در عملیات', description: `مشکلی در حین ${bulkAction === 'move' ? 'انتقال' : 'کپی'} محصولات رخ داد.`});
+      } finally {
+          setIsProcessingBulk(false);
+      }
+  };
+  
+  useEffect(() => {
+    // Reset category when store changes in bulk action modal
+    setBulkTargetCategory('');
+  }, [bulkTargetStore]);
+
 
   if (view === 'form') {
     return (
@@ -415,6 +463,21 @@ export default function ProductsPage() {
         </SelectGroup>
     ));
   };
+  
+  const bulkActionCategoryTree = useMemo(() => {
+    const relevantCategories = categories.filter(c => c.storeId === bulkTargetStore);
+    const categoryMap = new Map(relevantCategories.map(c => [c.id, { ...c, children: [] as Category[] }]));
+    const tree: (Category & { children: Category[] })[] = [];
+
+    relevantCategories.forEach(cat => {
+      if (cat.parentId && categoryMap.has(cat.parentId)) {
+        categoryMap.get(cat.parentId)?.children.push(categoryMap.get(cat.id)!);
+      } else if (!cat.parentId) {
+        tree.push(categoryMap.get(cat.id)!);
+      }
+    });
+    return tree;
+  }, [categories, bulkTargetStore]);
 
   return (
     <div className="grid gap-6" data-main-page="true">
@@ -501,9 +564,58 @@ export default function ProductsPage() {
             <span className="text-sm text-muted-foreground">
               {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
             </span>
+             <Dialog open={isBulkActionModalOpen} onOpenChange={setIsBulkActionModalOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                        <Move className="ml-2 h-4 w-4" />
+                        انتقال / کپی
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>انتقال یا کپی گروهی محصولات</DialogTitle>
+                        <DialogDescription>
+                            عملیات و مقصد مورد نظر را برای {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده مشخص کنید.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <RadioGroup defaultValue="move" value={bulkAction} onValueChange={(v) => setBulkAction(v as BulkAction)}>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                                <RadioGroupItem value="move" id="r1" />
+                                <Label htmlFor="r1">انتقال (Move)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                                <RadioGroupItem value="copy" id="r2" />
+                                <Label htmlFor="r2">کپی (Copy)</Label>
+                            </div>
+                        </RadioGroup>
+                        <Separator />
+                        <Select value={bulkTargetStore} onValueChange={setBulkTargetStore}>
+                             <SelectTrigger><SelectValue placeholder="فروشگاه مقصد..." /></SelectTrigger>
+                             <SelectContent>
+                                {stores.map(store => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
+                             </SelectContent>
+                        </Select>
+                        <Select value={bulkTargetCategory} onValueChange={setBulkTargetCategory} disabled={!bulkTargetStore}>
+                             <SelectTrigger><SelectValue placeholder="دسته‌بندی مقصد..." /></SelectTrigger>
+                             <SelectContent>
+                                {bulkActionCategoryTree.length > 0 ? renderCategoryOptions(bulkActionCategoryTree) : <div className="p-4 text-center text-sm text-muted-foreground">دسته‌بندی‌ای یافت نشد.</div>}
+                             </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
+                        <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore}>
+                            {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                            تایید
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isDeleting}>
+                <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
                   <Trash2 className="ml-2 h-4 w-4" />
                   حذف
                 </Button>
@@ -517,8 +629,8 @@ export default function ProductsPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>انصراف</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
-                    {isDeleting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                  <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
+                    {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                     حذف
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -539,7 +651,7 @@ export default function ProductsPage() {
                       selectedProducts.length > 0 &&
                       selectedProducts.length === sortedAndFilteredProducts.length
                     }
-                    onCheckedChange={handleSelectAll}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
                     aria-label="انتخاب همه"
                   />
                 </TableHead>
@@ -554,7 +666,7 @@ export default function ProductsPage() {
                 productsToShow.map((product) => (
                   <TableRow
                     key={product.id}
-                    data-state={selectedProducts.includes(product.id) && "selected"}
+                    data-state={selectedProducts.includes(product.id) ? "selected" : ""}
                   >
                     <TableCell>
                       <Checkbox

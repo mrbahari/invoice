@@ -20,7 +20,9 @@ interface DataContextType {
   data: AppData;
   isInitialized: boolean;
   addDocument: <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>) => Promise<string | undefined>;
+  addDocuments: <T extends Document>(collectionName: CollectionName, data: Omit<T, 'id'>[]) => Promise<void>;
   updateDocument: (collectionName: CollectionName, docId: string, data: Partial<Document>) => Promise<void>;
+  updateDocuments: (collectionName: CollectionName, docIds: string[], data: Partial<Document>) => Promise<void>;
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
   deleteDocuments: (collectionName: CollectionName, docIds: string[]) => Promise<void>;
   setData: React.Dispatch<React.SetStateAction<AppData>>; // Expose setData
@@ -91,12 +93,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     if (!isDataLoading && (user || !isUserLoading)) {
       setData({
-        products: productsData || [],
+        products: productsData?.sort((a,b) => (b.id > a.id) ? 1 : ((a.id > b.id) ? -1 : 0)) || [],
         categories: categoriesData || [],
         stores: storesData || [],
         units: unitsData || [],
         customers: customersData || [],
-        invoices: invoicesData || [],
+        invoices: invoicesData?.sort((a,b) => (new Date(b.date) as any) - (new Date(a.date) as any)) || [],
         toolbarPositions: toolbarData || {},
       });
       setIsSynced(true);
@@ -166,6 +168,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [firestore, user, getCollectionRef]);
 
+  const addDocuments = useCallback(async (collectionName: CollectionName, docsData: DocumentWithoutId[]) => {
+    if (!firestore || !user || docsData.length === 0) return;
+    const collectionRef = getCollectionRef(collectionName);
+    if (!collectionRef) return;
+    
+    const batch = writeBatch(firestore);
+    docsData.forEach(docData => {
+        const newDocRef = doc(collectionRef);
+        batch.set(newDocRef, docData);
+    });
+
+    try {
+        await batch.commit();
+        // Here we rely on onSnapshot to update the local state.
+        // For a more immediate optimistic update, we could generate temp IDs and update locally.
+    } catch (error) {
+        console.error('Batch add error:', error);
+         const permissionError = new FirestorePermissionError({
+            path: collectionRef.path,
+            operation: 'create',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    }
+  }, [firestore, user, getCollectionRef]);
+
   const updateDocument = useCallback(async (collectionName: CollectionName, docId: string, docData: Partial<Document>) => {
     if (!firestore || !user) return;
     const collectionRef = getCollectionRef(collectionName);
@@ -209,6 +236,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
         errorEmitter.emit('permission-error', permissionError);
     }
   }, [firestore, user, getCollectionRef, data]);
+
+  const updateDocuments = useCallback(async (collectionName: CollectionName, docIds: string[], updateData: Partial<Document>) => {
+    if (!firestore || !user || docIds.length === 0) return;
+    const collectionRef = getCollectionRef(collectionName);
+    if (!collectionRef) return;
+    
+    const batch = writeBatch(firestore);
+    docIds.forEach(id => {
+      const docRef = doc(collectionRef, id);
+      batch.update(docRef, updateData);
+    });
+
+    try {
+      await batch.commit();
+      // Rely on onSnapshot to update UI
+    } catch (error) {
+      console.error('Batch update error:', error);
+      const permissionError = new FirestorePermissionError({
+        path: collectionRef.path, // Simplified for batch
+        operation: 'update',
+        requestResourceData: updateData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    }
+  }, [firestore, user, getCollectionRef]);
 
   const deleteDocument = useCallback(async (collectionName: CollectionName, docId: string) => {
     if (!firestore || !user) return;
@@ -419,7 +471,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     data,
     isInitialized,
     addDocument,
+    addDocuments,
     updateDocument,
+    updateDocuments,
     deleteDocument,
     deleteDocuments,
     setData,

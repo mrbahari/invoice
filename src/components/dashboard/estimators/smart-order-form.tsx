@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -11,6 +10,20 @@ import { extractMaterialsFromFile } from '@/ai/flows/extract-materials-flow';
 import type { MaterialResult } from '../estimators-page';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import { useData } from '@/context/data-context';
+import { Badge } from '@/components/ui/badge';
+import type { Product, Category } from '@/lib/definitions';
+import { useUser, useFirestore } from '@/firebase';
+import { writeBatch, doc, collection } from 'firebase/firestore';
+
+
+type ExtractedProduct = {
+    isNew: boolean;
+    productId: string;
+    name: string;
+    quantity: number;
+    unit: string;
+};
 
 type SmartOrderFormProps = {
   onAddToList: (description: string, results: MaterialResult[]) => void;
@@ -20,8 +33,13 @@ type SmartOrderFormProps = {
 export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [extractedResults, setExtractedResults] = useState<MaterialResult[]>([]);
+  const [extractedResults, setExtractedResults] = useState<ExtractedProduct[]>([]);
   const { toast } = useToast();
+  const { data: appData, addDocument } = useData();
+  const { products, categories, stores } = appData;
+  const { user } = useUser();
+  const firestore = useFirestore();
+
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFile(acceptedFiles[0] || null);
@@ -48,21 +66,25 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   }
 
   const handleProcessFile = async () => {
-    if (!file) return;
+    if (!file || !user) return;
     setIsLoading(true);
     setExtractedResults([]);
 
     try {
       const fileDataUri = await fileToDataUri(file);
       
-      const result = await extractMaterialsFromFile({ fileDataUri });
+      const result = await extractMaterialsFromFile({ 
+          fileDataUri,
+          existingProducts: products,
+          existingCategories: categories,
+      });
 
       if (result.materials && result.materials.length > 0) {
         setExtractedResults(result.materials);
         toast({
           variant: 'success',
           title: 'پردازش موفق',
-          description: `${result.materials.length} مورد با موفقیت از فایل استخراج شد.`,
+          description: `${result.materials.length} مورد با موفقیت از فایل استخراج و مقایسه شد.`,
         });
       } else {
         toast({
@@ -84,12 +106,63 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
     }
   };
   
-  const handleAddClick = () => {
-    if (extractedResults.length === 0 || !file) {
+  const handleAddClick = async () => {
+    if (extractedResults.length === 0 || !file || !user || !firestore) {
       return;
     }
+
+    const newProductsToCreate = extractedResults.filter(p => p.isNew);
+    const materialResults: MaterialResult[] = [];
+    const batch = writeBatch(firestore);
+    
+    // Find or create "چکنویس" category for the first available store
+    const storeId = stores[0]?.id;
+    if (!storeId) {
+        toast({ variant: 'destructive', title: 'فروشگاهی یافت نشد', description: 'برای ایجاد محصولات جدید، ابتدا یک فروشگاه ایجاد کنید.' });
+        return;
+    }
+    
+    let draftCategoryId = categories.find(c => c.name === 'چکنویس' && c.storeId === storeId)?.id;
+    if (!draftCategoryId) {
+        const categoryRef = doc(collection(firestore, 'users', user.uid, 'categories'));
+        draftCategoryId = categoryRef.id;
+        batch.set(categoryRef, { name: 'چکنویس', storeId: storeId });
+    }
+
+    // Process new products
+    for (const newProd of newProductsToCreate) {
+        const productRef = doc(collection(firestore, 'users', user.uid, 'products'));
+        const newProductData: Omit<Product, 'id'> = {
+            name: newProd.name,
+            price: 0, // Default price
+            description: `ایجاد شده توسط سفارش هوشمند از فایل ${file.name}`,
+            storeId: storeId,
+            subCategoryId: draftCategoryId,
+            unit: newProd.unit,
+            imageUrl: `https://picsum.photos/seed/${encodeURIComponent(newProd.name)}/400/300`,
+        };
+        batch.set(productRef, newProductData);
+        materialResults.push({ material: newProd.name, quantity: newProd.quantity, unit: newProd.unit });
+    }
+
+    // Process existing products
+    extractedResults.filter(p => !p.isNew).forEach(existingProd => {
+        materialResults.push({ material: existingProd.name, quantity: existingProd.quantity, unit: existingProd.unit });
+    });
+
+    try {
+        await batch.commit();
+        if (newProductsToCreate.length > 0) {
+            toast({ variant: 'success', title: 'محصولات جدید ایجاد شد', description: `${newProductsToCreate.length} محصول جدید در دسته "چکنویس" ایجاد شد.` });
+        }
+    } catch (error) {
+        console.error("Error creating new products in batch:", error);
+        toast({ variant: 'destructive', title: 'خطا در ذخیره‌سازی', description: 'مشکلی در ایجاد محصولات جدید رخ داد.' });
+        return; // Stop if batch fails
+    }
+
     const description = `استخراج شده از فایل: ${file.name}`;
-    onAddToList(description, extractedResults);
+    onAddToList(description, materialResults);
   };
   
   const removeFile = () => {
@@ -178,15 +251,21 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
                             <TableRow>
                                 <TableHead>نوع مصالح</TableHead>
                                 <TableHead className="text-center w-1/4">مقدار</TableHead>
-                                <TableHead className="w-1/4">واحد</TableHead>
+                                <TableHead className="w-1/4">وضعیت</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
                             {extractedResults.map((item, index) => (
-                                <TableRow key={`${item.material}-${index}`}>
-                                <TableCell className="font-medium">{item.material}</TableCell>
+                                <TableRow key={`${item.productId}-${index}`}>
+                                <TableCell className="font-medium">{item.name}</TableCell>
                                 <TableCell className="text-center font-mono text-lg">{item.quantity.toLocaleString('fa-IR')}</TableCell>
-                                <TableCell>{item.unit}</TableCell>
+                                <TableCell>
+                                    {item.isNew ? (
+                                        <Badge variant="outline" className="text-amber-600 border-amber-500">جدید</Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="text-green-600 border-green-500">موجود</Badge>
+                                    )}
+                                </TableCell>
                                 </TableRow>
                             ))}
                             </TableBody>

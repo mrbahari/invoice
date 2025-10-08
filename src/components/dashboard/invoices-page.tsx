@@ -64,7 +64,7 @@ export default function InvoicesPage({
   const { searchTerm, setSearchVisible } = useSearch();
 
   
-  const [view, setView] = useState<View>({ type: 'list' });
+  const [view, setView] = useState<View>(() => draftInvoice ? { type: 'editor', isDirty: false } : { type: 'list' });
   const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
   
   useBeforeUnload(
@@ -129,7 +129,7 @@ export default function InvoicesPage({
   const handlePreviewFromEditor = useCallback(
     (invoiceId: string) =>
       setView({ type: 'preview', invoiceId, from: 'editor' }),
-    [setView]
+    []
   );
 
   const handleBackFromPreview = useCallback(
@@ -208,7 +208,11 @@ export default function InvoicesPage({
               onSaveSuccess={handleSaveSuccess}
               onPreview={handlePreviewFromEditor}
               onCancel={handleCancel}
-              onDirtyChange={(isDirty) => setView({ type: 'editor', isDirty })}
+              onDirtyChange={(isDirty) => {
+                  if (view.type === 'editor' && view.isDirty !== isDirty) {
+                      setView({ type: 'editor', isDirty });
+                  }
+              }}
             />
           </div>
         );

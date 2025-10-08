@@ -6,7 +6,7 @@ import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, To
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useUser } from '@/firebase'; // Changed from user-context
 import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc, where } from 'firebase/firestore';
+import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc, where, deleteField } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -480,8 +480,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [firestore, user, getCollectionRef, toolbarPosRef, clearCollections, data]);
 
   const repairDatabase = useCallback(async (): Promise<RepairReport> => {
-    if (!firestore || !user) {
-        throw new Error("User not authenticated or Firestore not available.");
+    if (!firestore || !user || !isSynced) {
+        throw new Error("User not authenticated, Firestore not available, or data not synced.");
     }
 
     const { stores, categories, products, invoices, units, customers } = data;
@@ -492,17 +492,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
         products: { label: "محصولات", total: products.length, repaired: 0 },
         invoices: { label: "فاکتورها", total: invoices.length, repaired: 0 },
         units: { label: "واحدها", total: units.length, repaired: 0 },
-        customers: { label: "مشتریان", total: customers.length, repaired: 0 }, // 'customers' is used for user-facing report
+        customers: { label: "مشتریان", total: customers.length, repaired: 0 },
     };
 
     const storeIds = new Set(stores.map(s => s.id));
     const categoryIds = new Set(categories.map(c => c.id));
     const customerIds = new Set(customers.map(c => c.id));
     const firstStoreId = stores[0]?.id;
-    const firstCategoryId = categories.find(c => c.storeId === firstStoreId)?.id;
 
     // Repair Categories
     for (const category of categories) {
+        if (!storesRef) continue;
         let changed = false;
         const updateData: Partial<Category> = {};
         if (!storeIds.has(category.storeId)) {
@@ -515,7 +515,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             changed = true;
         }
         if (changed) {
-            const docRef = doc(categoriesRef!, category.id);
+            const docRef = doc(categoriesRef, category.id);
             batch.update(docRef, updateData);
             report.categories.repaired++;
         }
@@ -523,28 +523,45 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Repair Products
     for (const product of products) {
+        if (!productsRef) continue;
         let changed = false;
         const updateData: Partial<Product> = {};
+
+        // Check storeId
         if (!storeIds.has(product.storeId)) {
-            if (!firstStoreId) continue;
-            updateData.storeId = firstStoreId;
-            changed = true;
+            if (firstStoreId) {
+                updateData.storeId = firstStoreId;
+                changed = true;
+            } else continue;
         }
         const effectiveStoreId = updateData.storeId || product.storeId;
         const storeCategoryIds = new Set(categories.filter(c => c.storeId === effectiveStoreId).map(c => c.id));
 
-        if (!storeCategoryIds.has(product.subCategoryId)) {
+        // Check subCategoryId
+        if (!product.subCategoryId || !storeCategoryIds.has(product.subCategoryId)) {
             const firstCatIdForStore = categories.find(c => c.storeId === effectiveStoreId)?.id;
             if (firstCatIdForStore) {
                 updateData.subCategoryId = firstCatIdForStore;
                 changed = true;
-            } else if (firstCategoryId) { // fallback to any category if store has none
-                 updateData.subCategoryId = firstCategoryId;
-                 changed = true;
             }
         }
+        
+        // Check subUnit fields
+        if (!product.subUnit || product.subUnit === 'none') {
+            const fieldsToDelete: any = {};
+            if (product.hasOwnProperty('subUnit')) fieldsToDelete.subUnit = deleteField();
+            if (product.hasOwnProperty('subUnitQuantity')) fieldsToDelete.subUnitQuantity = deleteField();
+            if (product.hasOwnProperty('subUnitPrice')) fieldsToDelete.subUnitPrice = deleteField();
+            if (Object.keys(fieldsToDelete).length > 0) {
+              const docRef = doc(productsRef, product.id);
+              batch.update(docRef, fieldsToDelete);
+              changed = true; // Still counts as a repair
+            }
+        }
+
+
         if (changed) {
-            const docRef = doc(productsRef!, product.id);
+            const docRef = doc(productsRef, product.id);
             batch.update(docRef, updateData);
             report.products.repaired++;
         }
@@ -552,15 +569,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     // Repair Units
     for (const unit of units) {
+        if (!unitsRef) continue;
         if (!storeIds.has(unit.storeId)) {
             if (!firstStoreId) continue;
-            const docRef = doc(unitsRef!, unit.id);
+            const docRef = doc(unitsRef, unit.id);
             batch.update(docRef, { storeId: firstStoreId });
             report.units.repaired++;
         }
     }
 
-    // Check Invoices (read-only check for now)
+    // Identify Invoices with missing customers (read-only check for now)
      for (const invoice of invoices) {
         if (!customerIds.has(invoice.customerId)) {
             report.invoices.repaired++; // Using 'repaired' to mean 'found issue'
@@ -570,7 +588,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await batch.commit();
     return report;
 
-  }, [data, firestore, user, categoriesRef, productsRef, unitsRef]);
+  }, [data, firestore, user, isSynced, categoriesRef, productsRef, unitsRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;

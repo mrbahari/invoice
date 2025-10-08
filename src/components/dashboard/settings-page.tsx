@@ -279,14 +279,21 @@ export default function SettingsPage() {
     try {
         const report = await repairDatabase();
         const reportLines = Object.entries(report)
-            .map(([key, value]) => `${value.label}: ${value.repaired} مورد اصلاح شد (از ${value.total} مورد)`)
-            .join('\n');
+            .filter(([, value]) => value.total > 0) // Only show sections that were checked
+            .map(([key, value]) => `${value.label}: ${value.repaired} مورد از ${value.total} مورد اصلاح شد.`)
+            
         
         toast({
             variant: 'success',
             title: 'تعمیر پایگاه داده انجام شد',
-            description: <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4"><code className="text-white">{reportLines}</code></pre>,
-            duration: 10000,
+            description: (
+              <div className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+                <pre className="text-white text-xs whitespace-pre-wrap">
+                  {reportLines.length > 0 ? reportLines.join('\n') : "هیچ مغایرتی یافت نشد."}
+                </pre>
+              </div>
+            ),
+            duration: 15000,
         });
 
     } catch (error) {

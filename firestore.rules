@@ -2,75 +2,84 @@
  * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for most data,
- * ensuring that users can only access their own data. Public read access
- * is granted to the `/visitorLogs` collection.
+ * This ruleset enforces a strict user-ownership model for data stored under `/users/{userId}`.
+ * Only the authenticated user matching the `userId` segment of the path can read or write to that data.
+ * Public read access is granted to the `/visitorLogs` collection, while writes are restricted.
  *
  * Data Structure:
- * - User-specific data is nested under `/users/{userId}`.
- * - Public visitor log data is stored in `/visitorLogs/{logId}`.
+ * Data is organized hierarchically under `/users/{userId}`, with subcollections for stores, products, categories, profiles, invoices, and units.
+ * Each user has their own isolated data tree.
+ * Visitor logs are stored in a top-level collection.
  *
  * Key Security Decisions:
- * - Users can only manage their own stores, products, categories, profiles, invoices, and units.
- * - Listing other users' data is disallowed.
- * - Public read access is allowed for visitor logs.
+ * - Users can only access their own data. No cross-user data access is allowed except for public `visitorLogs`.
+ * - User listing is implicitly disallowed by the path-based security model.
+ * - The `visitorLogs` collection is publicly readable but write-protected.
  *
  * Denormalization for Authorization:
- *  - The rules rely on path-based authorization.  Documents under `/users/{userId}` are considered owned by that user.
+ * The current data model inherently supports path-based authorization (ownership). No additional denormalization is required. The `userId` path segment is used to enforce ownership.
+ * For example, a rule on `/users/{userId}/products/{productId}` will check `request.auth.uid == userId` to ensure the user is accessing their own product data.
+ *
+ * Structural Segregation:
+ * Private user data is stored under `/users/{userId}`, while public visitor logs are stored in `/visitorLogs`, illustrating structural segregation.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in.
+     * @description Checks if the current user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the requested user ID matches the authenticated user's ID.
-     * @param {string} userId The user ID to check.
-     * @return {boolean} True if the user ID matches the authenticated user's ID.
+     * @description Checks if the current user is the owner of the resource, based on the provided userId.
+     * @param {string} userId The user ID to compare against the authenticated user's ID.
+     * @return {boolean} True if the user is the owner, false otherwise.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the user is the owner of the existing document.
-     * @param {string} userId The user ID to check.
-     * @return {boolean} True if the user ID matches the authenticated user's ID and the resource exists.
+     * @description Checks if the current user is the owner of the resource and the resource exists.
+     * @param {string} userId The user ID to compare against the authenticated user's ID.
+     * @return {boolean} True if the user is the owner and the resource exists, false otherwise.
      */
     function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Rules for user-specific stores.
+     * @description Security rules for user-specific stores.
      * @path /users/{userId}/stores/{storeId}
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create a store under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/store1 if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update store 'store1' under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/store1 if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create a store under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/stores/store1.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' creates a store with a matching userId in the path.
+     * @allow (get) User with ID 'user123' reads their own store.
+     * @allow (update) User with ID 'user123' updates their own store.
+     * @allow (delete) User with ID 'user123' deletes their own store.
+     * @deny (create) User with ID 'user123' tries to create a store for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/stores/{storeId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId) ;
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific products.
+     * @description Security rules for user-specific products.
      * @path /users/{userId}/products/{productId}
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create a product under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/product1 if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update product 'product1' under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/product1 if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create a product under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/products/product1.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' creates a product with a matching userId in the path.
+     * @allow (get) User with ID 'user123' reads their own product.
+     * @allow (update) User with ID 'user123' updates their own product.
+     * @allow (delete) User with ID 'user123' deletes their own product.
+     * @deny (create) User with ID 'user123' tries to create a product for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/products/{productId} {
       allow get: if isOwner(userId);
@@ -81,12 +90,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for user-specific categories.
+     * @description Security rules for user-specific categories.
      * @path /users/{userId}/categories/{categoryId}
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create a category under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/category1 if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update category 'category1' under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/category1 if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create a category under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/categories/category1.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' creates a category with a matching userId in the path.
+     * @allow (get) User with ID 'user123' reads their own category.
+     * @allow (update) User with ID 'user123' updates their own category.
+     * @allow (delete) User with ID 'user123' deletes their own category.
+     * @deny (create) User with ID 'user123' tries to create a category for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/categories/{categoryId} {
       allow get: if isOwner(userId);
@@ -97,28 +108,32 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for user-specific user profiles.
+     * @description Security rules for user-specific user profiles.
      * @path /users/{userId}/userProfiles/{profileId}
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create a profile under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/userProfiles/profile1 if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update profile 'profile1' under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/userProfiles/profile1 if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create a profile under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/userProfiles/profile1.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' creates a profile with a matching userId in the path.
+     * @allow (get) User with ID 'user123' reads their own profile.
+     * @allow (update) User with ID 'user123' updates their own profile.
+     * @allow (delete) User with ID 'user123' deletes their own profile.
+     * @deny (create) User with ID 'user123' tries to create a profile for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/userProfiles/{profileId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for user-specific invoices.
+     * @description Security rules for user-specific invoices.
      * @path /users/{userId}/invoices/{invoiceId}
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create a invoice under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/invoice1 if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update invoice 'invoice1' under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/invoice1 if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create a invoice under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/invoices/invoice1.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' creates an invoice with a matching userId in the path.
+     * @allow (get) User with ID 'user123' reads their own invoice.
+     * @allow (update) User with ID 'user123' updates their own invoice.
+     * @allow (delete) User with ID 'user123' deletes their own invoice.
+     * @deny (create) User with ID 'user123' tries to create an invoice for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/invoices/{invoiceId} {
       allow get: if isOwner(userId);
@@ -129,12 +144,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for user-specific units.
+     * @description Security rules for user-specific measurement units.
      * @path /users/{userId}/units/{unitId}
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create a unit under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/unit1 if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update unit 'unit1' under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/unit1 if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create a unit under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/units/unit1.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with ID 'user123' creates a unit with a matching userId in the path.
+     * @allow (get) User with ID 'user123' reads their own unit.
+     * @allow (update) User with ID 'user123' updates their own unit.
+     * @allow (delete) User with ID 'user123' deletes their own unit.
+     * @deny (create) User with ID 'user123' tries to create a unit for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/units/{unitId} {
       allow get: if isOwner(userId);
@@ -145,34 +162,39 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for user-specific toolbar settings.
+     * @description Security rules for user-specific toolbar settings.
      * @path /users/{userId}/settings/toolbarPositions
-     * @allow (create) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can create settings under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions if authenticated.
-     * @allow (update) - User 'xHYjOZByDvVoCdllW9YbyGU9ZKb2' can update settings under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions if authenticated.
-     * @deny (create) - User ' অন্যকেউ' cannot create settings under /users/xHYjOZByDvVoCdllW9YbyGU9ZKb2/settings/toolbarPositions.
-     * @principle Enforces document ownership for writes.
+     * @allow (get) User with ID 'user123' reads their own toolbar settings.
+     * @allow (create) User with ID 'user123' creates toolbar settings with a matching userId in the path.
+     * @allow (update) User with ID 'user123' updates their own toolbar settings.
+     * @allow (delete) User with ID 'user123' deletes their own toolbar settings.
+     * @deny (create) User with ID 'user123' tries to create toolbar settings for user 'otherUser'.
+     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
      */
     match /users/{userId}/settings/toolbarPositions {
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow list: if false;
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for visitor logs. Public read, owner-only write.
+     * @description Security rules for visitor logs. Public read access, restricted writes.
      * @path /visitorLogs/{logId}
-     * @allow (get, list) - Any user can read visitor logs.
-     * @allow (create) - Any authenticated user can create a visitor log.
-     * @allow (update, delete) - Only the owner can update or delete a visitor log.
-     * @principle Allows public reads for analytics, restricts writes to owners.
+     * @allow (get) Any user can read visitor logs.
+     * @allow (list) Any user can list visitor logs.
+     * @deny (create) No one can create a visitor log directly (likely created by a trusted function).
+     * @deny (update) No one can update a visitor log directly.
+     * @deny (delete) No one can delete a visitor log directly.
+     * @principle Allows public read access for analytics, restricts writes to prevent tampering.
      */
     match /visitorLogs/{logId} {
-      allow get, list: if true;
-      allow create: if isSignedIn();
-      allow update: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
-      allow delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

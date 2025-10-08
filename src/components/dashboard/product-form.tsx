@@ -280,8 +280,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const numericSubUnitPrice = Number(subUnitPrice);
     const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
-
-    return {
+  
+    const productData: Omit<Product, 'id'> = {
       name,
       code,
       description,
@@ -289,12 +289,21 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       storeId,
       subCategoryId,
       unit,
-      subUnit: subUnit || undefined,
-      subUnitQuantity: isNaN(numericSubUnitQuantity) ? undefined : numericSubUnitQuantity,
-      subUnitPrice: isNaN(numericSubUnitPrice) ? undefined : numericSubUnitPrice,
       imageUrl: finalImage,
     };
-  }
+  
+    if (subUnit && subUnit !== 'none') {
+      productData.subUnit = subUnit;
+      productData.subUnitQuantity = isNaN(numericSubUnitQuantity) ? 0 : numericSubUnitQuantity;
+      productData.subUnitPrice = isNaN(numericSubUnitPrice) ? 0 : numericSubUnitPrice;
+    } else {
+      productData.subUnit = undefined;
+      productData.subUnitQuantity = undefined;
+      productData.subUnitPrice = undefined;
+    }
+  
+    return productData;
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

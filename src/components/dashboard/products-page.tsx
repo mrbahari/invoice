@@ -439,9 +439,9 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
       
-      <div className="flex flex-col sm:flex-row items-center justify-end gap-2">
+      <div className="flex items-center gap-2">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-auto sm:min-w-[10rem] sm:max-w-xs flex-1">
+            <SelectTrigger className="flex-1">
                 <SelectValue placeholder="فیلتر بر اساس دسته‌بندی..." />
             </SelectTrigger>
             <SelectContent>
@@ -454,7 +454,7 @@ export default function ProductsPage() {
             </SelectContent>
         </Select>
         <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-auto sm:w-[180px]">
             <div className="flex items-center gap-2">
               <SortAsc className="h-4 w-4 text-muted-foreground" />
               <SelectValue placeholder="مرتب‌سازی بر اساس..." />

@@ -20,10 +20,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import type { UnitOfMeasurement, AppData } from '@/lib/definitions';
-import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2 } from 'lucide-react';
+import { Download, Upload, Trash2, PlusCircle, X, RefreshCw, Monitor, Moon, Sun, Loader2, Store } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -36,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import defaultDb from '@/database/defaultdb.json';
 import { useUser } from '@/firebase';
 import { Checkbox } from '../ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 const colorThemes = [
@@ -79,6 +79,9 @@ export default function SettingsPage() {
     units: true,
     toolbarPositions: true,
   });
+
+  const [isSelectingStore, setIsSelectingStore] = useState(false);
+  const [targetStoreId, setTargetStoreId] = useState('');
 
   useEffect(() => {
     setSearchVisible(false);
@@ -192,6 +195,8 @@ export default function SettingsPage() {
             stores: true, categories: true, products: true,
             customers: true, invoices: true, units: true, toolbarPositions: true
         });
+        setIsSelectingStore(false);
+        setTargetStoreId('');
 
       } catch (error: any) {
         console.error("Error parsing backup file:", error);
@@ -216,6 +221,17 @@ export default function SettingsPage() {
         toast({ variant: 'default', title: 'بخشی انتخاب نشده است', description: 'لطفاً حداقل یک بخش را برای بازیابی انتخاب کنید.'});
         return;
     }
+    
+    const needsStoreSelection = (sectionsToRestore.includes('products') || sectionsToRestore.includes('categories')) && !sectionsToRestore.includes('stores');
+
+    if (needsStoreSelection && !targetStoreId) {
+        if (data.stores.length === 0) {
+            toast({ variant: 'destructive', title: 'فروشگاه مقصد وجود ندارد', description: 'لطفاً ابتدا یک فروشگاه ایجاد کنید.' });
+            return;
+        }
+        setIsSelectingStore(true);
+        return;
+    }
 
     setIsProcessing(true);
     
@@ -227,7 +243,7 @@ export default function SettingsPage() {
             }
         }
         
-        await loadDataBatch(dataToLoad, true); // Use merge strategy
+        await loadDataBatch(dataToLoad, true, needsStoreSelection ? targetStoreId : undefined);
 
         toast({ variant: 'success', title: 'بازیابی موفق', description: 'اطلاعات انتخاب شده با موفقیت به داده‌های فعلی اضافه شد.' });
         setDataToRestore(null);
@@ -236,6 +252,8 @@ export default function SettingsPage() {
         toast({ variant: 'destructive', title: 'خطا در بازیابی', description: 'مشکلی در فرآیند بازیابی اطلاعات رخ داد.'});
     } finally {
         setIsProcessing(false);
+        setIsSelectingStore(false);
+        setTargetStoreId('');
     }
   };
 
@@ -245,49 +263,79 @@ export default function SettingsPage() {
   };
 
   const isRestoreConfirmDisabled = Object.values(selectedSections).every(v => !v);
+  
+  const handleCloseDialog = () => {
+    setDataToRestore(null);
+    setIsSelectingStore(false);
+    setTargetStoreId('');
+  }
 
   return (
     <>
-      <AlertDialog open={!!dataToRestore} onOpenChange={(open) => !open && setDataToRestore(null)}>
+      <AlertDialog open={!!dataToRestore} onOpenChange={(open) => !open && handleCloseDialog()}>
         <AlertDialogContent className="max-w-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>بازیابی اطلاعات از فایل</AlertDialogTitle>
-            <AlertDialogDescription>
-              بخش‌هایی را که می‌خواهید بازیابی شوند، انتخاب کنید. داده‌های جدید به داده‌های فعلی اضافه شده و از موارد تکراری جلوگیری می‌شود.
+             <AlertDialogDescription>
+              {isSelectingStore 
+                ? "برای وارد کردن محصولات/دسته‌بندی‌ها، یک فروشگاه مقصد انتخاب کنید."
+                : "بخش‌هایی را که می‌خواهید بازیابی شوند، انتخاب کنید. داده‌های جدید به داده‌های فعلی اضافه شده و از موارد تکراری جلوگیری می‌شود."
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="max-h-[60vh] overflow-y-auto p-1">
-            <div className="grid grid-cols-2 gap-4">
-                {(Object.keys(sectionLabels) as DataSection[]).map((key) => {
-                    const items = dataToRestore ? (dataToRestore[key] as any[]) : [];
-                    const count = Array.isArray(items) ? items.length : (items ? 1 : 0);
-                    if (count === 0) return null; // Don't show empty sections
-                    
-                    return (
-                        <div key={key} className="flex items-center space-x-2 space-x-reverse rounded-md border p-3 hover:bg-accent">
-                            <Checkbox
-                                id={`check-${key}`}
-                                checked={selectedSections[key]}
-                                onCheckedChange={(checked) => {
-                                    setSelectedSections(prev => ({...prev, [key]: !!checked}))
-                                }}
-                            />
-                            <Label htmlFor={`check-${key}`} className="flex-1 cursor-pointer">
-                                <div className="flex justify-between items-center">
-                                    <span className="font-semibold">{sectionLabels[key]}</span>
-                                    <Badge variant="secondary">{count.toLocaleString('fa-IR')} مورد</Badge>
-                                </div>
-                            </Label>
-                        </div>
-                    );
-                })}
-            </div>
+            {isSelectingStore ? (
+                 <div className="grid gap-4 py-8">
+                    <div className="flex items-center gap-3 p-4 border rounded-lg bg-amber-500/10 text-amber-800 dark:text-amber-300">
+                        <Store className="h-6 w-6"/>
+                        <p className="font-semibold">
+                            انتخاب فروشگاه مقصد
+                        </p>
+                    </div>
+                    <Select value={targetStoreId} onValueChange={setTargetStoreId}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="یک فروشگاه را برای وارد کردن اطلاعات انتخاب کنید..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {data.stores.map(store => (
+                                <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-4">
+                    {(Object.keys(sectionLabels) as DataSection[]).map((key) => {
+                        const items = dataToRestore ? (dataToRestore[key] as any[]) : [];
+                        const count = Array.isArray(items) ? items.length : (items ? 1 : 0);
+                        if (count === 0) return null; // Don't show empty sections
+                        
+                        return (
+                            <div key={key} className="flex items-center space-x-2 space-x-reverse rounded-md border p-3 hover:bg-accent">
+                                <Checkbox
+                                    id={`check-${key}`}
+                                    checked={selectedSections[key]}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedSections(prev => ({...prev, [key]: !!checked}))
+                                    }}
+                                />
+                                <Label htmlFor={`check-${key}`} className="flex-1 cursor-pointer">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-semibold">{sectionLabels[key]}</span>
+                                        <Badge variant="secondary">{count.toLocaleString('fa-IR')} مورد</Badge>
+                                    </div>
+                                </Label>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDataToRestore(null)}>انصراف</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled}>
+            <AlertDialogCancel onClick={handleCloseDialog}>انصراف</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRestore} disabled={isProcessing || isRestoreConfirmDisabled || (isSelectingStore && !targetStoreId)}>
               {isProcessing ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
-              تایید و بازیابی
+              {isSelectingStore ? "تایید و بازیابی" : "ادامه"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

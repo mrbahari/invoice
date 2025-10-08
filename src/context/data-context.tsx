@@ -24,7 +24,7 @@ interface DataContextType {
   deleteDocument: (collectionName: CollectionName, docId: string) => Promise<void>;
   setData: React.Dispatch<React.SetStateAction<AppData>>; // Expose setData
   setToolbarPosition: (pageKey: string, position: ToolbarPosition) => Promise<void>;
-  loadDataBatch: (dataToLoad: Partial<AppData>, merge: boolean) => Promise<void>;
+  loadDataBatch: (dataToLoad: Partial<AppData>, merge: boolean, targetStoreId?: string) => Promise<void>;
   clearCollections: (collectionNames: (keyof AppData)[]) => Promise<void>;
 }
 
@@ -303,10 +303,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [user, firestore, getCollectionRef, toolbarPosRef]);
 
 
-  const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>, merge: boolean = false) => {
+  const loadDataBatch = useCallback(async (dataToLoad: Partial<AppData>, merge: boolean = false, targetStoreId?: string) => {
     if (!firestore || !user) return;
 
-    // First, clear collections if merge is false
     if (!merge) {
         const collectionsToClear = Object.keys(dataToLoad) as (keyof AppData)[];
         await clearCollections(collectionsToClear);
@@ -325,11 +324,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
             for (const item of collectionData) {
                 const { id, ...itemData } = item;
-                // If merging, only add if ID doesn't already exist.
                 if (merge && existingIds.has(id)) {
-                    continue; // Skip duplicate
+                    continue;
                 }
 
+                // If importing products or categories to a specific store
+                if (targetStoreId && (key === 'products' || key === 'categories')) {
+                  (itemData as Product | Category).storeId = targetStoreId;
+                }
+                
                 const docRef = id && !id.startsWith('temp-') ? doc(collectionRef, id) : doc(collectionRef);
                 batch.set(docRef, itemData);
                 itemsToAdd.push({ id: docRef.id, ...itemData } as Document);
@@ -346,7 +349,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     try {
         await batch.commit();
-        // Optimistically update local state after successful commit
         setData(prev => ({...prev, ...localDataUpdates}));
     } catch(error: any) {
         const permissionError = new FirestorePermissionError({

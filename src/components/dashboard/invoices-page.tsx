@@ -151,7 +151,8 @@ export default function InvoicesPage({
     [deleteDocument]
   );
   
-  const handleStatusChange = (invoiceId: string, currentStatus: InvoiceStatus) => {
+  const handleStatusChange = (e: React.MouseEvent, invoiceId: string, currentStatus: InvoiceStatus) => {
+    e.stopPropagation();
     const newStatus = currentStatus === 'Paid' ? 'Pending' : 'Paid';
     updateDocument('invoices', invoiceId, { status: newStatus });
   };
@@ -270,7 +271,8 @@ export default function InvoicesPage({
                     return (
                       <Card 
                         key={invoice.id} 
-                        className="flex flex-col justify-between"
+                        onClick={() => handlePreview(invoice)}
+                        className="flex flex-col justify-between cursor-pointer"
                       >
                         <CardHeader className="p-4 sm:p-6 pb-4">
                           <div className="flex justify-between items-start">
@@ -296,7 +298,7 @@ export default function InvoicesPage({
                           </div>
                         </CardContent>
                         <CardFooter className="flex flex-row items-center justify-between p-4 sm:p-6">
-                            <button onClick={() => handleStatusChange(invoice.id, invoice.status)}>
+                            <button onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
                                 <Badge variant="outline" className={cn("text-xs font-mono cursor-pointer", statusStyles[invoice.status])}>
                                 {statusTranslation[invoice.status]}
                                 </Badge>
@@ -305,7 +307,7 @@ export default function InvoicesPage({
                            <div className="flex items-center gap-0 sm:gap-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={() => handleEdit(invoice)}>
+                                    <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={(e) => {e.stopPropagation(); handleEdit(invoice);}}>
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -313,7 +315,7 @@ export default function InvoicesPage({
                                 </Tooltip>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={() => handlePreview(invoice)}>
+                                    <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={(e) => {e.stopPropagation(); handlePreview(invoice);}}>
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
@@ -323,7 +325,7 @@ export default function InvoicesPage({
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon-sm" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                <Button variant="ghost" size="icon-sm" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => e.stopPropagation()}>
                                                   <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>

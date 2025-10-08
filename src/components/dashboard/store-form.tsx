@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback, ChangeEvent } from 'react';
@@ -883,6 +884,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                                   size="icon" 
                                   disabled={isProcessing} 
                                   className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                                  onClick={(e) => e.stopPropagation()}
                                   >
                                       <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -1093,7 +1095,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                       </Tooltip>
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="icon" disabled={isProcessing}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                              <Button variant="outline" size="icon" disabled={isProcessing} onClick={(e) => e.stopPropagation()}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                               <AlertDialogHeader><AlertDialogTitle>حذف همه دسته‌بندی‌ها</AlertDialogTitle><AlertDialogDescription>آیا مطمئن هستید که می‌خواهید تمام دسته‌بندی‌های این فروشگاه را حذف کنید؟ این عمل غیرقابل بازگشت است.</AlertDialogDescription></AlertDialogHeader>

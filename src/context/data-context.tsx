@@ -309,20 +309,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    const originalItems = data[collectionName].filter(item => docIds.includes(item.id));
+    const validDocIds = docIds.filter(id => id && !id.startsWith('temp-'));
+    if (validDocIds.length === 0) return;
+
+    const originalItems = data[collectionName].filter(item => validDocIds.includes(item.id));
     if (originalItems.length === 0) return;
 
     // Optimistic update
     setData(prev => ({
       ...prev,
-      [collectionName]: prev[collectionName].filter(item => !docIds.includes(item.id)),
+      [collectionName]: prev[collectionName].filter(item => !validDocIds.includes(item.id)),
     }));
     
     const batch = writeBatch(firestore);
-    docIds.forEach(id => {
-      if (id && !id.startsWith('temp-')) {
-        batch.delete(doc(collectionRef, id));
-      }
+    validDocIds.forEach(id => {
+      batch.delete(doc(collectionRef, id));
     });
 
     try {

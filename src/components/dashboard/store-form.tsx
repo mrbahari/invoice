@@ -209,7 +209,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const firestore = useFirestore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data, addDocument, deleteDocument, setData: setGlobalData } = useData();
+  const { data, addDocument, deleteDocument, deleteDocuments, setData: setGlobalData } = useData();
   const { products, categories, units: unitsOfMeasurement } = data;
   
   // Store fields
@@ -729,30 +729,50 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
   const handleDelete = useCallback(async () => {
-      if (!store) return;
-      const storeHasProducts = data.products.some(p => p.storeId === store.id);
-      if (storeHasProducts) {
-          toast({ variant: 'destructive', title: 'خطا', description: 'این فروشگاه دارای محصول است و قابل حذف نیست.' });
-          return;
-      }
-      
-      const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
-      
-      // Batch delete categories
-      if (firestore && user && categoryIdsToDelete.length > 0) {
-        const batch = writeBatch(firestore);
-        categoryIdsToDelete.forEach(id => {
-          const catRef = doc(firestore, 'users', user.uid, 'categories', id);
-          batch.delete(catRef);
-        });
-        await batch.commit();
-      }
-      
-      await deleteDocument('stores', store.id);
+      if (!store || !user || !firestore) return;
+  
+      setIsProcessing(true);
+  
+      try {
+          const productIdsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
+          const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
+          const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
+  
+          const batch = writeBatch(firestore);
+  
+          // Delete store
+          const storeRef = doc(firestore, 'users', user.uid, 'stores', store.id);
+          batch.delete(storeRef);
+  
+          // Delete associated products
+          productIdsToDelete.forEach(id => {
+              const productRef = doc(firestore, 'users', user.uid, 'products', id);
+              batch.delete(productRef);
+          });
+  
+          // Delete associated categories
+          categoryIdsToDelete.forEach(id => {
+              const categoryRef = doc(firestore, 'users', user.uid, 'categories', id);
+              batch.delete(categoryRef);
+          });
+          
+          // Delete associated units
+          unitIdsToDelete.forEach(id => {
+              const unitRef = doc(firestore, 'users', user.uid, 'units', id);
+              batch.delete(unitRef);
+          });
 
-      toast({ variant: 'success', title: 'فروشگاه حذف شد' });
-      onCancel();
-  }, [store, data.products, data.categories, deleteDocument, toast, onCancel, firestore, user]);
+          await batch.commit();
+  
+          toast({ variant: 'success', title: 'فروشگاه و تمام داده‌های آن حذف شد' });
+          onCancel();
+      } catch (error) {
+          console.error("Error deleting store and its data:", error);
+          toast({ variant: 'destructive', title: 'خطا در حذف', description: 'مشکلی در هنگام حذف فروشگاه و داده‌های مرتبط با آن رخ داد.' });
+      } finally {
+          setIsProcessing(false);
+      }
+  }, [store, user, firestore, data, onCancel, toast]);
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;
@@ -871,7 +891,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                           </Tooltip>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند. این کار تنها در صورتی امکان‌پذیر است که هیچ محصولی به این فروشگاه اختصاص داده نشده باشد.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را به همراه تمام محصولات، دسته‌بندی‌ها و واحدهای مرتبط با آن برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
                       </AlertDialogContent>
                   </AlertDialog>

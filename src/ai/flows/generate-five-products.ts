@@ -51,7 +51,7 @@ const generateFiveProductsFlow = ai.defineFlow(
             The product names and descriptions MUST be in professional Persian (Farsi).
             The price must be a reasonable estimate in Iranian Rials (IRR).
             
-            Also, do NOT generate any of the following product names as they already exist in this category:
+            Do NOT generate any of the following product names as they already exist in this category:
             {{#if existingProductNames}}
                 {{#each existingProductNames}}
                 - {{{this}}}

@@ -737,15 +737,22 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       }
       
       const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
-      for (const catId of categoryIdsToDelete) {
-          await deleteDocument('categories', catId);
+      
+      // Batch delete categories
+      if (firestore && user && categoryIdsToDelete.length > 0) {
+        const batch = writeBatch(firestore);
+        categoryIdsToDelete.forEach(id => {
+          const catRef = doc(firestore, 'users', user.uid, 'categories', id);
+          batch.delete(catRef);
+        });
+        await batch.commit();
       }
       
       await deleteDocument('stores', store.id);
 
       toast({ variant: 'success', title: 'فروشگاه حذف شد' });
       onCancel();
-  }, [store, data.products, data.categories, deleteDocument, toast, onCancel]);
+  }, [store, data.products, data.categories, deleteDocument, toast, onCancel, firestore, user]);
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;
@@ -864,7 +871,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                           </Tooltip>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را برای همیشه حذف می‌کند. این کار تنها در صورتی امکان‌پذیر است که هیچ محصولی به این فروشگاه اختصاص داده نشده باشد.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
                       </AlertDialogContent>
                   </AlertDialog>

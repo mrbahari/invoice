@@ -328,7 +328,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
               {store.bankName && <p><strong>بانک:</strong> {store.bankName}</p>}
               {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
-              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
               {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
             </footer>
 

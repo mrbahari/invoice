@@ -89,7 +89,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const { uploadFile, progress, isUploading, error: uploadError } = useUpload();
   
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -279,16 +278,20 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     const numericPrice = Number(price);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
 
-    const productData: Partial<Product> = {
+    const productData: any = {
       name,
       code,
       description,
       price: isNaN(numericPrice) ? 0 : numericPrice,
-      storeId,
       subCategoryId,
       unit,
       imageUrl: finalImage,
     };
+    
+    // Only include storeId when creating a new product
+    if (!isEditMode) {
+      productData.storeId = storeId;
+    }
     
     if (subUnit && subUnit !== 'none') {
         const numericSubUnitQuantity = Number(subUnitQuantity);
@@ -460,7 +463,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 <div className="grid grid-cols-3 items-center gap-4">
                                      <Label htmlFor="store" className="text-right">فروشگاه</Label>
                                      <div className="col-span-2">
-                                        <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required>
+                                        <Select value={storeId} onValueChange={(val) => { setStoreId(val); setSubCategoryId(''); }} required disabled={isEditMode}>
                                             <SelectTrigger id="store"><SelectValue placeholder="انتخاب فروشگاه" /></SelectTrigger>
                                             <SelectContent>
                                                 {stores?.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}

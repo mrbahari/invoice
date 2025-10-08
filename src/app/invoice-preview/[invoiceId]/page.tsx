@@ -230,9 +230,7 @@ export default function PublicInvoicePreviewPage() {
               <p>{toPersianDigits(1)}. اعتبار پیش فاکتور {toPersianDigits(24)} ساعت می‌باشد.</p>
                <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   {store.bankAccountHolder && <span><strong>صاحب حساب:</strong> {store.bankAccountHolder}</span>}
-                  {store.bankName && <span className="hidden sm:inline">|</span>}
-                  {store.bankName && <span><strong>بانک:</strong> {store.bankName}</span>}
-                   {store.bankCardNumber && <span className="hidden sm:inline">|</span>}
+                  {store.bankCardNumber && <span className="hidden sm:inline">|</span>}
                   {store.bankCardNumber && <span><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></span>}
                   {store.bankAccountNumber && <span className="hidden sm:inline">|</span>}
                   {store.bankAccountNumber && <span><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></span>}

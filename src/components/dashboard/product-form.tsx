@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/tooltip';
 import { FloatingToolbar } from './floating-toolbar';
 import { Badge } from '../ui/badge';
-import { formatNumber, parseFormattedNumber } from '@/lib/utils';
+import { formatNumber, parseFormattedNumber, formatCurrency, parseCurrency } from '@/lib/utils';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
@@ -67,8 +67,8 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [price, setPrice] = useState<number | ''>(product?.price ?? '');
   const [subUnitPrice, setSubUnitPrice] = useState<number | ''>(product?.subUnitPrice ?? '');
 
-  const [displayPrice, setDisplayPrice] = useState(formatNumber(product?.price));
-  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(formatNumber(product?.subUnitPrice));
+  const [displayPrice, setDisplayPrice] = useState(formatCurrency(product?.price, { currencyDisplay: 'code' }).replace('IRR', '').trim());
+  const [displaySubUnitPrice, setDisplaySubUnitPrice] = useState(formatCurrency(product?.subUnitPrice, { currencyDisplay: 'code' }).replace('IRR', '').trim());
   
   const [storeId, setStoreId] = useState(product?.storeId || '');
   const [subCategoryId, setSubCategoryId] = useState(product?.subCategoryId || '');
@@ -77,7 +77,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   
   const [subUnit, setSubUnit] = useState<string | undefined>(product?.subUnit);
   const [subUnitQuantity, setSubUnitQuantity] = useState<number | ''>(product?.subUnitQuantity ?? '');
-  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity));
+  const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity, {minimumFractionDigits: 0, maximumFractionDigits: 2}));
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiLoading, setAiLoading] = useState({
@@ -128,7 +128,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     if (mainPriceNum > 0 && subUnitQtyNum > 0 && subUnit) {
       const calculatedSubPrice = Math.round(mainPriceNum / subUnitQtyNum);
       setSubUnitPrice(calculatedSubPrice);
-      setDisplaySubUnitPrice(formatNumber(calculatedSubPrice));
+      setDisplaySubUnitPrice(formatCurrency(calculatedSubPrice, { currencyDisplay: 'code' }).replace('IRR', '').trim());
     } else if (!subUnit) {
        setSubUnitPrice('');
        setDisplaySubUnitPrice('');
@@ -146,7 +146,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         const calculatedMainPrice = Math.round(subPriceNum * subUnitQtyNum);
         if (calculatedMainPrice !== price) {
             setPrice(calculatedMainPrice);
-            setDisplayPrice(formatNumber(calculatedMainPrice));
+            setDisplayPrice(formatCurrency(calculatedMainPrice));
         }
     }
     */
@@ -155,23 +155,23 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const numericValue = parseFormattedNumber(value);
+    const numericValue = parseCurrency(value);
     setPrice(numericValue);
-    setDisplayPrice(formatNumber(numericValue));
+    setDisplayPrice(formatCurrency(numericValue, { currencyDisplay: 'code' }).replace('IRR', '').trim());
   };
 
   const handleSubUnitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const numericValue = parseFormattedNumber(value);
+    const numericValue = parseCurrency(value);
     setSubUnitPrice(numericValue);
-    setDisplaySubUnitPrice(formatNumber(numericValue));
+    setDisplaySubUnitPrice(formatCurrency(numericValue, { currencyDisplay: 'code' }).replace('IRR', '').trim());
 
     // Also update main price when sub unit price changes
     const subUnitQtyNum = Number(subUnitQuantity);
     if (numericValue !== '' && subUnitQtyNum > 0 && subUnit) {
         const calculatedMainPrice = Math.round(numericValue * subUnitQtyNum);
         setPrice(calculatedMainPrice);
-        setDisplayPrice(formatNumber(calculatedMainPrice));
+        setDisplayPrice(formatCurrency(calculatedMainPrice, { currencyDisplay: 'code' }).replace('IRR', '').trim());
     }
   };
   
@@ -179,7 +179,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       const value = e.target.value;
       const numericValue = parseFormattedNumber(value);
       setSubUnitQuantity(numericValue);
-      setDisplaySubUnitQuantity(formatNumber(numericValue));
+      setDisplaySubUnitQuantity(formatNumber(numericValue, {minimumFractionDigits: 0, maximumFractionDigits: 2}));
   };
   
   const handleImageFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -209,7 +209,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
       } else if (feature === 'price' && result.price !== undefined) {
         const roundedPrice = Math.round(result.price);
         setPrice(roundedPrice);
-        setDisplayPrice(formatNumber(roundedPrice));
+        setDisplayPrice(formatCurrency(roundedPrice, { currencyDisplay: 'code' }).replace('IRR', '').trim());
       } else if (feature === 'image' && result.imageUrl) {
          if (result.imageUrl.startsWith('data:image')) {
           // Convert data URI to file and upload
@@ -535,7 +535,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="price" className="text-right">
-                                        قیمت اصلی (ریال)
+                                        قیمت اصلی
                                     </Label>
                                     <div className="col-span-2 flex items-center gap-2">
                                         <Input id="price" value={displayPrice} onChange={handlePriceChange} required className="flex-1 font-mono" />
@@ -545,13 +545,13 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="sub-unit-price" className="text-right">قیمت فرعی (ریال)</Label>
+                                    <Label htmlFor="sub-unit-price" className="text-right">قیمت فرعی</Label>
                                     <Input id="sub-unit-price" value={displaySubUnitPrice} onChange={handleSubUnitPriceChange} placeholder={showSubUnitFields ? 'محاسبه خودکار' : 'ابتدا واحد فرعی را انتخاب کنید'} disabled={!showSubUnitFields} className="col-span-2 font-mono" />
                                 </div>
                             </div>
                             {showSubUnitFields && subUnitQuantity && price && (
                                 <p className="text-xs text-muted-foreground mt-4">
-                                    هر {formatNumber(subUnitQuantity)} {subUnit} معادل یک {unit} با قیمت {displayPrice} ریال است. قیمت هر {subUnit} تقریباً {displaySubUnitPrice} ریال محاسبه می‌شود.
+                                    هر {formatNumber(subUnitQuantity)} {subUnit} معادل یک {unit} با قیمت {formatCurrency(price)} است. قیمت هر {subUnit} تقریباً {formatCurrency(subUnitPrice)} محاسبه می‌شود.
                                 </p>
                             )}
                         </CardContent>

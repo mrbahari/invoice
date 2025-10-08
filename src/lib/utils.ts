@@ -5,13 +5,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number) {
+export function formatCurrency(amount: number | '' | null | undefined, options?: Intl.NumberFormatOptions) {
+  const numericAmount = Number(amount);
+  if (amount === '' || amount === null || amount === undefined || isNaN(numericAmount)) return '';
+
   return new Intl.NumberFormat('fa-IR', {
     style: 'currency',
     currency: 'IRR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+    ...options
+  }).format(numericAmount);
 }
 
 export function downloadCSV(data: any[], filename: string = 'export.csv', headers?: Record<string, string>) {
@@ -69,21 +73,39 @@ export function getStorePrefix(storeName: string): string {
   return 'INV';
 }
 
-export const formatNumber = (num: number | '' | null | undefined): string => {
+export const formatNumber = (num: number | '' | null | undefined, options?: Intl.NumberFormatOptions): string => {
     if (num === '' || num === null || num === undefined || isNaN(Number(num))) return '';
-    return new Intl.NumberFormat('fa-IR', { useGrouping: false }).format(Number(num));
+    return new Intl.NumberFormat('fa-IR', { useGrouping: false, ...options }).format(Number(num));
 };
   
-export const parseFormattedNumber = (str: string): number | '' => {
-    if (!str) return '';
+const convertPersianToArabic = (str: string): string => {
     const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
     const englishDigits = '0123456789';
-    let numericString = String(str); // Ensure it's a string
+    let numericString = String(str);
     for (let i = 0; i < 10; i++) {
         numericString = numericString.replace(new RegExp(persianDigits[i], 'g'), englishDigits[i]);
     }
-    // Allow dots for decimals, remove other non-numeric characters except for the first dot
-    numericString = numericString.replace(/[^0-9.]/g, ''); 
-    const number = parseFloat(numericString);
+    return numericString;
+};
+
+export const parseFormattedNumber = (str: string): number | '' => {
+    if (!str) return '';
+    const numericString = convertPersianToArabic(str).replace(/[^0-9.]/g, '');
+    
+    // Handle multiple dots by keeping only the first one
+    const parts = numericString.split('.');
+    const integerPart = parts[0];
+    const fractionalPart = parts.slice(1).join('');
+    const finalString = fractionalPart ? `${integerPart}.${fractionalPart}` : integerPart;
+
+    const number = parseFloat(finalString);
     return isNaN(number) ? '' : number;
 };
+
+export const parseCurrency = (str: string): number | '' => {
+    if (!str) return '';
+    // Convert to English digits and remove everything except digits and a decimal point
+    const numericString = convertPersianToArabic(str).replace(/[^0-9.]/g, '');
+    const number = parseFloat(numericString);
+    return isNaN(number) ? '' : number;
+}

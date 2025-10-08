@@ -10,7 +10,7 @@ export const config = {
   },
 };
 
-const uploadDir = path.join(process.cwd(), 'public/uploads');
+const uploadDir = path.join(process.cwd(), 'public/uploads/ads');
 
 async function ensureUploadDirExists() {
   try {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, fileBuffer);
 
-    const publicUrl = `/uploads/${uniqueFilename}`;
+    const publicUrl = `/uploads/ads/${uniqueFilename}`;
     
     return NextResponse.json({ url: publicUrl });
 

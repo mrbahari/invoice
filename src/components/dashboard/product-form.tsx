@@ -211,7 +211,19 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         setPrice(roundedPrice);
         setDisplayPrice(formatNumber(roundedPrice));
       } else if (feature === 'image' && result.imageUrl) {
-        setImageUrl(result.imageUrl);
+         if (result.imageUrl.startsWith('data:image')) {
+          // Convert data URI to file and upload
+          const response = await fetch(result.imageUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `${name.replace(/\s+/g, '_')}-${Date.now()}.jpg`, { type: blob.type });
+          const uploadedUrl = await uploadFile(file);
+          if (uploadedUrl) {
+            setImageUrl(uploadedUrl);
+          }
+        } else {
+          // It's a regular URL (like picsum)
+          setImageUrl(result.imageUrl);
+        }
       }
       
 
@@ -236,8 +248,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const path = `images/product/${Date.now()}-${file.name}`;
-      const downloadedUrl = await uploadFile(file, path);
+      const downloadedUrl = await uploadFile(file);
       if (downloadedUrl) {
           setImageUrl(downloadedUrl);
       }

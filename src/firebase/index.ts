@@ -1,27 +1,20 @@
-
 'use client';
 
-import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore } from 'firebase/firestore';
 import { useUser } from '../context/user-context';
+import { firebaseConfig } from './config'; // Import config directly
 
 let firebaseApp: FirebaseApp;
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+// IMPORTANT: This function is now simplified to use a direct import.
 export function initializeFirebase() {
   if (!getApps().length) {
-    const firebaseConfigStr = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
-    if (!firebaseConfigStr) {
-      throw new Error("Firebase config not found in environment variables. Please ensure NEXT_PUBLIC_FIREBASE_CONFIG is set in your .env file.");
+    if (!firebaseConfig.apiKey) {
+        throw new Error("Firebase config is missing or incomplete. Check src/firebase/config.ts");
     }
-    try {
-      const firebaseConfig: FirebaseOptions = JSON.parse(firebaseConfigStr);
-      firebaseApp = initializeApp(firebaseConfig);
-    } catch (e: any) {
-      console.error("Failed to parse Firebase config:", e);
-      throw new Error(`Invalid Firebase configuration string in NEXT_PUBLIC_FIREBASE_CONFIG. It must be a valid JSON. Original error: ${e.message}`);
-    }
+    firebaseApp = initializeApp(firebaseConfig);
   } else {
     firebaseApp = getApp();
   }

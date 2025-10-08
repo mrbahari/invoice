@@ -42,10 +42,16 @@ const generateFiveProductsFlow = ai.defineFlow(
         model: 'googleai/gemini-2.5-flash',
         prompt: `
             You are an expert product manager for the Iranian market.
-            Based on the store name "{{storeName}}", its description "{{storeDescription}}", and the category "{{categoryName}}", generate a list of 5 diverse and relevant products.
+            Your primary task is to generate 5 diverse and relevant products.
+
+            CRITICAL: The products you generate MUST STRICTLY belong to the category "{{categoryName}}". Use the store name and description only for general context, but the category is the most important instruction. Do not generate products outside of this category.
+            - Store Name (for context): "{{storeName}}"
+            - Store Description (for context): "{{storeDescription}}"
+
             The product names and descriptions MUST be in professional Persian (Farsi).
             The price must be a reasonable estimate in Iranian Rials (IRR).
-            CRITICAL: Do NOT generate any of the following product names as they already exist:
+            
+            Also, do NOT generate any of the following product names as they already exist in this category:
             {{#if existingProductNames}}
                 {{#each existingProductNames}}
                 - {{{this}}}

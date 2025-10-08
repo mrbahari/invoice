@@ -214,31 +214,25 @@ export default function ProductsPage() {
 
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
-  const scrollPositionRef = useRef(0);
-
+  
   const [activeTab, setActiveTab] = useState('all');
-  const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
+  const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
 
   useEffect(() => {
     // Show search only when in list view
     setSearchVisible(view === 'list');
   }, [view, setSearchVisible]);
 
-  // Restore scroll position when returning to list
+  // Scroll to top when form opens
   useEffect(() => {
-    if (view === 'list' && scrollPositionRef.current > 0 && typeof window !== 'undefined') {
-        setTimeout(() => {
-            window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
-            scrollPositionRef.current = 0; // Reset after restoring
-        }, 100);
+    if (view === 'form') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [view]);
 
   const handleEdit = (product?: Product) => {
-    if (typeof window !== 'undefined') {
-      scrollPositionRef.current = window.scrollY; // Save current scroll position
-    }
     setEditingProduct(product);
     setView('form');
   };
@@ -413,7 +407,13 @@ export default function ProductsPage() {
     setBulkTargetCategory('');
   }, [bulkTargetStore]);
 
-  const categoryOrder = useMemo(() => Object.keys(groupedProducts), [groupedProducts]);
+  const categoryOrder = useMemo(() => {
+    return Object.keys(groupedProducts).sort((a, b) => {
+        const countA = groupedProducts[a]?.length || 0;
+        const countB = groupedProducts[b]?.length || 0;
+        return countB - countA;
+    });
+  }, [groupedProducts]);
   
   const bulkActionCategoryTree = useMemo(() => {
     const relevantCategories = categories.filter(c => c.storeId === bulkTargetStore);

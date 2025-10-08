@@ -275,33 +275,33 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     return true;
   }
 
-  const buildProductData = (): Omit<Product, 'id'> => {
+  const buildProductData = (): Partial<Product> => {
     const numericPrice = Number(price);
-    const numericSubUnitPrice = Number(subUnitPrice);
-    const numericSubUnitQuantity = Number(subUnitQuantity);
     const finalImage = imageUrl || `https://picsum.photos/seed/${name}${subCategoryId}/400/300`;
-  
-    const productData: Omit<Product, 'id'> = {
+
+    const productData: Partial<Product> = {
       name,
       code,
       description,
-      price: numericPrice,
+      price: isNaN(numericPrice) ? 0 : numericPrice,
       storeId,
       subCategoryId,
       unit,
       imageUrl: finalImage,
     };
-  
+    
     if (subUnit && subUnit !== 'none') {
-      productData.subUnit = subUnit;
-      productData.subUnitQuantity = isNaN(numericSubUnitQuantity) ? 0 : numericSubUnitQuantity;
-      productData.subUnitPrice = isNaN(numericSubUnitPrice) ? 0 : numericSubUnitPrice;
+        const numericSubUnitQuantity = Number(subUnitQuantity);
+        const numericSubUnitPrice = Number(subUnitPrice);
+        productData.subUnit = subUnit;
+        productData.subUnitQuantity = isNaN(numericSubUnitQuantity) ? undefined : numericSubUnitQuantity;
+        productData.subUnitPrice = isNaN(numericSubUnitPrice) ? undefined : numericSubUnitPrice;
     } else {
-      productData.subUnit = undefined;
-      productData.subUnitQuantity = undefined;
-      productData.subUnitPrice = undefined;
+        productData.subUnit = undefined;
+        productData.subUnitQuantity = undefined;
+        productData.subUnitPrice = undefined;
     }
-  
+
     return productData;
   };
 
@@ -315,7 +315,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     if (isEditMode && product) {
       await updateDocument('products', product.id, productData);
     } else {
-      await addDocument('products', productData);
+      await addDocument('products', productData as Omit<Product, 'id'>);
     }
 
     setIsProcessing(false);
@@ -327,7 +327,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     
     setIsProcessing(true);
     const productData = buildProductData();
-    await addDocument('products', productData);
+    await addDocument('products', productData as Omit<Product, 'id'>);
     
     setIsProcessing(false);
     onSave();

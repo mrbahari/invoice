@@ -859,6 +859,63 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     }
   };
 
+  const handleBrandSwap = useCallback(() => {
+    if (!invoice.items || invoice.items.length === 0) return;
+
+    const isCurrentlyKPlus = invoice.items.some(item => item.productName.includes('کی پلاس'));
+    const targetBrand = isCurrentlyKPlus ? 'miscellaneous' : 'k-plus';
+    let updatedCount = 0;
+
+    const newItems = invoice.items.map(item => {
+      const currentProduct = products.find(p => p.id === item.productId);
+      if (!currentProduct) return item; // Cannot swap if product doesn't exist
+
+      // Clean the current product name to find a base name
+      const baseName = currentProduct.name.replace(/کی پلاس|باتیس|کناف ایران/gi, '').trim();
+
+      // Find an equivalent product
+      const equivalentProduct = products.find(p => {
+        if (p.id === currentProduct.id || p.subCategoryId !== currentProduct.subCategoryId) {
+          return false;
+        }
+
+        const candidateBaseName = p.name.replace(/کی پلاس|باتیس|کناف ایران/gi, '').trim();
+        if (candidateBaseName !== baseName) return false;
+
+        const isCandidateKPlus = p.name.includes('کی پلاس');
+        if (targetBrand === 'k-plus') return isCandidateKPlus;
+        if (targetBrand === 'miscellaneous') return !isCandidateKPlus;
+        
+        return false;
+      });
+
+      if (equivalentProduct) {
+        updatedCount++;
+        return {
+          ...item,
+          productId: equivalentProduct.id,
+          productName: equivalentProduct.name,
+          unitPrice: equivalentProduct.price,
+          imageUrl: equivalentProduct.imageUrl,
+          totalPrice: item.quantity * equivalentProduct.price,
+        };
+      }
+      return item; // Return original item if no equivalent is found
+    });
+
+    setInvoice({ ...invoice, items: newItems });
+    toast({
+        variant: 'success',
+        title: 'تعویض برند انجام شد',
+        description: `${updatedCount} محصول به برند ${targetBrand === 'k-plus' ? 'کی پلاس' : 'متفرقه'} تغییر کرد.`
+    });
+  }, [invoice, products, setInvoice, toast]);
+
+  const invoiceBrandType = useMemo(() => {
+    if (!invoice.items || invoice.items.length === 0) return null;
+    return invoice.items.some(item => item.productName.includes('کی پلاس')) ? 'کی پلاس' : 'متفرقه';
+  }, [invoice.items]);
+
    return (
     <TooltipProvider>
       <AnimatePresence>
@@ -921,6 +978,14 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left"><p>پیش‌نمایش</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" onClick={handleBrandSwap} className="w-8 h-8">
+                        <Shuffle className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>تعویض برند (کی پلاس/متفرقه)</p></TooltipContent>
                 </Tooltip>
             </div>
             <Separator orientation="horizontal" className="w-6" />
@@ -1084,7 +1149,14 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                   className={cn("overflow-hidden")}
                 >
                     <CardHeader>
-                        <CardTitle>آیتم‌های فاکتور</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>آیتم‌های فاکتور</CardTitle>
+                            {invoiceBrandType && (
+                                <Badge variant={invoiceBrandType === 'کی پلاس' ? 'default' : 'secondary'}>
+                                    {invoiceBrandType}
+                                </Badge>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid gap-4">

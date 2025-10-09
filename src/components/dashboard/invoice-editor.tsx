@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Minus, Trash2, Search, X, Eye, ArrowRight, Save, GripVertical, UserPlus, Pencil, Shuffle, WandSparkles, LoaderCircle, CheckCircle2, ChevronsUpDown, Package, Check } from 'lucide-react';
-import { formatCurrency, getStorePrefix, formatNumber, parseFormattedNumber } from '@/lib/utils';
+import { formatCurrency, getStorePrefix, formatNumber, parseFormattedNumber, parseCurrency } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
@@ -125,7 +125,8 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     
     // Internal state for input fields to allow for debounced updates
     const [localQuantity, setLocalQuantity] = useState<string>(() => formatNumber(item.quantity));
-    const [localTotalPrice, setLocalTotalPrice] = useState<string>(() => formatNumber(item.totalPrice));
+    const [displayUnitPrice, setDisplayUnitPrice] = useState(() => formatCurrency(item.unitPrice));
+    const [displayTotalPrice, setDisplayTotalPrice] = useState(() => formatCurrency(item.totalPrice));
 
     const product = products.find(p => p.id === item.productId);
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
@@ -137,25 +138,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     const mouseDownPos = useRef({ x: 0, y: 0 });
 
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-
-    const similarProducts = useMemo(() => {
-        if (!product) return [];
-        const currentBaseName = normalizeName(product.name);
-        
-        const equivalents = products.filter(p => {
-             if (p.id === product.id) return false;
-             const candidateBaseName = normalizeName(p.name);
-             return candidateBaseName === currentBaseName;
-        });
-
-        const categoryMates = products.filter(p => 
-            p.subCategoryId === product.subCategoryId && 
-            p.id !== product.id &&
-            !equivalents.some(e => e.id === p.id) // Exclude already found equivalents
-        );
-
-        return [...equivalents, ...categoryMates];
-    }, [product, products]);
     
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -170,15 +152,23 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     };
     
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-         onUpdate(index, 'unitPrice', parseFormattedNumber(e.target.value));
+        const value = e.target.value;
+        setDisplayUnitPrice(formatCurrency(parseCurrency(value)));
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(() => {
+             const newPrice = parseCurrency(value);
+             if (newPrice !== '') {
+                 onUpdate(index, 'unitPrice', newPrice);
+             }
+        }, 500);
     };
 
     const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setLocalTotalPrice(value);
+        setDisplayTotalPrice(formatCurrency(parseCurrency(value)));
         if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
         debounceTimeout.current = setTimeout(() => {
-            const newTotal = parseFormattedNumber(value);
+            const newTotal = parseCurrency(value);
             if (newTotal !== '' && item.quantity > 0) {
                 const newUnitPrice = Math.round(newTotal / item.quantity);
                 onUpdate(index, 'unitPrice', newUnitPrice);
@@ -188,8 +178,9 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
 
     useEffect(() => {
         setLocalQuantity(formatNumber(item.quantity));
-        setLocalTotalPrice(formatNumber(item.totalPrice));
-    }, [item.quantity, item.totalPrice]);
+        setDisplayUnitPrice(formatCurrency(item.unitPrice));
+        setDisplayTotalPrice(formatCurrency(item.totalPrice));
+    }, [item.quantity, item.unitPrice, item.totalPrice]);
 
     const handleHeaderMouseDown = (e: React.MouseEvent) => {
         isDraggingRef.current = false;
@@ -265,7 +256,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                         <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <ScrollArea className="h-[200px]">
-                                        {similarProducts.length > 0 ? similarProducts.map(p => (
+                                        {products.length > 0 ? products.map(p => (
                                             <DropdownMenuItem key={p.id} onSelect={() => onReplace(index, p)} className="flex items-center gap-2">
                                                 <Image src={p.imageUrl} alt={p.name} width={32} height={32} className="rounded-md object-cover" />
                                                 <div className="flex-1">
@@ -302,11 +293,11 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                             </div>
                              <div className="grid gap-1.5">
                                 <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onBlur={() => onPriceBlur(item)} onChange={handlePriceChange} placeholder="مبلغ" className="h-9 font-mono" />
+                                <Input id={`price-${index}`} value={displayUnitPrice} onBlur={() => onPriceBlur(item)} onChange={handlePriceChange} placeholder="مبلغ" className="h-9 font-mono" />
                             </div>
                              <div className="grid gap-1.5">
                                 <Label htmlFor={`total-price-${index}`} className="text-xs">مبلغ کل</Label>
-                                <Input id={`total-price-${index}`} value={localTotalPrice} onChange={handleTotalPriceChange} placeholder="مبلغ کل" className="h-9 font-mono" />
+                                <Input id={`total-price-${index}`} value={displayTotalPrice} onChange={handleTotalPriceChange} placeholder="مبلغ کل" className="h-9 font-mono" />
                             </div>
                         </div>
                     </div>
@@ -526,9 +517,6 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
   // Debounced values
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [debouncedDiscount, setDebouncedDiscount] = useState<number>(invoice.discount || 0);
-  const [debouncedAdditions, setDebouncedAdditions] = useState<number>(invoice.additions || 0);
-  const [debouncedTax, setDebouncedTax] = useState<number>(invoice.tax || 0);
   
   const [flyingProduct, setFlyingProduct] = useState<FlyingProduct | null>(null);
   const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
@@ -594,13 +582,13 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   // Recalculate totals whenever items or financial fields change
   useEffect(() => {
     const subtotal = invoice.items?.reduce((acc, item) => acc + item.totalPrice, 0) || 0;
-    const total = subtotal - debouncedDiscount + debouncedAdditions + debouncedTax;
+    const total = subtotal - (invoice.discount || 0) + (invoice.additions || 0) + (invoice.tax || 0);
 
     if (invoice.subtotal !== subtotal || invoice.total !== total) {
         setInvoice({ ...invoice, subtotal, total });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoice.items, debouncedDiscount, debouncedAdditions, debouncedTax]);
+  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax]);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -797,18 +785,8 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   
   const handleFinancialFieldChange = useCallback(
     (field: 'discount' | 'additions' | 'tax', value: string) => {
-      const numericValue = parseFormattedNumber(value);
-      const setter = 
-        field === 'discount' ? setDebouncedDiscount :
-        field === 'additions' ? setDebouncedAdditions :
-        setDebouncedTax;
-      
+      const numericValue = parseCurrency(value);
       setInvoice(prev => ({ ...prev, [field]: numericValue === '' ? 0 : numericValue }));
-
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(() => {
-        setter(numericValue === '' ? 0 : numericValue);
-      }, 500);
     }, [setInvoice]
   );
 
@@ -1238,16 +1216,16 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                    <Input id="discount" value={formatNumber(invoice.discount)} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
+                                    <Input id="discount" value={formatCurrency(invoice.discount)} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
                                 </div>
                                  <div className="grid gap-2">
                                     <Label htmlFor="additions">اضافات (ریال)</Label>
-                                    <Input id="additions" value={formatNumber(invoice.additions)} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
+                                    <Input id="additions" value={formatCurrency(invoice.additions)} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                                <Input id="tax" value={formatNumber(invoice.tax)} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
+                                <Input id="tax" value={formatCurrency(invoice.tax)} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
                             </div>
                             <Separator />
                             <div className="grid gap-2">
@@ -1287,4 +1265,3 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     </TooltipProvider>
   );
 }
-

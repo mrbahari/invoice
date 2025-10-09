@@ -109,10 +109,10 @@ export const parseFormattedNumber = (str: string): number | '' => {
     return isNaN(number) ? '' : number;
 };
 
-export const parseCurrency = (str: string): number | '' => {
-    if (!str) return '';
+export const parseCurrency = (str: string | number | '' | null | undefined): number | '' => {
+    if (str === '' || str === null || str === undefined) return '';
     // Convert to English digits and remove everything except digits and a decimal point
-    const numericString = convertPersianToArabic(str).replace(/[^0-9.]/g, '');
+    const numericString = convertPersianToArabic(String(str)).replace(/[^0-9.]/g, '');
     const number = parseFloat(numericString);
     return isNaN(number) ? '' : number;
 }

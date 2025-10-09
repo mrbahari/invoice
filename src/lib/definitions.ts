@@ -44,6 +44,11 @@ export type Category = {
   description?: string;
 };
 
+export type PriceHistory = {
+    price: number;
+    date: string; // ISO 8601 format
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -57,6 +62,7 @@ export type Product = {
   subUnit?: string;
   subUnitQuantity?: number;
   subUnitPrice?: number;
+  priceHistory?: PriceHistory[];
 };
 
 export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue';

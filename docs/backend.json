@@ -18,9 +18,23 @@
         "unit": { "type": "string" },
         "subUnit": { "type": "string" },
         "subUnitQuantity": { "type": "number" },
-        "subUnitPrice": { "type": "number" }
+        "subUnitPrice": { "type": "number" },
+        "priceHistory": {
+          "type": "array",
+          "items": { "$ref": "#/entities/PriceHistory" }
+        }
       },
       "required": ["id", "name", "price", "imageUrl", "storeId", "subCategoryId", "unit"]
+    },
+    "PriceHistory": {
+      "title": "PriceHistory",
+      "type": "object",
+      "description": "Represents a record of a product's price at a specific time.",
+      "properties": {
+        "price": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["price", "date"]
     },
     "Category": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -165,6 +179,11 @@
         "path": "/users/{userId}/products/{productId}",
         "schema": { "$ref": "#/entities/Product" },
         "description": "User-specific collection of products."
+      },
+      {
+        "path": "/users/{userId}/products/{productId}/priceHistory/{priceHistoryId}",
+        "schema": { "$ref": "#/entities/PriceHistory" },
+        "description": "Price history for a specific product."
       },
       {
         "path": "/users/{userId}/categories/{categoryId}",

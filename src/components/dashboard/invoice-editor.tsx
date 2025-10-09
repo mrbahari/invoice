@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import type { Customer, Product, Category, InvoiceItem, Invoice, InvoiceStatus, Store } from '@/lib/definitions';
+import type { Customer, Product, Category, InvoiceItem, Invoice, InvoiceStatus, Store, PriceHistory } from '@/lib/definitions';
 import {
   Card,
   CardContent,
@@ -65,6 +65,8 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
+import { collection } from 'firebase/firestore';
 
 
 type InvoiceEditorProps = {
@@ -110,7 +112,7 @@ const useInterval = (callback: () => void, delay: number | null) => {
 
 
 
-function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
+function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen, onPriceBlur }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, onPriceBlur: (item: InvoiceItem) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
     
     // Internal state for input fields to allow for debounced updates
     const [localQuantity, setLocalQuantity] = useState<string>(() => formatNumber(item.quantity));
@@ -280,7 +282,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                             </div>
                              <div className="grid gap-1.5">
                                 <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                <Input id={`price-${index}`} value={localPrice} onChange={(e) => setLocalPrice(e.target.value)} placeholder="مبلغ" className="h-9 font-mono" />
+                                <Input id={`price-${index}`} value={localPrice} onBlur={() => onPriceBlur(item)} onChange={(e) => setLocalPrice(e.target.value)} placeholder="مبلغ" className="h-9 font-mono" />
                             </div>
                              <div className="grid gap-1.5">
                                 <Label htmlFor={`total-price-${index}`} className="text-xs">مبلغ کل</Label>
@@ -456,6 +458,7 @@ AddProductsComponent.displayName = 'AddProductsComponent';
 export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, onCancel, onDirtyChange }: InvoiceEditorProps) {
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
+  const { toast } = useToast();
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
@@ -477,6 +480,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   const [flyingProduct, setFlyingProduct] = useState<FlyingProduct | null>(null);
   const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
   
+  const customerCollapsibleRef = useRef<HTMLDivElement>(null);
   const [customerDialogView, setCustomerDialogView] = useState<'select' | 'create'>('select');
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -694,6 +698,31 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
         setInvoice({ ...invoice, items: newItems });
   }, [invoice, setInvoice]);
 
+  const handlePriceBlur = async (item: InvoiceItem) => {
+    const product = products.find(p => p.id === item.productId);
+    if (!product || product.price === item.unitPrice) {
+      return; // No change or no product found
+    }
+  
+    // Update the product price in the database
+    await updateDocument('products', item.productId, { price: item.unitPrice });
+    
+    // Add the new price to the priceHistory subcollection
+    const newPriceHistoryEntry: PriceHistory = {
+      price: item.unitPrice,
+      date: new Date().toISOString(),
+    };
+    
+    // Use addDocument to add to the subcollection
+    await addDocument(`products/${item.productId}/priceHistory` as any, newPriceHistoryEntry);
+
+    toast({
+        variant: 'success',
+        title: 'قیمت محصول به‌روز شد',
+        description: `قیمت محصول «${item.productName}» به ${formatCurrency(item.unitPrice)} تغییر یافت.`,
+    });
+  };
+
   const handleReplaceItem = useCallback((index: number, newProduct: Product) => {
         const newItems = invoice.items ? [...invoice.items] : [];
         if (newItems[index]) {
@@ -767,7 +796,15 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
   const handleProcessInvoice = async (): Promise<string | null> => {
     if (!selectedCustomer) {
+      toast({
+          variant: 'destructive',
+          title: 'مشتری انتخاب نشده است',
+          description: 'لطفاً قبل از ذخیره یا پیش‌نمایش، یک مشتری برای فاکتور انتخاب کنید.',
+      });
       setIsCustomerSelectorOpen(true);
+      setTimeout(() => {
+          customerCollapsibleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
       return null;
     }
     
@@ -907,7 +944,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
         <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 grid auto-rows-max gap-4">
-                <Collapsible open={isCustomerSelectorOpen} onOpenChange={(isOpen) => {
+                <Collapsible ref={customerCollapsibleRef} open={isCustomerSelectorOpen} onOpenChange={(isOpen) => {
                     setIsCustomerSelectorOpen(isOpen);
                     if (isOpen) {
                         setCustomerDialogView('select');
@@ -1077,6 +1114,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                                                                 onUpdate={handleItemChange}
                                                                 onUnitChange={handleUnitChange}
                                                                 onReplace={handleReplaceItem}
+                                                                onPriceBlur={handlePriceBlur}
                                                                 products={products}
                                                                 isDragging={snapshot.isDragging}
                                                                 isOpen={openItemId === uniqueId}

@@ -97,6 +97,13 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     return () => setSearchVisible(true);
   }, [setSearchVisible]);
 
+  useEffect(() => {
+    if (selectedEstimator) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedEstimator]);
+
+
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
      if (!user) {
       toast({
@@ -178,8 +185,8 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'] },
       'رانر': { keyword: ['رانر'], aliases: ['runner'] },
       'استاد': { keyword: ['استاد'], aliases: ['stud'] },
-      'پیچ ۲.۵': { keyword: ['پیچ', '2.5'], aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
-      'پیچ سازه': { keyword: ['پیچ'], aliases: ['پیچ سازه', 'ln9', 'پیچ LN'] },
+      'پیچ پنل': { keyword: ['پیچ', 'پنل', '2.5'], aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
+      'پیچ سازه': { keyword: ['پیچ', 'سازه'], aliases: ['پیچ سازه', 'ln9', 'پیچ LN'] },
       'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'] },
       'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'] },
       'پشم سنگ': { keyword: ['پشم سنگ'], aliases: ['پشم سنگ', 'rockwool'] },
@@ -193,12 +200,13 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         const materialNameLower = item.material.toLowerCase();
         let foundMatch = false;
 
-        // Step 1: Find an exact or alias match.
+        // Step 1: Find an exact or alias match with all keywords present.
         for (const key in productMap) {
             const productKeywords = productMap[key].aliases.map(alias => alias.toLowerCase());
             if (productKeywords.some(alias => materialNameLower.includes(alias))) {
                 matchedProduct = products.find(p => {
                     const productNameLower = p.name.toLowerCase();
+                    // Ensure all defined keywords for this material are present in the product name
                     return productMap[key].keyword.every(kw => productNameLower.includes(kw.toLowerCase()));
                 });
                 if (matchedProduct) {

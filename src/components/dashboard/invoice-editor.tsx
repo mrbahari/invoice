@@ -447,7 +447,7 @@ AddProductsComponent.displayName = 'AddProductsComponent';
 
 
 export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, onCancel, onDirtyChange }: InvoiceEditorProps) {
-  const { data, updateDocument, deleteDocument } = useData();
+  const { data, updateDocument, deleteDocument, addDocument } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
@@ -813,7 +813,8 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     if (isEditMode && processedInvoiceId) {
         await updateDocument('invoices', processedInvoiceId, finalInvoiceData);
     } else {
-        processedInvoiceId = await addDocument('invoices', finalInvoiceData);
+        const newId = await addDocument('invoices', finalInvoiceData);
+        processedInvoiceId = newId;
     }
     setInitialState(JSON.stringify({ ...invoice, id: processedInvoiceId }));
     setIsProcessing(false);
@@ -863,8 +864,8 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     return name
       .replace(/کی پلاس|کناف ایران|باتیس/gi, '')
       .replace(/[\u064B-\u0652]/g, '') // remove arabic diacritics
-      .replace(/ك/g, 'ک') // replace arabic kaf with persian kaf
       .replace(/ي/g, 'ی') // replace arabic yeh with persian yeh
+      .replace(/ك/g, 'ک') // replace arabic kaf with persian kaf
       .replace(/\s+/g, '') // remove all spaces
       .toLowerCase();
   };

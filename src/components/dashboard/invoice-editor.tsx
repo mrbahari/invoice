@@ -408,7 +408,7 @@ const AddProductsComponent = React.memo(({
                             <div key={product.id} className="group flex flex-col">
                                 <Card className="overflow-hidden" onClick={() => handleProductClick(product.id)}>
                                     <div className="relative aspect-square w-full">
-                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover pointer-events-none" draggable="false" />
                                          <AnimatePresence>
                                             {activeInput === product.id && (
                                                 <motion.div 

@@ -1,5 +1,5 @@
+
 import * as admin from 'firebase-admin';
-import serviceAccount from './service-account.json';
 
 // Function to create and initialize a Firebase Admin app instance.
 // It ensures that the app is initialized only once (singleton pattern).
@@ -8,17 +8,18 @@ export function initializeFirebase() {
     return admin.app();
   }
 
-  // The service account key is now imported directly from a JSON file.
-  // This file should be kept secure and not exposed to the client-side.
-  const serviceAccountKey = serviceAccount as admin.ServiceAccount;
+  // The service account key is now read from an environment variable.
+  // This is a secure practice, especially for server-side code.
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-  if (!serviceAccountKey.project_id) {
-    console.warn('Firebase service account key is missing or invalid. Admin operations will fail.');
+  if (!serviceAccountKey) {
+    console.warn('Firebase service account key is not set in environment variables. Admin operations will fail.');
     return null;
   }
 
   try {
-    const credential = admin.credential.cert(serviceAccountKey);
+    // The key is expected to be a JSON string.
+    const credential = admin.credential.cert(JSON.parse(serviceAccountKey));
     return admin.initializeApp({
       credential,
     });

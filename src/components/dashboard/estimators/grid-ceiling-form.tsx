@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,10 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
   const [width, setWidth] = useState<number | ''>('');
   const [displayLength, setDisplayLength] = useState('');
   const [displayWidth, setDisplayWidth] = useState('');
-
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);

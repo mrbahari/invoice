@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -161,7 +161,7 @@ function calculatePanelLayout(roomLength: number, roomWidth: number): PanelLayou
 // Component
 // =================================================================
 type FlatCeilingFormProps = {
-    onAddToList: (description: string, results: MaterialResult[]) => void;
+    onAddToList: (description: string, results: MaterialResult[], details: any) => void;
     onBack: () => void;
 };
 
@@ -177,6 +177,10 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   const [displaySuspensionHeight, setDisplaySuspensionHeight] = useState(() => formatNumber(20));
 
   const [ceilingType, setCeilingType] = useState<CeilingType>('B');
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const { results, details } = useMemo(() => {
     const l = Number(length);
@@ -280,7 +284,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   const handleAddClick = () => {
     if (results.length === 0) return;
     const description = `سقف فلت تیپ ${ceilingType}: ${displayLength} * ${displayWidth} متر`;
-    onAddToList(description, results);
+    onAddToList(description, results, details);
   };
 
   return (

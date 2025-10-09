@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,10 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
 
   const [wallType, setWallType] = useState<WallType>('partition');
   const [includeWool, setIncludeWool] = useState(true);
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);

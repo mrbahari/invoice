@@ -107,9 +107,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       return;
     }
     setSelectedEstimator(estimatorId);
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   };
   
   const handleBackToList = () => {
@@ -265,11 +262,11 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     let detailsDescription = '';
     estimationList.forEach(est => {
         if (est.details) {
-            detailsDescription += `\n\nجزئیات ${est.description}:\n`;
-            detailsDescription += `مساحت کل: ${formatNumber(est.details.area.toFixed(2))} متر مربع | `;
-            detailsDescription += `محیط: ${formatNumber(est.details.perimeter.toFixed(2))} متر\n`;
-            detailsDescription += `پرت تقریبی سازه: ${formatNumber(est.details.f47MainProfiles.waste.toFixed(2))} متر | `;
-            detailsDescription += `پرت تقریبی پنل: ${formatNumber(est.details.panelLayout.waste.toFixed(2))} متر مربع`;
+            detailsDescription += `\n--- جزئیات ${est.description} ---\n`;
+            if(est.details.area) detailsDescription += `مساحت کل: ${formatNumber(est.details.area.toFixed(2))} متر مربع | `;
+            if(est.details.perimeter) detailsDescription += `محیط: ${formatNumber(est.details.perimeter.toFixed(2))} متر\n`;
+            if(est.details.f47MainProfiles?.waste) detailsDescription += `پرت تقریبی سازه: ${formatNumber(est.details.f47MainProfiles.waste.toFixed(2))} متر | `;
+            if(est.details.panelLayout?.waste) detailsDescription += `پرت تقریبی پنل: ${formatNumber(est.details.panelLayout.waste.toFixed(2))} متر مربع`;
         }
     });
 
@@ -321,7 +318,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                                 </Tooltip>
                             </FloatingToolbar>
                          </TooltipProvider>
-                        <ActiveForm onAddToList={handleAddToList} onBack={handleBackToList} />
+                        <ActiveForm onAddToList={handleAddToList as any} onBack={handleBackToList} />
                     </motion.div>
                 ) : (
                     <motion.div

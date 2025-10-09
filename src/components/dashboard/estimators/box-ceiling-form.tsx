@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,10 @@ type BoxCeilingFormProps = {
 export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [displayLength, setDisplayLength] = useState('');
+  
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);

@@ -185,7 +185,7 @@ export default function PublicInvoicePreviewPage() {
               <tbody>
                 {invoice.items.map((item, index) => {
                     const product = products.find(p => p.id === item.productId);
-                    const imageUrl = product?.imageUrl || item.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.productName)}/40/40`;
+                    const imageUrl = item.imageUrl || product?.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.productName)}/40/40`;
                     return (
                   <tr key={index}>
                     <td className="border p-1 text-center">{toPersianDigits(index + 1)}</td>
@@ -212,9 +212,13 @@ export default function PublicInvoicePreviewPage() {
           </section>
 
             <section className="grid grid-cols-2 gap-4 mt-4 text-sm">
-              <div className="space-y-1">
-                <p><strong>توضیحات:</strong> {invoice.description}</p>
-                <p className="font-bold pt-4">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
+              <div className="space-y-2 text-xs">
+                <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
+                {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
+                {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
+                {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
+                {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+                {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
               </div>
               <div className="border rounded-md p-2 space-y-1">
                 <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
@@ -225,19 +229,12 @@ export default function PublicInvoicePreviewPage() {
                 <p className="flex justify-between font-bold text-base"><strong>جمع کل:</strong> <span className="font-mono">{formatCurrency(invoice.total)}</span></p>
               </div>
             </section>
+            
+            <section className="mt-4 pt-4 border-t text-sm">
+                 <p className="font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
+                 <p className="mt-2"><strong>توضیحات:</strong> {invoice.description}</p>
+            </section>
 
-            <footer className="border-t mt-4 pt-2 text-xs text-gray-600">
-              <p>{toPersianDigits(1)}. اعتبار پیش فاکتور {toPersianDigits(24)} ساعت می‌باشد.</p>
-               <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  {store.bankAccountHolder && <span><strong>صاحب حساب:</strong> {store.bankAccountHolder}</span>}
-                  {store.bankCardNumber && <span className="hidden sm:inline">|</span>}
-                  {store.bankCardNumber && <span><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></span>}
-                  {store.bankAccountNumber && <span className="hidden sm:inline">|</span>}
-                  {store.bankAccountNumber && <span><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></span>}
-                  {store.bankIban && <span className="hidden sm:inline">|</span>}
-                  {store.bankIban && <span><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></span>}
-              </p>
-            </footer>
         </div>
       </div>
   );

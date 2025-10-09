@@ -8,13 +8,15 @@ import {
 import { formatCurrency, toPersianDigits } from '@/lib/utils';
 import Image from 'next/image';
 import type { Store, Customer, Invoice } from '@/lib/definitions';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import QRCode from 'qrcode';
 import { useData } from '@/context/data-context';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
+import html2canvas from 'html2canvas';
+
 
 function toWords(num: number): string {
     if (num === 0) return "صفر";
@@ -82,6 +84,8 @@ export default function PublicInvoicePreviewPage() {
   const { data, isInitialized } = useData();
   const { invoices, stores, customers, products } = data;
   const invoiceId = params.invoiceId as string;
+  const pageContainerRef = useRef<HTMLDivElement>(null);
+
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -114,6 +118,32 @@ export default function PublicInvoicePreviewPage() {
     }
   }, [invoice]);
 
+  const handleDownloadImage = async () => {
+    const element = document.getElementById('invoice-card');
+    const container = pageContainerRef.current;
+    if (!element || !container) return;
+
+    // Temporarily remove padding to get a clean shot
+    const originalPadding = container.style.padding;
+    container.style.padding = '0';
+    
+    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for styles to apply
+
+    html2canvas(element, {
+      scale: 1.5,
+      useCORS: true,
+      allowTaint: true,
+    }).then(canvas => {
+      // Restore padding after taking the screenshot
+      container.style.padding = originalPadding;
+      
+      const link = document.createElement('a');
+      link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  };
+
   if (!isInitialized) {
     return <LoadingSpinner />;
   }
@@ -135,7 +165,7 @@ export default function PublicInvoicePreviewPage() {
   }
 
   return (
-      <div className="min-h-screen bg-muted p-4 sm:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-muted p-4 sm:p-8 flex items-center justify-center" ref={pageContainerRef}>
         <div className="max-w-4xl w-full mx-auto bg-white p-4 sm:p-8 border text-black shadow-2xl rounded-lg" id="invoice-card">
           <header className="flex justify-between items-start gap-4 mb-4">
               <div className="flex items-center justify-center w-1/6">
@@ -216,9 +246,9 @@ export default function PublicInvoicePreviewPage() {
                 <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
                 {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
                 {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
-                {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
-                {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
-                {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
+                {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
+                {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+                {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
               </div>
               <div className="border rounded-md p-2 space-y-1">
                 <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
@@ -239,5 +269,3 @@ export default function PublicInvoicePreviewPage() {
       </div>
   );
 }
-
-    

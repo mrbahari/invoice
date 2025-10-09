@@ -90,6 +90,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   const { data } = useData();
   const { toast } = useToast();
   const { invoices, products, stores, customers } = data;
+  const invoiceCardRef = useRef<HTMLDivElement>(null);
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -135,23 +136,24 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     }
   }, [invoice]);
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     const element = document.getElementById('invoice-card');
     if (!element) return;
-  
-    // Use the natural width of the element for a better capture
-    const elementWidth = element.offsetWidth;
-  
+
+    // Temporarily remove padding to get a clean shot
+    const originalPadding = element.style.padding;
+    element.style.padding = '0';
+    
+    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for styles to apply
+
     html2canvas(element, {
-      scale: 1.5, // Increase scale for better resolution
+      scale: 1.5,
       useCORS: true,
       allowTaint: true,
-      logging: false,
-      width: elementWidth,
-      windowWidth: elementWidth,
-      x: -window.scrollX,
-      y: 0,
     }).then(canvas => {
+      // Restore padding after taking the screenshot
+      element.style.padding = originalPadding;
+      
       const link = document.createElement('a');
       link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -234,7 +236,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </div>
         </FloatingToolbar>
 
-        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card">
+        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card" ref={invoiceCardRef}>
           <header className="flex justify-between items-start gap-4 mb-4">
               <div className="flex items-center justify-center w-1/6">
                   {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
@@ -314,9 +316,9 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
               {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
               {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
-              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
-              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
-              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
+              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
+              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
             </div>
             <div className="border rounded-md p-2 space-y-1">
               <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
@@ -338,5 +340,3 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     </TooltipProvider>
   );
 }
-
-    

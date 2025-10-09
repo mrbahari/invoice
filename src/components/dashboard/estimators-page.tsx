@@ -173,62 +173,60 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
 
-    const productMap: Record<string, { keyword: string[], aliases: string[] }> = {
-      'پنل RG باتیس': { keyword: ['پنل', 'RG', 'باتیس'], aliases: ['پنل RG باتیس', 'پنل', 'پانل گچی', 'panel'] },
-      'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'] },
-      'سازه f47': { keyword: ['f47'], aliases: ['f47'] },
-      'سازه u36': { keyword: ['u36'], aliases: ['u36'] },
-      'نبشی l25': { keyword: ['l25', 'نبشی'], aliases: ['l25'] },
-      'نبشی l24': { keyword: ['l24', 'نبشی'], aliases: ['l24', 'سپری'] },
-      'سپری t360': { keyword: ['t360', '3.60', 'سپری'], aliases: ['t360', '3.60'] },
-      'سپری t120': { keyword: ['t120', '1.20', 'سپری'], aliases: ['t120', '1.20'] },
-      'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'] },
-      'رانر': { keyword: ['رانر'], aliases: ['runner'] },
-      'استاد': { keyword: ['استاد'], aliases: ['stud'] },
-      'پیچ 2.5': { keyword: ['پیچ', '2.5', '۲.۵', 'tn25'], aliases: ['پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
-      'پیچ سازه': { keyword: ['پیچ', 'سازه'], aliases: ['پیچ سازه', 'ln9', 'پیچ LN'] },
-      'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'] },
-      'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'] },
-      'پشم سنگ': { keyword: ['پشم سنگ'], aliases: ['پشم سنگ', 'rockwool'] },
-      'اتصال W': { keyword: ['w', 'اتصال'], aliases: ['اتصال w', 'w clip', 'دبلیو'] },
-      'کلیپس': { keyword: ['کلیپس'], aliases: ['کلیپس', 'clip'] },
-      'براکت': { keyword: ['براکت'], aliases: ['براکت', 'bracket'] },
+    const productMap: Record<string, { keyword: string[], aliases: string[], categoryKeywords: string[] }> = {
+        'پنل RG باتیس': { keyword: ['پنل', 'rg', 'باتیس'], aliases: ['پنل rg باتیس', 'پنل', 'پانل گچی', 'panel'], categoryKeywords: ['پنل'] },
+        'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'], categoryKeywords: ['تایل'] },
+        'سازه f47': { keyword: ['f47'], aliases: ['f47'], categoryKeywords: ['سازه'] },
+        'سازه u36': { keyword: ['u36'], aliases: ['u36'], categoryKeywords: ['سازه'] },
+        'نبشی l25': { keyword: ['l25', 'نبشی'], aliases: ['l25'], categoryKeywords: ['سازه'] },
+        'نبشی l24': { keyword: ['l24', 'نبشی'], aliases: ['l24'], categoryKeywords: ['سپری', 'سازه'] },
+        'سپری t360': { keyword: ['t360', '3.60', 'سپری'], aliases: ['t360', '3.60'], categoryKeywords: ['سپری', 'سازه'] },
+        'سپری t120': { keyword: ['t120', '1.20', 'سپری'], aliases: ['t120', '1.20'], categoryKeywords: ['سپری', 'سازه'] },
+        'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'], categoryKeywords: ['سپری', 'سازه'] },
+        'رانر': { keyword: ['رانر'], aliases: ['runner'], categoryKeywords: ['سازه'] },
+        'استاد': { keyword: ['استاد'], aliases: ['stud'], categoryKeywords: ['سازه'] },
+        'پیچ 2.5': { keyword: ['پیچ', '2.5', '۲.۵', 'tn25'], aliases: ['پیچ 2.5', 'پیچ ۲.۵', 'tn25'], categoryKeywords: ['پیچ', 'ملزومات'] },
+        'پیچ سازه': { keyword: ['پیچ', 'سازه'], aliases: ['پیچ سازه', 'ln9', 'پیچ ln'], categoryKeywords: ['پیچ', 'ملزومات'] },
+        'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'], categoryKeywords: ['ملزومات'] },
+        'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'], categoryKeywords: ['ملزومات', 'پیچ'] },
+        'پشم سنگ': { keyword: ['پشم', 'سنگ'], aliases: ['پشم سنگ', 'rockwool'], categoryKeywords: ['عایق', 'پشم'] },
+        'اتصال w': { keyword: ['w', 'اتصال'], aliases: ['اتصال w', 'w clip', 'دبلیو'], categoryKeywords: ['ملزومات', 'اتصال'] },
+        'کلیپس': { keyword: ['کلیپس'], aliases: ['کلیپس', 'clip'], categoryKeywords: ['ملزومات', 'اتصال'] },
+        'براکت': { keyword: ['براکت'], aliases: ['براکت', 'bracket'], categoryKeywords: ['ملزومات', 'اتصال'] },
     };
 
     aggregatedResults.forEach(item => {
         let matchedProduct: Product | undefined;
         const materialNameLower = item.material.toLowerCase();
-        let foundMatch = false;
 
-        // Step 1: Find an exact or alias match with all keywords present.
         for (const key in productMap) {
-            const productKeywords = productMap[key].aliases.map(alias => alias.toLowerCase());
-            if (productKeywords.some(alias => materialNameLower.includes(alias))) {
-                matchedProduct = products.find(p => {
+            const productInfo = productMap[key];
+            const hasAliasMatch = productInfo.aliases.some(alias => materialNameLower.includes(alias.toLowerCase()));
+
+            if (hasAliasMatch) {
+                // Find products that match by name keywords
+                const potentialProducts = products.filter(p => {
                     const productNameLower = p.name.toLowerCase();
-                    // Ensure all defined keywords for this material are present in the product name
-                    return productMap[key].keyword.every(kw => productNameLower.includes(kw.toLowerCase()));
+                    return productInfo.keyword.every(kw => productNameLower.includes(kw.toLowerCase()));
                 });
+
+                // From potential products, find one that matches category keywords
+                matchedProduct = potentialProducts.find(p => {
+                    const category = categories.find(c => c.id === p.subCategoryId);
+                    if (!category) return false;
+                    const categoryNameLower = category.name.toLowerCase();
+                    return productInfo.categoryKeywords.some(catKw => categoryNameLower.includes(catKw.toLowerCase()));
+                });
+
                 if (matchedProduct) {
-                    foundMatch = true;
-                    break;
+                    break; 
                 }
             }
         }
         
-        // Step 2: If no match, find a substitute using the main keyword from the material name itself.
-        if (!foundMatch) {
-            const materialKeywords = item.material.split(/\s+/);
-             for (const keyword of materialKeywords) {
-                if (keyword.length > 2) { // Avoid very short keywords
-                    const substitute = products.find(p => p.name.toLowerCase().includes(keyword.toLowerCase()));
-                     if (substitute) {
-                         matchedProduct = substitute;
-                         foundMatch = true;
-                         break;
-                     }
-                }
-             }
+        // Fallback if no specific match is found
+        if (!matchedProduct) {
+            matchedProduct = products.find(p => p.name.toLowerCase() === materialNameLower);
         }
 
 

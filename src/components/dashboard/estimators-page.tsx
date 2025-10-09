@@ -39,6 +39,7 @@ export interface Estimation {
   id: string;
   description: string;
   results: MaterialResult[];
+  details?: any; // To hold extra details like waste calculation
 }
 
 type EstimatorType = 'grid-ceiling' | 'box' | 'flat-ceiling' | 'drywall' | 'smart-order';
@@ -115,11 +116,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     setSelectedEstimator(null);
   }
 
-  const handleAddToList = (description: string, results: MaterialResult[]) => {
+  const handleAddToList = (description: string, results: MaterialResult[], details?: any) => {
     const newEstimation: Estimation = {
         id: `est-${Date.now()}`,
         description,
-        results
+        results,
+        details,
     };
     setEstimationList(prev => [...prev, newEstimation]);
     handleBackToList();
@@ -259,7 +261,19 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     });
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
-    const invoiceDescription = estimationList.map(est => `- ${est.description}`).join('\n');
+    
+    let detailsDescription = '';
+    estimationList.forEach(est => {
+        if (est.details) {
+            detailsDescription += `\n\nجزئیات ${est.description}:\n`;
+            detailsDescription += `مساحت کل: ${formatNumber(est.details.area.toFixed(2))} متر مربع | `;
+            detailsDescription += `محیط: ${formatNumber(est.details.perimeter.toFixed(2))} متر\n`;
+            detailsDescription += `پرت تقریبی سازه: ${formatNumber(est.details.f47MainProfiles.waste.toFixed(2))} متر | `;
+            detailsDescription += `پرت تقریبی پنل: ${formatNumber(est.details.panelLayout.waste.toFixed(2))} متر مربع`;
+        }
+    });
+
+    const invoiceDescription = `ایجاد شده از برآورد مصالح برای بخش‌های:\n${estimationList.map(est => `- ${est.description}`).join('\n')}${detailsDescription}`;
 
     const newInvoice: Partial<Invoice> = {
       invoiceNumber: `${getStorePrefix('Est')}-${(invoices.length + 1).toString().padStart(4, '0')}`,
@@ -274,7 +288,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       additions: 0,
       tax: 0,
       total: subtotal,
-      description: `ایجاد شده از برآورد مصالح برای بخش‌های:\n${invoiceDescription}`,
+      description: invoiceDescription,
     };
     
     onNavigate('invoices', { invoice: newInvoice });

@@ -127,6 +127,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     const isDraggingRef = useRef(false);
     const mouseDownPos = useRef({ x: 0, y: 0 });
 
+    const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const similarProducts = useMemo(() => {
         if (!product) return [];
@@ -135,27 +136,32 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        const newQuantity = parseFormattedNumber(value);
-        setLocalQuantity(formatNumber(newQuantity));
-        if (newQuantity !== '') {
-            onUpdate(index, 'quantity', newQuantity);
-        }
+        setLocalQuantity(value); // Update display immediately
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(() => {
+            const newQuantity = parseFormattedNumber(value);
+            if (newQuantity !== '') {
+                onUpdate(index, 'quantity', newQuantity);
+            }
+        }, 500);
     };
     
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        const newPrice = parseFormattedNumber(value);
-        onUpdate(index, 'unitPrice', newPrice === '' ? 0 : newPrice);
+         onUpdate(index, 'unitPrice', parseFormattedNumber(value));
     };
 
     const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        const newTotal = parseFormattedNumber(value);
-        setLocalTotalPrice(formatNumber(newTotal));
-        if (newTotal !== '' && item.quantity > 0) {
-            const newUnitPrice = Math.round(newTotal / item.quantity);
-            onUpdate(index, 'unitPrice', newUnitPrice);
-        }
+        setLocalTotalPrice(value);
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(() => {
+            const newTotal = parseFormattedNumber(value);
+            if (newTotal !== '' && item.quantity > 0) {
+                const newUnitPrice = Math.round(newTotal / item.quantity);
+                onUpdate(index, 'unitPrice', newUnitPrice);
+            }
+        }, 500);
     };
 
     useEffect(() => {
@@ -459,10 +465,11 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   const [storeId, setStoreId] = useState<string>('');
   const [openItemId, setOpenItemId] = useState<string | null>(null);
 
-  // Display state for formatted numbers
-  const [displayDiscount, setDisplayDiscount] = useState('');
-  const [displayAdditions, setDisplayAdditions] = useState('');
-  const [displayTax, setDisplayTax] = useState('');
+  // Debounced values
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedDiscount, setDebouncedDiscount] = useState<number>(invoice.discount || 0);
+  const [debouncedAdditions, setDebouncedAdditions] = useState<number>(invoice.additions || 0);
+  const [debouncedTax, setDebouncedTax] = useState<number>(invoice.tax || 0);
   
   const [flyingProduct, setFlyingProduct] = useState<FlyingProduct | null>(null);
   const invoiceItemsCardRef = useRef<HTMLDivElement>(null);
@@ -503,12 +510,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     
     setStoreId(initialStoreId);
 
-    // Initialize display values
-    setDisplayDiscount(formatNumber(invoice.discount || 0));
-    setDisplayAdditions(formatNumber(invoice.additions || 0));
-    setDisplayTax(formatNumber(invoice.tax || 0));
-
-  }, [invoice.customerId, invoice.items, invoice.discount, invoice.additions, invoice.tax, customerList, products, stores]);
+  }, [invoice.customerId, invoice.items, customerList, products, stores]);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -533,16 +535,13 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   // Recalculate totals whenever items or financial fields change
   useEffect(() => {
     const subtotal = invoice.items?.reduce((acc, item) => acc + item.totalPrice, 0) || 0;
-    const discount = Number(invoice.discount) || 0;
-    const additions = Number(invoice.additions) || 0;
-    const tax = Number(invoice.tax) || 0;
-    const total = subtotal - discount + additions + tax;
+    const total = subtotal - debouncedDiscount + debouncedAdditions + debouncedTax;
 
     if (invoice.subtotal !== subtotal || invoice.total !== total) {
         setInvoice({ ...invoice, subtotal, total });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoice.items, invoice.discount, invoice.additions, invoice.tax]);
+  }, [invoice.items, debouncedDiscount, debouncedAdditions, debouncedTax]);
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -770,21 +769,22 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     document.body.classList.add('dragging-invoice-item');
   };
   
-  const handleFinancialFieldChange = (
-    field: 'discount' | 'additions' | 'tax',
-    value: string
-  ) => {
-    const numericValue = parseFormattedNumber(value);
-    const displayValue = formatNumber(numericValue);
-    
-    switch(field) {
-        case 'discount': setDisplayDiscount(displayValue); break;
-        case 'additions': setDisplayAdditions(displayValue); break;
-        case 'tax': setDisplayTax(displayValue); break;
-    }
+  const handleFinancialFieldChange = useCallback(
+    (field: 'discount' | 'additions' | 'tax', value: string) => {
+      const numericValue = parseFormattedNumber(value);
+      const setter = 
+        field === 'discount' ? setDebouncedDiscount :
+        field === 'additions' ? setDebouncedAdditions :
+        setDebouncedTax;
+      
+      setInvoice(prev => ({ ...prev, [field]: numericValue === '' ? 0 : numericValue }));
 
-    setInvoice({...invoice, [field]: numericValue === '' ? 0 : numericValue});
-  };
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = setTimeout(() => {
+        setter(numericValue === '' ? 0 : numericValue);
+      }, 500);
+    }, [setInvoice]
+  );
 
   const handleProcessInvoice = async (): Promise<string | null> => {
     if (!selectedCustomer) {
@@ -1212,16 +1212,16 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                    <Input id="discount" value={displayDiscount} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
+                                    <Input id="discount" value={formatNumber(invoice.discount)} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
                                 </div>
                                  <div className="grid gap-2">
                                     <Label htmlFor="additions">اضافات (ریال)</Label>
-                                    <Input id="additions" value={displayAdditions} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
+                                    <Input id="additions" value={formatNumber(invoice.additions)} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                                <Input id="tax" value={displayTax} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
+                                <Input id="tax" value={formatNumber(invoice.tax)} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
                             </div>
                             <Separator />
                             <div className="grid gap-2">

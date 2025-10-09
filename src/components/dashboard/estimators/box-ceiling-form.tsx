@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,10 +20,12 @@ type BoxCeilingFormProps = {
 export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [displayLength, setDisplayLength] = useState('');
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedLength, setDebouncedLength] = useState<number | ''>('');
   
 
   const results: MaterialResult[] = useMemo(() => {
-    const l = Number(length);
+    const l = Number(debouncedLength);
 
     if (isNaN(l) || l <= 0) {
       return [];
@@ -39,14 +41,20 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'پیچ ۲.۵', quantity: screws, unit: 'عدد' },
     ].filter(item => item.quantity > 0);
-  }, [length]);
+  }, [debouncedLength]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setDisplayLength(value);
     const numericValue = parseFormattedNumber(value);
-    displaySetter(formatNumber(numericValue));
-    setter(numericValue);
+    setLength(numericValue);
+
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+        setDebouncedLength(numericValue);
+    }, 500);
   };
+
 
   const handleAddClick = () => {
     if (results.length === 0) {
@@ -76,7 +84,7 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
                 type="text"
                 placeholder="مثال: ۱۵"
                 value={displayLength}
-                onChange={handleInputChange(setLength, setDisplayLength)}
+                onChange={handleInputChange}
               />
             </div>
           </div>

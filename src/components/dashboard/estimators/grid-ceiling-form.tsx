@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,10 +23,14 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
   const [displayLength, setDisplayLength] = useState('');
   const [displayWidth, setDisplayWidth] = useState('');
   
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedLength, setDebouncedLength] = useState<number | ''>('');
+  const [debouncedWidth, setDebouncedWidth] = useState<number | ''>('');
+  
 
   const results: MaterialResult[] = useMemo(() => {
-    const l = Number(length);
-    const w = Number(width);
+    const l = Number(debouncedLength);
+    const w = Number(debouncedWidth);
 
     if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0) {
       return [];
@@ -59,13 +63,22 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
       { material: 'آویز', quantity: hangers, unit: 'عدد' },
       { material: 'پیچ ۲.۵', quantity: screws, unit: 'عدد'},
     ].filter(item => item.quantity > 0);
-  }, [length, width]);
+  }, [debouncedLength, debouncedWidth]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const handleInputChange = (
+    value: string,
+    displaySetter: React.Dispatch<React.SetStateAction<string>>,
+    valueSetter: React.Dispatch<React.SetStateAction<number | ''>>,
+    debounceSetter: React.Dispatch<React.SetStateAction<number | ''>>
+  ) => {
+    displaySetter(value);
     const numericValue = parseFormattedNumber(value);
-    displaySetter(formatNumber(numericValue));
-    setter(numericValue);
+    valueSetter(numericValue);
+
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+        debounceSetter(numericValue);
+    }, 500);
   };
 
   const handleAddClick = () => {
@@ -95,7 +108,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
                 type="text"
                 placeholder="مثال: ۸"
                 value={displayLength}
-                onChange={handleInputChange(setLength, setDisplayLength)}
+                onChange={(e) => handleInputChange(e.target.value, setDisplayLength, setLength, setDebouncedLength)}
               />
             </div>
             <div className="grid gap-2">
@@ -105,7 +118,7 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
                 type="text"
                 placeholder="مثال: ۴"
                 value={displayWidth}
-                onChange={handleInputChange(setWidth, setDisplayWidth)}
+                onChange={(e) => handleInputChange(e.target.value, setDisplayWidth, setWidth, setDebouncedWidth)}
               />
             </div>
           </div>

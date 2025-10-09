@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, Loader2, ListTree, Mic, MicOff } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, ListTree, Mic, MicOff, X, FileImage } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { extractMaterialsFromFile } from '@/ai/flows/extract-materials-flow';
@@ -18,6 +18,7 @@ import { writeBatch, doc, collection } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
+import Image from 'next/image';
 
 
 type ExtractedProduct = {
@@ -35,6 +36,7 @@ type SmartOrderFormProps = {
 
 export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [textInput, setTextInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [extractedResults, setExtractedResults] = useState<ExtractedProduct[]>([]);
@@ -49,8 +51,19 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFile(acceptedFiles[0] || null);
+    const selectedFile = acceptedFiles[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
     setExtractedResults([]);
+
+    if (selectedFile.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => setFilePreview(e.target?.result as string);
+        reader.readAsDataURL(selectedFile);
+    } else {
+        setFilePreview(null);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -187,9 +200,36 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
     onAddToList(description, materialResults);
   };
   
-  const removeFile = () => {
+  const removeFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setFile(null);
+    setFilePreview(null);
     setExtractedResults([]);
+  }
+
+  const renderFilePreview = () => {
+    if (!file) return null;
+
+    return (
+        <div className="mt-4 p-3 border rounded-lg flex items-center justify-between bg-muted/30 relative">
+            <div className="flex items-center gap-3">
+                {filePreview ? (
+                     <Image src={filePreview} alt="پیش‌نمایش" width={48} height={48} className="object-cover rounded-md" />
+                ) : (
+                     file.type.includes('pdf') ? <FileText className="w-8 h-8 text-red-500" /> : <FileText className="w-8 h-8 text-primary" />
+                )}
+                <div className="grid gap-0.5">
+                    <span className="text-sm font-medium">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                    {(file.size / 1024).toFixed(2)} KB
+                    </span>
+                </div>
+            </div>
+             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={removeFile}>
+                <X className="h-4 w-4" />
+            </Button>
+        </div>
+    );
   }
 
   return (
@@ -233,19 +273,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
                             </div>
                         </div>
 
-                        {file && (
-                        <div className="mt-4 p-3 border rounded-lg flex items-center justify-between bg-muted/30">
-                            <div className="flex items-center gap-3">
-                            <FileText className="w-6 h-6 text-primary" />
-                            <div className="grid gap-0.5">
-                                <span className="text-sm font-medium">{file.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                {(file.size / 1024).toFixed(2)} KB
-                                </span>
-                            </div>
-                            </div>
-                        </div>
-                        )}
+                        {renderFilePreview()}
                         
                         <Button 
                             onClick={() => handleProcess('file')} 

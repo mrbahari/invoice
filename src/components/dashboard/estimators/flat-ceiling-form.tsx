@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -173,19 +173,26 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   const [suspensionHeight, setSuspensionHeight] = useState<number | ''>(20);
   const [joistSpacing, setJoistSpacing] = useState<number | ''>(60);
   
+  // Display states for formatted numbers
   const [displayLength, setDisplayLength] = useState('');
   const [displayWidth, setDisplayWidth] = useState('');
   const [displaySuspensionHeight, setDisplaySuspensionHeight] = useState(() => formatNumber(20));
   const [displayJoistSpacing, setDisplayJoistSpacing] = useState(() => formatNumber(60));
 
   const [ceilingType, setCeilingType] = useState<CeilingType>('B');
+
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   
+  const [debouncedLength, setDebouncedLength] = useState<number | ''>('');
+  const [debouncedWidth, setDebouncedWidth] = useState<number | ''>('');
+  const [debouncedSuspensionHeight, setDebouncedSuspensionHeight] = useState<number | ''>(20);
+  const [debouncedJoistSpacing, setDebouncedJoistSpacing] = useState<number | ''>(60);
 
   const { results, details } = useMemo(() => {
-    const l = Number(length);
-    const w = Number(width);
-    const sHeight = Number(suspensionHeight);
-    const jSpacing = Number(joistSpacing) / 100; // convert cm to m
+    const l = Number(debouncedLength);
+    const w = Number(debouncedWidth);
+    const sHeight = Number(debouncedSuspensionHeight);
+    const jSpacing = Number(debouncedJoistSpacing) / 100; // convert cm to m
 
     if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0 || isNaN(sHeight) || sHeight < 0 || isNaN(jSpacing) || jSpacing <=0) {
       return { results: [], details: null };
@@ -271,19 +278,22 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     };
 
     return { results: materialList.filter(item => item.quantity > 0), details: estimationDetails };
-  }, [length, width, suspensionHeight, joistSpacing, ceilingType]);
+  }, [debouncedLength, debouncedWidth, debouncedSuspensionHeight, debouncedJoistSpacing, ceilingType]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // For placeholder behavior, we set the actual value directly
-    if (value === '') {
-        displaySetter('');
-        setter('');
-        return;
-    }
+  const handleInputChange = (
+    value: string, 
+    displaySetter: React.Dispatch<React.SetStateAction<string>>,
+    valueSetter: React.Dispatch<React.SetStateAction<number | ''>>,
+    debounceSetter: React.Dispatch<React.SetStateAction<number | ''>>
+  ) => {
+    displaySetter(value); // Update display immediately
     const numericValue = parseFormattedNumber(value);
-    displaySetter(formatNumber(numericValue));
-    setter(numericValue);
+    valueSetter(numericValue);
+
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+        debounceSetter(numericValue);
+    }, 500); // 500ms delay
   };
 
   const handleAddClick = () => {
@@ -308,11 +318,11 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
             <div className="grid grid-cols-2 gap-6">
                 <div className="grid gap-2">
                     <Label htmlFor="length">طول اتاق (متر)</Label>
-                    <Input id="length" type="text" placeholder="مثال: ۶.۳۲" value={displayLength} onChange={handleInputChange(setLength, setDisplayLength)} />
+                    <Input id="length" type="text" placeholder="مثال: ۶.۳۲" value={displayLength} onChange={(e) => handleInputChange(e.target.value, setDisplayLength, setLength, setDebouncedLength)} />
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="width">عرض اتاق (متر)</Label>
-                    <Input id="width" type="text" placeholder="مثال: ۳.۱۴" value={displayWidth} onChange={handleInputChange(setWidth, setDisplayWidth)} />
+                    <Input id="width" type="text" placeholder="مثال: ۳.۱۴" value={displayWidth} onChange={(e) => handleInputChange(e.target.value, setDisplayWidth, setWidth, setDebouncedWidth)} />
                 </div>
             </div>
              <div className="grid grid-cols-2 gap-4 mt-6">
@@ -343,12 +353,12 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
             <div className="grid grid-cols-2 gap-6 mt-6">
                 <div className="grid gap-2">
                     <Label htmlFor="sHeight">ارتفاع آویز (سانتی‌متر)</Label>
-                    <Input id="sHeight" type="text" placeholder="مثال: ۲۰" value={displaySuspensionHeight} onChange={handleInputChange(setSuspensionHeight, setDisplaySuspensionHeight)} />
+                    <Input id="sHeight" type="text" placeholder="مثال: ۲۰" value={displaySuspensionHeight} onChange={(e) => handleInputChange(e.target.value, setDisplaySuspensionHeight, setSuspensionHeight, setDebouncedSuspensionHeight)} />
                     <p className="text-xs text-muted-foreground">اگر ارتفاع کمتر از ۱۲ سانتی‌متر باشد، از براکت به جای آویز U36 استفاده می‌شود.</p>
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="jSpacing">فاصله تیرچه‌ها (سانتی‌متر)</Label>
-                    <Input id="jSpacing" type="text" placeholder="مثال: ۶۰" value={displayJoistSpacing} onChange={handleInputChange(setJoistSpacing, setDisplayJoistSpacing)} />
+                    <Input id="jSpacing" type="text" placeholder="مثال: ۶۰" value={displayJoistSpacing} onChange={(e) => handleInputChange(e.target.value, setDisplayJoistSpacing, setJoistSpacing, setDebouncedJoistSpacing)} />
                     <p className="text-xs text-muted-foreground">فاصله مرکز به مرکز تیرچه‌های باربر سقف.</p>
                 </div>
             </div>

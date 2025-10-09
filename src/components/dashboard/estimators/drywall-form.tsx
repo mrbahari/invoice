@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,10 +30,14 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
   const [wallType, setWallType] = useState<WallType>('partition');
   const [includeWool, setIncludeWool] = useState(true);
   
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedLength, setDebouncedLength] = useState<number | ''>('');
+  const [debouncedHeight, setDebouncedHeight] = useState<number | ''>('');
+  
 
   const results: MaterialResult[] = useMemo(() => {
-    const l = Number(length);
-    const h = Number(height);
+    const l = Number(debouncedLength);
+    const h = Number(debouncedHeight);
 
     if (isNaN(l) || isNaN(h) || l <= 0 || h <= 0) {
       return [];
@@ -81,14 +85,24 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
     }
 
     return materialList.filter(item => item.quantity > 0);
-  }, [length, height, wallType, includeWool]);
+  }, [debouncedLength, debouncedHeight, wallType, includeWool]);
   
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const handleInputChange = (
+    value: string, 
+    displaySetter: React.Dispatch<React.SetStateAction<string>>,
+    valueSetter: React.Dispatch<React.SetStateAction<number | ''>>,
+    debounceSetter: React.Dispatch<React.SetStateAction<number | ''>>
+  ) => {
+    displaySetter(value);
     const numericValue = parseFormattedNumber(value);
-    displaySetter(formatNumber(numericValue));
-    setter(numericValue);
+    valueSetter(numericValue);
+    
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+        debounceSetter(numericValue);
+    }, 500);
   };
+
 
   const handleAddClick = () => {
     if (results.length === 0) {
@@ -121,7 +135,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
                     type="text"
                     placeholder="مثال: ۳.۲۰"
                     value={displayLength}
-                    onChange={handleInputChange(setLength, setDisplayLength)}
+                    onChange={(e) => handleInputChange(e.target.value, setDisplayLength, setLength, setDebouncedLength)}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -131,7 +145,7 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
                     type="text"
                     placeholder="مثال: ۲.۸۰"
                     value={displayHeight}
-                    onChange={handleInputChange(setHeight, setDisplayHeight)}
+                    onChange={(e) => handleInputChange(e.target.value, setDisplayHeight, setHeight, setDebouncedHeight)}
                   />
                 </div>
               </div>

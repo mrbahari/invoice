@@ -122,6 +122,8 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
 
     const product = products.find(p => p.id === item.productId);
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
+    const brandType = item.productName.includes('کی پلاس') ? 'کی پلاس' : 'متفرقه';
+
 
     // Click vs Drag detection state
     const isDraggingRef = useRef(false);
@@ -217,7 +219,12 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                     )}
                                 </div>
                                 <div className="grid gap-0.5 overflow-hidden">
-                                  <p className="font-semibold truncate">{item.productName}</p>
+                                  <div className="flex items-center gap-2">
+                                     <p className="font-semibold truncate">{item.productName}</p>
+                                     <Badge variant={brandType === 'کی پلاس' ? 'default' : 'secondary'} className="h-4 px-1.5 text-[10px] whitespace-nowrap">
+                                        {brandType}
+                                    </Badge>
+                                  </div>
                                   <p className="text-xs text-muted-foreground font-mono truncate">
                                     {formatNumber(item.quantity)} {item.unit} &times; {formatCurrency(item.unitPrice)}
                                   </p>
@@ -299,7 +306,6 @@ const AddProductsComponent = React.memo(({
     filteredProducts,
     invoiceItems,
     onAddProduct,
-    onRemoveProduct,
 }: {
     storeId: string;
     setStoreId: (id: string) => void;
@@ -311,40 +317,47 @@ const AddProductsComponent = React.memo(({
     setProductSearch: (term: string) => void;
     filteredProducts: Product[];
     invoiceItems: InvoiceItem[];
-    onAddProduct: (product: Product) => void;
-    onRemoveProduct: (product: Product) => void;
+    onAddProduct: (product: Product, quantity: number) => void;
 }) => {
     const draggableScrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
-    
-    // States to detect click vs. drag
-    const isDraggingRef = useRef(false);
-    const startPos = useRef({ x: 0, y: 0 });
 
-    const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-        isDraggingRef.current = false;
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-        startPos.current = { x: clientX, y: clientY };
-    };
+    const [activeInput, setActiveInput] = useState<string | null>(null);
+    const [quantity, setQuantity] = useState<string>('1');
 
-    const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-        const dx = Math.abs(clientX - startPos.current.x);
-        const dy = Math.abs(clientY - startPos.current.y);
-        if (dx > 5 || dy > 5) {
-            isDraggingRef.current = true;
+    const handleProductClick = (productId: string) => {
+        if (activeInput === productId) {
+            // If clicking the same product, add it
+            const numQuantity = parseFormattedNumber(quantity);
+            if (numQuantity > 0) {
+                 const product = filteredProducts.find(p => p.id === productId);
+                 if (product) onAddProduct(product, numQuantity);
+            }
+            setActiveInput(null);
+            setQuantity('1');
+        } else {
+            // Open the input for a new product
+            setActiveInput(productId);
+            setQuantity('1');
         }
     };
     
-    const handleMouseUp = (action: 'add' | 'remove', product: Product) => {
-        if (!isDraggingRef.current) {
-            if (action === 'add') onAddProduct(product);
-            else onRemoveProduct(product);
-        }
+    const handleQuantityChange = (value: number) => {
+        const newQuantity = Math.max(1, (parseFormattedNumber(quantity) || 0) + value);
+        setQuantity(formatNumber(newQuantity));
     };
 
+    const handleConfirm = (e: React.MouseEvent, productId: string) => {
+        e.stopPropagation();
+        const numQuantity = parseFormattedNumber(quantity);
+        if (numQuantity > 0) {
+            const product = filteredProducts.find(p => p.id === productId);
+            if (product) onAddProduct(product, numQuantity);
+        }
+        setActiveInput(null);
+        setQuantity('1');
+    };
+    
     return (
         <Card className="sticky top-20">
             <CardHeader>
@@ -393,32 +406,37 @@ const AddProductsComponent = React.memo(({
 
                             return (
                             <div key={product.id} className="group flex flex-col">
-                                <Card className="overflow-hidden">
+                                <Card className="overflow-hidden" onClick={() => handleProductClick(product.id)}>
                                     <div className="relative aspect-square w-full">
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                        <div 
-                                          className="absolute inset-0 flex"
-                                          onMouseDown={handleMouseDown}
-                                          onTouchStart={handleMouseDown}
-                                          onMouseMove={handleMouseMove}
-                                          onTouchMove={handleMouseMove}
-                                        >
-                                            <div 
-                                                className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/40"
-                                                onMouseUp={() => handleMouseUp('remove', product)}
-                                                onTouchEnd={() => handleMouseUp('remove', product)}
-                                            >
-                                                <Minus className="h-6 w-6 text-white" />
-                                            </div>
-                                            <div 
-                                                className="w-1/2 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-green-500/20 hover:bg-green-500/40"
-                                                onMouseUp={() => handleMouseUp('add', product)}
-                                                onTouchEnd={() => handleMouseUp('add', product)}
-                                            >
-                                                <Plus className="h-6 w-6 text-white" />
-                                            </div>
-                                        </div>
-                                        {isInInvoice && (
+                                         <AnimatePresence>
+                                            {activeInput === product.id && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.8 }}
+                                                    className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-1 gap-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="flex items-center gap-1">
+                                                        <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleQuantityChange(-1)}><Minus className="h-3 w-3" /></Button>
+                                                        <Input 
+                                                            className="h-7 w-12 text-center font-mono text-sm p-1" 
+                                                            value={quantity}
+                                                            onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
+                                                            autoFocus
+                                                            onFocus={(e) => e.target.select()}
+                                                        />
+                                                        <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleQuantityChange(1)}><Plus className="h-3 w-3" /></Button>
+                                                    </div>
+                                                    <Button size="sm" className="h-6 px-2 text-xs w-full bg-green-600 hover:bg-green-700" onClick={(e) => handleConfirm(e, product.id)}>
+                                                        <Check className="ml-1 h-3 w-3" />
+                                                        افزودن
+                                                    </Button>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                        {isInInvoice && activeInput !== product.id && (
                                             <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white select-none pointer-events-none">
                                                 {formatNumber(invoiceItem?.quantity)}
                                             </Badge>
@@ -604,7 +622,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   }, [customerSearch, filteredCustomers]);
 
   
-  const handleAddProduct = (product: Product) => {
+  const handleAddProduct = (product: Product, quantity: number) => {
       const currentItems = invoice.items ? [...invoice.items] : [];
       const existingItemIndex = currentItems.findIndex(item => item.productId === product.id && item.unit === product.unit);
       
@@ -614,7 +632,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
         // Item exists, update quantity
         newItems = currentItems.map((item, index) => {
           if (index === existingItemIndex) {
-            const newQuantity = item.quantity + 1;
+            const newQuantity = item.quantity + quantity;
             return {
               ...item,
               imageUrl: product.imageUrl,
@@ -629,49 +647,16 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
         const newItem: InvoiceItem = {
           productId: product.id,
           productName: product.name,
-          quantity: 1,
+          quantity: quantity,
           unit: product.unit,
           unitPrice: product.price,
-          totalPrice: product.price,
+          totalPrice: product.price * quantity,
           imageUrl: product.imageUrl, // Make sure to add the imageUrl
         };
         newItems = [newItem, ...currentItems];
       }
       
       setInvoice({...invoice, items: newItems});
-  };
-
-  const handleRemoveProduct = (product: Product) => {
-      if (!invoice.items) return invoice;
-
-      const existingItemIndex = invoice.items.findIndex(item => item.productId === product.id);
-
-      if (existingItemIndex === -1) {
-        return invoice; // Product not in invoice, do nothing
-      }
-
-      const itemToUpdate = invoice.items[existingItemIndex];
-      let newItems;
-
-      if (itemToUpdate.quantity > 1) {
-        // Decrease quantity
-        newItems = invoice.items.map((item, index) => {
-          if (index === existingItemIndex) {
-            const newQuantity = item.quantity - 1;
-            return {
-              ...item,
-              quantity: newQuantity,
-              totalPrice: newQuantity * item.unitPrice,
-            };
-          }
-          return item;
-        });
-      } else {
-        // Remove item if quantity is 1
-        newItems = invoice.items.filter((_, index) => index !== existingItemIndex);
-      }
-
-      setInvoice({ ...invoice, items: newItems });
   };
 
 
@@ -1158,7 +1143,6 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                       filteredProducts={filteredProducts}
                       invoiceItems={invoice.items || []}
                       onAddProduct={handleAddProduct}
-                      onRemoveProduct={handleRemoveProduct}
                     />
                 </div>
 
@@ -1169,11 +1153,6 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>آیتم‌های فاکتور</CardTitle>
-                            {invoiceBrandType && (
-                                <Badge variant={invoiceBrandType === 'کی پلاس' ? 'default' : 'secondary'}>
-                                    {invoiceBrandType}
-                                </Badge>
-                            )}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -1272,7 +1251,6 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                     filteredProducts={filteredProducts}
                     invoiceItems={invoice.items || []}
                     onAddProduct={handleAddProduct}
-                    onRemoveProduct={handleRemoveProduct}
                   />
             </div>
         </div>

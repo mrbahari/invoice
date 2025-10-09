@@ -255,9 +255,28 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={(e) => { e.stopPropagation(); onRemove(index); }}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                                    <Shuffle className="h-4 w-4" />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                            <Shuffle className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-64">
+                                        <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <ScrollArea className="h-[200px]">
+                                        {similarProducts.length > 0 ? similarProducts.map(p => (
+                                            <DropdownMenuItem key={p.id} onSelect={() => onReplace(index, p)} className="flex items-center gap-2">
+                                                <Image src={p.imageUrl} alt={p.name} width={32} height={32} className="rounded-md object-cover" />
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold truncate">{p.name}</p>
+                                                    <p className="text-xs text-muted-foreground font-mono">{formatCurrency(p.price)}</p>
+                                                </div>
+                                            </DropdownMenuItem>
+                                        )) : <p className="p-4 text-center text-xs text-muted-foreground">محصول مشابهی یافت نشد.</p>}
+                                        </ScrollArea>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                                 <div className="h-8 w-8 flex items-center justify-center">
                                     <ChevronsUpDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
                                 </div>
@@ -290,35 +309,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <Input id={`total-price-${index}`} value={localTotalPrice} onChange={handleTotalPriceChange} placeholder="مبلغ کل" className="h-9 font-mono" />
                             </div>
                         </div>
-                        <AnimatePresence>
-                        {isOpen && similarProducts.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden"
-                            >
-                                <Separator className="my-2" />
-                                <p className="text-xs font-semibold text-muted-foreground mb-2">محصولات مشابه پیشنهادی:</p>
-                                <ScrollArea className="w-full whitespace-nowrap">
-                                    <div className="flex gap-3 pb-2">
-                                        {similarProducts.map(p => (
-                                            <Card key={p.id} onClick={() => onReplace(index, p)} className="flex-shrink-0 w-32 cursor-pointer hover:border-primary transition-colors">
-                                                <div className="relative aspect-square w-full">
-                                                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover rounded-t-lg" />
-                                                </div>
-                                                <div className="p-2">
-                                                    <p className="text-xs font-semibold truncate">{p.name}</p>
-                                                    <p className="text-xs text-muted-foreground font-mono">{formatCurrency(p.price)}</p>
-                                                </div>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            </motion.div>
-                        )}
-                        </AnimatePresence>
                     </div>
                 </CollapsibleContent>
             </div>
@@ -1297,3 +1287,4 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     </TooltipProvider>
   );
 }
+

@@ -88,6 +88,7 @@ type InvoicePreviewPageProps = {
 export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: InvoicePreviewPageProps) {
   
   const { data } = useData();
+  const { invoices, customers, stores, products } = data;
   const { toast } = useToast();
   const invoiceCardRef = useRef<HTMLDivElement>(null);
 
@@ -150,6 +151,10 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
       scale: 2,
       useCORS: true,
       allowTaint: true,
+      x: -window.scrollX,
+      y: -window.scrollY,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
     }).then(canvas => {
       // Restore padding
       if(container) container.style.padding = originalPadding;

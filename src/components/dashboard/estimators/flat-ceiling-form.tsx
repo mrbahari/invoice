@@ -199,7 +199,6 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
     // 2. L25 Profiles
     const l25Profiles = Math.ceil(perimeter / L25_LENGTH);
-    const l25Screws = Math.ceil(perimeter / 0.2); // This is likely for wall attachment (mihk o chashni)
 
     // 3. F47 Main Runners (Load-bearing)
     const f47MainRunnerCount = Math.ceil(shortSide / 0.6) - 1;
@@ -230,7 +229,6 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     // 6. Panel Screws (TN25 - pich 2.5)
     // Screws are needed for F47s and for perimeter L25s
     const panelScrewsForF47 = Math.ceil(f47MainTotalLength / 0.2);
-    // Perimeter screws are attached to L25, not panels directly to wall, so we use panel screw logic
     const panelScrewsForL25 = Math.ceil(perimeter / 0.2); 
     const totalPanelScrews = panelScrewsForF47 + panelScrewsForL25;
     
@@ -248,7 +246,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
       { material: 'پنل RG باتیس', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'سازه F47', quantity: f47MainProfiles + f47SecondaryProfiles, unit: 'شاخه' },
-      { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
+      { material: 'پیچ 2.5', quantity: totalPanelScrews, unit: 'عدد' },
     ];
     
     if (u36Profiles > 0) {

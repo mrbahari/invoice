@@ -97,6 +97,12 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     return () => setSearchVisible(true);
   }, [setSearchVisible]);
 
+  useEffect(() => {
+    if (selectedEstimator) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [selectedEstimator]);
+
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
      if (!user) {
@@ -179,7 +185,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
       'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'] },
       'رانر': { keyword: ['رانر'], aliases: ['runner'] },
       'استاد': { keyword: ['استاد'], aliases: ['stud'] },
-      'پیچ پنل': { keyword: ['پیچ', 'پنل', '2.5'], aliases: ['پیچ پنل', 'پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
+      'پیچ 2.5': { keyword: ['پیچ', '2.5', '۲.۵', 'tn25'], aliases: ['پیچ 2.5', 'پیچ ۲.۵', 'tn25'] },
       'پیچ سازه': { keyword: ['پیچ', 'سازه'], aliases: ['پیچ سازه', 'ln9', 'پیچ LN'] },
       'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'] },
       'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'] },

@@ -582,7 +582,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   // Recalculate totals whenever items or financial fields change
   useEffect(() => {
     const subtotal = invoice.items?.reduce((acc, item) => acc + item.totalPrice, 0) || 0;
-    const total = subtotal - (invoice.discount || 0) + (invoice.additions || 0) + (invoice.tax || 0);
+    const total = subtotal - (parseCurrency(invoice.discount) || 0) + (parseCurrency(invoice.additions) || 0) + (parseCurrency(invoice.tax) || 0);
 
     if (invoice.subtotal !== subtotal || invoice.total !== total) {
         setInvoice({ ...invoice, subtotal, total });
@@ -785,8 +785,8 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   
   const handleFinancialFieldChange = useCallback(
     (field: 'discount' | 'additions' | 'tax', value: string) => {
-      const numericValue = parseCurrency(value);
-      setInvoice(prev => ({ ...prev, [field]: numericValue === '' ? 0 : numericValue }));
+      const formattedValue = formatCurrency(parseCurrency(value));
+      setInvoice(prev => ({ ...prev, [field]: formattedValue as any }));
     }, [setInvoice]
   );
 
@@ -811,7 +811,10 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
         ...invoice,
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
-        customerEmail: selectedCustomer.email
+        customerEmail: selectedCustomer.email,
+        discount: parseCurrency(invoice.discount),
+        additions: parseCurrency(invoice.additions),
+        tax: parseCurrency(invoice.tax),
     } as Omit<Invoice, 'id'>;
 
     if (isEditMode && processedInvoiceId) {
@@ -948,7 +951,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
           </motion.div>
         )}
       </AnimatePresence>
-    <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
+    <form className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
       
        <FloatingToolbar pageKey="invoice-editor">
             <div className="flex flex-col items-center gap-1">
@@ -965,7 +968,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                     <AlertDialogTrigger asChild>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8">
+                                <Button type="button" variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8" onClick={(e) => e.stopPropagation()}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
@@ -1001,7 +1004,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
             <Separator orientation="horizontal" className="w-6" />
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleSaveAndExit} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
+                    <Button type="button" onClick={handleSaveAndExit} disabled={isProcessing} variant="ghost" size="icon" className="w-10 h-10 bg-green-600 text-white hover:bg-green-700">
                         <Save className="h-5 w-5" />
                     </Button>
                 </TooltipTrigger>
@@ -1216,16 +1219,16 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label htmlFor="discount">تخفیف (ریال)</Label>
-                                    <Input id="discount" value={formatCurrency(invoice.discount)} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
+                                    <Input id="discount" value={invoice.discount} onChange={(e) => handleFinancialFieldChange('discount', e.target.value)} className="font-mono" />
                                 </div>
                                  <div className="grid gap-2">
                                     <Label htmlFor="additions">اضافات (ریال)</Label>
-                                    <Input id="additions" value={formatCurrency(invoice.additions)} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
+                                    <Input id="additions" value={invoice.additions} onChange={(e) => handleFinancialFieldChange('additions', e.target.value)} className="font-mono" />
                                 </div>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="tax">مالیات و ارزش افزوده (ریال)</Label>
-                                <Input id="tax" value={formatCurrency(invoice.tax)} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
+                                <Input id="tax" value={invoice.tax} onChange={(e) => handleFinancialFieldChange('tax', e.target.value)} className="font-mono" />
                             </div>
                             <Separator />
                             <div className="grid gap-2">
@@ -1261,7 +1264,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                   />
             </div>
         </div>
-    </div>
+    </form>
     </TooltipProvider>
   );
 }

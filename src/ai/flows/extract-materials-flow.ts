@@ -20,6 +20,7 @@ const MaterialSchema = z.object({
 const ExtractMaterialsInputSchema = z.object({
   fileDataUri: z.string().optional().describe("A file (image, PDF, text) encoded as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
   textInput: z.string().optional().describe("A string of text containing the list of materials."),
+  brandType: z.enum(['k-plus', 'miscellaneous']).optional().describe("The desired brand for material matching. 'k-plus' for K-Plus brand, 'miscellaneous' for non-K-Plus brands."),
   existingProducts: z.array(z.custom<Product>()).describe("A list of existing products in the store for matching."),
   existingCategories: z.array(z.custom<Category>()).describe("A list of existing categories in the store."),
 });
@@ -44,21 +45,30 @@ const extractMaterialsPrompt = ai.definePrompt({
     input: { schema: z.custom<ExtractMaterialsInput>() },
     output: { schema: ExtractMaterialsOutputSchema },
     prompt: `
-    You are an expert assistant for a construction material supplier in Iran. Your task is to analyze the provided content and extract a list of materials.
+    You are an expert assistant for a construction material supplier in Iran. Your task is to analyze the provided content and extract a list of materials, matching them against a list of existing products based on a specified brand preference.
 
     **CRITICAL INSTRUCTIONS:**
 
-    1.  **Analyze Context First:** Before processing individual items, analyze the entire list to understand the type of construction project (e.g., if you see "F47" and "U36", you can infer it's a flat ceiling project). This context is key.
+    1.  **Brand Preference is KEY:**
+        {{#if brandType}}
+        *   **Brand Type:** "{{brandType}}"
+        *   **If 'k-plus':** You MUST ONLY match with products that have "کی پلاس" in their name.
+        *   **If 'miscellaneous':** You MUST ONLY match with products that DO NOT have "کی پلاس" in their name.
+        {{else}}
+        *   **Brand Type:** Not specified. Find the best possible match regardless of brand.
+        {{/if}}
 
-    2.  **Deduce Necessary Materials:** Based on the project type, you know certain materials *must* exist. For a flat ceiling project, "پنل" (panel) and "نبشی" (L-profile) are essential.
+    2.  **Context is Queen:**
+        *   Before processing individual items, analyze the entire list to understand the project type (e.g., if you see "F47" and "U36", infer it's a flat ceiling project; if you see "T360", "T120", it's a grid ceiling). This context is vital.
+        *   Know that K-Plus brand is relevant for flat ceilings, walls, and boxes, but NOT for grid ceilings or tiles.
 
-    3.  **Intelligent Matching:**
-        *   First, try to find an exact or very close match for each item in the 'existingProducts' list. Your matching should be very accurate and consider common synonyms and typos in Persian (e.g., "پیچ کناف" should match "پیچ پنل").
-        *   **If no direct match is found, use your contextual knowledge.** For example, if the project is a flat ceiling and you see an item like "پانل 12.5 درجه یک", you must recognize "پانل" as a variant of "پنل". Since you know a panel is required, you should match this to the default existing panel product (e.g., "پنل RG باتیس").
-        *   When a match is found (either direct or through deduction), you MUST use the existing product's data (id, name, unit). Set 'isNew' to false.
+    3.  **Intelligent Matching (within Brand context):**
+        *   First, try to find an exact or very close match for each item in the 'existingProducts' list that fits the brand preference. Your matching must be very accurate, considering Persian synonyms and typos (e.g., "پیچ کناف" should match "پیچ پنل").
+        *   **If no direct match is found, use your contextual knowledge.** For example, if the project is a flat ceiling and you see "پانل 12.5 درجه یک", you must recognize "پانل" as a variant of "پنل". Since a panel is required, you must match this to the default panel product that fits the brand preference (e.g., "پنل RG کی پلاس" if brand is 'k-plus', or "پنل RG باتیس" if brand is 'miscellaneous').
+        *   When a match is found (direct or deduced), use the existing product's data (id, name, unit). Set 'isNew' to false.
 
     4.  **Handling New Products:**
-        *   Only if an item cannot be matched to an existing product, even with contextual deduction, should you treat it as a new product.
+        *   Only if an item cannot be matched to an existing product, even with contextual deduction and respecting the brand preference, should you treat it as a new product.
         *   For new products, set 'isNew' to true, and use the extracted name as a temporary 'productId' and 'name'.
 
     5.  **Output:** The final response MUST be in PERSIAN.

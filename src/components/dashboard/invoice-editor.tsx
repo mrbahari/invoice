@@ -858,6 +858,16 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
         setCustomerSearch('');
     }
   };
+    
+  const normalizeName = (name: string) => {
+    return name
+      .replace(/کی پلاس|کناف ایران|باتیس/gi, '')
+      .replace(/[\u064B-\u0652]/g, '') // remove arabic diacritics
+      .replace(/ك/g, 'ک') // replace arabic kaf with persian kaf
+      .replace(/ي/g, 'ی') // replace arabic yeh with persian yeh
+      .replace(/\s+/g, '') // remove all spaces
+      .toLowerCase();
+  };
 
   const handleBrandSwap = useCallback(() => {
     if (!invoice.items || invoice.items.length === 0) return;
@@ -868,21 +878,20 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
     const newItems = invoice.items.map(item => {
       const currentProduct = products.find(p => p.id === item.productId);
-      if (!currentProduct) return item; // Cannot swap if product doesn't exist
+      if (!currentProduct) return item;
 
-      // Clean the current product name to find a base name
-      const baseName = currentProduct.name.replace(/کی پلاس|باتیس|کناف ایران/gi, '').trim();
+      const baseName = normalizeName(currentProduct.name);
 
-      // Find an equivalent product
       const equivalentProduct = products.find(p => {
         if (p.id === currentProduct.id || p.subCategoryId !== currentProduct.subCategoryId) {
           return false;
         }
 
-        const candidateBaseName = p.name.replace(/کی پلاس|باتیس|کناف ایران/gi, '').trim();
+        const candidateBaseName = normalizeName(p.name);
         if (candidateBaseName !== baseName) return false;
 
         const isCandidateKPlus = p.name.includes('کی پلاس');
+        
         if (targetBrand === 'k-plus') return isCandidateKPlus;
         if (targetBrand === 'miscellaneous') return !isCandidateKPlus;
         
@@ -900,15 +909,23 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
           totalPrice: item.quantity * equivalentProduct.price,
         };
       }
-      return item; // Return original item if no equivalent is found
+      return item;
     });
 
     setInvoice({ ...invoice, items: newItems });
-    toast({
-        variant: 'success',
-        title: 'تعویض برند انجام شد',
-        description: `${updatedCount} محصول به برند ${targetBrand === 'k-plus' ? 'کی پلاس' : 'متفرقه'} تغییر کرد.`
-    });
+    if (updatedCount > 0) {
+      toast({
+          variant: 'success',
+          title: 'تعویض برند انجام شد',
+          description: `${updatedCount} محصول به برند ${targetBrand === 'k-plus' ? 'کی پلاس' : 'متفرقه'} تغییر کرد.`
+      });
+    } else {
+      toast({
+          variant: 'default',
+          title: 'محصولی تعویض نشد',
+          description: `هیچ معادل با برند ${targetBrand === 'k-plus' ? 'کی پلاس' : 'متفرقه'} یافت نشد.`
+      });
+    }
   }, [invoice, products, setInvoice, toast]);
 
   const invoiceBrandType = useMemo(() => {

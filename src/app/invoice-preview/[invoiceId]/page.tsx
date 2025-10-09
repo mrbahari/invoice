@@ -140,7 +140,7 @@ export default function PublicInvoicePreviewPage() {
       container.style.padding = originalPadding;
       element.style.width = originalWidth;
       
-      const margin = 10;
+      const margin = 20;
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = canvas.width + margin * 2;
       finalCanvas.height = canvas.height + margin * 2;
@@ -181,7 +181,7 @@ export default function PublicInvoicePreviewPage() {
 
   return (
       <div className="min-h-screen bg-muted p-4 sm:p-8 flex items-center justify-center" ref={pageContainerRef}>
-        <div className="max-w-4xl w-full mx-auto bg-white p-4 sm:p-8 border text-black shadow-2xl rounded-lg" id="invoice-card" style={{padding: '10px'}}>
+        <div className="max-w-4xl w-full mx-auto bg-white p-4 sm:p-8 border text-black shadow-2xl rounded-lg" id="invoice-card" style={{padding: '20px'}}>
           <header className="flex justify-between items-start gap-4 mb-4">
               <div className="flex items-center justify-center w-1/6">
                   {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}
@@ -242,6 +242,7 @@ export default function PublicInvoicePreviewPage() {
                                 width={40} 
                                 height={40} 
                                 className="object-contain rounded-md mx-auto"
+                                unoptimized
                             />
                         )}
                     </td>
@@ -284,3 +285,5 @@ export default function PublicInvoicePreviewPage() {
       </div>
   );
 }
+
+    

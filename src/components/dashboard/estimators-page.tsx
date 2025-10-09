@@ -173,55 +173,52 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
 
-    const productMap: Record<string, { keyword: string[], categoryKeywords: string[] }> = {
-        'پنل RG باتیس': { keyword: ['پنل', 'rg', 'باتیس'], categoryKeywords: ['پنل'] },
-        'تایل پی وی سی': { keyword: ['تایل', 'pvc'], categoryKeywords: ['تایل'] },
-        'سازه f47': { keyword: ['f47', 'سازه', 'پروفیل'], categoryKeywords: ['سازه'] },
-        'سازه u36': { keyword: ['u36', 'سازه', 'پروفیل'], categoryKeywords: ['سازه'] },
-        'نبشی l25': { keyword: ['l25', 'نبشی', 'پروفیل'], categoryKeywords: ['سازه'] },
-        'نبشی l24': { keyword: ['l24', 'نبشی', 'سپری'], categoryKeywords: ['سپری', 'سازه'] },
-        'سپری t360': { keyword: ['t360', '3.60', 'سپری', 'پروفیل'], categoryKeywords: ['سپری', 'سازه'] },
-        'سپری t120': { keyword: ['t120', '1.20', 'سپری', 'پروفیل'], categoryKeywords: ['سپری', 'سازه'] },
-        'سپری t60': { keyword: ['t60', '0.60', 'سپری', 'پروفیل'], categoryKeywords: ['سپری', 'سازه'] },
-        'رانر': { keyword: ['رانر', 'runner', 'پروفیل'], categoryKeywords: ['سازه'] },
-        'استاد': { keyword: ['استاد', 'stud', 'پروفیل'], categoryKeywords: ['سازه'] },
-        'پیچ 2.5': { keyword: ['پیچ', '2.5', '۲.۵', 'tn25'], categoryKeywords: ['پیچ', 'ملزومات'] },
-        'پیچ سازه': { keyword: ['پیچ', 'سازه', 'ln9'], categoryKeywords: ['پیچ', 'ملزومات'] },
-        'آویز': { keyword: ['آویز', 'hanger'], categoryKeywords: ['ملزومات'] },
-        'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], categoryKeywords: ['ملزومات', 'پیچ'] },
-        'پشم سنگ': { keyword: ['پشم', 'سنگ', 'rockwool'], categoryKeywords: ['عایق', 'پشم'] },
-        'اتصال w': { keyword: ['w', 'اتصال', 'دبلیو'], categoryKeywords: ['ملزومات', 'اتصال'] },
-        'کلیپس': { keyword: ['کلیپس', 'clip'], categoryKeywords: ['ملزومات', 'اتصال'] },
-        'براکت': { keyword: ['براکت', 'bracket'], categoryKeywords: ['ملزومات', 'اتصال'] },
+    const productMap: Record<string, { keywords: string[] }> = {
+        'پنل RG باتیس': { keywords: ['پنل', 'rg', 'باتیس'] },
+        'تایل پی وی سی': { keywords: ['تایل', 'pvc'] },
+        'سازه f47': { keywords: ['f47', 'سازه', 'پروفیل'] },
+        'سازه u36': { keywords: ['u36', 'سازه', 'پروفیل'] },
+        'نبشی l25': { keywords: ['l25', 'نبشی', 'پروفیل'] },
+        'نبشی l24': { keywords: ['l24', 'نبشی', 'سپری'] },
+        'سپری t360': { keywords: ['t360', '3.60', 'سپری', 'پروفیل'] },
+        'سپری t120': { keywords: ['t120', '1.20', 'سپری', 'پروفیل'] },
+        'سپری t60': { keywords: ['t60', '0.60', 'سپری', 'پروفیل'] },
+        'رانر': { keywords: ['رانر', 'runner', 'پروفیل'] },
+        'استاد': { keywords: ['استاد', 'stud', 'پروفیل'] },
+        'پیچ 2.5': { keywords: ['پیچ', '2.5', '۲.۵', 'tn25', 'پنل'] },
+        'پیچ سازه': { keywords: ['پیچ', 'سازه', 'ln9'] },
+        'آویز': { keywords: ['آویز', 'hanger'] },
+        'میخ و چاشنی': { keywords: ['میخ', 'چاشنی'] },
+        'پشم سنگ': { keywords: ['پشم', 'سنگ', 'rockwool'] },
+        'اتصال w': { keywords: ['w', 'اتصال', 'دبلیو', 'w-connector'] },
+        'کلیپس': { keywords: ['کلیپس', 'clip'] },
+        'براکت': { keywords: ['براکت', 'bracket'] },
     };
 
     aggregatedResults.forEach(item => {
-        let matchedProduct: Product | undefined;
+        let bestMatch: { product: Product, score: number } | null = null;
         const materialNameLower = item.material.toLowerCase();
         
-        for (const key in productMap) {
-            const productInfo = productMap[key];
-            // Check if the item material name is a match for one of the keys in productMap
-            if (key.toLowerCase() === materialNameLower) {
-                // Find products that match by name keywords
-                 const potentialProducts = products.filter(p => {
-                    const productNameLower = p.name.toLowerCase();
-                    return productInfo.keyword.some(kw => productNameLower.includes(kw.toLowerCase()));
-                });
-                
-                // From potential products, find one that matches category keywords
-                matchedProduct = potentialProducts.find(p => {
-                    const category = categories.find(c => c.id === p.subCategoryId);
-                    if (!category) return false;
-                    const categoryNameLower = category.name.toLowerCase();
-                    return productInfo.categoryKeywords.some(catKw => categoryNameLower.includes(catKw.toLowerCase()));
-                });
+        const materialKeywords = productMap[item.material]?.keywords || [materialNameLower];
 
-                if (matchedProduct) {
-                    break;
+        for (const product of products) {
+            const productNameLower = product.name.toLowerCase();
+            let currentScore = 0;
+            
+            for (const keyword of materialKeywords) {
+                if (productNameLower.includes(keyword.toLowerCase())) {
+                    currentScore++;
+                }
+            }
+
+            if (currentScore > 0) {
+                if (!bestMatch || currentScore > bestMatch.score) {
+                    bestMatch = { product, score: currentScore };
                 }
             }
         }
+        
+        let matchedProduct: Product | undefined = bestMatch?.product;
 
         // Fallback if no specific match is found by the map
         if (!matchedProduct) {

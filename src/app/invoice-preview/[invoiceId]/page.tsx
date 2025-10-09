@@ -238,7 +238,7 @@ export default function PublicInvoicePreviewPage() {
                                 alt={item.productName} 
                                 width={40} 
                                 height={40} 
-                                className="object-cover rounded-md mx-auto"
+                                className="object-contain rounded-md mx-auto"
                             />
                         )}
                     </td>

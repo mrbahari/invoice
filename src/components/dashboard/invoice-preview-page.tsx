@@ -89,7 +89,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   
   const { data } = useData();
   const { toast } = useToast();
-  const { invoices, products, stores, customers } = data;
   const invoiceCardRef = useRef<HTMLDivElement>(null);
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -151,10 +150,6 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      x: -window.scrollX,
-      y: -window.scrollY,
-      width: element.offsetWidth,
-      height: element.offsetHeight,
     }).then(canvas => {
       // Restore padding
       if(container) container.style.padding = originalPadding;
@@ -313,7 +308,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
                                 alt={item.productName} 
                                 width={40} 
                                 height={40} 
-                                className="object-cover rounded-md mx-auto"
+                                className="object-contain rounded-md mx-auto"
                             />
                         )}
                     </td>

@@ -168,13 +168,15 @@ type FlatCeilingFormProps = {
 type CeilingType = 'A' | 'B';
 
 export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
-  const [length, setLength] = useState<number | ''>(6.32);
-  const [width, setWidth] = useState<number | ''>(3.14);
+  const [length, setLength] = useState<number | ''>('');
+  const [width, setWidth] = useState<number | ''>('');
   const [suspensionHeight, setSuspensionHeight] = useState<number | ''>(20);
+  const [joistSpacing, setJoistSpacing] = useState<number | ''>(60);
   
-  const [displayLength, setDisplayLength] = useState(() => formatNumber(6.32));
-  const [displayWidth, setDisplayWidth] = useState(() => formatNumber(3.14));
+  const [displayLength, setDisplayLength] = useState('');
+  const [displayWidth, setDisplayWidth] = useState('');
   const [displaySuspensionHeight, setDisplaySuspensionHeight] = useState(() => formatNumber(20));
+  const [displayJoistSpacing, setDisplayJoistSpacing] = useState(() => formatNumber(60));
 
   const [ceilingType, setCeilingType] = useState<CeilingType>('B');
   
@@ -186,8 +188,9 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     const l = Number(length);
     const w = Number(width);
     const sHeight = Number(suspensionHeight);
+    const jSpacing = Number(joistSpacing) / 100; // convert cm to m
 
-    if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0 || isNaN(sHeight) || sHeight < 0) {
+    if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0 || isNaN(sHeight) || sHeight < 0 || isNaN(jSpacing) || jSpacing <=0) {
       return { results: [], details: null };
     }
     
@@ -211,7 +214,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
     // 4. Suspension System
     const useBrackets = sHeight <= 12;
-    const hangersPerRow = Math.ceil(longSide / 0.6);
+    const hangersPerRow = Math.ceil(longSide / jSpacing);
     const totalHangers = f47MainRunnerCount * hangersPerRow;
     const nailAndChargeCount = totalHangers;
     
@@ -272,7 +275,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     };
 
     return { results: materialList.filter(item => item.quantity > 0), details: estimationDetails };
-  }, [length, width, suspensionHeight, ceilingType]);
+  }, [length, width, suspensionHeight, joistSpacing, ceilingType]);
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -334,10 +337,17 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                       </CardHeader>
                   </Card>
             </div>
-            <div className="grid gap-2 mt-6">
-                <Label htmlFor="sHeight">ارتفاع آویز (سانتی‌متر)</Label>
-                <Input id="sHeight" type="text" placeholder="مثال: ۲۰" value={displaySuspensionHeight} onChange={handleInputChange(setSuspensionHeight, setDisplaySuspensionHeight)} />
-                <p className="text-xs text-muted-foreground">اگر ارتفاع کمتر از ۱۲ سانتی‌متر باشد، از براکت به جای آویز U36 استفاده می‌شود.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="grid gap-2">
+                    <Label htmlFor="sHeight">ارتفاع آویز (سانتی‌متر)</Label>
+                    <Input id="sHeight" type="text" placeholder="مثال: ۲۰" value={displaySuspensionHeight} onChange={handleInputChange(setSuspensionHeight, setDisplaySuspensionHeight)} />
+                    <p className="text-xs text-muted-foreground">اگر ارتفاع کمتر از ۱۲ سانتی‌متر باشد، از براکت به جای آویز U36 استفاده می‌شود.</p>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="jSpacing">فاصله تیرچه‌ها (سانتی‌متر)</Label>
+                    <Input id="jSpacing" type="text" placeholder="مثال: ۶۰" value={displayJoistSpacing} onChange={handleInputChange(setJoistSpacing, setDisplayJoistSpacing)} />
+                    <p className="text-xs text-muted-foreground">فاصله مرکز به مرکز تیرچه‌های باربر سقف.</p>
+                </div>
             </div>
           </div>
 
@@ -370,7 +380,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                     <p><strong>نبشی L25:</strong> به {formatNumber(details.l25Profiles.count)} شاخه {formatNumber(details.l25Profiles.length)} متری نیاز است.</p>
                     <p><strong>سازه F47 اصلی:</strong> برای {formatNumber(details.f47MainProfiles.rows)} ردیف، به {formatNumber(details.f47MainProfiles.count)} شاخه نیاز است. پرت تقریبی: {formatNumber(details.f47MainProfiles.waste.toFixed(2))} متر.</p>
                     <p><strong>پنل‌ها:</strong> به {formatNumber(details.panelLayout.panelsNeeded)} برگ پنل نیاز است. پرت کل: {formatNumber(details.panelLayout.waste.toFixed(2))} متر مربع.</p>
-                    {details.panelLayout.wastePieces.map((p, i) => (
+                    {details.panelLayout.wastePieces.map((p: any, i: number) => (
                        <p key={i} className="pr-4"> - قطعه پرت {formatNumber(i+1)}: {formatNumber(p.count)} عدد به ابعاد {formatNumber(p.length.toFixed(2))} در {formatNumber(p.width.toFixed(2))} متر</p>
                     ))}
                 </div>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
@@ -116,7 +117,6 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     
     // Internal state for input fields to allow for debounced updates
     const [localQuantity, setLocalQuantity] = useState<string>(() => formatNumber(item.quantity));
-    const [localPrice, setLocalPrice] = useState<string>(() => formatNumber(item.unitPrice));
     const [localTotalPrice, setLocalTotalPrice] = useState<string>(() => formatNumber(item.totalPrice));
 
     const product = products.find(p => p.id === item.productId);
@@ -131,54 +131,36 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
         if (!product) return [];
         return products.filter(p => p.subCategoryId === product.subCategoryId && p.id !== product.id);
     }, [product, products]);
+    
+    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const newQuantity = parseFormattedNumber(value);
+        setLocalQuantity(formatNumber(newQuantity));
+        if (newQuantity !== '') {
+            onUpdate(index, 'quantity', newQuantity);
+        }
+    };
+    
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const newPrice = parseFormattedNumber(value);
+        onUpdate(index, 'unitPrice', newPrice === '' ? 0 : newPrice);
+    };
 
-    // When the real item data from the parent changes, update the local state
+    const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const newTotal = parseFormattedNumber(value);
+        setLocalTotalPrice(formatNumber(newTotal));
+        if (newTotal !== '' && item.quantity > 0) {
+            const newUnitPrice = Math.round(newTotal / item.quantity);
+            onUpdate(index, 'unitPrice', newUnitPrice);
+        }
+    };
+
     useEffect(() => {
         setLocalQuantity(formatNumber(item.quantity));
-        setLocalPrice(formatNumber(item.unitPrice));
         setLocalTotalPrice(formatNumber(item.totalPrice));
-    }, [item.quantity, item.unitPrice, item.totalPrice]);
-
-    // Debounce effect for auto-updating
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            const newQuantity = parseFormattedNumber(localQuantity);
-            const newPrice = parseFormattedNumber(localPrice);
-            const newTotalPrice = parseFormattedNumber(localTotalPrice);
-            
-            const quantityChanged = newQuantity !== '' && newQuantity !== item.quantity;
-            const priceChanged = newPrice !== '' && newPrice !== item.unitPrice;
-            const totalPriceChanged = newTotalPrice !== '' && newTotalPrice !== item.totalPrice;
-    
-            let finalQuantity = item.quantity;
-            let finalUnitPrice = item.unitPrice;
-    
-            if (totalPriceChanged && newTotalPrice !== '') {
-                finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
-                if (finalQuantity > 0) {
-                    finalUnitPrice = Math.round(newTotalPrice / finalQuantity);
-                }
-                onUpdate(index, 'totalPrice', newTotalPrice);
-                onUpdate(index, 'unitPrice', finalUnitPrice);
-                if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
-            } else if (quantityChanged || priceChanged) {
-                finalQuantity = quantityChanged && newQuantity !== '' ? newQuantity : item.quantity;
-                finalUnitPrice = priceChanged && newPrice !== '' ? newPrice : item.unitPrice;
-                const finalTotalPrice = finalQuantity * finalUnitPrice;
-                
-                if (quantityChanged) onUpdate(index, 'quantity', finalQuantity);
-                if (priceChanged) onUpdate(index, 'unitPrice', finalUnitPrice);
-                onUpdate(index, 'totalPrice', finalTotalPrice);
-            }
-        }, 2000); // 2-second delay
-
-        // Cleanup function to cancel the timeout if the user keeps typing
-        return () => {
-            clearTimeout(handler);
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localQuantity, localPrice, localTotalPrice]);
-    
+    }, [item.quantity, item.totalPrice]);
 
     const handleHeaderMouseDown = (e: React.MouseEvent) => {
         isDraggingRef.current = false;
@@ -199,6 +181,8 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
         }
         isDraggingRef.current = false;
     };
+    
+    const imageUrl = item.imageUrl || products.find(p => p.id === item.productId)?.imageUrl;
 
 
     return (
@@ -217,8 +201,8 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                     <GripVertical className="h-6 w-6 text-muted-foreground" />
                                 </div>
                                 <div className="relative h-12 w-12 flex-shrink-0">
-                                    {item.imageUrl ? (
-                                        <Image src={item.imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
+                                    {imageUrl ? (
+                                        <Image src={imageUrl} alt={item.productName} fill className="object-cover rounded-md border" />
                                     ) : (
                                         <div className="h-12 w-12 bg-muted rounded-md flex items-center justify-center">
                                             <Package className="h-6 w-6 text-muted-foreground" />
@@ -269,7 +253,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                         <div className={cn("grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
-                                <Input type="text" id={`quantity-${index}`} value={localQuantity} onChange={(e) => setLocalQuantity(e.target.value)} placeholder="مقدار" className="h-9 font-mono" />
+                                <Input type="text" id={`quantity-${index}`} value={localQuantity} onChange={handleQuantityChange} placeholder="مقدار" className="h-9 font-mono" />
                             </div>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`unit-${index}`} className="text-xs">واحد</Label>
@@ -282,11 +266,11 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                             </div>
                              <div className="grid gap-1.5">
                                 <Label htmlFor={`price-${index}`} className="text-xs">مبلغ واحد</Label>
-                                <Input id={`price-${index}`} value={localPrice} onBlur={() => onPriceBlur(item)} onChange={(e) => setLocalPrice(e.target.value)} placeholder="مبلغ" className="h-9 font-mono" />
+                                <Input id={`price-${index}`} value={formatNumber(item.unitPrice)} onBlur={() => onPriceBlur(item)} onChange={handlePriceChange} placeholder="مبلغ" className="h-9 font-mono" />
                             </div>
                              <div className="grid gap-1.5">
                                 <Label htmlFor={`total-price-${index}`} className="text-xs">مبلغ کل</Label>
-                                <Input id={`total-price-${index}`} value={localTotalPrice} onChange={(e) => setLocalTotalPrice(e.target.value)} placeholder="مبلغ کل" className="h-9 font-mono" />
+                                <Input id={`total-price-${index}`} value={localTotalPrice} onChange={handleTotalPriceChange} placeholder="مبلغ کل" className="h-9 font-mono" />
                             </div>
                         </div>
                     </div>
@@ -625,13 +609,13 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
       let newItems;
 
       if (existingItemIndex > -1) {
-        // Item exists, update quantity and ensure image is preserved
+        // Item exists, update quantity
         newItems = currentItems.map((item, index) => {
           if (index === existingItemIndex) {
             const newQuantity = item.quantity + 1;
             return {
               ...item,
-              imageUrl: product.imageUrl, // IMPORTANT: Ensure image is preserved
+              imageUrl: product.imageUrl,
               quantity: newQuantity,
               totalPrice: newQuantity * item.unitPrice,
             };
@@ -690,12 +674,15 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
 
   const handleItemChange = useCallback((index: number, field: keyof InvoiceItem, value: any) => {
-        const newItems = invoice.items ? [...invoice.items] : [];
-        if (newItems[index]) {
-            const updatedItem = { ...newItems[index], [field]: value };
-            newItems[index] = updatedItem;
+    const newItems = invoice.items ? [...invoice.items] : [];
+    if (newItems[index]) {
+        const updatedItem = { ...newItems[index], [field]: value };
+        if (field === 'quantity' || field === 'unitPrice') {
+            updatedItem.totalPrice = (updatedItem.quantity || 0) * (updatedItem.unitPrice || 0);
         }
-        setInvoice({ ...invoice, items: newItems });
+        newItems[index] = updatedItem;
+    }
+    setInvoice({ ...invoice, items: newItems });
   }, [invoice, setInvoice]);
 
   const handlePriceBlur = async (item: InvoiceItem) => {
@@ -708,12 +695,11 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     await updateDocument('products', item.productId, { price: item.unitPrice });
     
     // Add the new price to the priceHistory subcollection
-    const newPriceHistoryEntry: PriceHistory = {
+    const newPriceHistoryEntry: Omit<PriceHistory, 'id'> = {
       price: item.unitPrice,
       date: new Date().toISOString(),
     };
     
-    // Use addDocument to add to the subcollection
     await addDocument(`products/${item.productId}/priceHistory` as any, newPriceHistoryEntry);
 
     toast({

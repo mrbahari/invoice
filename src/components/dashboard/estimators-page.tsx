@@ -97,12 +97,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     return () => setSearchVisible(true);
   }, [setSearchVisible]);
 
-  useEffect(() => {
-    if (selectedEstimator) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [selectedEstimator]);
-
 
   const handleEstimatorSelect = (estimatorId: EstimatorType) => {
      if (!user) {

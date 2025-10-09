@@ -37,6 +37,11 @@ export default function DashboardPage() {
     }
   }, [searchParams, router]);
 
+  // Scroll to top when tab changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
   const handleNavigation = (tab: DashboardTab, data?: { invoice: Partial<Invoice>}) => {
     if (tab === 'invoices' && data?.invoice) {
         setDraftInvoice(data.invoice);

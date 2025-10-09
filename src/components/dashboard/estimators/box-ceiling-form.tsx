@@ -21,9 +21,6 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
   const [length, setLength] = useState<number | ''>('');
   const [displayLength, setDisplayLength] = useState('');
   
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);

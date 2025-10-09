@@ -30,9 +30,6 @@ export function DrywallForm({ onAddToList, onBack }: DrywallFormProps) {
   const [wallType, setWallType] = useState<WallType>('partition');
   const [includeWool, setIncludeWool] = useState(true);
   
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);

@@ -23,9 +23,6 @@ export function GridCeilingForm({ onAddToList, onBack }: GridCeilingFormProps) {
   const [displayLength, setDisplayLength] = useState('');
   const [displayWidth, setDisplayWidth] = useState('');
   
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
   const results: MaterialResult[] = useMemo(() => {
     const l = Number(length);

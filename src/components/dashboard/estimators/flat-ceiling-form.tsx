@@ -180,9 +180,6 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
   const [ceilingType, setCeilingType] = useState<CeilingType>('B');
   
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
   const { results, details } = useMemo(() => {
     const l = Number(length);

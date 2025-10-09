@@ -302,7 +302,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
         <CardContent className="space-y-8">
           <div>
             <h3 className="text-lg font-semibold mb-4 text-primary">۱. مشخصات سقف</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6">
                 <div className="grid gap-2">
                     <Label htmlFor="length">طول اتاق (متر)</Label>
                     <Input id="length" type="text" placeholder="مثال: ۶.۳۲" value={displayLength} onChange={handleInputChange(setLength, setDisplayLength)} />
@@ -312,7 +312,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                     <Input id="width" type="text" placeholder="مثال: ۳.۱۴" value={displayWidth} onChange={handleInputChange(setWidth, setDisplayWidth)} />
                 </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+             <div className="grid grid-cols-2 gap-4 mt-6">
                   <Card className={cn("cursor-pointer", ceilingType === 'B' && 'border-primary ring-2 ring-primary')} onClick={() => setCeilingType('B')}>
                       <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
                           <Layers className="h-8 w-8 text-primary" />
@@ -337,7 +337,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                       </CardHeader>
                   </Card>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div className="grid grid-cols-2 gap-6 mt-6">
                 <div className="grid gap-2">
                     <Label htmlFor="sHeight">ارتفاع آویز (سانتی‌متر)</Label>
                     <Input id="sHeight" type="text" placeholder="مثال: ۲۰" value={displaySuspensionHeight} onChange={handleInputChange(setSuspensionHeight, setDisplaySuspensionHeight)} />

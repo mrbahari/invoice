@@ -123,19 +123,22 @@ export default function PublicInvoicePreviewPage() {
     const container = pageContainerRef.current;
     if (!element || !container) return;
 
-    // Temporarily remove padding to get a clean shot
+    // Temporarily adjust styles for capture
     const originalPadding = container.style.padding;
+    const originalWidth = element.style.width;
     container.style.padding = '0';
+    element.style.width = '900px';
     
-    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for styles to apply
+    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for styles to apply
 
     html2canvas(element, {
       scale: 1.5,
       useCORS: true,
       allowTaint: true,
     }).then(canvas => {
-      // Restore padding after taking the screenshot
+      // Restore original styles
       container.style.padding = originalPadding;
+      element.style.width = originalWidth;
       
       const margin = 10;
       const finalCanvas = document.createElement('canvas');

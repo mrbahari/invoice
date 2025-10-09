@@ -91,6 +91,8 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   const { invoices, customers, stores, products } = data;
   const { toast } = useToast();
   const invoiceCardRef = useRef<HTMLDivElement>(null);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
+
 
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   
@@ -138,27 +140,26 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
 
   const handleDownloadImage = async () => {
     const element = document.getElementById('invoice-card');
-    if (!element) return;
+    const container = pageContainerRef.current;
+    if (!element || !container) return;
   
-    // Temporarily remove padding from parent for a clean shot
-    const container = element.parentElement;
-    const originalPadding = container ? container.style.padding : '';
-    if(container) container.style.padding = '0';
+    // Temporarily adjust styles for capture
+    const originalPadding = container.style.padding;
+    const originalWidth = element.style.width;
+    container.style.padding = '0';
+    element.style.width = '900px';
   
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for styles to apply
   
     html2canvas(element, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      x: -window.scrollX,
-      y: -window.scrollY,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight
     }).then(canvas => {
-      // Restore padding
-      if(container) container.style.padding = originalPadding;
-  
+      // Restore original styles
+      container.style.padding = originalPadding;
+      element.style.width = originalWidth;
+
       const margin = 10;
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = canvas.width + margin * 2;
@@ -214,7 +215,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
 
   return (
     <TooltipProvider>
-      <div className="pb-24">
+      <div className="pb-24" ref={pageContainerRef}>
         {/* Floating Action Bar */}
          <FloatingToolbar pageKey="invoice-preview">
              <div className="flex flex-col items-center gap-1">

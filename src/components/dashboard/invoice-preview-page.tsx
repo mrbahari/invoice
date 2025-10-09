@@ -140,36 +140,36 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
     const element = document.getElementById('invoice-card');
     if (!element) return;
   
-    // Temporarily remove padding to get a clean shot
-    const originalPadding = element.style.padding;
-    element.style.padding = '0';
+    // Temporarily remove padding from parent for a clean shot
+    const container = element.parentElement;
+    const originalPadding = container ? container.style.padding : '';
+    if(container) container.style.padding = '0';
   
     await new Promise(resolve => setTimeout(resolve, 50));
   
     html2canvas(element, {
-      scale: 2, // Increase scale for better resolution
+      scale: 2,
       useCORS: true,
       allowTaint: true,
+      x: -window.scrollX,
+      y: -window.scrollY,
+      width: element.offsetWidth,
+      height: element.offsetHeight,
     }).then(canvas => {
       // Restore padding
-      element.style.padding = originalPadding;
+      if(container) container.style.padding = originalPadding;
   
-      // Create a new canvas with a margin
-      const margin = 10; // 5px margin on each side
+      const margin = 10;
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = canvas.width + margin * 2;
       finalCanvas.height = canvas.height + margin * 2;
       const ctx = finalCanvas.getContext('2d');
   
       if (ctx) {
-        // Fill the background with white color
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-  
-        // Draw the captured canvas onto the new canvas with an offset
         ctx.drawImage(canvas, margin, margin);
   
-        // Create the download link from the final canvas
         const link = document.createElement('a');
         link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
         link.href = finalCanvas.toDataURL('image/png');
@@ -253,7 +253,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </div>
         </FloatingToolbar>
 
-        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card" ref={invoiceCardRef}>
+        <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 border text-black select-none" id="invoice-card" ref={invoiceCardRef} style={{padding: '10px'}}>
           <header className="flex justify-between items-start gap-4 mb-4">
               <div className="flex items-center justify-center w-1/6">
                   {qrCodeUrl && <Image src={qrCodeUrl} alt="QR Code" width={96} height={96} />}

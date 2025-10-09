@@ -472,7 +472,7 @@ const AddProductsComponent = React.memo(({
                                                         <Minus className="h-4 w-4" />
                                                     </Button>
                                                     <Input
-                                                        className="h-7 w-12 text-center font-mono text-sm p-1"
+                                                        className="h-7 w-12 text-center font-mono text-sm p-1 bg-white text-black"
                                                         value={quantity}
                                                         onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
                                                         autoFocus

@@ -173,10 +173,10 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
 
-    const productMap: Record<string, { keywords: string[] }> = {
+    const productMap: Record<string, { keywords: string[]; exact?: boolean }> = {
         'پنل RG باتیس': { keywords: ['پنل', 'rg', 'باتیس'] },
         'تایل پی وی سی': { keywords: ['تایل', 'pvc'] },
-        'سازه F47': { keywords: ['f47', 'سازه', 'پروفیل'] },
+        'سازه F47': { keywords: ['f47', 'سازه', 'پروفیل'], exact: true },
         'سازه U36': { keywords: ['u36', 'سازه', 'پروفیل'] },
         'نبشی L25': { keywords: ['l25', 'نبشی', 'کناف'] },
         'نبشی L24': { keywords: ['l24', 'نبشی', 'سپری'] },
@@ -199,14 +199,21 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let bestMatch: { product: Product, score: number } | null = null;
         
         const materialKeywords = productMap[item.material]?.keywords || [item.material.toLowerCase()];
+        const isExactMatch = productMap[item.material]?.exact || false;
 
-        for (const product of products) {
+        const miscellaneousProducts = products.filter(p => !p.name.includes('کی پلاس'));
+
+        for (const product of miscellaneousProducts) {
             const productNameLower = product.name.toLowerCase();
             let currentScore = 0;
             
-            for (const keyword of materialKeywords) {
-                if (productNameLower.includes(keyword.toLowerCase())) {
-                    currentScore++;
+            if (isExactMatch && product.name === item.material) {
+                currentScore = 100; // High score for exact match
+            } else if (!isExactMatch) {
+                for (const keyword of materialKeywords) {
+                    if (productNameLower.includes(keyword.toLowerCase())) {
+                        currentScore++;
+                    }
                 }
             }
 
@@ -251,6 +258,19 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
             });
         }
     });
+    
+    // Sort items logically
+    const sortOrder = ['پنل', 'سازه', 'پروفیل', 'رانر', 'استاد', 'نبشی', 'سپری', 'پیچ', 'میخ', 'اتصال', 'کلیپس', 'براکت'];
+    invoiceItems.sort((a, b) => {
+        const aIndex = sortOrder.findIndex(keyword => a.productName.includes(keyword));
+        const bIndex = sortOrder.findIndex(keyword => b.productName.includes(keyword));
+        
+        const finalAIndex = aIndex === -1 ? sortOrder.length : aIndex;
+        const finalBIndex = bIndex === -1 ? sortOrder.length : bIndex;
+
+        return finalAIndex - finalBIndex;
+    });
+
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
     
@@ -485,4 +505,3 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
   );
 }
 
-    

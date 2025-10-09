@@ -450,54 +450,55 @@ const AddProductsComponent = React.memo(({
                                                 {formatNumber(invoiceItem?.quantity)}
                                             </Badge>
                                         )}
+                                        <AnimatePresence>
+                                        {activeInput === product.id && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: '100%' }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: '100%' }}
+                                                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                                className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-1 gap-1"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <div className="flex items-center justify-center gap-1 w-full">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        className="h-7 w-7 bg-red-600 text-white hover:bg-red-700 border-red-700"
+                                                        onMouseDown={() => { handleQuantityChange(-1); setIsHolding('dec'); }}
+                                                        onMouseUp={() => setIsHolding(null)}
+                                                        onMouseLeave={() => setIsHolding(null)}
+                                                    >
+                                                        <Minus className="h-4 w-4" />
+                                                    </Button>
+                                                    <Input
+                                                        className="h-7 w-12 text-center font-mono text-sm p-1"
+                                                        value={quantity}
+                                                        onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
+                                                        autoFocus
+                                                        onFocus={(e) => e.target.select()}
+                                                    />
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        className="h-7 w-7 bg-green-600 text-white hover:bg-green-700 border-green-700"
+                                                        onMouseDown={() => { handleQuantityChange(1); setIsHolding('inc'); }}
+                                                        onMouseUp={() => setIsHolding(null)}
+                                                        onMouseLeave={() => setIsHolding(null)}
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <Button size="sm" className="h-7 px-2 text-xs w-full bg-green-600 hover:bg-green-700" onClick={(e) => handleConfirm(e, product.id)}>
+                                                    <Check className="ml-1 h-3 w-3" />
+                                                    افزودن
+                                                </Button>
+                                            </motion.div>
+                                        )}
+                                        </AnimatePresence>
                                     </div>
                                 </Card>
-                                <AnimatePresence>
-                                {activeInput === product.id && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 10 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="w-full flex flex-col gap-1 items-center mt-2"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <div className="flex items-center justify-center gap-1 w-full">
-                                             <Button
-                                                variant="outline"
-                                                size="icon"
-                                                className="h-7 w-7 bg-red-600 text-white hover:bg-red-700"
-                                                onMouseDown={() => { handleQuantityChange(-1); setIsHolding('dec'); }}
-                                                onMouseUp={() => setIsHolding(null)}
-                                                onMouseLeave={() => setIsHolding(null)}
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
-                                            <Input
-                                                className="h-7 w-12 text-center font-mono text-sm p-1"
-                                                value={quantity}
-                                                onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
-                                                autoFocus
-                                                onFocus={(e) => e.target.select()}
-                                            />
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                className="h-7 w-7 bg-green-600 text-white hover:bg-green-700"
-                                                onMouseDown={() => { handleQuantityChange(1); setIsHolding('inc'); }}
-                                                onMouseUp={() => setIsHolding(null)}
-                                                onMouseLeave={() => setIsHolding(null)}
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                         <Button size="sm" className="h-7 px-2 text-xs w-full bg-green-600 hover:bg-green-700" onClick={(e) => handleConfirm(e, product.id)}>
-                                            <Check className="ml-1 h-3 w-3" />
-                                            افزودن
-                                        </Button>
-                                    </motion.div>
-                                )}
-                                </AnimatePresence>
+                                
                                 <div className="p-1.5 text-center w-full">
                                     <p className="text-xs font-semibold truncate">{product.name}</p>
                                     <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>

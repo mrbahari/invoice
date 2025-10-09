@@ -148,7 +148,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
       logging: false,
       width: elementWidth,
       windowWidth: elementWidth,
-      x: 0,
+      x: -window.scrollX,
       y: 0,
     }).then(canvas => {
       const link = document.createElement('a');
@@ -308,29 +308,30 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
             </table>
           </section>
 
-            <section className="grid grid-cols-2 gap-4 mt-4 text-sm">
-              <div className="space-y-2 text-xs">
-                <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
-                {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
-                {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
-                {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
-                {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
-                {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
-              </div>
-              <div className="border rounded-md p-2 space-y-1">
-                <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
-                {invoice.discount > 0 && <p className="flex justify-between"><strong>تخفیف:</strong> <span className="font-mono text-red-600">-{formatCurrency(invoice.discount)}</span></p>}
-                {invoice.additions > 0 && <p className="flex justify-between"><strong>اضافات:</strong> <span className="font-mono">{formatCurrency(invoice.additions)}</span></p>}
-                {invoice.tax > 0 && <p className="flex justify-between"><strong>مالیات:</strong> <span className="font-mono">{formatCurrency(invoice.tax)}</span></p>}
-                <hr className="my-1 border-dashed" />
-                <p className="flex justify-between font-bold text-base"><strong>جمع کل:</strong> <span className="font-mono">{formatCurrency(invoice.total)}</span></p>
-              </div>
-            </section>
-            
-            <section className="mt-4 pt-4 border-t text-sm">
-                 <p className="font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
-                 <p className="mt-2"><strong>توضیحات:</strong> {invoice.description}</p>
-            </section>
+          <section className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                <div className="space-y-2 text-xs">
+                    <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
+                    {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
+                    {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
+                    {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
+                    {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+                    {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
+                </div>
+                <div className="border rounded-md p-2 space-y-1">
+                    <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>
+                    {invoice.discount > 0 && <p className="flex justify-between"><strong>تخفیف:</strong> <span className="font-mono text-red-600">-{formatCurrency(invoice.discount)}</span></p>}
+                    {invoice.additions > 0 && <p className="flex justify-between"><strong>اضافات:</strong> <span className="font-mono">{formatCurrency(invoice.additions)}</span></p>}
+                    {invoice.tax > 0 && <p className="flex justify-between"><strong>مالیات:</strong> <span className="font-mono">{formatCurrency(invoice.tax)}</span></p>}
+                    <hr className="my-1 border-dashed" />
+                    <p className="flex justify-between font-bold text-base"><strong>جمع کل:</strong> <span className="font-mono">{formatCurrency(invoice.total)}</span></p>
+                </div>
+          </section>
+
+          <section className="mt-4 pt-4 border-t text-sm">
+                <p className="font-bold">مبلغ به حروف: {toWords(Math.floor(invoice.total))} ریال</p>
+                <p className="mt-2"><strong>توضیحات:</strong> {invoice.description}</p>
+          </section>
+
         </div>
     </div>
     </TooltipProvider>

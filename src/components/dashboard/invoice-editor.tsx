@@ -132,6 +132,29 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     const availableUnits = product ? [product.unit, product.subUnit].filter(Boolean) as string[] : [item.unit];
     const brandType = item.productName.includes('کی پلاس') ? 'کی پلاس' : 'متفرقه';
 
+    const getSimilarProducts = () => {
+      if (!product) return [];
+      
+      const currentBaseName = normalizeName(product.name);
+      
+      // Prioritize exact base name matches (e.g., K-Plus version and regular version)
+      const primaryMatches = products.filter(p => {
+        if (p.id === product.id) return false;
+        const candidateBaseName = normalizeName(p.name);
+        return candidateBaseName === currentBaseName;
+      });
+
+      // Fallback to same subcategory, excluding primary matches
+      const secondaryMatches = products.filter(p => {
+        if (p.id === product.id) return false;
+        if (primaryMatches.some(pm => pm.id === p.id)) return false; // Exclude already found matches
+        return p.subCategoryId === product.subCategoryId;
+      });
+
+      return [...primaryMatches, ...secondaryMatches.slice(0, 10 - primaryMatches.length)]; // Limit total results
+    };
+    
+    const similarProducts = getSimilarProducts();
 
     // Click vs Drag detection state
     const isDraggingRef = useRef(false);
@@ -256,7 +279,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                         <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <ScrollArea className="h-[200px]">
-                                        {products.length > 0 ? products.map(p => (
+                                        {similarProducts.length > 0 ? similarProducts.map(p => (
                                             <DropdownMenuItem key={p.id} onSelect={() => onReplace(index, p)} className="flex items-center gap-2">
                                                 <Image src={p.imageUrl} alt={p.name} width={32} height={32} className="rounded-md object-cover" />
                                                 <div className="flex-1">
@@ -432,9 +455,9 @@ const AddProductsComponent = React.memo(({
                                 <AnimatePresence>
                                 {activeInput === product.id && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
+                                        initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
+                                        exit={{ opacity: 0, y: 10 }}
                                         transition={{ duration: 0.2 }}
                                         className="w-full flex flex-col gap-1 items-center mt-2"
                                         onClick={(e) => e.stopPropagation()}
@@ -923,11 +946,6 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
       });
     }
   }, [invoice, products, setInvoice, toast]);
-
-  const invoiceBrandType = useMemo(() => {
-    if (!invoice.items || invoice.items.length === 0) return null;
-    return invoice.items.some(item => item.productName.includes('کی پلاس')) ? 'کی پلاس' : 'متفرقه';
-  }, [invoice.items]);
 
    return (
     <TooltipProvider>

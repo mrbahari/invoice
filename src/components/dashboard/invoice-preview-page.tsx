@@ -139,25 +139,42 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
   const handleDownloadImage = async () => {
     const element = document.getElementById('invoice-card');
     if (!element) return;
-
+  
     // Temporarily remove padding to get a clean shot
     const originalPadding = element.style.padding;
     element.style.padding = '0';
-    
-    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for styles to apply
-
+  
+    await new Promise(resolve => setTimeout(resolve, 50));
+  
     html2canvas(element, {
-      scale: 1.5,
+      scale: 2, // Increase scale for better resolution
       useCORS: true,
       allowTaint: true,
     }).then(canvas => {
-      // Restore padding after taking the screenshot
+      // Restore padding
       element.style.padding = originalPadding;
-      
-      const link = document.createElement('a');
-      link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+  
+      // Create a new canvas with a margin
+      const margin = 10; // 5px margin on each side
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = canvas.width + margin * 2;
+      finalCanvas.height = canvas.height + margin * 2;
+      const ctx = finalCanvas.getContext('2d');
+  
+      if (ctx) {
+        // Fill the background with white color
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+  
+        // Draw the captured canvas onto the new canvas with an offset
+        ctx.drawImage(canvas, margin, margin);
+  
+        // Create the download link from the final canvas
+        const link = document.createElement('a');
+        link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
+      }
     });
   };
 
@@ -316,9 +333,9 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
               {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
               {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
-              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
-              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
-              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono text-base" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
+              {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono font-bold" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
+              {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono font-bold" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
+              {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono font-bold" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}
             </div>
             <div className="border rounded-md p-2 space-y-1">
               <p className="flex justify-between"><strong>جمع جزء:</strong> <span className="font-mono">{formatCurrency(invoice.subtotal)}</span></p>

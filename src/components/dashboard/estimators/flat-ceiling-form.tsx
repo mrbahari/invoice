@@ -202,7 +202,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
     // 2. L25 Profiles
     const l25Profiles = Math.ceil(perimeter / L25_LENGTH);
-    const l25Screws = Math.ceil(perimeter / 0.2);
+    const l25Screws = Math.ceil(perimeter / 0.2); // This is likely for wall attachment (mihk o chashni)
 
     // 3. F47 Main Runners (Load-bearing)
     const f47MainRunnerCount = Math.ceil(shortSide / 0.6) - 1;
@@ -230,9 +230,12 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     // 5. Panel Layout
     const panelLayout = calculatePanelLayout(longSide, shortSide);
 
-    // 6. Panel Screws
+    // 6. Panel Screws (TN25 - pich 2.5)
+    // Screws are needed for F47s and for perimeter L25s
     const panelScrewsForF47 = Math.ceil(f47MainTotalLength / 0.2);
-    const totalPanelScrews = l25Screws + panelScrewsForF47;
+    // Perimeter screws are attached to L25, not panels directly to wall, so we use panel screw logic
+    const panelScrewsForL25 = Math.ceil(perimeter / 0.2); 
+    const totalPanelScrews = panelScrewsForF47 + panelScrewsForL25;
     
     // --- Type A Specific Calculations ---
     let f47SecondaryProfiles = 0;
@@ -255,7 +258,6 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     }
 
     materialList.push(
-        { material: 'پیچ ۲.۵', quantity: totalPanelScrews, unit: 'عدد' },
         { material: 'پیچ سازه', quantity: structureScrews, unit: 'عدد' },
         { material: 'میخ و چاشنی', quantity: nailAndChargeCount, unit: 'عدد' },
         { material: 'اتصال W', quantity: wConnectors, unit: 'عدد' },
@@ -279,6 +281,12 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
   
   const handleInputChange = (setter: React.Dispatch<React.SetStateAction<number | ''>>, displaySetter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    // For placeholder behavior, we set the actual value directly
+    if (value === '') {
+        displaySetter('');
+        setter('');
+        return;
+    }
     const numericValue = parseFormattedNumber(value);
     displaySetter(formatNumber(numericValue));
     setter(numericValue);
@@ -286,7 +294,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) return;
-    const description = `سقف فلت تیپ ${ceilingType}: ${displayLength} * ${displayWidth} متر`;
+    const description = `سقف فلت تیپ ${ceilingType}: ${displayLength || length} * ${displayWidth || width} متر`;
     onAddToList(description, results, details);
   };
 

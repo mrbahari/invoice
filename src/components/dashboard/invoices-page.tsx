@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
@@ -99,6 +98,7 @@ export default function InvoicesPage({
       });
       return;
     }
+    // Set the draft invoice first, THEN change the view.
     setDraftInvoice({
         date: new Date().toISOString(),
         status: 'Pending',
@@ -110,7 +110,7 @@ export default function InvoicesPage({
         total: 0,
         description: '',
         invoiceNumber: `${getStorePrefix('INV')}-${(allInvoices.length + 1).toString().padStart(4, '0')}`,
-    }); // Clear any previous draft
+    }); 
     setView({ type: 'editor', isDirty: false });
   }, [setDraftInvoice, allInvoices.length, user, toast]);
   
@@ -210,10 +210,18 @@ export default function InvoicesPage({
   const renderContent = () => {
     switch (view.type) {
       case 'editor':
+        // Ensure draftInvoice is not null before rendering editor
+        if (!draftInvoice) {
+            // This can happen briefly if the view is set to editor before the draft is ready.
+            // Or if an action incorrectly sets the view without a draft.
+            // We can show a loading state or redirect back to the list.
+            handleCancel(); // Go back to list view if there's no draft
+            return null;
+        }
         return (
           <div className="pb-16">
             <InvoiceEditor
-              invoice={draftInvoice!}
+              invoice={draftInvoice}
               setInvoice={setDraftInvoice}
               onSaveSuccess={handleSaveSuccess}
               onPreview={handlePreviewFromEditor}

@@ -176,13 +176,13 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     const productMap: Record<string, { keywords: string[] }> = {
         'پنل RG باتیس': { keywords: ['پنل', 'rg', 'باتیس'] },
         'تایل پی وی سی': { keywords: ['تایل', 'pvc'] },
-        'سازه f47': { keywords: ['f47', 'سازه', 'پروفیل'] },
-        'سازه u36': { keywords: ['u36', 'سازه', 'پروفیل'] },
-        'نبشی l25': { keywords: ['l25', 'نبشی', 'پروفیل'] },
-        'نبشی l24': { keywords: ['l24', 'نبشی', 'سپری'] },
-        'سپری t360': { keywords: ['t360', '3.60', 'سپری', 'پروفیل'] },
-        'سپری t120': { keywords: ['t120', '1.20', 'سپری', 'پروفیل'] },
-        'سپری t60': { keywords: ['t60', '0.60', 'سپری', 'پروفیل'] },
+        'سازه F47': { keywords: ['f47', 'سازه', 'پروفیل'] },
+        'سازه U36': { keywords: ['u36', 'سازه', 'پروفیل'] },
+        'نبشی L25': { keywords: ['l25', 'نبشی', 'کناف'] },
+        'نبشی L24': { keywords: ['l24', 'نبشی', 'سپری'] },
+        'سپری T360': { keywords: ['t360', '3.60', 'سپری', 'پروفیل'] },
+        'سپری T120': { keywords: ['t120', '1.20', 'سپری', 'پروفیل'] },
+        'سپری T60': { keywords: ['t60', '0.60', 'سپری', 'پروفیل'] },
         'رانر': { keywords: ['رانر', 'runner', 'پروفیل'] },
         'استاد': { keywords: ['استاد', 'stud', 'پروفیل'] },
         'پیچ 2.5': { keywords: ['پیچ', '2.5', '۲.۵', 'tn25', 'پنل'] },
@@ -190,16 +190,15 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         'آویز': { keywords: ['آویز', 'hanger'] },
         'میخ و چاشنی': { keywords: ['میخ', 'چاشنی'] },
         'پشم سنگ': { keywords: ['پشم', 'سنگ', 'rockwool'] },
-        'اتصال w': { keywords: ['w', 'اتصال', 'دبلیو', 'w-connector'] },
+        'اتصال W': { keywords: ['w', 'اتصال', 'دبلیو', 'w-connector'] },
         'کلیپس': { keywords: ['کلیپس', 'clip'] },
         'براکت': { keywords: ['براکت', 'bracket'] },
     };
 
     aggregatedResults.forEach(item => {
         let bestMatch: { product: Product, score: number } | null = null;
-        const materialNameLower = item.material.toLowerCase();
         
-        const materialKeywords = productMap[item.material]?.keywords || [materialNameLower];
+        const materialKeywords = productMap[item.material]?.keywords || [item.material.toLowerCase()];
 
         for (const product of products) {
             const productNameLower = product.name.toLowerCase();
@@ -220,11 +219,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         
         let matchedProduct: Product | undefined = bestMatch?.product;
 
-        // Fallback if no specific match is found by the map
-        if (!matchedProduct) {
-            matchedProduct = products.find(p => p.name.toLowerCase() === materialNameLower);
-        }
-
         let quantity = item.quantity;
         let unit = item.unit;
         let unitPrice = matchedProduct ? matchedProduct.price : 0;
@@ -232,7 +226,7 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         let productName = matchedProduct ? matchedProduct.name : item.material;
         const imageUrl = matchedProduct ? matchedProduct.imageUrl : `https://picsum.photos/seed/${encodeURIComponent(productName)}/400/300`;
 
-        if ((materialNameLower.includes('پیچ') || materialNameLower.includes('میخ')) && item.unit === 'عدد') {
+        if ((productName.toLowerCase().includes('پیچ') || productName.toLowerCase().includes('میخ')) && item.unit === 'عدد') {
             quantity = Math.ceil(item.quantity / 1000);
             unit = 'بسته';
         } else {

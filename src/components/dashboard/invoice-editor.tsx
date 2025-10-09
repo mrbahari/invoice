@@ -121,7 +121,7 @@ const normalizeName = (name: string) => {
       .toLowerCase();
 };
 
-function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen, onPriceBlur }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, onPriceBlur: (item: InvoiceItem) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
+function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, onPriceBlur, products, isDragging, isOpen, onToggleOpen }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, onPriceBlur: (item: InvoiceItem) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
     
     // Internal state for input fields to allow for debounced updates
     const [localQuantity, setLocalQuantity] = useState<string>(() => formatNumber(item.quantity));
@@ -951,7 +951,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
           </motion.div>
         )}
       </AnimatePresence>
-    <form className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
+    <div className="mx-auto grid max-w-full flex-1 auto-rows-max gap-4 pb-28">
       
        <FloatingToolbar pageKey="invoice-editor">
             <div className="flex flex-col items-center gap-1">
@@ -1264,7 +1264,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                   />
             </div>
         </div>
-    </form>
+    </div>
     </TooltipProvider>
   );
 }

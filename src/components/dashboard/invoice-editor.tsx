@@ -112,7 +112,14 @@ const useInterval = (callback: () => void, delay: number | null) => {
   }, [delay]);
 };
 
-
+const normalizeName = (name: string) => {
+    return name
+      .replace(/کی پلاس|کناف ایران|باتیس/gi, '')
+      .replace(/ي/g, 'ی') 
+      .replace(/ك/g, 'ک') 
+      .replace(/\s+/g, '') 
+      .toLowerCase();
+};
 
 function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onReplace, products, isDragging, isOpen, onToggleOpen, onPriceBlur }: { item: InvoiceItem, index: number, onRemove: (index: number) => void, onUpdate: (index: number, field: keyof InvoiceItem, value: any) => void, onUnitChange: (index: number, newUnit: string) => void, onReplace: (index: number, newProduct: Product) => void, onPriceBlur: (item: InvoiceItem) => void, products: Product[], isDragging: boolean, isOpen: boolean, onToggleOpen: () => void }) {
     
@@ -133,7 +140,21 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
 
     const similarProducts = useMemo(() => {
         if (!product) return [];
-        return products.filter(p => p.subCategoryId === product.subCategoryId && p.id !== product.id);
+        const currentBaseName = normalizeName(product.name);
+        
+        const equivalents = products.filter(p => {
+             if (p.id === product.id) return false;
+             const candidateBaseName = normalizeName(p.name);
+             return candidateBaseName === currentBaseName;
+        });
+
+        const categoryMates = products.filter(p => 
+            p.subCategoryId === product.subCategoryId && 
+            p.id !== product.id &&
+            !equivalents.some(e => e.id === p.id) // Exclude already found equivalents
+        );
+
+        return [...equivalents, ...categoryMates];
     }, [product, products]);
     
     const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,8 +170,7 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
     };
     
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-         onUpdate(index, 'unitPrice', parseFormattedNumber(value));
+         onUpdate(index, 'unitPrice', parseFormattedNumber(e.target.value));
     };
 
     const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,26 +255,9 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <Button variant="ghost" size="icon" className={cn("h-8 w-8 flex-shrink-0 text-destructive", isDragging && "hidden")} onClick={(e) => { e.stopPropagation(); onRemove(index); }}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-                                            <Shuffle className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuLabel>جایگزینی با محصول مشابه</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        {similarProducts.length > 0 ? (
-                                            similarProducts.map(p => (
-                                                <DropdownMenuItem key={p.id} onClick={() => onReplace(index, p)}>
-                                                    {p.name}
-                                                </DropdownMenuItem>
-                                            ))
-                                        ) : (
-                                            <DropdownMenuItem disabled>محصول مشابهی یافت نشد.</DropdownMenuItem>
-                                        )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                                    <Shuffle className="h-4 w-4" />
+                                </Button>
                                 <div className="h-8 w-8 flex items-center justify-center">
                                     <ChevronsUpDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
                                 </div>
@@ -263,8 +266,8 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                     </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <div className="p-3 pt-0 relative">
-                        <div className={cn("grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
+                    <div className="p-3 pt-0 relative space-y-3">
+                         <div className={cn("grid grid-cols-2 gap-x-4 gap-y-3", isDragging && "hidden")}>
                             <div className="grid gap-1.5">
                                 <Label htmlFor={`quantity-${index}`} className="text-xs">مقدار</Label>
                                 <Input type="text" id={`quantity-${index}`} value={localQuantity} onChange={handleQuantityChange} placeholder="مقدار" className="h-9 font-mono" />
@@ -287,6 +290,35 @@ function InvoiceItemRow({ item, index, onRemove, onUpdate, onUnitChange, onRepla
                                 <Input id={`total-price-${index}`} value={localTotalPrice} onChange={handleTotalPriceChange} placeholder="مبلغ کل" className="h-9 font-mono" />
                             </div>
                         </div>
+                        <AnimatePresence>
+                        {isOpen && similarProducts.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                            >
+                                <Separator className="my-2" />
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">محصولات مشابه پیشنهادی:</p>
+                                <ScrollArea className="w-full whitespace-nowrap">
+                                    <div className="flex gap-3 pb-2">
+                                        {similarProducts.map(p => (
+                                            <Card key={p.id} onClick={() => onReplace(index, p)} className="flex-shrink-0 w-32 cursor-pointer hover:border-primary transition-colors">
+                                                <div className="relative aspect-square w-full">
+                                                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover rounded-t-lg" />
+                                                </div>
+                                                <div className="p-2">
+                                                    <p className="text-xs font-semibold truncate">{p.name}</p>
+                                                    <p className="text-xs text-muted-foreground font-mono">{formatCurrency(p.price)}</p>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            </motion.div>
+                        )}
+                        </AnimatePresence>
                     </div>
                 </CollapsibleContent>
             </div>
@@ -864,16 +896,6 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     }
   };
     
-  const normalizeName = (name: string) => {
-    // This regex removes brand names and then standardizes the string
-    return name
-      .replace(/کی پلاس|کناف ایران|باتیس/gi, '') // Remove brand names
-      .replace(/ي/g, 'ی') // Standardize Arabic 'yeh' to Persian 'yeh'
-      .replace(/ك/g, 'ک') // Standardize Arabic 'kaf' to Persian 'kaf'
-      .replace(/\s+/g, '') // Remove all spaces
-      .toLowerCase();
-  };
-
   const handleBrandSwap = useCallback(() => {
     if (!invoice.items || invoice.items.length === 0) return;
 
@@ -888,10 +910,8 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
       const baseName = normalizeName(currentProduct.name);
 
       const equivalentProduct = products.find(p => {
-        if (p.id === currentProduct.id || p.subCategoryId !== currentProduct.subCategoryId) {
-          return false;
-        }
-
+        if (p.id === currentProduct.id) return false;
+        
         const candidateBaseName = normalizeName(p.name);
         if (candidateBaseName !== baseName) return false;
 

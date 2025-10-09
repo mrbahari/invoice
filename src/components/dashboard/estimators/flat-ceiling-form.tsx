@@ -251,6 +251,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
       { material: 'پنل RG باتیس', quantity: panelLayout.panelsNeeded, unit: 'برگ' },
       { material: 'نبشی L25', quantity: l25Profiles, unit: 'شاخه' },
       { material: 'سازه F47', quantity: f47MainProfiles + f47SecondaryProfiles, unit: 'شاخه' },
+      { material: 'پیچ پنل', quantity: totalPanelScrews, unit: 'عدد' },
     ];
     
     if (u36Profiles > 0) {
@@ -398,7 +399,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
         </CardContent>
       </Card>
        {results.length > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 z-10 p-4 bg-background/90 border-t backdrop-blur-sm no-print" style={{ bottom: '64px' }}>
+        <div className="fixed bottom-20 left-0 right-0 z-10 p-4 bg-background/90 border-t backdrop-blur-sm no-print" style={{ bottom: '80px' }}>
           <div className="max-w-4xl mx-auto">
               <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
                   <PlusCircle className="ml-2 h-5 w-5" />

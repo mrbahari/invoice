@@ -116,7 +116,7 @@ export function BoxCeilingForm({ onAddToList, onBack }: BoxCeilingFormProps) {
       {results.length > 0 && (
         <div 
           className="fixed bottom-20 left-0 right-0 z-10 p-4 bg-background/90 border-t backdrop-blur-sm no-print"
-          style={{ bottom: '64px' }}
+          style={{ bottom: '80px' }}
         >
           <div className="max-w-4xl mx-auto">
               <Button onClick={handleAddClick} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">

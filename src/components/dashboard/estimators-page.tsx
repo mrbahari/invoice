@@ -173,43 +173,42 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
     const invoiceItems: InvoiceItem[] = [];
 
-    const productMap: Record<string, { keyword: string[], aliases: string[], categoryKeywords: string[] }> = {
-        'پنل RG باتیس': { keyword: ['پنل', 'rg', 'باتیس'], aliases: ['پنل rg باتیس', 'پنل', 'پانل گچی', 'panel'], categoryKeywords: ['پنل'] },
-        'تایل پی وی سی': { keyword: ['تایل'], aliases: ['تایل', 'pvc'], categoryKeywords: ['تایل'] },
-        'سازه f47': { keyword: ['f47'], aliases: ['f47'], categoryKeywords: ['سازه'] },
-        'سازه u36': { keyword: ['u36'], aliases: ['u36'], categoryKeywords: ['سازه'] },
-        'نبشی l25': { keyword: ['l25', 'نبشی'], aliases: ['l25'], categoryKeywords: ['سازه'] },
-        'نبشی l24': { keyword: ['l24', 'نبشی'], aliases: ['l24'], categoryKeywords: ['سپری', 'سازه'] },
-        'سپری t360': { keyword: ['t360', '3.60', 'سپری'], aliases: ['t360', '3.60'], categoryKeywords: ['سپری', 'سازه'] },
-        'سپری t120': { keyword: ['t120', '1.20', 'سپری'], aliases: ['t120', '1.20'], categoryKeywords: ['سپری', 'سازه'] },
-        'سپری t60': { keyword: ['t60', '0.60', 'سپری'], aliases: ['t60', '0.60'], categoryKeywords: ['سپری', 'سازه'] },
-        'رانر': { keyword: ['رانر'], aliases: ['runner'], categoryKeywords: ['سازه'] },
-        'استاد': { keyword: ['استاد'], aliases: ['stud'], categoryKeywords: ['سازه'] },
-        'پیچ 2.5': { keyword: ['پیچ', '2.5', '۲.۵', 'tn25'], aliases: ['پیچ 2.5', 'پیچ ۲.۵', 'tn25'], categoryKeywords: ['پیچ', 'ملزومات'] },
-        'پیچ سازه': { keyword: ['پیچ', 'سازه'], aliases: ['پیچ سازه', 'ln9', 'پیچ ln'], categoryKeywords: ['پیچ', 'ملزومات'] },
-        'آویز': { keyword: ['آویز'], aliases: ['آویز', 'hanger'], categoryKeywords: ['ملزومات'] },
-        'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], aliases: ['میخ', 'چاشنی'], categoryKeywords: ['ملزومات', 'پیچ'] },
-        'پشم سنگ': { keyword: ['پشم', 'سنگ'], aliases: ['پشم سنگ', 'rockwool'], categoryKeywords: ['عایق', 'پشم'] },
-        'اتصال w': { keyword: ['w', 'اتصال'], aliases: ['اتصال w', 'w clip', 'دبلیو'], categoryKeywords: ['ملزومات', 'اتصال'] },
-        'کلیپس': { keyword: ['کلیپس'], aliases: ['کلیپس', 'clip'], categoryKeywords: ['ملزومات', 'اتصال'] },
-        'براکت': { keyword: ['براکت'], aliases: ['براکت', 'bracket'], categoryKeywords: ['ملزومات', 'اتصال'] },
+    const productMap: Record<string, { keyword: string[], categoryKeywords: string[] }> = {
+        'پنل RG باتیس': { keyword: ['پنل', 'rg', 'باتیس'], categoryKeywords: ['پنل'] },
+        'تایل پی وی سی': { keyword: ['تایل', 'pvc'], categoryKeywords: ['تایل'] },
+        'سازه f47': { keyword: ['f47', 'سازه', 'پروفیل'], categoryKeywords: ['سازه'] },
+        'سازه u36': { keyword: ['u36', 'سازه', 'پروفیل'], categoryKeywords: ['سازه'] },
+        'نبشی l25': { keyword: ['l25', 'نبشی', 'پروفیل'], categoryKeywords: ['سازه'] },
+        'نبشی l24': { keyword: ['l24', 'نبشی', 'سپری'], categoryKeywords: ['سپری', 'سازه'] },
+        'سپری t360': { keyword: ['t360', '3.60', 'سپری', 'پروفیل'], categoryKeywords: ['سپری', 'سازه'] },
+        'سپری t120': { keyword: ['t120', '1.20', 'سپری', 'پروفیل'], categoryKeywords: ['سپری', 'سازه'] },
+        'سپری t60': { keyword: ['t60', '0.60', 'سپری', 'پروفیل'], categoryKeywords: ['سپری', 'سازه'] },
+        'رانر': { keyword: ['رانر', 'runner', 'پروفیل'], categoryKeywords: ['سازه'] },
+        'استاد': { keyword: ['استاد', 'stud', 'پروفیل'], categoryKeywords: ['سازه'] },
+        'پیچ 2.5': { keyword: ['پیچ', '2.5', '۲.۵', 'tn25'], categoryKeywords: ['پیچ', 'ملزومات'] },
+        'پیچ سازه': { keyword: ['پیچ', 'سازه', 'ln9'], categoryKeywords: ['پیچ', 'ملزومات'] },
+        'آویز': { keyword: ['آویز', 'hanger'], categoryKeywords: ['ملزومات'] },
+        'میخ و چاشنی': { keyword: ['میخ', 'چاشنی'], categoryKeywords: ['ملزومات', 'پیچ'] },
+        'پشم سنگ': { keyword: ['پشم', 'سنگ', 'rockwool'], categoryKeywords: ['عایق', 'پشم'] },
+        'اتصال w': { keyword: ['w', 'اتصال', 'دبلیو'], categoryKeywords: ['ملزومات', 'اتصال'] },
+        'کلیپس': { keyword: ['کلیپس', 'clip'], categoryKeywords: ['ملزومات', 'اتصال'] },
+        'براکت': { keyword: ['براکت', 'bracket'], categoryKeywords: ['ملزومات', 'اتصال'] },
     };
 
     aggregatedResults.forEach(item => {
         let matchedProduct: Product | undefined;
         const materialNameLower = item.material.toLowerCase();
-
+        
         for (const key in productMap) {
             const productInfo = productMap[key];
-            const hasAliasMatch = productInfo.aliases.some(alias => materialNameLower.includes(alias.toLowerCase()));
-
-            if (hasAliasMatch) {
+            // Check if the item material name is a match for one of the keys in productMap
+            if (key.toLowerCase() === materialNameLower) {
                 // Find products that match by name keywords
-                const potentialProducts = products.filter(p => {
+                 const potentialProducts = products.filter(p => {
                     const productNameLower = p.name.toLowerCase();
-                    return productInfo.keyword.every(kw => productNameLower.includes(kw.toLowerCase()));
+                    return productInfo.keyword.some(kw => productNameLower.includes(kw.toLowerCase()));
                 });
-
+                
                 // From potential products, find one that matches category keywords
                 matchedProduct = potentialProducts.find(p => {
                     const category = categories.find(c => c.id === p.subCategoryId);
@@ -219,16 +218,15 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
                 });
 
                 if (matchedProduct) {
-                    break; 
+                    break;
                 }
             }
         }
-        
-        // Fallback if no specific match is found
+
+        // Fallback if no specific match is found by the map
         if (!matchedProduct) {
             matchedProduct = products.find(p => p.name.toLowerCase() === materialNameLower);
         }
-
 
         let quantity = item.quantity;
         let unit = item.unit;
@@ -495,3 +493,5 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     </div>
   );
 }
+
+    

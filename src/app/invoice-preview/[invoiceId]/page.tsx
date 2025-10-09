@@ -260,8 +260,15 @@ export default function PublicInvoicePreviewPage() {
             <section className="grid grid-cols-2 gap-4 mt-4 text-sm">
               <div className="space-y-2 text-xs">
                 <p><strong>اعتبار پیش فاکتور:</strong> {toPersianDigits(24)} ساعت می‌باشد.</p>
-                {store.bankAccountHolder && <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>}
-                {store.bankName && <p><strong>نام بانک:</strong> {store.bankName}</p>}
+                {store.bankAccountHolder && store.bankName && (
+                  <p><strong>صاحب حساب:</strong> {store.bankAccountHolder} - <strong>بانک:</strong> {store.bankName}</p>
+                )}
+                {store.bankAccountHolder && !store.bankName && (
+                    <p><strong>صاحب حساب:</strong> {store.bankAccountHolder}</p>
+                )}
+                {!store.bankAccountHolder && store.bankName && (
+                    <p><strong>نام بانک:</strong> {store.bankName}</p>
+                )}
                 {store.bankCardNumber && <p><strong>شماره کارت:</strong> <span className="font-mono font-bold" dir="ltr">{toPersianDigits(store.bankCardNumber)}</span></p>}
                 {store.bankAccountNumber && <p><strong>شماره حساب:</strong> <span className="font-mono font-bold" dir="ltr">{toPersianDigits(store.bankAccountNumber)}</span></p>}
                 {store.bankIban && <p><strong>شماره شبا:</strong> <span className="font-mono font-bold" dir="ltr">{toPersianDigits(store.bankIban)}</span></p>}

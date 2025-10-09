@@ -227,10 +227,8 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
     const panelLayout = calculatePanelLayout(longSide, shortSide);
 
     // 6. Panel Screws (TN25 - pich 2.5)
-    // Screws are needed for F47s and for perimeter L25s
     const panelScrewsForF47 = Math.ceil(f47MainTotalLength / 0.2);
-    const panelScrewsForL25 = Math.ceil(perimeter / 0.2); 
-    const totalPanelScrews = panelScrewsForF47 + panelScrewsForL25;
+    const totalPanelScrews = panelScrewsForF47;
     
     // --- Type A Specific Calculations ---
     let f47SecondaryProfiles = 0;
@@ -290,7 +288,8 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
 
   const handleAddClick = () => {
     if (results.length === 0) return;
-    const description = `سقف فلت تیپ ${ceilingType}: ${displayLength || length} * ${displayWidth || width} متر`;
+    const typeText = ceilingType === 'A' ? 'آ' : 'ب';
+    const description = `سقف فلت تیپ ${typeText}: ${displayLength || length} * ${displayWidth || width} متر`;
     onAddToList(description, results, details);
   };
 
@@ -321,7 +320,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                       <CardHeader className="flex-row items-start gap-4 space-y-0 p-4">
                           <Layers className="h-8 w-8 text-primary" />
                           <div className="grid gap-1">
-                              <CardTitle className="text-base">تیپ B (استاندارد)</CardTitle>
+                              <CardTitle className="text-base">تیپ ب (استاندارد)</CardTitle>
                               <CardDescription className="text-xs">سازه کشی یک طرفه. مناسب برای دهانه‌های کوتاه و کاربری‌های معمول.</CardDescription>
                           </div>
                           {ceilingType === 'B' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}
@@ -334,7 +333,7 @@ export function FlatCeilingForm({ onAddToList, onBack }: FlatCeilingFormProps) {
                             <Layers className="h-8 w-8 text-primary absolute top-0 left-0 opacity-50 transform rotate-90" />
                           </div>
                           <div className="grid gap-1">
-                              <CardTitle className="text-base">تیپ A (پیشرفته)</CardTitle>
+                              <CardTitle className="text-base">تیپ آ (پیشرفته)</CardTitle>
                               <CardDescription className="text-xs">سازه کشی دو طرفه. مناسب برای دهانه‌های بزرگ و استحکام بیشتر.</CardDescription>
                           </div>
                           {ceilingType === 'A' && <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />}

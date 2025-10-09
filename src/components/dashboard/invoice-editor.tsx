@@ -67,7 +67,8 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { useDraggableScroll } from '@/hooks/use-draggable-scroll';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
 
 
 type InvoiceEditorProps = {
@@ -440,11 +441,13 @@ AddProductsComponent.displayName = 'AddProductsComponent';
 
 
 export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, onCancel, onDirtyChange }: InvoiceEditorProps) {
-  const { data, addDocument, updateDocument, deleteDocument } = useData();
+  const { data, updateDocument, deleteDocument } = useData();
   const { customers: customerList, products, categories, stores, invoices, units: unitsOfMeasurement } = data;
   const { toast } = useToast();
   const isClient = useIsClient();
   const isMobile = useIsMobile();
+  const { user } = useUser();
+  const firestore = useFirestore();
 
 
   const productsScrollRef = useRef<HTMLDivElement>(null);
@@ -686,21 +689,24 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   }, [invoice, setInvoice]);
 
   const handlePriceBlur = async (item: InvoiceItem) => {
+    if (!user || !firestore) return;
     const product = products.find(p => p.id === item.productId);
     if (!product || product.price === item.unitPrice) {
       return; // No change or no product found
     }
-  
+
     // Update the product price in the database
     await updateDocument('products', item.productId, { price: item.unitPrice });
-    
+
     // Add the new price to the priceHistory subcollection
     const newPriceHistoryEntry: Omit<PriceHistory, 'id'> = {
       price: item.unitPrice,
       date: new Date().toISOString(),
     };
     
-    await addDocument(`products/${item.productId}/priceHistory` as any, newPriceHistoryEntry);
+    // Directly use firestore functions for subcollection
+    const priceHistoryRef = collection(firestore, 'users', user.uid, 'products', item.productId, 'priceHistory');
+    await addDoc(priceHistoryRef, newPriceHistoryEntry);
 
     toast({
         variant: 'success',

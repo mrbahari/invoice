@@ -324,19 +324,19 @@ const AddProductsComponent = React.memo(({
 
     const [activeInput, setActiveInput] = useState<string | null>(null);
     const [quantity, setQuantity] = useState<string>('1');
-
+    const [isHolding, setIsHolding] = useState<null | 'inc' | 'dec'>(null);
+    
+    useInterval(() => {
+        if (isHolding) {
+            handleQuantityChange(isHolding === 'inc' ? 1 : -1);
+        }
+    }, isHolding ? 100 : null);
+    
     const handleProductClick = (productId: string) => {
         if (activeInput === productId) {
-            // If clicking the same product, add it
-            const numQuantity = parseFormattedNumber(quantity);
-            if (numQuantity > 0) {
-                 const product = filteredProducts.find(p => p.id === productId);
-                 if (product) onAddProduct(product, numQuantity);
-            }
             setActiveInput(null);
             setQuantity('1');
         } else {
-            // Open the input for a new product
             setActiveInput(productId);
             setQuantity('1');
         }
@@ -405,37 +405,10 @@ const AddProductsComponent = React.memo(({
                             const isInInvoice = !!invoiceItem;
 
                             return (
-                            <div key={product.id} className="group flex flex-col">
-                                <Card className="overflow-hidden" onClick={() => handleProductClick(product.id)}>
+                            <div key={product.id} className="group flex flex-col items-center">
+                                <Card className="overflow-hidden w-full cursor-pointer" onClick={() => handleProductClick(product.id)}>
                                     <div className="relative aspect-square w-full">
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover pointer-events-none" draggable="false" />
-                                         <AnimatePresence>
-                                            {activeInput === product.id && (
-                                                <motion.div 
-                                                    initial={{ opacity: 0, scale: 0.8 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.8 }}
-                                                    className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-1 gap-1"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <div className="flex items-center gap-1">
-                                                        <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleQuantityChange(-1)}><Minus className="h-3 w-3" /></Button>
-                                                        <Input 
-                                                            className="h-7 w-12 text-center font-mono text-sm p-1" 
-                                                            value={quantity}
-                                                            onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
-                                                            autoFocus
-                                                            onFocus={(e) => e.target.select()}
-                                                        />
-                                                        <Button variant="outline" size="icon" className="h-6 w-6 rounded-full" onClick={() => handleQuantityChange(1)}><Plus className="h-3 w-3" /></Button>
-                                                    </div>
-                                                    <Button size="sm" className="h-6 px-2 text-xs w-full bg-green-600 hover:bg-green-700" onClick={(e) => handleConfirm(e, product.id)}>
-                                                        <Check className="ml-1 h-3 w-3" />
-                                                        افزودن
-                                                    </Button>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
                                         {isInInvoice && activeInput !== product.id && (
                                             <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white select-none pointer-events-none">
                                                 {formatNumber(invoiceItem?.quantity)}
@@ -443,7 +416,53 @@ const AddProductsComponent = React.memo(({
                                         )}
                                     </div>
                                 </Card>
-                                <div className="p-1.5 text-center">
+                                <AnimatePresence>
+                                {activeInput === product.id && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="w-full flex flex-col gap-1 items-center mt-2"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <div className="flex items-center justify-center gap-1 w-full">
+                                             <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7 bg-red-600 text-white hover:bg-red-700"
+                                                onMouseDown={() => { handleQuantityChange(-1); setIsHolding('dec'); }}
+                                                onMouseUp={() => setIsHolding(null)}
+                                                onMouseLeave={() => setIsHolding(null)}
+                                            >
+                                                <Minus className="h-4 w-4" />
+                                            </Button>
+                                            <Input
+                                                className="h-7 w-12 text-center font-mono text-sm p-1"
+                                                value={quantity}
+                                                onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
+                                                autoFocus
+                                                onFocus={(e) => e.target.select()}
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7 bg-green-600 text-white hover:bg-green-700"
+                                                onMouseDown={() => { handleQuantityChange(1); setIsHolding('inc'); }}
+                                                onMouseUp={() => setIsHolding(null)}
+                                                onMouseLeave={() => setIsHolding(null)}
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                         <Button size="sm" className="h-7 px-2 text-xs w-full bg-green-600 hover:bg-green-700" onClick={(e) => handleConfirm(e, product.id)}>
+                                            <Check className="ml-1 h-3 w-3" />
+                                            افزودن
+                                        </Button>
+                                    </motion.div>
+                                )}
+                                </AnimatePresence>
+                                <div className="p-1.5 text-center w-full">
                                     <p className="text-xs font-semibold truncate">{product.name}</p>
                                     <p className="text-xs text-muted-foreground font-mono">{formatCurrency(product.price)}</p>
                                 </div>
@@ -846,12 +865,12 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   };
     
   const normalizeName = (name: string) => {
+    // This regex removes brand names and then standardizes the string
     return name
-      .replace(/کی پلاس|کناف ایران|باتیس/gi, '')
-      .replace(/[\u064B-\u0652]/g, '') // remove arabic diacritics
-      .replace(/ي/g, 'ی') // replace arabic yeh with persian yeh
-      .replace(/ك/g, 'ک') // replace arabic kaf with persian kaf
-      .replace(/\s+/g, '') // remove all spaces
+      .replace(/کی پلاس|کناف ایران|باتیس/gi, '') // Remove brand names
+      .replace(/ي/g, 'ی') // Standardize Arabic 'yeh' to Persian 'yeh'
+      .replace(/ك/g, 'ک') // Standardize Arabic 'kaf' to Persian 'kaf'
+      .replace(/\s+/g, '') // Remove all spaces
       .toLowerCase();
   };
 

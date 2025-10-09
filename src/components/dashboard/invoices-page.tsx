@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
@@ -63,7 +64,7 @@ export default function InvoicesPage({
   const { searchTerm, setSearchVisible } = useSearch();
 
   
-  const [view, setView] = useState<View>(() => draftInvoice ? { type: 'editor', isDirty: false } : { type: 'list' });
+  const [view, setView] = useState<View>(() => (draftInvoice ? { type: 'editor', isDirty: false } : { type: 'list' }));
   const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);

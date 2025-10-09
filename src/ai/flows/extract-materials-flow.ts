@@ -44,15 +44,26 @@ const extractMaterialsPrompt = ai.definePrompt({
     input: { schema: z.custom<ExtractMaterialsInput>() },
     output: { schema: ExtractMaterialsOutputSchema },
     prompt: `
-    You are an expert assistant for a construction material supplier in Iran.
-    Your task is to analyze the provided document (which could be an image of a handwritten list, a PDF, or a text file) and extract a list of all construction materials mentioned.
-    For each material, you must identify its name, quantity, and unit of measurement.
+    You are an expert assistant for a construction material supplier in Iran. Your task is to analyze the provided content and extract a list of materials.
 
-    CRITICAL: You MUST compare each extracted material name with the list of 'existingProducts' provided. Your matching should be very accurate and consider synonyms, typos, and common variations in Persian (e.g., "پیچ کناف" should match "پیچ پنل").
-    - If you find a close match in the 'existingProducts' list, you MUST use the existing product's data (id, name, unit). Set 'isNew' to false.
-    - If there is NO reasonable match in the existing products, you MUST treat it as a new product. Set 'isNew' to true, and use the extracted name as a temporary 'productId' and 'name'.
+    **CRITICAL INSTRUCTIONS:**
 
-    The final response MUST be in PERSIAN.
+    1.  **Analyze Context First:** Before processing individual items, analyze the entire list to understand the type of construction project (e.g., if you see "F47" and "U36", you can infer it's a flat ceiling project). This context is key.
+
+    2.  **Deduce Necessary Materials:** Based on the project type, you know certain materials *must* exist. For a flat ceiling project, "پنل" (panel) and "نبشی" (L-profile) are essential.
+
+    3.  **Intelligent Matching:**
+        *   First, try to find an exact or very close match for each item in the 'existingProducts' list. Your matching should be very accurate and consider common synonyms and typos in Persian (e.g., "پیچ کناف" should match "پیچ پنل").
+        *   **If no direct match is found, use your contextual knowledge.** For example, if the project is a flat ceiling and you see an item like "پانل 12.5 درجه یک", you must recognize "پانل" as a variant of "پنل". Since you know a panel is required, you should match this to the default existing panel product (e.g., "پنل RG باتیس").
+        *   When a match is found (either direct or through deduction), you MUST use the existing product's data (id, name, unit). Set 'isNew' to false.
+
+    4.  **Handling New Products:**
+        *   Only if an item cannot be matched to an existing product, even with contextual deduction, should you treat it as a new product.
+        *   For new products, set 'isNew' to true, and use the extracted name as a temporary 'productId' and 'name'.
+
+    5.  **Output:** The final response MUST be in PERSIAN.
+
+    **Data for Analysis:**
 
     Existing Products for Matching:
     {{#if existingProducts}}

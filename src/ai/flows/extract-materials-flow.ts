@@ -65,7 +65,10 @@ const extractMaterialsPrompt = ai.definePrompt({
     3.  **Intelligent Matching (within Brand context):**
         *   First, try to find an exact or very close match for each item in the 'existingProducts' list that fits the brand preference. Your matching must be very accurate.
         *   **Synonym Matching:** Be aware of common synonyms. For example, "پیچ پنل" or "پیچ کناف" MUST be matched to the product named "پیچ پنل" (which is usually a 2.5cm screw), NOT any other screw type.
-        *   **Contextual Deduction:** If no direct match is found, use your contextual knowledge. For example, if the project is a flat ceiling and you see an item like "پانل 12.5 درجه یک", you must recognize "پانل" as a variant of "پنل". Since a flat ceiling requires panels, you MUST match this to the default panel product that fits the brand preference (e.g., "پنل RG کی پلاس" if brand is 'k-plus', or "پنل RG باتیس" if brand is 'miscellaneous').
+        *   **Contextual Deduction:** If no direct match is found, use your contextual knowledge. For example, if the project is a flat ceiling and you see an item like "پانل 12.5 درجه یک", you must recognize "پانل" as a variant of "پنل".
+            *   Since a flat ceiling requires panels, you MUST match this to the default panel product that fits the brand preference.
+            *   For 'k-plus' brand, the default is "پنل RG کی پلاس".
+            *   **MOST IMPORTANT:** For 'miscellaneous' brand or if no brand is specified, the default panel is ALWAYS "پنل RG باتیس". You must match any generic panel term to "پنل RG باتیس" in these cases.
         *   When a match is found (direct or deduced), use the existing product's data (id, name, unit). Set 'isNew' to false.
 
     4.  **Handling New Products:**

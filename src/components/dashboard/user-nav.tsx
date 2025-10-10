@@ -25,6 +25,7 @@ import {
   updateProfile,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  signInWithRedirect,
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import type { AuthFormValues } from '@/lib/definitions';
@@ -59,14 +60,27 @@ export function UserNav() {
   };
 
   const handleClientGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
+      // First, try to sign in with a popup. This is better for desktop.
       await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle the rest
       return { success: true };
     } catch (error: any) {
-      console.error('Google Sign-In Error', error);
-      return { success: false, error: error.message };
+      // If the popup fails (e.g., blocked on mobile), fall back to redirect.
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+        try {
+          await signInWithRedirect(auth, provider);
+          // No return here as the page will redirect. The result is handled on the next page load.
+          return { success: true }; // Technically this won't be used, but for consistency
+        } catch (redirectError: any) {
+          console.error('Google Sign-In Redirect Error', redirectError);
+          return { success: false, error: redirectError.message };
+        }
+      } else {
+        // Handle other errors (e.g., user closes popup)
+        console.error('Google Sign-In Popup Error', error);
+        return { success: false, error: error.message };
+      }
     }
   };
 

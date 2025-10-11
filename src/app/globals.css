@@ -60,7 +60,7 @@
     --background-hsl: 222.2 84% 4.9%;
     --foreground-hsl: 210 40% 98%;
     --primary-hsl: 217 91% 60%;
-    --ring-hsl: 217 91% 60%;
+    --ring-hsl: 217 90% 59%;
 
     --background: hsl(var(--background-hsl));
     --foreground: hsl(var(--foreground-hsl));
@@ -71,7 +71,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: hsl(var(--primary-hsl));
+    --primary: hsl(217 91% 60%);
     --primary-foreground: 210 40% 98%;
  
     --secondary: 217.2 32.6% 17.5%;
@@ -84,7 +84,7 @@
     --accent-foreground: 210 40% 98%;
  
     --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
  
     --border: 217 90% 59%;
     --input: 217 90% 59%;

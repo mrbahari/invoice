@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import formidable from 'formidable';
+import os from 'os';
 
 export const config = {
   api: {
@@ -10,7 +11,8 @@ export const config = {
   },
 };
 
-const uploadDir = path.join(process.cwd(), 'public/uploads/ads');
+// Use the temporary directory which is writable on Vercel
+const uploadDir = path.join(os.tmpdir(), 'uploads/ads');
 
 async function ensureUploadDirExists() {
   try {
@@ -37,13 +39,20 @@ export async function POST(req: NextRequest) {
     const uniqueFilename = `${Date.now()}-${file.name}`;
     const filePath = path.join(uploadDir, uniqueFilename);
 
-    // Stream the file to the filesystem
+    // Save the file to the temporary directory
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, fileBuffer);
 
-    const publicUrl = `/uploads/ads/${uniqueFilename}`;
+    // Read the file back and convert to a Base64 Data URI
+    const base64Data = fileBuffer.toString('base64');
+    const dataUri = `data:${file.type};base64,${base64Data}`;
+
+    // Clean up the temporary file after converting
+    // This is important because the /tmp directory has limited space.
+    await fs.unlink(filePath);
     
-    return NextResponse.json({ url: publicUrl });
+    // Return the Data URI instead of a public URL
+    return NextResponse.json({ url: dataUri });
 
   } catch (error: any) {
     console.error('File upload error:', error);

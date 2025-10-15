@@ -549,6 +549,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   const [customerDialogView, setCustomerDialogView] = useState<'select' | 'create'>('select');
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   
   const isDirty = useMemo(() => {
     if (initialState === null) return false;
@@ -983,17 +984,22 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
                     <TooltipContent side="left"><p>بازگشت</p></TooltipContent>
                 </Tooltip>
                 {isEditMode && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" disabled={isProcessing} className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8" onClick={(e) => e.stopPropagation()}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left"><p>حذف فاکتور</p></TooltipContent>
-                        </Tooltip>
-                    </AlertDialogTrigger>
+                <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              disabled={isProcessing}
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                              onClick={() => setIsDeleteAlertOpen(true)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left"><p>حذف فاکتور</p></TooltipContent>
+                    </Tooltip>
                     <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فاکتور را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
                         <AlertDialogFooter>

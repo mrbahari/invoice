@@ -19,9 +19,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   
   return (
     <SearchProvider>
-        <div className="flex h-screen w-full flex-col bg-muted/40">
+        <div className="grid h-screen w-full grid-rows-[auto_1fr_auto]">
             <Header activeTab={activeTab} onTabChange={handleTabChange} />
-            <main className="flex-1 overflow-auto p-4 sm:p-6">
+            <main className="overflow-auto bg-muted/40 p-4 sm:p-6">
                 {children}
             </main>
             <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />

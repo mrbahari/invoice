@@ -25,6 +25,7 @@ import { FloatingToolbar } from './floating-toolbar';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import useBeforeUnload from '@/hooks/use-before-unload';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
 type View =
@@ -285,6 +286,7 @@ export default function InvoicesPage({
                     const hasValidName = customer && customer.name && customer.name !== 'مشتری بدون نام';
                     const displayName = hasValidName ? customer!.name : (invoice.customerName && invoice.customerName !== 'مشتری بدون نام' ? invoice.customerName : 'بی نام');
                     const displayPhone = customer?.phone || 'بدون تماس';
+                    const nameInitials = (hasValidName ? customer!.name : displayPhone).split(' ').map(n => n[0]).join('');
 
                     return (
                       <Card 
@@ -293,13 +295,16 @@ export default function InvoicesPage({
                         className="flex flex-col justify-between cursor-pointer"
                       >
                         <CardHeader className="p-4 sm:p-6 pb-4">
-                          <div className="flex justify-between items-start">
-                            <div className="grid gap-1">
-                              <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
-                              <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
+                            <div className="flex flex-row-reverse items-start justify-end gap-4">
+                                <Avatar className="h-12 w-12 border">
+                                    <AvatarImage src={`https://picsum.photos/seed/${invoice.customerId}/48/48`} />
+                                    <AvatarFallback>{nameInitials}</AvatarFallback>
+                                </Avatar>
+                                <div className="grid gap-1 text-right">
+                                    <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
+                                    <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
+                                </div>
                             </div>
-                           
-                          </div>
                         </CardHeader>
                         <CardContent className="grid gap-2 text-sm p-4 sm:p-6 pt-0">
                            <div className="flex justify-between">

@@ -278,33 +278,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!firestore || !user) throw new Error('Firestore/user not available.');
     const collectionRef = getCollectionRef(collectionName);
     if (!collectionRef) throw new Error(`Invalid collection name: ${collectionName}`);
-    if (!docId || docId.startsWith('temp-')) return; 
-
-    const originalItem = data[collectionName].find((item: any) => item.id === docId);
-    if (!originalItem) return;
-
-    // Optimistic UI update
-    setData(prev => ({ ...prev, [collectionName]: prev[collectionName].filter((item: any) => item.id !== docId) }));
-
+    if (!docId || docId.startsWith('temp-')) return;
+  
+    const docRef = doc(collectionRef, docId);
+  
     try {
-        const docRef = doc(collectionRef, docId);
-        await deleteDoc(docRef);
-    } catch (error) {
-        // Rollback UI on error
-        setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], originalItem] }));
-        console.error(`Error deleting document from ${collectionName}:`, error);
-
-        // Check for permission error specifically
-        if ((error as any).code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError({
-              path: doc(collectionRef, docId).path,
-              operation: 'delete',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        }
-        throw error; // Re-throw to allow caller to handle it
+      await deleteDoc(docRef);
+      // Wait for the server to confirm before updating the UI
+      setData(prev => ({
+        ...prev,
+        [collectionName]: prev[collectionName].filter((item: any) => item.id !== docId),
+      }));
+    } catch (error: any) {
+      console.error(`Error deleting document from ${collectionName}:`, error);
+      // If there's an error, we don't update the UI, and the item remains visible.
+      if ((error as any).code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
+      throw error; // Re-throw to allow caller to handle it
     }
-  }, [firestore, user, getCollectionRef, data]);
+  }, [firestore, user, getCollectionRef]);
 
   const deleteDocuments = useCallback(async (collectionName: CollectionName, docIds: string[]) => {
     if (!firestore || !user || docIds.length === 0) throw new Error('Firestore/user not available or no documents to delete.');
@@ -314,37 +311,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const validDocIds = docIds.filter(id => id && !id.startsWith('temp-'));
     if (validDocIds.length === 0) return;
 
-    const originalItems = data[collectionName].filter((item: any) => validDocIds.includes(item.id));
-
-    // Optimistic UI update
-    setData(prev => ({
-        ...prev,
-        [collectionName]: prev[collectionName].filter((item: any) => !validDocIds.includes(item.id)),
-    }));
-    
     const batch = writeBatch(firestore);
     validDocIds.forEach(id => {
-        const docRef = doc(collectionRef, id);
-        batch.delete(docRef);
+      const docRef = doc(collectionRef, id);
+      batch.delete(docRef);
     });
-
+  
     try {
-        await batch.commit();
+      await batch.commit();
+      // Wait for server confirmation, then update UI
+      setData(prev => ({
+        ...prev,
+        [collectionName]: prev[collectionName].filter((item: any) => !validDocIds.includes(item.id)),
+      }));
     } catch (error: any) {
-        // Rollback UI on error
-        setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], ...originalItems] }));
-        console.error(`Batch delete error in ${collectionName}:`, error);
-
-        if ((error as any).code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: collectionRef.path, // Simplified for batch error
-                operation: 'delete',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        }
-        throw error; // Re-throw for caller
+      console.error(`Batch delete error in ${collectionName}:`, error);
+      if ((error as any).code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+            path: collectionRef.path, // Simplified for batch error
+            operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
+      throw error; // Re-throw for caller
     }
-  }, [firestore, user, getCollectionRef, data]);
+  }, [firestore, user, getCollectionRef]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {
     // Optimistic update for local state
@@ -624,3 +615,5 @@ export function useData() {
   }
   return context;
 }
+
+    

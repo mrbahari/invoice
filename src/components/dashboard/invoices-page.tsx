@@ -296,13 +296,15 @@ export default function InvoicesPage({
                       >
                         <CardHeader className="p-4 sm:p-6 pb-4">
                             <div className="flex flex-row items-center justify-between gap-4">
-                                <Avatar className="h-12 w-12 border">
-                                    <AvatarImage src={`https://picsum.photos/seed/${invoice.customerId}/48/48`} />
-                                    <AvatarFallback>{nameInitials}</AvatarFallback>
-                                </Avatar>
-                                <div className="grid gap-1 text-right">
-                                    <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
-                                    <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="h-12 w-12 border">
+                                        <AvatarImage src={`https://picsum.photos/seed/${invoice.customerId}/48/48`} />
+                                        <AvatarFallback>{nameInitials}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="grid gap-1 text-right">
+                                        <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
+                                        <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
+                                    </div>
                                 </div>
                             </div>
                         </CardHeader>

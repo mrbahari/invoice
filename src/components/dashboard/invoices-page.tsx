@@ -329,7 +329,7 @@ export default function InvoicesPage({
                            </div>
                          </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <CardContent className="grid gap-2 text-sm px-4 sm:px-6 pt-0">
+                          <CardContent className="grid gap-2 text-sm p-4 sm:px-6 pt-0">
                             <div className="flex justify-between font-semibold text-base pt-4 border-t mt-2">
                                 <span className="text-muted-foreground">مبلغ کل</span>
                                 <span>{formatCurrency(invoice.total)}</span>

@@ -20,14 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
+    <html lang="fa" dir="rtl" suppressHydrationWarning className="overflow-x-hidden">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased overflow-x-hidden">
+      <body className="font-body antialiased overflow-x-hidden w-full">
         <ThemeProvider
             attribute="class"
             defaultTheme="light"

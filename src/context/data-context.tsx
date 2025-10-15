@@ -315,8 +315,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const collectionRef = getCollectionRef(collectionName);
     
     if (!collectionRef) {
-      console.error('Invalid collection reference or user not logged in.');
-      return;
+        console.error('Invalid collection reference or user not logged in.');
+        return;
     }
     
     const validDocIds = docIds.filter(id => id && !id.startsWith('temp-'));
@@ -327,25 +327,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Optimistic update
     setData(prev => ({
-      ...prev,
-      [collectionName]: prev[collectionName].filter(item => !validDocIds.includes(item.id)),
+        ...prev,
+        [collectionName]: prev[collectionName].filter(item => !validDocIds.includes(item.id)),
     }));
     
     const batch = writeBatch(firestore);
     validDocIds.forEach(id => {
-      batch.delete(doc(collectionRef, id));
+        const docRef = doc(collectionRef, id);
+        batch.delete(docRef);
     });
 
     try {
-      await batch.commit();
+        await batch.commit();
+        // The optimistic update should suffice for a responsive UI.
+        // onSnapshot will eventually confirm the state, but we don't need to do anything specific here.
     } catch (error: any) {
-        // Revert optimistic update
-        setData(prev => ({...prev, [collectionName]: [...prev[collectionName], ...originalItems]}));
+        console.error(`Batch delete error in ${collectionName}:`, error);
+        // Revert the optimistic update on failure
+        setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], ...originalItems] }));
+        
         const permissionError = new FirestorePermissionError({
-            path: collectionRef.path,
-            operation: 'delete', // This is a simplification for the error
+            path: collectionRef.path, // This is a simplification for the batch error
+            operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
+        throw error; // Re-throw so the caller knows the operation failed.
     }
   }, [firestore, user, getCollectionRef, data]);
   

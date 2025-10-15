@@ -739,31 +739,11 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
           const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
           const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
   
-          const batch = writeBatch(firestore);
-  
-          // Delete store
-          const storeRef = doc(firestore, 'users', user.uid, 'stores', store.id);
-          batch.delete(storeRef);
-  
-          // Delete associated products
-          productIdsToDelete.forEach(id => {
-              const productRef = doc(firestore, 'users', user.uid, 'products', id);
-              batch.delete(productRef);
-          });
-  
-          // Delete associated categories
-          categoryIdsToDelete.forEach(id => {
-              const categoryRef = doc(firestore, 'users', user.uid, 'categories', id);
-              batch.delete(categoryRef);
-          });
-          
-          // Delete associated units
-          unitIdsToDelete.forEach(id => {
-              const unitRef = doc(firestore, 'users', user.uid, 'units', id);
-              batch.delete(unitRef);
-          });
-
-          await batch.commit();
+          // Use the batch delete function from context
+          await deleteDocuments('products', productIdsToDelete);
+          await deleteDocuments('categories', categoryIdsToDelete);
+          await deleteDocuments('units', unitIdsToDelete);
+          await deleteDocument('stores', store.id); // Delete the store itself
   
           toast({ variant: 'success', title: 'فروشگاه و تمام داده‌های آن حذف شد' });
           onCancel();
@@ -773,7 +753,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       } finally {
           setIsProcessing(false);
       }
-  }, [store, user, firestore, data, onCancel, toast]);
+  }, [store, user, firestore, data, deleteDocument, deleteDocuments, onCancel, toast]);
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;

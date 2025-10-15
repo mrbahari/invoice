@@ -29,6 +29,7 @@ import CustomerDetailPage from './customer-detail-page';
 import { useData } from '@/context/data-context';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 
 type View =
   | { type: 'list' }
@@ -43,6 +44,8 @@ export default function CustomersPage() {
   const { searchTerm, setSearchVisible } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
   const scrollPositionRef = useRef(0);
+  const { itemsToShow, sentinelRef } = useVirtualScroll();
+
 
   useEffect(() => {
     // Control search bar visibility based on view
@@ -204,7 +207,7 @@ export default function CustomersPage() {
           </TableHeader>
           <TableBody>
             {filteredCustomers.length > 0 ? (
-              filteredCustomers.map((customer) => {
+              filteredCustomers.slice(0, itemsToShow).map((customer) => {
                 const { totalSpent, orderCount } = getCustomerStats(customer.id);
                 const hasValidName =
                   customer.name && customer.name !== 'مشتری بدون نام';
@@ -266,12 +269,19 @@ export default function CustomersPage() {
                 </TableCell>
               </TableRow>
             )}
+             {filteredCustomers.length > itemsToShow && (
+                <TableRow>
+                    <TableCell colSpan={4} className="p-0">
+                        <div ref={sentinelRef} className="h-1" />
+                    </TableCell>
+                </TableRow>
+             )}
           </TableBody>
         </Table>
       </CardContent>
       <CardFooter>
         <div className="text-xs text-muted-foreground">
-          نمایش <strong>{filteredCustomers.length.toLocaleString('fa-IR')}</strong> از{' '}
+          نمایش <strong>{Math.min(itemsToShow, filteredCustomers.length).toLocaleString('fa-IR')}</strong> از{' '}
           <strong>{(customerList?.length || 0).toLocaleString('fa-IR')}</strong> مشتریان
         </div>
       </CardFooter>

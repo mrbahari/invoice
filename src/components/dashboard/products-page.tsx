@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -62,6 +63,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { ProductForm } from './product-form';
+import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 
 
 type AiMultipleProductsDialogProps = {
@@ -207,6 +209,76 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
 
 type BulkAction = 'move' | 'copy';
 
+const CategoryProducts = ({ categoryId, categoryProducts, onEdit, onCopy, selectedProducts, onSelectProduct }: { categoryId: string, categoryProducts: Product[], onEdit: (p: Product) => void, onCopy: (p: Product) => void, selectedProducts: string[], onSelectProduct: (id: string, checked: boolean) => void }) => {
+    const { itemsToShow, sentinelRef } = useVirtualScroll(10);
+    const visibleProducts = categoryProducts.slice(0, itemsToShow);
+  
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[80px] text-center">
+              <Checkbox
+                checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
+                onCheckedChange={(checked) => {
+                  const categoryProductIds = categoryProducts.map(p => p.id);
+                  onSelectProduct(categoryProductIds.join(','), !!checked);
+                }}
+              />
+            </TableHead>
+            <TableHead>نام</TableHead>
+            <TableHead className="hidden md:table-cell">توضیحات</TableHead>
+            <TableHead className="text-left">قیمت</TableHead>
+            <TableHead><span className="sr-only">Actions</span></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {visibleProducts.map((product) => (
+            <TableRow
+              key={product.id}
+              data-state={selectedProducts.includes(product.id) ? "selected" : ""}
+              className="cursor-pointer"
+            >
+              <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
+                <Checkbox
+                  checked={selectedProducts.includes(product.id)}
+                  onCheckedChange={(checked) => onSelectProduct(product.id, !!checked)}
+                />
+              </TableCell>
+              <TableCell className="font-medium" onClick={() => onEdit(product)}>
+                <div className="flex items-center gap-3">
+                  <Image
+                    alt={product.name}
+                    className="aspect-square rounded-md object-cover"
+                    height="40"
+                    src={product.imageUrl}
+                    width="40"
+                  />
+                  <span>{product.name}</span>
+                </div>
+              </TableCell>
+              <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => onEdit(product)}>{product.description}</TableCell>
+              <TableCell className="text-left" onClick={() => onEdit(product)}>{formatCurrency(product.price)}</TableCell>
+              <TableCell className="text-left">
+                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onCopy(product) }}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {categoryProducts.length > itemsToShow && (
+            <TableRow>
+              <TableCell colSpan={5} className="p-0">
+                <div ref={sentinelRef} className="h-1"></div>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+};
+
+
 export default function ProductsPage() {
   const { data, addDocuments, updateDocuments, deleteDocuments } = useData();
   const { products, stores, categories } = data;
@@ -350,20 +422,19 @@ export default function ProductsPage() {
     setSelectedProducts([]);
   }, [searchTerm, activeTab]);
 
-  const handleSelectAll = (checked: boolean) => {
-    const allProductIds = Object.values(groupedProducts).flat().map(p => p.id);
-    if (checked) {
-      setSelectedProducts(allProductIds);
-    } else {
-      setSelectedProducts([]);
-    }
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    const ids = productId.split(','); // Handle multi-select from header
+    setSelectedProducts(prev => {
+        const newSelection = new Set(prev);
+        if (checked) {
+            ids.forEach(id => newSelection.add(id));
+        } else {
+            ids.forEach(id => newSelection.delete(id));
+        }
+        return Array.from(newSelection);
+    });
   };
 
-  const handleSelectProduct = (productId: string, checked: boolean) => {
-    setSelectedProducts(prev => 
-      checked ? [...prev, productId] : prev.filter(id => id !== productId)
-    );
-  };
   
   const handleDeleteSelected = async () => {
     if (selectedProducts.length === 0) return;
@@ -627,63 +698,14 @@ export default function ProductsPage() {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent>
-                                    <Table>
-                                        <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-[80px] text-center">
-                                                <Checkbox
-                                                    checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
-                                                    onCheckedChange={(checked) => {
-                                                        const categoryProductIds = categoryProducts.map(p => p.id);
-                                                        setSelectedProducts(prev => {
-                                                            const otherSelections = prev.filter(id => !categoryProductIds.includes(id));
-                                                            return checked ? [...otherSelections, ...categoryProductIds] : otherSelections;
-                                                        });
-                                                    }}
-                                                />
-                                            </TableHead>
-                                            <TableHead>نام</TableHead>
-                                            <TableHead className="hidden md:table-cell">توضیحات</TableHead>
-                                            <TableHead className="text-left">قیمت</TableHead>
-                                            <TableHead><span className="sr-only">Actions</span></TableHead>
-                                        </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {categoryProducts.map((product) => (
-                                                <TableRow 
-                                                    key={product.id}
-                                                    data-state={selectedProducts.includes(product.id) ? "selected" : ""}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
-                                                        <Checkbox
-                                                            checked={selectedProducts.includes(product.id)}
-                                                            onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className="font-medium" onClick={() => handleEdit(product)}>
-                                                        <div className="flex items-center gap-3">
-                                                            <Image
-                                                                alt={product.name}
-                                                                className="aspect-square rounded-md object-cover"
-                                                                height="40"
-                                                                src={product.imageUrl}
-                                                                width="40"
-                                                            />
-                                                            <span>{product.name}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => handleEdit(product)}>{product.description}</TableCell>
-                                                    <TableCell className="text-left" onClick={() => handleEdit(product)}>{formatCurrency(product.price)}</TableCell>
-                                                    <TableCell className="text-left">
-                                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCopy(product)}}>
-                                                            <Copy className="h-4 w-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                    <CategoryProducts
+                                        categoryId={categoryId}
+                                        categoryProducts={categoryProducts}
+                                        onEdit={handleEdit}
+                                        onCopy={handleCopy}
+                                        selectedProducts={selectedProducts}
+                                        onSelectProduct={handleSelectProduct}
+                                    />
                                 </AccordionContent>
                             </Card>
                         </AccordionItem>

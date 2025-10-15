@@ -31,6 +31,7 @@ import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import useBeforeUnload from '@/hooks/use-before-unload';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 
 
 type View =
@@ -75,6 +76,7 @@ export default function InvoicesPage({
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [openInvoiceId, setOpenInvoiceId] = useState<string | null>(null);
+  const { itemsToShow, sentinelRef } = useVirtualScroll(12);
   
   useBeforeUnload(
     view.type === 'editor' && view.isDirty,
@@ -287,7 +289,7 @@ export default function InvoicesPage({
 
               {filteredInvoices.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredInvoices.map((invoice) => {
+                  {filteredInvoices.slice(0, itemsToShow).map((invoice) => {
                     const customer = customers.find(c => c.id === invoice.customerId);
                     const hasValidName = customer && customer.name && customer.name !== 'مشتری بدون نام';
                     const displayName = hasValidName ? customer!.name : (invoice.customerName && invoice.customerName !== 'مشتری بدون نام' ? invoice.customerName : 'بی نام');
@@ -367,6 +369,9 @@ export default function InvoicesPage({
                       </Collapsible>
                     );
                   })}
+                  {filteredInvoices.length > itemsToShow && (
+                    <div ref={sentinelRef} className="col-span-full h-1" />
+                  )}
                 </div>
               ) : (
                 <Card>

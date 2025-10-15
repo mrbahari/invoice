@@ -756,30 +756,44 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     onSave();
   }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     if (!store) return;
-  
     setIsProcessing(true);
     try {
-      const productIdsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
-      const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
-      const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(c => c.id);
-  
-      if (productIdsToDelete.length > 0) await deleteDocuments('products', productIdsToDelete);
-      if (categoryIdsToDelete.length > 0) await deleteDocuments('categories', categoryIdsToDelete);
-      if (unitIdsToDelete.length > 0) await deleteDocuments('units', unitIdsToDelete);
-      
-      await deleteDocument('stores', store.id);
-  
-      toast({ variant: 'success', title: 'حذف موفق', description: `فروشگاه «${store.name}» و تمام داده‌های آن حذف شد.` });
-      onCancel();
+        const productsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
+        const categoriesToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
+        const unitsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
+
+        if (productsToDelete.length > 0) {
+            await deleteDocuments('products', productsToDelete);
+        }
+        if (categoriesToDelete.length > 0) {
+            await deleteDocuments('categories', categoriesToDelete);
+        }
+        if (unitsToDelete.length > 0) {
+            await deleteDocuments('units', unitsToDelete);
+        }
+
+        await deleteDocument('stores', store.id);
+
+        toast({
+            variant: 'success',
+            title: 'حذف موفق',
+            description: `فروشگاه «${store.name}» و تمام داده‌های مرتبط با آن حذف شد.`,
+        });
+        onCancel();
     } catch (error) {
-      console.error("Error deleting store and its data:", error);
-      toast({ variant: 'destructive', title: 'خطا در حذف', description: 'مشکلی در هنگام حذف فروشگاه و داده‌های مرتبط با آن رخ داد.' });
+        console.error("Error deleting store:", error);
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: 'مشکلی در هنگام حذف فروشگاه رخ داد.',
+        });
     } finally {
-      setIsProcessing(false);
+        setIsProcessing(false);
     }
-  }, [store, data.products, data.categories, data.units, deleteDocument, deleteDocuments, onCancel, toast]);
+  };
+
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;
@@ -1171,3 +1185,5 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     </TooltipProvider>
   );
 }
+
+    

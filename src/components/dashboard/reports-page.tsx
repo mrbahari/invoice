@@ -24,16 +24,11 @@ import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { useData } from '@/context/data-context';
 import { useSearch } from './search-provider';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -107,7 +102,6 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     }
 
     const invoicesInPeriod = allInvoices.filter(inv => {
-        // Ensure inv.date is a valid date string before parsing
         if (!inv.date || typeof inv.date !== 'string') return false;
         const invoiceDate = parseISO(inv.date);
         return isValid(invoiceDate) && invoiceDate >= startDate;
@@ -121,7 +115,6 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     const uniqueCustomerIds = new Set(paidInvoicesInPeriod.map(inv => inv.customerId));
     const customerCount = uniqueCustomerIds.size;
     
-    // Process chart data
     const salesByDay: Record<string, { paid: number; unpaid: number }> = {};
     
     invoicesInPeriod.forEach(invoice => {
@@ -147,7 +140,6 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         unpaid: salesByDay[dayString].unpaid,
       };
     });
-
 
     const customerSpending = paidInvoicesInPeriod.reduce<Record<string, { total: number, name: string }>>((acc, inv) => {
         if (!acc[inv.customerId]) {
@@ -192,7 +184,6 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10);
 
-
     return { 
         totalRevenue, 
         paidInvoiceCount: paidInvoicesInPeriod.length,
@@ -203,6 +194,19 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         chartData
     };
   }, [allInvoices, allCustomers, allProducts, period]);
+
+  const animationVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+        ease: "easeOut"
+      },
+    }),
+  };
 
   return (
     <div className="grid flex-1 items-start gap-4 md:gap-8" data-main-page="true">
@@ -224,189 +228,115 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
        </div>
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <button onClick={() => handleNavigation('invoices')} className="w-full text-right">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                درآمد کل
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-              <p className="text-xs text-muted-foreground">
-                فقط از فاکتورهای پرداخت شده
-              </p>
-            </CardContent>
-          </Card>
-        </button>
-        <button onClick={() => handleNavigation('invoices')} className="w-full text-right">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">فاکتورهای پرداخت شده</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+{paidInvoiceCount.toLocaleString('fa-IR')}</div>
-               <p className="text-xs text-muted-foreground">
-                تعداد فاکتورهای پرداخت شده در این دوره
-              </p>
-            </CardContent>
-          </Card>
-        </button>
-        <button onClick={() => handleNavigation('invoices')} className="w-full text-right">
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">سفارش‌های در انتظار</CardTitle>
-              <Hourglass className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+{unpaidInvoiceCount.toLocaleString('fa-IR')}</div>
-              <p className="text-xs text-muted-foreground">
-                فاکتورهای در انتظار و سررسید گذشته
-              </p>
-            </CardContent>
-          </Card>
-        </button>
-        <button onClick={() => handleNavigation('customers')} className="w-full text-right">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">مشتریان فعال</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">+{customerCount.toLocaleString('fa-IR')}</div>
-              <p className="text-xs text-muted-foreground">
-                مشتریانی که در این دوره خرید کرده‌اند
-              </p>
-            </CardContent>
-          </Card>
-        </button>
+        {[
+          { title: 'درآمد کل', value: formatCurrency(totalRevenue), icon: DollarSign, description: 'فقط از فاکتورهای پرداخت شده', tab: 'invoices' },
+          { title: 'فاکتورهای پرداخت شده', value: `+${paidInvoiceCount.toLocaleString('fa-IR')}`, icon: CreditCard, description: 'تعداد فاکتورهای پرداخت شده', tab: 'invoices' },
+          { title: 'سفارش‌های در انتظار', value: `+${unpaidInvoiceCount.toLocaleString('fa-IR')}`, icon: Hourglass, description: 'فاکتورهای در انتظار و سررسید گذشته', tab: 'invoices' },
+          { title: 'مشتریان فعال', value: `+${customerCount.toLocaleString('fa-IR')}`, icon: Users, description: 'خریداران در این دوره', tab: 'customers' },
+        ].map((stat, i) => (
+          <motion.div key={stat.title} custom={i} initial="hidden" animate="visible" variants={animationVariants}>
+            <button onClick={() => handleNavigation(stat.tab as DashboardTab)} className="w-full text-right">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                </CardContent>
+              </Card>
+            </button>
+          </motion.div>
+        ))}
       </div>
 
-      <Accordion 
-        type="multiple" 
-        defaultValue={["sales-overview", "top-customers", "top-products"]}
-        className="grid gap-4 md:gap-8"
-      >
-        <AccordionItem value="sales-overview" className="border-b-0">
-          <Card>
-              <AccordionTrigger className="p-6 hover:no-underline">
-                <div className='text-right'>
-                  <CardTitle>نمای کلی فروش</CardTitle>
-                  <CardDescription className='mt-2'>مقایسه درآمد پرداخت شده و پرداخت نشده در بازه زمانی انتخاب شده.</CardDescription>
-                </div>
-              </AccordionTrigger>
-            <AccordionContent>
-              <CardContent className="pr-2">
-                <OverviewChart data={chartData} />
-              </CardContent>
-            </AccordionContent>
-          </Card>
-        </AccordionItem>
-        
-        <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-2">
-          <AccordionItem value="top-customers" className="border-b-0">
+      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-5">
+        <motion.div custom={4} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-3">
             <Card>
-              <AccordionTrigger className="p-6 hover:no-underline">
-                 <div className='text-right'>
+                <CardHeader>
+                    <CardTitle>نمای کلی فروش</CardTitle>
+                    <CardDescription>مقایسه درآمد پرداخت شده و پرداخت نشده در بازه زمانی انتخاب شده.</CardDescription>
+                </CardHeader>
+                <CardContent className="pr-2">
+                    <OverviewChart data={chartData} />
+                </CardContent>
+            </Card>
+        </motion.div>
+
+        <motion.div custom={5} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-2">
+            <Card>
+                <CardHeader>
                     <CardTitle>مشتریان برتر</CardTitle>
-                    <CardDescription className='mt-2'>
-                    مشتریانی با بیشترین میزان خرید در این دوره.
-                    </CardDescription>
-                  </div>
-              </AccordionTrigger>
-              <AccordionContent>
+                    <CardDescription>مشتریانی با بیشترین میزان خرید در این دوره.</CardDescription>
+                </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>مشتری</TableHead>
-                                <TableHead className="text-left">مجموع خرید</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                    <div className="space-y-4">
                         {topCustomers.map(customer => {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                             const initials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
                             return (
-                                <TableRow key={customer.id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3 hover:underline">
-                                            <Avatar className="hidden h-9 w-9 sm:flex">
-                                                <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                                <AvatarFallback>{initials}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <div className="font-medium">{customer.phone}</div>
-                                                <div className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</div>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-left font-mono">{formatCurrency(customer.total)}</TableCell>
-                                </TableRow>
-                            );
+                                <div key={customer.id} className="flex items-center gap-4">
+                                    <Avatar className="hidden h-9 w-9 sm:flex">
+                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
+                                        <AvatarFallback>{initials}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="grid gap-1 flex-1">
+                                        <p className="text-sm font-medium leading-none">{customer.phone}</p>
+                                        <p className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
+                                    </div>
+                                    <div className="ml-auto font-medium">{formatCurrency(customer.total)}</div>
+                                </div>
+                            )
                         })}
                         {topCustomers.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                    هیچ مشتری در این بازه زمانی خریدی نداشته است.
-                                </TableCell>
-                            </TableRow>
+                            <div className="text-center text-muted-foreground py-8">
+                                هیچ مشتری در این بازه زمانی خریدی نداشته است.
+                            </div>
                         )}
-                        </TableBody>
-                    </Table>
+                    </div>
                 </CardContent>
-              </AccordionContent>
             </Card>
-          </AccordionItem>
+        </motion.div>
+      </div>
 
-          <AccordionItem value="top-products" className="border-b-0">
-            <Card>
-                <AccordionTrigger className="p-6 hover:no-underline">
-                  <div className='text-right'>
-                    <CardTitle>پرفروش‌ترین محصولات</CardTitle>
-                    <CardDescription className='mt-2'>
-                        محصولاتی که بیشترین تعداد فروش را در این دوره داشته‌اند.
-                    </CardDescription>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>محصول</TableHead>
-                                    <TableHead className="text-center">تعداد فروش</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {topProducts.map(product => (
-                                <TableRow key={product.id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3 hover:underline">
-                                            <Image src={product.imageUrl} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
-                                            <span className="font-medium">{product.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center font-mono font-bold">{product.quantity.toLocaleString('fa-IR')}</TableCell>
-                                </TableRow>
-                            ))}
-                            {topProducts.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                        هیچ محصولی در این بازه زمانی فروخته نشده است.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </AccordionContent>
-            </Card>
-          </AccordionItem>
-        </div>
-      </Accordion>
+      <motion.div custom={6} initial="hidden" animate="visible" variants={animationVariants}>
+        <Card>
+            <CardHeader>
+                <CardTitle>پرفروش‌ترین محصولات</CardTitle>
+                <CardDescription>محصولاتی که بیشترین تعداد فروش را در این دوره داشته‌اند.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[80px]">تصویر</TableHead>
+                            <TableHead>محصول</TableHead>
+                            <TableHead className="text-center">تعداد فروش</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {topProducts.map(product => (
+                        <TableRow key={product.id}>
+                            <TableCell>
+                                <Image src={product.imageUrl} alt={product.name} width={64} height={64} className="rounded-md object-cover" />
+                            </TableCell>
+                            <TableCell className="font-medium">{product.name}</TableCell>
+                            <TableCell className="text-center font-mono font-bold text-lg">{product.quantity.toLocaleString('fa-IR')}</TableCell>
+                        </TableRow>
+                    ))}
+                    {topProducts.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground h-32">
+                                هیچ محصولی در این بازه زمانی فروخته نشده است.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

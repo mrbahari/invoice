@@ -311,46 +311,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [firestore, user, getCollectionRef, data]);
 
   const deleteDocuments = useCallback(async (collectionName: CollectionName, docIds: string[]) => {
-    if (!firestore || !user || docIds.length === 0) return;
-    const collectionRef = getCollectionRef(collectionName);
-    if (!collectionRef) {
-      console.error('Invalid collection reference or user not logged in.');
-      throw new Error('Invalid collection reference or user not logged in.');
-    }
-    
-    const validDocIds = docIds.filter(id => id && !id.startsWith('temp-'));
-    if (validDocIds.length === 0) return;
-
-    const originalItems = data[collectionName].filter(item => validDocIds.includes(item.id));
-
-    // Optimistic update
-    setData(prev => ({
-        ...prev,
-        [collectionName]: prev[collectionName].filter(item => !validDocIds.includes(item.id)),
-    }));
-    
-    const batch = writeBatch(firestore);
-    validDocIds.forEach(id => {
-        const docRef = doc(collectionRef, id);
-        batch.delete(docRef);
-    });
-
-    try {
-        await batch.commit();
-    } catch (error: any) {
-        console.error(`Batch delete error in ${collectionName}:`, error);
-        // Revert the optimistic update on failure
-        if (originalItems.length > 0) {
-            setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], ...originalItems] }));
-        }
-        
-        const permissionError = new FirestorePermissionError({
-            path: collectionRef.path, // This is a simplification for the batch error
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw error;
-    }
+      if (!firestore || !user || docIds.length === 0) {
+          throw new Error('Firestore/user not available or no documents to delete.');
+      }
+      const collectionRef = getCollectionRef(collectionName);
+      if (!collectionRef) {
+          throw new Error(`Invalid collection name: ${collectionName}`);
+      }
+      
+      const validDocIds = docIds.filter(id => id && !id.startsWith('temp-'));
+      if (validDocIds.length === 0) return;
+  
+      const originalItems = data[collectionName].filter((item: any) => validDocIds.includes(item.id));
+  
+      // Optimistic update
+      setData(prev => ({
+          ...prev,
+          [collectionName]: prev[collectionName].filter((item: any) => !validDocIds.includes(item.id)),
+      }));
+      
+      const batch = writeBatch(firestore);
+      validDocIds.forEach(id => {
+          const docRef = doc(collectionRef, id);
+          batch.delete(docRef);
+      });
+  
+      try {
+          await batch.commit();
+          // The UI is already updated optimistically.
+      } catch (error: any) {
+          console.error(`Batch delete error in ${collectionName}:`, error);
+          // Revert the optimistic update on failure
+          if (originalItems.length > 0) {
+              setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], ...originalItems] }));
+          }
+          const permissionError = new FirestorePermissionError({
+              path: collectionRef.path, // This is a simplification for the batch error
+              operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          throw error; // Re-throw to allow the caller to handle it.
+      }
   }, [firestore, user, getCollectionRef, data]);
   
   const setToolbarPosition = useCallback(async (pageKey: string, position: ToolbarPosition) => {

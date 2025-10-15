@@ -747,7 +747,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
           const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
           const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
   
-          // Use a batch delete approach for efficiency
           if (productIdsToDelete.length > 0) await deleteDocuments('products', productIdsToDelete);
           if (categoryIdsToDelete.length > 0) await deleteDocuments('categories', categoryIdsToDelete);
           if (unitIdsToDelete.length > 0) await deleteDocuments('units', unitIdsToDelete);
@@ -873,7 +872,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                                   size="icon" 
                                   disabled={isProcessing} 
                                   className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
-                                  onClick={(e) => e.stopPropagation()}
                                   >
                                       <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -882,8 +880,14 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                           </Tooltip>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را به همراه تمام محصولات، دسته‌بندی‌ها و واحدهای مرتبط با آن برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                          <AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction></AlertDialogFooter>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                            <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را به همراه تمام محصولات، دسته‌بندی‌ها و واحدهای مرتبط با آن برای همیشه حذف می‌کند.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+                          </AlertDialogFooter>
                       </AlertDialogContent>
                   </AlertDialog>
                   )}

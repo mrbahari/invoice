@@ -295,7 +295,7 @@ export default function InvoicesPage({
                         className="flex flex-col justify-between cursor-pointer"
                       >
                         <CardHeader className="p-4 sm:p-6 pb-4">
-                            <div className="flex flex-row-reverse items-start justify-end gap-4">
+                            <div className="flex flex-row items-center justify-between gap-4">
                                 <Avatar className="h-12 w-12 border">
                                     <AvatarImage src={`https://picsum.photos/seed/${invoice.customerId}/48/48`} />
                                     <AvatarFallback>{nameInitials}</AvatarFallback>

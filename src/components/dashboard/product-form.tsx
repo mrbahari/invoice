@@ -84,6 +84,7 @@ export function ProductForm({ product, onSave, onCancel, isCopy = false }: Produ
   const [displaySubUnitQuantity, setDisplaySubUnitQuantity] = useState(formatNumber(product?.subUnitQuantity));
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState({
     description: false,
     price: false,
@@ -336,7 +337,7 @@ export function ProductForm({ product, onSave, onCancel, isCopy = false }: Produ
         toast({
             variant: 'destructive',
             title: 'خطا در حذف',
-            description: 'مشکلی در هنگام حذف محصول رخ داد. لطفاً دوباره تلاش کنید.',
+            description: 'مشکلی در هنگام حذف محصول رخ داد.',
         });
     } finally {
         setIsProcessing(false);
@@ -363,6 +364,15 @@ export function ProductForm({ product, onSave, onCancel, isCopy = false }: Produ
   return (
     <TooltipProvider>
     <form onSubmit={handleSubmit}>
+       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+       </AlertDialog>
        <FloatingToolbar pageKey="product-form">
           <div className="flex flex-col items-center gap-1">
               <Tooltip>
@@ -380,30 +390,21 @@ export function ProductForm({ product, onSave, onCancel, isCopy = false }: Produ
                   <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
               </Tooltip>
               {isEditMode && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  disabled={isProcessing} 
-                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left"><p>حذف محصول</p></TooltipContent>
-                        </Tooltip>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle><AlertDialogDescription>این عمل غیرقابل بازگشت است و محصول «{product?.name}» را برای همیشه حذف می‌کند.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button 
+                          type="button"
+                          variant="ghost" 
+                          size="icon" 
+                          disabled={isProcessing} 
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                          onClick={() => setIsDeleteAlertOpen(true)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left"><p>حذف محصول</p></TooltipContent>
+                </Tooltip>
               )}
           </div>
           <Separator orientation="horizontal" className="w-6" />

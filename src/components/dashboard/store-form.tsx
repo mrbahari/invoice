@@ -161,12 +161,7 @@ const CategoryTree = ({
                           <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStartEdit(cat)}><Pencil className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent><p>ویرایش</p></TooltipContent></Tooltip>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>حذف</p></TooltipContent>
-                              </Tooltip>
+                              <Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
@@ -270,6 +265,8 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   
   const [newUnitName, setNewUnitName] = useState('');
   const [localUnits, setLocalUnits] = useState<UnitOfMeasurement[]>([]);
+
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   useEffect(() => {
     if (store) {
@@ -883,6 +880,20 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را به همراه تمام محصولات، دسته‌بندی‌ها و واحدهای مرتبط با آن برای همیشه حذف می‌کند.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+
       <div className="max-w-4xl mx-auto grid gap-6 pb-28">
           <FloatingToolbar pageKey="store-form">
               <div className="flex flex-col items-center gap-1">
@@ -895,33 +906,21 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
                       <TooltipContent side="left"><p>بازگشت به لیست</p></TooltipContent>
                   </Tooltip>
                   {isEditMode && (
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                          <Tooltip>
-                              <TooltipTrigger asChild>
-                                  <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  disabled={isProcessing} 
-                                  className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
-                                  >
-                                      <Trash2 className="h-4 w-4" />
-                                  </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
-                          </Tooltip>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                            <AlertDialogDescription>این عمل غیرقابل بازگشت است و فروشگاه «{store?.name}» را به همراه تمام محصولات، دسته‌بندی‌ها و واحدهای مرتبط با آن برای همیشه حذف می‌کند.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className='bg-destructive hover:bg-destructive/90'>حذف</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="icon" 
+                            disabled={isProcessing} 
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                            onClick={() => setIsDeleteAlertOpen(true)}
+                          >
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left"><p>حذف فروشگاه</p></TooltipContent>
+                  </Tooltip>
                   )}
                   {isEditMode && (
                       <Tooltip>
@@ -1185,5 +1184,3 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     </TooltipProvider>
   );
 }
-
-    

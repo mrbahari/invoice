@@ -302,7 +302,7 @@ export default function InvoicesPage({
                         className="w-full"
                       >
                       <Card className="flex flex-col justify-between cursor-pointer w-full relative">
-                        <Badge variant="outline" className={cn("absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-xs font-mono", statusStyles[invoice.status])}  onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
+                        <Badge variant="outline" className={cn("absolute top-2 left-1/2 -translate-x-1/2 z-10 text-xs font-mono", statusStyles[invoice.status])}  onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
                             {statusTranslation[invoice.status]}
                         </Badge>
                          <CollapsibleTrigger asChild>

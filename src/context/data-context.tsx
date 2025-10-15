@@ -313,17 +313,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteDocuments = useCallback(async (collectionName: CollectionName, docIds: string[]) => {
     if (!firestore || !user || docIds.length === 0) return;
     const collectionRef = getCollectionRef(collectionName);
-    
     if (!collectionRef) {
-        console.error('Invalid collection reference or user not logged in.');
-        return;
+      console.error('Invalid collection reference or user not logged in.');
+      throw new Error('Invalid collection reference or user not logged in.');
     }
     
     const validDocIds = docIds.filter(id => id && !id.startsWith('temp-'));
     if (validDocIds.length === 0) return;
 
     const originalItems = data[collectionName].filter(item => validDocIds.includes(item.id));
-    if (originalItems.length === 0) return;
 
     // Optimistic update
     setData(prev => ({
@@ -339,19 +337,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
         await batch.commit();
-        // The optimistic update should suffice for a responsive UI.
-        // onSnapshot will eventually confirm the state, but we don't need to do anything specific here.
     } catch (error: any) {
         console.error(`Batch delete error in ${collectionName}:`, error);
         // Revert the optimistic update on failure
-        setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], ...originalItems] }));
+        if (originalItems.length > 0) {
+            setData(prev => ({ ...prev, [collectionName]: [...prev[collectionName], ...originalItems] }));
+        }
         
         const permissionError = new FirestorePermissionError({
             path: collectionRef.path, // This is a simplification for the batch error
             operation: 'delete',
         });
         errorEmitter.emit('permission-error', permissionError);
-        throw error; // Re-throw so the caller knows the operation failed.
+        throw error;
     }
   }, [firestore, user, getCollectionRef, data]);
   

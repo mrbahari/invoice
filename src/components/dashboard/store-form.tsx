@@ -730,7 +730,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
   const handleDelete = useCallback(async () => {
-      if (!store || !user || !firestore) return;
+      if (!store) return;
   
       setIsProcessing(true);
   
@@ -739,13 +739,13 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
           const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
           const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
   
-          // Use the batch delete function from context
+          // Use a batch delete approach for efficiency
           await deleteDocuments('products', productIdsToDelete);
           await deleteDocuments('categories', categoryIdsToDelete);
           await deleteDocuments('units', unitIdsToDelete);
-          await deleteDocument('stores', store.id); // Delete the store itself
+          await deleteDocument('stores', store.id);
   
-          toast({ variant: 'success', title: 'فروشگاه و تمام داده‌های آن حذف شد' });
+          toast({ variant: 'success', title: 'حذف موفق', description: `فروشگاه «${store.name}» و تمام داده‌های آن حذف شد.` });
           onCancel();
       } catch (error) {
           console.error("Error deleting store and its data:", error);
@@ -753,7 +753,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       } finally {
           setIsProcessing(false);
       }
-  }, [store, user, firestore, data, deleteDocument, deleteDocuments, onCancel, toast]);
+  }, [store, data, deleteDocument, deleteDocuments, onCancel, toast]);
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;

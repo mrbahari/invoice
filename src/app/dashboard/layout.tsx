@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -19,9 +18,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   
   return (
     <SearchProvider>
-        <div className="grid h-screen w-full grid-rows-[auto_1fr_auto]">
+        <div className="relative flex min-h-screen w-full flex-col">
             <Header activeTab={activeTab} onTabChange={handleTabChange} />
-            <main className="overflow-auto bg-muted/40 p-4 sm:p-6">
+            <main className="flex-1 overflow-auto bg-muted/40 p-4 pt-20 pb-24 sm:p-6 sm:pt-20 sm:pb-24">
                 {children}
             </main>
             <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />

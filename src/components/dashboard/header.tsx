@@ -40,7 +40,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   const pageTitle = tabToNameMapping[activeTab] || 'داشبورد';
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm no-print sm:px-6">
+    <header className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm no-print sm:px-6">
       <div className="flex w-full items-center justify-between gap-4">
         <div className="flex items-center gap-x-6 gap-y-2">
             <h1 className="text-xl font-bold hidden md:block shrink-0">{pageTitle}</h1>

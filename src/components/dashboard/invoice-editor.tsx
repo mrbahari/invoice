@@ -554,6 +554,7 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     
     // Sort by subCategoryId
     return availableProducts.sort((a, b) => {
+        if (!a.subCategoryId || !b.subCategoryId) return 0;
         if (a.subCategoryId < b.subCategoryId) return -1;
         if (a.subCategoryId > b.subCategoryId) return 1;
         return 0;
@@ -586,20 +587,22 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   const filteredCustomers = useMemo(() => {
     if (!customerList) return [];
     const sortedCustomers = [...customerList].sort((a, b) => {
-      if (a.purchaseHistory === 'مشتری جدید' && b.purchaseHistory !== 'مشتری جدید') {
-        return -1;
-      }
-      if (b.purchaseHistory === 'مشتری جدید' && a.purchaseHistory !== 'مشتری جدید') {
-        return 1;
-      }
-      return 0; // maintain original order for others
+      const aIsNew = a.purchaseHistory === 'مشتری جدید';
+      const bIsNew = b.purchaseHistory === 'مشتری جدید';
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+      return 0;
     });
-
+  
     if (!customerSearch) {
-        return sortedCustomers;
+      return sortedCustomers;
     }
-
-    return sortedCustomers.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
+  
+    return sortedCustomers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        c.phone.toLowerCase().includes(customerSearch.toLowerCase())
+    );
   }, [customerList, customerSearch]);
 
   // Logic for showing the "Add Customer" button

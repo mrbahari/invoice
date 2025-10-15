@@ -44,6 +44,7 @@ import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type ProductFormProps = {
   product?: Product;
@@ -58,6 +59,7 @@ type AIFeature = 'description' | 'price' | 'image';
 export function ProductForm({ product, onSave, onCancel, isCopy = false }: ProductFormProps) {
   const isEditMode = !!product && !isCopy;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { data, addDocument, updateDocument, deleteDocument } = useData();
   const { stores, categories, units: unitsOfMeasurement } = data;
@@ -318,13 +320,27 @@ export function ProductForm({ product, onSave, onCancel, isCopy = false }: Produ
   
   
   const handleDelete = async () => {
-    if (!product || isCopy) return; // Cannot delete in copy mode
-    
-    setIsProcessing(true);
-    await deleteDocument('products', product.id);
+    if (!product || isCopy) return;
 
-    setIsProcessing(false);
-    onSave();
+    setIsProcessing(true);
+    try {
+        await deleteDocument('products', product.id);
+        toast({
+            variant: 'success',
+            title: 'حذف موفق',
+            description: `محصول «${product.name}» با موفقیت حذف شد.`,
+        });
+        onSave(); // Navigate back to the list
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: 'مشکلی در هنگام حذف محصول رخ داد. لطفاً دوباره تلاش کنید.',
+        });
+    } finally {
+        setIsProcessing(false);
+    }
   };
 
 

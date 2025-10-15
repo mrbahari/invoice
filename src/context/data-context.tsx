@@ -1,13 +1,11 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import type { Product, Category, Customer, Invoice, UnitOfMeasurement, Store, ToolbarPosition, AppData, UserProfile } from '@/lib/definitions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useUser } from '@/firebase'; // Changed from user-context
+import { useUser, useFirebase } from '@/firebase'; // Changed from user-context
 import { useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, doc, writeBatch, getFirestore, CollectionReference, addDoc, updateDoc, deleteDoc, getDocs, query, DocumentReference, setDoc, where, deleteField } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -56,10 +54,9 @@ const emptyData: AppData = {
 };
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, firestore } = useFirebase();
   const [data, setData] = useState<AppData>(emptyData);
   const [isSynced, setIsSynced] = useState(false);
-  const { firestore } = useMemo(() => initializeFirebase(), []);
 
 
   // Define collection references, memoized to prevent re-renders
@@ -593,7 +590,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await batch.commit();
     return report;
 
-  }, [data, firestore, user, isSynced, categoriesRef, productsRef, unitsRef]);
+  }, [data, firestore, user, isSynced, categoriesRef, productsRef, storesRef, unitsRef]);
 
 
   const isInitialized = !isUserLoading && isSynced;
@@ -632,5 +629,3 @@ export function useData() {
   }
   return context;
 }
-
-  

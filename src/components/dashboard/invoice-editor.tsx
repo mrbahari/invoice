@@ -586,23 +586,22 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
   const filteredCustomers = useMemo(() => {
     if (!customerList) return [];
-    const sortedCustomers = [...customerList].sort((a, b) => {
+
+    const filtered = customerSearch
+      ? customerList.filter(
+          (c) =>
+            c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+            c.phone.toLowerCase().includes(customerSearch.toLowerCase())
+        )
+      : customerList;
+
+    return [...filtered].sort((a, b) => {
       const aIsNew = a.purchaseHistory === 'مشتری جدید';
       const bIsNew = b.purchaseHistory === 'مشتری جدید';
       if (aIsNew && !bIsNew) return -1;
       if (!aIsNew && bIsNew) return 1;
-      return 0;
+      return 0; // You might want to add secondary sort criteria here, e.g., by name or phone
     });
-  
-    if (!customerSearch) {
-      return sortedCustomers;
-    }
-  
-    return sortedCustomers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-        c.phone.toLowerCase().includes(customerSearch.toLowerCase())
-    );
   }, [customerList, customerSearch]);
 
   // Logic for showing the "Add Customer" button

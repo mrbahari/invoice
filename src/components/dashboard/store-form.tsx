@@ -648,28 +648,36 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    // Check if this category or any of its subcategories are used by products
-    let allIdsToDelete = new Set<string>();
-    let queue = [categoryId];
+    const allIdsToDelete = new Set<string>();
+    const queue = [categoryId];
     allIdsToDelete.add(categoryId);
 
-    while(queue.length > 0) {
-        const currentId = queue.shift()!;
-        const children = storeCategories.filter(c => c.parentId === currentId);
-        children.forEach(child => {
-            allIdsToDelete.add(child.id);
-            queue.push(child.id);
-        });
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      const children = storeCategories.filter(c => c.parentId === currentId);
+      children.forEach(child => {
+        allIdsToDelete.add(child.id);
+        queue.push(child.id);
+      });
     }
 
     const isUsed = products.some(p => p.subCategoryId && allIdsToDelete.has(p.subCategoryId));
 
     if (isUsed) {
-        toast({ variant: 'destructive', title: 'خطا', description: 'این دسته یا زیردسته‌های آن به یک یا چند محصول اختصاص داده شده و قابل حذف نیست.' });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'خطا در حذف',
+        description: 'این دسته یا زیردسته‌های آن به یک یا چند محصول اختصاص داده شده و قابل حذف نیست.'
+      });
+      return;
     }
 
     setStoreCategories(prev => prev.filter(c => !allIdsToDelete.has(c.id)));
+    toast({
+        variant: 'success',
+        title: 'حذف موفق',
+        description: 'دسته بندی حذف شد. برای نهایی شدن تغییرات را ذخیره کنید.'
+    });
   };
   
   const handleStartEditCategory = (category: Category) => {
@@ -740,9 +748,10 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
           const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
   
           // Use a batch delete approach for efficiency
-          await deleteDocuments('products', productIdsToDelete);
-          await deleteDocuments('categories', categoryIdsToDelete);
-          await deleteDocuments('units', unitIdsToDelete);
+          if (productIdsToDelete.length > 0) await deleteDocuments('products', productIdsToDelete);
+          if (categoryIdsToDelete.length > 0) await deleteDocuments('categories', categoryIdsToDelete);
+          if (unitIdsToDelete.length > 0) await deleteDocuments('units', unitIdsToDelete);
+          
           await deleteDocument('stores', store.id);
   
           toast({ variant: 'success', title: 'حذف موفق', description: `فروشگاه «${store.name}» و تمام داده‌های آن حذف شد.` });

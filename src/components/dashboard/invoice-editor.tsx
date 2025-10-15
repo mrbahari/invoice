@@ -551,8 +551,14 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
     if (productSearch) {
       availableProducts = availableProducts.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
     }
-  
-    return availableProducts;
+    
+    // Sort by subCategoryId
+    return availableProducts.sort((a, b) => {
+        if (a.subCategoryId < b.subCategoryId) return -1;
+        if (a.subCategoryId > b.subCategoryId) return 1;
+        return 0;
+    });
+
   }, [products, productSearch, selectedSubCategoryId, storeId]);
   
   const subCategories = useMemo(() => {

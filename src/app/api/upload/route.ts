@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import formidable from 'formidable';
 
 export const config = {
   api: {
@@ -10,7 +9,7 @@ export const config = {
   },
 };
 
-const uploadDir = path.join(process.cwd(), 'public/uploads/ads');
+const uploadDir = '/tmp/uploads/ads';
 
 async function ensureUploadDirExists() {
   try {
@@ -37,13 +36,13 @@ export async function POST(req: NextRequest) {
     const uniqueFilename = `${Date.now()}-${file.name}`;
     const filePath = path.join(uploadDir, uniqueFilename);
 
-    // Stream the file to the filesystem
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, fileBuffer);
 
-    const publicUrl = `/uploads/ads/${uniqueFilename}`;
+    // Return as a Base64 Data URI
+    const dataUri = `data:${file.type};base64,${fileBuffer.toString('base64')}`;
     
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: dataUri });
 
   } catch (error: any) {
     console.error('File upload error:', error);

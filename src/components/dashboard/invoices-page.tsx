@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical } from 'lucide-react';
+import { PlusCircle, Pencil, Eye, Trash2, CheckCircle2, TriangleAlert, GripVertical, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import type { Invoice, InvoiceStatus } from '@/lib/definitions';
@@ -17,6 +17,11 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Badge } from '../ui/badge';
 import { formatCurrency, cn, getStorePrefix } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
@@ -69,6 +74,7 @@ export default function InvoicesPage({
   const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [openInvoiceId, setOpenInvoiceId] = useState<string | null>(null);
   
   useBeforeUnload(
     view.type === 'editor' && view.isDirty,
@@ -289,12 +295,18 @@ export default function InvoicesPage({
                     const nameInitials = (hasValidName ? customer!.name : displayPhone).split(' ').map(n => n[0]).join('');
 
                     return (
-                      <Card 
-                        key={invoice.id} 
-                        onClick={() => handlePreview(invoice)}
-                        className="flex flex-col justify-between cursor-pointer"
+                       <Collapsible
+                        key={invoice.id}
+                        open={openInvoiceId === invoice.id}
+                        onOpenChange={() => setOpenInvoiceId(prev => prev === invoice.id ? null : invoice.id)}
+                        className="w-full"
                       >
-                        <CardHeader className="p-4 sm:p-6 pb-4">
+                      <Card className="flex flex-col justify-between cursor-pointer w-full relative">
+                        <Badge variant="outline" className={cn("absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-xs font-mono", statusStyles[invoice.status])}  onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
+                            {statusTranslation[invoice.status]}
+                        </Badge>
+                         <CollapsibleTrigger asChild>
+                           <div className="p-4 sm:p-6 pb-4">
                             <div className="flex flex-row items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
                                     <Avatar className="h-12 w-12 border">
@@ -302,34 +314,27 @@ export default function InvoicesPage({
                                         <AvatarFallback>{nameInitials}</AvatarFallback>
                                     </Avatar>
                                     <div className="grid gap-1 text-right">
-                                        <CardTitle className="text-base sm:text-lg">{displayPhone}</CardTitle>
-                                        <CardDescription className="text-sm text-muted-foreground">{displayName}</CardDescription>
+                                        <p className="text-base sm:text-lg font-semibold">{displayName}</p>
+                                        <p className="text-sm text-muted-foreground">{displayPhone}</p>
                                     </div>
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="grid gap-2 text-sm p-4 sm:p-6 pt-0">
-                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">شماره فاکتور</span>
-                            <span>{invoice.invoiceNumber}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">تاریخ</span>
-                            <span>{new Date(invoice.date).toLocaleDateString('fa-IR')}</span>
-                          </div>
-                          <div className="flex justify-between font-semibold text-base pt-2 border-t mt-2">
-                            <span className="text-muted-foreground">مبلغ کل</span>
-                            <span>{formatCurrency(invoice.total)}</span>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex flex-row items-center justify-between p-4 sm:p-6">
-                            <button onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
-                                <Badge variant="outline" className={cn("text-xs font-mono cursor-pointer", statusStyles[invoice.status])}>
-                                {statusTranslation[invoice.status]}
-                                </Badge>
-                            </button>
 
-                           <div className="flex items-center gap-0 sm:gap-1">
+                                <div className="grid gap-1 text-left text-xs text-muted-foreground">
+                                    <p>#{invoice.invoiceNumber}</p>
+                                    <p>{new Date(invoice.date).toLocaleDateString('fa-IR')}</p>
+                                </div>
+                            </div>
+                           </div>
+                         </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent className="grid gap-2 text-sm px-4 sm:px-6 pt-0">
+                            <div className="flex justify-between font-semibold text-base pt-4 border-t mt-2">
+                                <span className="text-muted-foreground">مبلغ کل</span>
+                                <span>{formatCurrency(invoice.total)}</span>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="flex flex-row items-center justify-end p-4 sm:p-6 pt-2">
+                            <div className="flex items-center gap-0 sm:gap-1">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon-sm" className="h-8 w-8" onClick={(e) => {e.stopPropagation(); handleEdit(invoice);}}>
@@ -354,9 +359,12 @@ export default function InvoicesPage({
                                     </TooltipTrigger>
                                     <TooltipContent><p>حذف</p></TooltipContent>
                                 </Tooltip>
+                                 <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", openInvoiceId === invoice.id && "rotate-180")} />
                             </div>
-                        </CardFooter>
+                          </CardFooter>
+                        </CollapsibleContent>
                       </Card>
+                      </Collapsible>
                     );
                   })}
                 </div>

@@ -156,10 +156,29 @@ const CategoryTree = ({
                         </div>
                        
                         <div className="flex items-center gap-1 shrink-0">
-                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onAiGenerate(cat); }} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
-                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); toggleAddForm(cat.id); }}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
-                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onStartEdit(cat);}}><Pencil className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent><p>ویرایش</p></TooltipContent></Tooltip>
-                          <AlertDialog><AlertDialogTrigger asChild><Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button></TooltipTrigger><TooltipContent><p>حذف</p></TooltipContent></Tooltip></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>حذف دسته</AlertDialogTitle><AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>انصراف</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onAiGenerate(cat)} disabled={isAiLoading}>{isAiLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <WandSparkles className="w-4 h-4" />}</Button></TooltipTrigger><TooltipContent><p>تولید زیر دسته با AI</p></TooltipContent></Tooltip>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toggleAddForm(cat.id)}><PlusCircle className="w-4 h-4 text-green-600" /></Button></TooltipTrigger><TooltipContent><p>افزودن زیردسته</p></TooltipContent></Tooltip>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onStartEdit(cat)}><Pencil className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent><p>ویرایش</p></TooltipContent></Tooltip>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7"><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>حذف</p></TooltipContent>
+                              </Tooltip>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>حذف دسته</AlertDialogTitle>
+                                <AlertDialogDescription>آیا از حذف دسته «{cat.name}» و تمام زیردسته‌های آن مطمئن هستید؟</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(cat.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                     </div>
 
@@ -738,30 +757,29 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
 
   const handleDelete = useCallback(async () => {
-      if (!store) return;
+    if (!store) return;
   
-      setIsProcessing(true);
+    setIsProcessing(true);
+    try {
+      const productIdsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
+      const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
+      const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(c => c.id);
   
-      try {
-          const productIdsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
-          const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
-          const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(c => c.id);
+      if (productIdsToDelete.length > 0) await deleteDocuments('products', productIdsToDelete);
+      if (categoryIdsToDelete.length > 0) await deleteDocuments('categories', categoryIdsToDelete);
+      if (unitIdsToDelete.length > 0) await deleteDocuments('units', unitIdsToDelete);
+      
+      await deleteDocument('stores', store.id);
   
-          if (productIdsToDelete.length > 0) await deleteDocuments('products', productIdsToDelete);
-          if (categoryIdsToDelete.length > 0) await deleteDocuments('categories', categoryIdsToDelete);
-          if (unitIdsToDelete.length > 0) await deleteDocuments('units', unitIdsToDelete);
-          
-          await deleteDocument('stores', store.id);
-  
-          toast({ variant: 'success', title: 'حذف موفق', description: `فروشگاه «${store.name}» و تمام داده‌های آن حذف شد.` });
-          onCancel();
-      } catch (error) {
-          console.error("Error deleting store and its data:", error);
-          toast({ variant: 'destructive', title: 'خطا در حذف', description: 'مشکلی در هنگام حذف فروشگاه و داده‌های مرتبط با آن رخ داد.' });
-      } finally {
-          setIsProcessing(false);
-      }
-  }, [store, data, deleteDocument, deleteDocuments, onCancel, toast]);
+      toast({ variant: 'success', title: 'حذف موفق', description: `فروشگاه «${store.name}» و تمام داده‌های آن حذف شد.` });
+      onCancel();
+    } catch (error) {
+      console.error("Error deleting store and its data:", error);
+      toast({ variant: 'destructive', title: 'خطا در حذف', description: 'مشکلی در هنگام حذف فروشگاه و داده‌های مرتبط با آن رخ داد.' });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [store, data.products, data.categories, data.units, deleteDocument, deleteDocuments, onCancel, toast]);
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;

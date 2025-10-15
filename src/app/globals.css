@@ -57,37 +57,37 @@
   }
  
   .dark {
-    --background-hsl: 222.2 84% 4.9%;
-    --foreground-hsl: 210 40% 98%;
-    --primary-hsl: 217 91% 60%;
-    --ring-hsl: 217 91% 60%;
-
+    --background-hsl: 240 10% 3.9%;
+    --foreground-hsl: 0 0% 98%;
+    --primary-hsl: 248 82% 58%;
+    --ring-hsl: 248 82% 58%;
+    
     --background: hsl(var(--background-hsl));
     --foreground: hsl(var(--foreground-hsl));
  
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 3.7% 15.9%;
+    --card-foreground: 0 0% 98%;
  
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 3.7% 15.9%;
+    --popover-foreground: 0 0% 98%;
  
     --primary: hsl(var(--primary-hsl));
     --primary-foreground: 210 40% 98%;
  
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
  
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
  
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
  
-    --destructive: 0 63% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
  
-    --border: 217 90% 59%;
-    --input: 217 90% 59%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
     --ring: hsl(var(--ring-hsl));
 
     --chart-1: 142 71% 45%; /* A vivid green for paid in dark mode */

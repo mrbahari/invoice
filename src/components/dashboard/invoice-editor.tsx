@@ -40,7 +40,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
@@ -357,42 +356,6 @@ const AddProductsComponent = React.memo(({
 }) => {
     const draggableScrollRef = useRef<HTMLDivElement>(null);
     useDraggableScroll(draggableScrollRef, { direction: 'horizontal' });
-
-    const [activeInput, setActiveInput] = useState<string | null>(null);
-    const [quantity, setQuantity] = useState<string>('1');
-    const [isHolding, setIsHolding] = useState<null | 'inc' | 'dec'>(null);
-    
-    useInterval(() => {
-        if (isHolding) {
-            handleQuantityChange(isHolding === 'inc' ? 1 : -1);
-        }
-    }, isHolding ? 100 : null);
-    
-    const handleProductClick = (productId: string) => {
-        if (activeInput === productId) {
-            setActiveInput(null);
-            setQuantity('1');
-        } else {
-            setActiveInput(productId);
-            setQuantity('1');
-        }
-    };
-    
-    const handleQuantityChange = (value: number) => {
-        const newQuantity = Math.max(1, (parseFormattedNumber(quantity) || 0) + value);
-        setQuantity(formatNumber(newQuantity));
-    };
-
-    const handleConfirm = (e: React.MouseEvent, productId: string) => {
-        e.stopPropagation();
-        const numQuantity = parseFormattedNumber(quantity);
-        if (numQuantity > 0) {
-            const product = filteredProducts.find(p => p.id === productId);
-            if (product) onAddProduct(product, numQuantity);
-        }
-        setActiveInput(null);
-        setQuantity('1');
-    };
     
     return (
         <Card className="sticky top-20">
@@ -442,60 +405,14 @@ const AddProductsComponent = React.memo(({
 
                             return (
                             <div key={product.id} className="group flex flex-col items-center">
-                                <Card className="overflow-hidden w-full cursor-pointer" onClick={() => handleProductClick(product.id)}>
+                                <Card className="overflow-hidden w-full cursor-pointer" onClick={() => onAddProduct(product, 1)}>
                                     <div className="relative aspect-square w-full">
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover pointer-events-none" draggable="false" />
-                                        {isInInvoice && activeInput !== product.id && (
-                                            <Badge className="absolute top-1 right-1 rounded-full h-5 w-5 flex items-center justify-center text-xs bg-green-600 text-white select-none pointer-events-none">
+                                        {isInInvoice && (
+                                            <Badge className="absolute top-1 right-1 rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold bg-green-600 text-white select-none pointer-events-none">
                                                 {formatNumber(invoiceItem?.quantity)}
                                             </Badge>
                                         )}
-                                        <AnimatePresence>
-                                        {activeInput === product.id && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: '100%' }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: '100%' }}
-                                                transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                                className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center p-1 gap-1"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <div className="flex items-center justify-center gap-1 w-full">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="icon"
-                                                        className="h-7 w-7 bg-red-600 text-white hover:bg-red-700 border-red-700"
-                                                        onMouseDown={() => { handleQuantityChange(-1); setIsHolding('dec'); }}
-                                                        onMouseUp={() => setIsHolding(null)}
-                                                        onMouseLeave={() => setIsHolding(null)}
-                                                    >
-                                                        <Minus className="h-4 w-4" />
-                                                    </Button>
-                                                    <Input
-                                                        className="h-7 w-12 text-center font-mono text-sm p-1 bg-white text-black"
-                                                        value={quantity}
-                                                        onChange={(e) => setQuantity(formatNumber(parseFormattedNumber(e.target.value)))}
-                                                        autoFocus
-                                                        onFocus={(e) => e.target.select()}
-                                                    />
-                                                    <Button
-                                                        variant="outline"
-                                                        size="icon"
-                                                        className="h-7 w-7 bg-green-600 text-white hover:bg-green-700 border-green-700"
-                                                        onMouseDown={() => { handleQuantityChange(1); setIsHolding('inc'); }}
-                                                        onMouseUp={() => setIsHolding(null)}
-                                                        onMouseLeave={() => setIsHolding(null)}
-                                                    >
-                                                        <Plus className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                                <Button size="sm" className="h-7 px-2 text-xs w-full bg-green-600 hover:bg-green-700" onClick={(e) => handleConfirm(e, product.id)}>
-                                                    <Check className="ml-1 h-3 w-3" />
-                                                    افزودن
-                                                </Button>
-                                            </motion.div>
-                                        )}
-                                        </AnimatePresence>
                                     </div>
                                 </Card>
                                 
@@ -662,7 +579,21 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
 
   const filteredCustomers = useMemo(() => {
     if (!customerList) return [];
-    return customerList.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
+    const sortedCustomers = [...customerList].sort((a, b) => {
+      if (a.purchaseHistory === 'مشتری جدید' && b.purchaseHistory !== 'مشتری جدید') {
+        return -1;
+      }
+      if (b.purchaseHistory === 'مشتری جدید' && a.purchaseHistory !== 'مشتری جدید') {
+        return 1;
+      }
+      return 0; // maintain original order for others
+    });
+
+    if (!customerSearch) {
+        return sortedCustomers;
+    }
+
+    return sortedCustomers.filter(c => c.name.toLowerCase().includes(customerSearch.toLowerCase()) || c.phone.toLowerCase().includes(customerSearch.toLowerCase()));
   }, [customerList, customerSearch]);
 
   // Logic for showing the "Add Customer" button
@@ -855,8 +786,16 @@ export function InvoiceEditor({ invoice, setInvoice, onSaveSuccess, onPreview, o
   
   const handleDeleteInvoice = async () => {
     if (!isEditMode || !invoice.id) return;
-    await deleteDocument('invoices', invoice.id);
-    onCancel();
+    try {
+        await deleteDocument('invoices', invoice.id);
+        toast({ variant: 'success', title: 'حذف موفق', description: 'فاکتور با موفقیت حذف شد.' });
+        onCancel();
+    } catch (error) {
+        console.error("Error deleting invoice:", error);
+        toast({ variant: 'destructive', title: 'خطا در حذف', description: 'مشکلی در حذف فاکتور رخ داد.' });
+    } finally {
+        setIsDeleteAlertOpen(false);
+    }
   };
 
   const handleSaveAndExit = async () => {

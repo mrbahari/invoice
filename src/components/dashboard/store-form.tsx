@@ -745,7 +745,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
       try {
           const productIdsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
           const categoryIdsToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
-          const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
+          const unitIdsToDelete = data.units.filter(u => u.storeId === store.id).map(c => c.id);
   
           if (productIdsToDelete.length > 0) await deleteDocuments('products', productIdsToDelete);
           if (categoryIdsToDelete.length > 0) await deleteDocuments('categories', categoryIdsToDelete);

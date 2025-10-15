@@ -224,7 +224,7 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
   const firestore = useFirestore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data, addDocument, deleteDocument, deleteDocuments, setData: setGlobalData } = useData();
+  const { data, addDocument, deleteDocuments, deleteDocument } = useData();
   const { products, categories, units: unitsOfMeasurement } = data;
   
   // Store fields
@@ -611,6 +611,44 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     }
   }, [name, user, firestore, isEditMode, store, buildStoreData, storeCategories, data.categories, unitsOfMeasurement, localUnits, toast, onSave]);
   
+  const handleDelete = async () => {
+    if (!store) return;
+    setIsProcessing(true);
+    try {
+        const productsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
+        const categoriesToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
+        const unitsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
+
+        if (productsToDelete.length > 0) {
+            await deleteDocuments('products', productsToDelete);
+        }
+        if (categoriesToDelete.length > 0) {
+            await deleteDocuments('categories', categoriesToDelete);
+        }
+        if (unitsToDelete.length > 0) {
+            await deleteDocuments('units', unitsToDelete);
+        }
+
+        await deleteDocument('stores', store.id);
+
+        toast({
+            variant: 'success',
+            title: 'حذف موفق',
+            description: `فروشگاه «${store.name}» و تمام داده‌های مرتبط با آن حذف شد.`,
+        });
+        onCancel();
+    } catch (error) {
+        console.error("Error deleting store:", error);
+        toast({
+            variant: 'destructive',
+            title: 'خطا در حذف',
+            description: 'مشکلی در هنگام حذف فروشگاه رخ داد.',
+        });
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+  
   const handleDeleteAllCategories = useCallback(() => {
     const allCategoryIds = new Set(storeCategories.map(c => c.id));
     const isUsed = products.some(p => p.subCategoryId && allCategoryIds.has(p.subCategoryId));
@@ -752,45 +790,6 @@ export function StoreForm({ store, onSave, onCancel }: StoreFormProps) {
     toast({ variant: 'success', title: 'کپی از فروشگاه با موفقیت ایجاد شد.' });
     onSave();
   }, [name, buildStoreData, storeCategories, addDocument, toast, onSave]);
-
-  const handleDelete = async () => {
-    if (!store) return;
-    setIsProcessing(true);
-    try {
-        const productsToDelete = data.products.filter(p => p.storeId === store.id).map(p => p.id);
-        const categoriesToDelete = data.categories.filter(c => c.storeId === store.id).map(c => c.id);
-        const unitsToDelete = data.units.filter(u => u.storeId === store.id).map(u => u.id);
-
-        if (productsToDelete.length > 0) {
-            await deleteDocuments('products', productsToDelete);
-        }
-        if (categoriesToDelete.length > 0) {
-            await deleteDocuments('categories', categoriesToDelete);
-        }
-        if (unitsToDelete.length > 0) {
-            await deleteDocuments('units', unitsToDelete);
-        }
-
-        await deleteDocument('stores', store.id);
-
-        toast({
-            variant: 'success',
-            title: 'حذف موفق',
-            description: `فروشگاه «${store.name}» و تمام داده‌های مرتبط با آن حذف شد.`,
-        });
-        onCancel();
-    } catch (error) {
-        console.error("Error deleting store:", error);
-        toast({
-            variant: 'destructive',
-            title: 'خطا در حذف',
-            description: 'مشکلی در هنگام حذف فروشگاه رخ داد.',
-        });
-    } finally {
-        setIsProcessing(false);
-    }
-  };
-
 
     const handleDragEnd = (result: DropResult) => {
         const { destination, source, draggableId, type } = result;

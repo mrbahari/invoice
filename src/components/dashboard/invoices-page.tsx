@@ -302,9 +302,6 @@ export default function InvoicesPage({
                         className="w-full"
                       >
                       <Card className="flex flex-col justify-between cursor-pointer w-full relative">
-                        <Badge variant="outline" className={cn("absolute top-2 left-1/2 -translate-x-1/2 z-10 text-xs font-mono", statusStyles[invoice.status])}  onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
-                            {statusTranslation[invoice.status]}
-                        </Badge>
                          <CollapsibleTrigger asChild>
                            <div className="p-4 sm:p-6 pb-4">
                             <div className="flex flex-row items-center justify-between gap-4">
@@ -319,7 +316,10 @@ export default function InvoicesPage({
                                     </div>
                                 </div>
 
-                                <div className="grid gap-1 text-left text-xs text-muted-foreground">
+                                <div className="flex flex-col items-end gap-1 text-left text-xs text-muted-foreground">
+                                    <Badge variant="outline" className={cn("mb-1", statusStyles[invoice.status])}  onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}>
+                                        {statusTranslation[invoice.status]}
+                                    </Badge>
                                     <p>#{invoice.invoiceNumber}</p>
                                     <p>{new Date(invoice.date).toLocaleDateString('fa-IR')}</p>
                                 </div>

@@ -407,7 +407,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             <Card key={product.id} className="group overflow-hidden">
                                 <CardHeader className="p-0 relative aspect-square">
                                     <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                    <Badge className="absolute top-1 right-1 bg-primary/90 text-primary-foreground">
+                                    <Badge className="absolute top-1 right-1 bg-green-600 text-white">
                                         {product.quantity.toLocaleString('fa-IR')}
                                     </Badge>
                                     {product.name === 'محصول حذف شده' && (

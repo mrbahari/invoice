@@ -15,23 +15,24 @@ const chartConfig = {
   revenue: {
     label: 'درآمد',
     icon: DollarSign,
-    color: 'hsl(var(--chart-1))',
+    color: "hsl(var(--chart-1))",
   },
   customers: {
     label: 'مشتریان',
     icon: Users,
-    color: 'hsl(var(--chart-2))',
+    color: "hsl(var(--chart-2))",
   },
   invoices: {
     label: 'فاکتورها',
     icon: FileText,
-    color: 'hsl(var(--chart-3))',
+    color: "hsl(var(--chart-3))",
   }
 } satisfies ChartConfig;
 
+type ChartKeys = keyof typeof chartConfig;
 
 export function OverviewChart({ data }: { data: DailySales[] }) {
-  const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("revenue");
+  const [activeCharts, setActiveCharts] = React.useState<ChartKeys[]>(["revenue"]);
 
   const chartData = React.useMemo(() => {
     return data.map(d => ({
@@ -39,10 +40,28 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
         date: new Date(d.date).toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' }),
     }));
   }, [data]);
+  
+  const handleChartToggle = (chartKey: ChartKeys) => {
+    setActiveCharts(prev => {
+        const newActiveCharts = prev.includes(chartKey)
+            ? prev.filter(key => key !== chartKey)
+            : [...prev, chartKey];
+
+        // Ensure at least one chart is always active
+        if (newActiveCharts.length === 0) {
+            return prev;
+        }
+        return newActiveCharts;
+    });
+  };
 
   const yAxisFormatter = (value: number) => {
-    if (activeChart === 'revenue') {
-        return formatCurrency(value, { notation: 'compact' });
+    // This formatter is now more generic as multiple data types can be shown
+    if (value >= 1000000) {
+        return `${(value / 1000000).toLocaleString('fa-IR')} M`;
+    }
+    if (value >= 1000) {
+        return `${(value / 1000).toLocaleString('fa-IR')} K`;
     }
     return toPersianDigits(value);
   }
@@ -63,21 +82,23 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
              <div>
                 <CardTitle>نمای کلی فروش</CardTitle>
-                <CardDescription>نمایش روند فروش در بازه زمانی انتخاب شده.</CardDescription>
+                <CardDescription>برای مقایسه، چند معیار را همزمان انتخاب کنید.</CardDescription>
              </div>
              <div className="flex w-full sm:w-auto items-center gap-2 rounded-lg bg-muted p-1">
                 {Object.entries(chartConfig).map(([key, config]) => {
-                    const isActive = activeChart === key;
+                    const chartKey = key as ChartKeys;
+                    const isActive = activeCharts.includes(chartKey);
                     const Icon = config.icon;
                     return (
                         <Button
                             key={key}
                             variant={isActive ? "secondary" : "ghost"}
                             size="sm"
-                            className="flex-1 h-auto py-1.5 px-3"
-                            onClick={() => setActiveChart(key as keyof typeof chartConfig)}
+                            className={cn("flex-1 h-auto py-1.5 px-3 transition-colors duration-300", isActive && "shadow-sm")}
+                            style={isActive ? { backgroundColor: config.color, color: 'white' } : {}}
+                            onClick={() => handleChartToggle(chartKey)}
                         >
-                            <Icon className={cn("ml-2 h-4 w-4", isActive ? `text-${config.color}`: 'text-muted-foreground')} />
+                            <Icon className={cn("ml-2 h-4 w-4", !isActive && 'text-muted-foreground')} />
                             {config.label}
                         </Button>
                     )
@@ -113,28 +134,28 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 tickFormatter={yAxisFormatter}
             />
             <ChartTooltip
-              cursor={false}
+              cursor={true}
               content={
                 <ChartTooltipContent
-                  indicator="line"
+                  indicator="dot"
                   formatter={(value, name) => {
                     const config = chartConfig[name as keyof typeof chartConfig];
+                    const formattedValue = name === 'revenue' 
+                        ? formatCurrency(value as number, { notation: 'compact' })
+                        : toPersianDigits(value);
+
                     return (
-                        <div className="flex min-w-[120px] items-center text-xs">
+                        <div className="flex min-w-[140px] items-center text-xs">
                             <div className="flex items-center gap-2">
                                 <div
-                                className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-[var(--color-bg)]"
-                                style={
-                                    {
-                                    "--color-bg": config.color,
-                                    } as React.CSSProperties
-                                }
+                                className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                                style={{ backgroundColor: config.color }}
                                 />
                                 {config.label}
                             </div>
                             <div className="mr-auto flex items-end gap-1">
                                 <span className="font-bold">
-                                {yAxisFormatter(value as number)}
+                                {formattedValue}
                                 </span>
                             </div>
                         </div>
@@ -143,13 +164,19 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 />
               }
             />
-            <Area
-              dataKey={activeChart}
-              type="monotone"
-              fill={`url(#fill-${activeChart})`}
-              stroke={chartConfig[activeChart].color}
-              stackId="a"
-            />
+            {activeCharts.map(key => (
+                <Area
+                    key={key}
+                    dataKey={key}
+                    type="monotone"
+                    fill={`url(#fill-${key})`}
+                    stroke={chartConfig[key].color}
+                    stackId="1" // Use the same stackId to overlay areas
+                    strokeWidth={2}
+                    animationDuration={300}
+                    animationEasing="ease-in-out"
+                />
+            ))}
           </AreaChart>
         </ChartContainer>
       </CardContent>

@@ -124,7 +124,7 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
                 storeId: storeId,
                 subCategoryId: subCategoryId,
                 unit: 'عدد',
-                imageUrl: `https://picsum.photos/seed/${encodeURIComponent(aiProduct.name)}/400/300`,
+                imageUrl: `https://picsum.photos/seed/${'\'\'\'' + encodeURIComponent(aiProduct.name) + '\'\'\''}/400/300`,
                 subUnit: '',
                 subUnitQuantity: 0,
                 subUnitPrice: 0
@@ -312,7 +312,7 @@ export default function ProductsPage() {
     }));
 
     const headers = { name: 'نام محصول', description: 'توضیحات', price: 'قیمت', storeName: 'فروشگاه', categoryName: 'زیردسته' };
-    downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
+    downloadCSV(dataToExport, `products-${'\'\'\'' + activeTab + '\'\'\''}.csv`, headers);
   };
   
   const handleProductsGenerated = () => {
@@ -606,15 +606,18 @@ export default function ProductsPage() {
                                 src={firstProduct.imageUrl}
                                 data-ai-hint="product image"
                               />
+                               <Badge className="absolute top-2 right-2 bg-green-600 text-white">
+                                {categoryProducts.length.toLocaleString('fa-IR')}
+                               </Badge>
                             </div>
                           </CardHeader>
-                          <CardContent className="p-4">
-                            <h3 className="font-semibold">{getCategoryName(categoryId)}</h3>
-                            <p className="text-sm text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
+                          <CardContent className="p-2 text-center">
+                            <h3 className="text-sm font-semibold truncate">{getCategoryName(categoryId)}</h3>
+                            <p className="text-xs text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
                           </CardContent>
                         </Card>
                       </DialogTrigger>
-                      <DialogContent className="max-w-4xl">
+                      <DialogContent className="max-w-4xl dark:bg-slate-900">
                         <DialogHeader>
                           <DialogTitle>{getCategoryName(categoryId)}</DialogTitle>
                           <DialogDescription>
@@ -686,7 +689,7 @@ export default function ProductsPage() {
               <Card>
                   <CardContent className="py-16 text-center">
                   <p className="text-muted-foreground mb-4">
-                      {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
+                      {searchTerm ? `هیچ محصولی با عبارت «${'\'\'\'' + searchTerm + '\'\'\''}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
                   </p>
                   </CardContent>
               </Card>

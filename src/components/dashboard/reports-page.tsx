@@ -21,7 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
 import type { Invoice, Customer, Product, DailySales, DashboardTab, Category } from '@/lib/definitions';
-import { DollarSign, CreditCard, Users, Hourglass, Loader2 } from 'lucide-react';
+import { DollarSign, CreditCard, Users, Hourglass, Loader2, Wrench } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
@@ -45,6 +45,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { writeBatch, doc } from 'firebase/firestore';
+import { Badge } from '../ui/badge';
 
 
 type Period = 'all' | '30d' | '7d' | 'today';
@@ -400,84 +401,82 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                 <CardDescription>محصولاتی که بیشترین تعداد فروش را در این دوره داشته‌اند.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[80px]">تصویر</TableHead>
-                            <TableHead>محصول</TableHead>
-                            <TableHead className="text-center">تعداد فروش</TableHead>
-                            <TableHead className="text-left w-[120px]">اقدامات</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {topProducts.map(product => (
-                        <TableRow key={product.id}>
-                            <TableCell>
-                                <Image src={product.imageUrl} alt={product.name} width={64} height={64} className="rounded-md object-cover" />
-                            </TableCell>
-                            <TableCell className="font-medium">{product.name}</TableCell>
-                            <TableCell className="text-center font-mono font-bold text-lg">{product.quantity.toLocaleString('fa-IR')}</TableCell>
-                            <TableCell className="text-left">
-                                {product.name === 'محصول حذف شده' && (
-                                    <AlertDialog onOpenChange={(open) => !open && setReplacementProduct(null)}>
-                                        <AlertDialogTrigger asChild>
-                                             <Button variant="outline" size="sm" onClick={() => setDeletedProductId(product.id)}>جایگزینی</Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent className="max-w-2xl">
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>جایگزینی محصول حذف شده</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    یک محصول از لیست زیر انتخاب کنید تا در تمام فاکتورهای مربوطه جایگزین شود. این عمل غیرقابل بازگشت است.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <ScrollArea className="h-96 border rounded-md">
-                                                <Accordion type="single" collapsible className="w-full">
-                                                    {Object.keys(groupedProductsForDialog).map(categoryId => {
-                                                        const category = allCategories.find(c => c.id === categoryId);
-                                                        const categoryName = category?.name || 'بدون دسته‌بندی';
-                                                        return (
-                                                            <AccordionItem value={categoryId} key={categoryId}>
-                                                                <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">{categoryName}</AccordionTrigger>
-                                                                <AccordionContent>
-                                                                    <div className="p-2 space-y-2">
-                                                                        {groupedProductsForDialog[categoryId].map(p => (
-                                                                            <Card key={p.id} className={`p-2 flex items-center gap-3 cursor-pointer hover:bg-muted ${replacementProduct?.id === p.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setReplacementProduct(p)}>
-                                                                                <Image src={p.imageUrl} alt={p.name} width={40} height={40} className="rounded-md object-cover" />
-                                                                                <div className="flex-1">
-                                                                                    <p className="font-semibold text-sm">{p.name}</p>
-                                                                                    <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
-                                                                                </div>
-                                                                            </Card>
-                                                                        ))}
-                                                                    </div>
-                                                                </AccordionContent>
-                                                            </AccordionItem>
-                                                        )
-                                                    })}
-                                                </Accordion>
-                                            </ScrollArea>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleConfirmReplacement} disabled={!replacementProduct || isReplacing}>
-                                                    {isReplacing && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                                                    تایید
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                )}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                    {topProducts.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground h-32">
-                                هیچ محصولی در این بازه زمانی فروخته نشده است.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
+                {topProducts.length > 0 ? (
+                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {topProducts.map(product => (
+                            <Card key={product.id} className="group overflow-hidden">
+                                <CardHeader className="p-0 relative aspect-square">
+                                    <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                    <Badge className="absolute top-1 right-1 bg-primary/90 text-primary-foreground">
+                                        {product.quantity.toLocaleString('fa-IR')}
+                                    </Badge>
+                                    {product.name === 'محصول حذف شده' && (
+                                         <AlertDialog onOpenChange={(open) => !open && setReplacementProduct(null)}>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="icon"
+                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-9 w-9 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => setDeletedProductId(product.id)}
+                                                >
+                                                    <Wrench className="h-5 w-5" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="max-w-2xl">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>جایگزینی محصول حذف شده</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        یک محصول از لیست زیر انتخاب کنید تا در تمام فاکتورهای مربوطه جایگزین شود. این عمل غیرقابل بازگشت است.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <ScrollArea className="h-96 border rounded-md">
+                                                    <Accordion type="single" collapsible className="w-full">
+                                                        {Object.keys(groupedProductsForDialog).map(categoryId => {
+                                                            const category = allCategories.find(c => c.id === categoryId);
+                                                            const categoryName = category?.name || 'بدون دسته‌بندی';
+                                                            return (
+                                                                <AccordionItem value={categoryId} key={categoryId}>
+                                                                    <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">{categoryName}</AccordionTrigger>
+                                                                    <AccordionContent>
+                                                                        <div className="p-2 space-y-2">
+                                                                            {groupedProductsForDialog[categoryId].map(p => (
+                                                                                <Card key={p.id} className={`p-2 flex items-center gap-3 cursor-pointer hover:bg-muted ${replacementProduct?.id === p.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setReplacementProduct(p)}>
+                                                                                    <Image src={p.imageUrl} alt={p.name} width={40} height={40} className="rounded-md object-cover" />
+                                                                                    <div className="flex-1">
+                                                                                        <p className="font-semibold text-sm">{p.name}</p>
+                                                                                        <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
+                                                                                    </div>
+                                                                                </Card>
+                                                                            ))}
+                                                                        </div>
+                                                                    </AccordionContent>
+                                                                </AccordionItem>
+                                                            )
+                                                        })}
+                                                    </Accordion>
+                                                </ScrollArea>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={handleConfirmReplacement} disabled={!replacementProduct || isReplacing}>
+                                                        {isReplacing && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                                        تایید
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
+                                </CardHeader>
+                                <CardContent className="p-2">
+                                    <h3 className="text-xs font-semibold truncate">{product.name}</h3>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-muted-foreground py-16">
+                        هیچ محصولی در این بازه زمانی فروخته نشده است.
+                    </div>
+                )}
             </CardContent>
         </Card>
       </motion.div>

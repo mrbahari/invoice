@@ -241,38 +241,6 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
 
   return (
     <Card className="relative">
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="absolute top-4 left-4 h-8 w-8 text-muted-foreground">
-                    <Settings className="h-5 w-5" />
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>تنظیمات هوش مصنوعی</DialogTitle>
-                    <DialogDescription>
-                        تنظیمات زیر به هوش مصنوعی کمک می‌کند تا محصولات شما را با دقت بیشتری تطبیق دهد.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <Label>فیلتر برند محصولات</Label>
-                    <RadioGroup value={brandType} onValueChange={(value) => setBrandType(value as BrandType)}>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="k-plus" id="brand-kplus" />
-                            <Label htmlFor="brand-kplus">فقط محصولات برند کی پلاس (کناف)</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="miscellaneous" id="brand-misc" />
-                            <Label htmlFor="brand-misc">فقط محصولات متفرقه (غیر از کی پلاس)</Label>
-                        </div>
-                    </RadioGroup>
-                    <Button variant="link" onClick={() => setBrandType(undefined)} className="justify-start p-0 h-auto">
-                        حذف فیلتر
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
-
       <CardHeader>
         <CardTitle>سفارش هوشمند با AI</CardTitle>
         <CardDescription>

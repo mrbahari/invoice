@@ -370,14 +370,14 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                             return (
                                 <div key={customer.id} className="flex items-center gap-4">
-                                    <div className="ml-auto font-medium text-left">{formatCurrency(customer.total)}</div>
+                                    <div className="relative h-9 w-9 flex-shrink-0">
+                                        <Image src={customer.avatarUrl} alt="آواتار" fill className="rounded-md object-cover" />
+                                    </div>
                                     <div className="grid gap-1 flex-1 text-right">
                                         <p className="text-sm font-medium leading-none">{customer.phone}</p>
                                         <p className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
                                     </div>
-                                    <div className="relative h-9 w-9">
-                                        <Image src={customer.avatarUrl} alt="آواتار" fill className="rounded-md object-cover" />
-                                    </div>
+                                    <div className="font-medium text-left">{formatCurrency(customer.total)}</div>
                                 </div>
                             )
                         })}

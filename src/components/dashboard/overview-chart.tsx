@@ -2,28 +2,29 @@
 'use client';
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Bar, BarChart } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DailySales } from '@/lib/definitions';
 import { formatCurrency, toPersianDigits } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Users, FileText, DollarSign, Activity, TrendingUp } from 'lucide-react';
+import { Users, FileText, DollarSign } from 'lucide-react';
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns-jalali";
-
 
 const chartConfig = {
   revenue: {
     label: 'درآمد',
+    icon: DollarSign,
     color: 'hsl(var(--chart-1))',
   },
   customers: {
     label: 'مشتریان',
+    icon: Users,
     color: 'hsl(var(--chart-2))',
   },
   invoices: {
     label: 'فاکتورها',
+    icon: FileText,
     color: 'hsl(var(--chart-3))',
   }
 } satisfies ChartConfig;
@@ -35,7 +36,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
   const chartData = React.useMemo(() => {
     return data.map(d => ({
         ...d,
-        date: format(new Date(d.date), 'dd MMM'),
+        date: new Date(d.date).toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' }),
     }));
   }, [data]);
 
@@ -67,6 +68,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
              <div className="flex w-full sm:w-auto items-center gap-2 rounded-lg bg-muted p-1">
                 {Object.entries(chartConfig).map(([key, config]) => {
                     const isActive = activeChart === key;
+                    const Icon = config.icon;
                     return (
                         <Button
                             key={key}
@@ -75,6 +77,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                             className="flex-1 h-auto py-1.5 px-3"
                             onClick={() => setActiveChart(key as keyof typeof chartConfig)}
                         >
+                            <Icon className={cn("ml-2 h-4 w-4", isActive ? `text-${config.color}`: 'text-muted-foreground')} />
                             {config.label}
                         </Button>
                     )
@@ -87,12 +90,14 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+          <AreaChart data={chartData}>
              <defs>
-                <linearGradient id={`fill-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartConfig[activeChart].color} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={chartConfig[activeChart].color} stopOpacity={0.1} />
-                </linearGradient>
+                {Object.entries(chartConfig).map(([key, config]) => (
+                     <linearGradient key={`fill-${key}`} id={`fill-${key}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={config.color} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={config.color} stopOpacity={0.1} />
+                    </linearGradient>
+                ))}
             </defs>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
@@ -100,40 +105,54 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
             />
              <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={yAxisFormatter}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
             />
             <ChartTooltip
-                cursor={false}
-                content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                        return (
-                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="grid grid-cols-1 gap-2">
-                                <div className="flex flex-col">
-                                    <span className="text-[0.70rem] uppercase text-muted-foreground">{label}</span>
-                                    <span className="font-bold text-foreground">
-                                        {yAxisFormatter(payload[0].value as number)}
-                                    </span>
-                                </div>
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  indicator="line"
+                  formatter={(value, name) => {
+                    const config = chartConfig[name as keyof typeof chartConfig];
+                    return (
+                        <div className="flex min-w-[120px] items-center text-xs">
+                            <div className="flex items-center gap-2">
+                                <div
+                                className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-[var(--color-bg)]"
+                                style={
+                                    {
+                                    "--color-bg": config.color,
+                                    } as React.CSSProperties
+                                }
+                                />
+                                {config.label}
+                            </div>
+                            <div className="mr-auto flex items-end gap-1">
+                                <span className="font-bold">
+                                {yAxisFormatter(value as number)}
+                                </span>
                             </div>
                         </div>
-                        )
-                    }
-                    return null
-                }}
+                    );
+                  }}
+                />
+              }
             />
-            <Bar dataKey={activeChart} fill={`url(#fill-${activeChart})`} radius={[4, 4, 0, 0]} />
-          </BarChart>
+            <Area
+              dataKey={activeChart}
+              type="monotone"
+              fill={`url(#fill-${activeChart})`}
+              stroke={chartConfig[activeChart].color}
+              stackId="a"
+            />
+          </AreaChart>
         </ChartContainer>
       </CardContent>
     </Card>
   );
 }
-

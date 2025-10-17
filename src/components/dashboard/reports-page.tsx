@@ -116,19 +116,26 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     const uniqueCustomerIds = new Set(paidInvoicesInPeriod.map(inv => inv.customerId));
     const customerCount = uniqueCustomerIds.size;
     
-    const salesByDay: Record<string, { paid: number; unpaid: number }> = {};
+    const salesByDay: Record<string, { revenue: number; newCustomers: number; invoices: number; }> = {};
+    const seenCustomers = new Set();
     
-    invoicesInPeriod.forEach(invoice => {
+    invoicesInPeriod.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).forEach(invoice => {
         const invoiceDate = parseISO(invoice.date);
         if (isValid(invoiceDate)) {
             const day = format(invoiceDate, 'yyyy-MM-dd');
             if (!salesByDay[day]) {
-                salesByDay[day] = { paid: 0, unpaid: 0 };
+                salesByDay[day] = { revenue: 0, newCustomers: 0, invoices: 0 };
             }
+
+            salesByDay[day].invoices += 1;
+            
             if (invoice.status === 'Paid') {
-                salesByDay[day].paid += invoice.total;
-            } else {
-                salesByDay[day].unpaid += invoice.total;
+                salesByDay[day].revenue += invoice.total;
+            }
+
+            if (!seenCustomers.has(invoice.customerId)) {
+                salesByDay[day].newCustomers += 1;
+                seenCustomers.add(invoice.customerId);
             }
         }
     });
@@ -137,8 +144,9 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
       const dateObj = parseISO(dayString);
       return {
         date: isValid(dateObj) ? format(dateObj, 'MM/dd') : 'تاریخ نامعتبر',
-        paid: salesByDay[dayString].paid,
-        unpaid: salesByDay[dayString].unpaid,
+        revenue: salesByDay[dayString].revenue,
+        customers: salesByDay[dayString].newCustomers,
+        invoices: salesByDay[dayString].invoices,
       };
     });
 
@@ -228,7 +236,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </Tabs>
        </div>
 
-      <div className="col-span-full grid grid-cols-2 gap-4 lg:grid-cols-3">
+      <div className="col-span-full grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { title: 'درآمد کل', value: formatCurrency(totalRevenue), icon: DollarSign, description: 'فقط از فاکتورهای پرداخت شده', tab: 'invoices' },
           { title: 'فاکتورهای پرداخت شده', value: `+${paidInvoiceCount.toLocaleString('fa-IR')}`, icon: CreditCard, description: 'تعداد فاکتورهای پرداخت شده', tab: 'invoices' },

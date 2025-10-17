@@ -110,11 +110,12 @@ export type AuthFormValues = {
 
 export type DailySales = {
   date: string;
-  paid: number;
-  unpaid: number;
+  revenue: number;
+  customers: number;
+  invoices: number;
 };
 
-export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators';
+export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators' | 'profile';
 
 export type ToolbarPosition = { x: number, y: number };
 

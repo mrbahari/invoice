@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -369,12 +370,12 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                             const customerData = allCustomers.find(c => c.id === customer.id);
                             return (
-                                <button key={customer.id} onClick={() => customerData && handleNavigation('customers', customerData)} className="w-full text-right">
+                                <button key={customer.id} onClick={() => customerData && onNavigate('customers', { customer: customerData })} className="w-full text-right">
                                     <div className="flex items-center gap-4 hover:bg-muted/50 p-2 rounded-lg">
                                         <Image src={customer.avatarUrl} alt="آواتار" width={36} height={36} className="rounded-md object-cover" />
                                         <div className="grid gap-1 flex-1">
-                                            <p className="text-sm font-medium leading-none">{customer.phone}</p>
-                                            <p className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
+                                            <p className="text-sm font-medium leading-none">{hasValidName ? customer.name : customer.phone}</p>
+                                            <p className="text-sm text-muted-foreground">{hasValidName ? customer.phone : 'بی نام'}</p>
                                         </div>
                                         <div className="font-medium text-left">{formatCurrency(customer.total)}</div>
                                     </div>
@@ -398,12 +399,12 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                 </CardHeader>
                 <CardContent>
                     {topProducts.length > 0 ? (
-                        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 gap-4">
                             {topProducts.map(product => (
                                 <Card key={product.id} className="group overflow-hidden">
                                     <CardHeader className="p-0 relative aspect-square">
                                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                        <Badge className="absolute top-1 right-1 bg-green-600 text-white">
+                                        <Badge className="absolute top-1 right-1 bg-green-600/90 text-white">
                                             {product.quantity.toLocaleString('fa-IR')}
                                         </Badge>
                                         {product.name === 'محصول حذف شده' && (

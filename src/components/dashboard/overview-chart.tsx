@@ -70,7 +70,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 <CardTitle>نمای کلی فروش</CardTitle>
                 <CardDescription>مقایسه درآمد، مشتریان و فاکتورها در بازه زمانی انتخاب شده.</CardDescription>
              </div>
-             <div className="flex items-center gap-2 rounded-lg bg-muted p-1">
+             <div className="flex w-full sm:w-auto items-center gap-2 rounded-lg bg-muted p-1">
                 {Object.entries(chartConfig).map(([key, config]) => {
                     const isActive = activeCharts.includes(key);
                     return (
@@ -82,7 +82,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                             onClick={() => handleToggle(key)}
                         >
                             <div className="flex items-center gap-2 text-right w-full">
-                                <config.icon className={cn("h-5 w-5", isActive ? `text-[${config.color}]` : 'text-muted-foreground')} style={{color: isActive ? config.color : ''}} />
+                                <config.icon className={cn("h-5 w-5", isActive ? `text-[${'config.color'}]` : 'text-muted-foreground')} style={{color: isActive ? config.color : ''}} />
                                 <div className="grid gap-0">
                                     <span className="text-xs font-normal">{config.label}</span>
                                     <span className="font-bold text-sm">
@@ -96,7 +96,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
              </div>
         </div>
       </CardHeader>
-      <CardContent className="pr-2">
+      <CardContent>
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
@@ -124,7 +124,8 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => formatCurrency(value, {notation: 'compact'})}
-                hide={!activeCharts.includes('revenue')}
+                width={activeCharts.includes('revenue') ? undefined : 0}
+                tick={activeCharts.includes('revenue')}
             />
              <YAxis
                 yAxisId="right"
@@ -133,7 +134,8 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => toPersianDigits(value)}
-                hide={!activeCharts.some(c => c === 'customers' || c === 'invoices')}
+                width={activeCharts.some(c => c === 'customers' || c === 'invoices') ? undefined : 0}
+                tick={activeCharts.some(c => c === 'customers' || c === 'invoices')}
             />
             <ChartTooltip
                 cursor={false}

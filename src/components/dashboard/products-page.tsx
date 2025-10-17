@@ -124,7 +124,7 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
                 storeId: storeId,
                 subCategoryId: subCategoryId,
                 unit: 'عدد',
-                imageUrl: `https://picsum.photos/seed/${encodeURIComponent(aiProduct.name)}/400/300`,
+                imageUrl: `https://picsum.photos/seed/${'encodeURIComponent(aiProduct.name)'}/400/300`,
                 subUnit: '',
                 subUnitQuantity: 0,
                 subUnitPrice: 0
@@ -211,16 +211,19 @@ const animationProps = {
     transition: { duration: 0.3, ease: 'easeInOut' },
 };
 
+type ProductsPageProps = {
+  initialProduct?: Product;
+};
 
-export default function ProductsPage() {
+export default function ProductsPage({ initialProduct }: ProductsPageProps) {
   const { data, addDocuments, updateDocuments, deleteDocuments } = useData();
   const { products, stores, categories } = data;
   const { user } = useUser();
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
 
-  const [view, setView] = useState<'list' | 'form' | 'detail'>('list');
-  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
+  const [view, setView] = useState<'list' | 'form' | 'detail'>(initialProduct ? 'detail' : 'list');
+  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(initialProduct);
   const [isCopyMode, setIsCopyMode] = useState(false);
   
   const [activeTab, setActiveTab] = useState('all');
@@ -317,7 +320,7 @@ export default function ProductsPage() {
     }));
 
     const headers = { name: 'نام محصول', description: 'توضیحات', price: 'قیمت', storeName: 'فروشگاه', categoryName: 'زیردسته' };
-    downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
+    downloadCSV(dataToExport, `products-${'activeTab'}.csv`, headers);
   };
   
   const handleProductsGenerated = () => {
@@ -396,7 +399,7 @@ export default function ProductsPage() {
         setSelectedProducts([]);
         setIsBulkActionModalOpen(false);
       } catch (error) {
-          toast({variant: 'destructive', title: 'خطا در عملیات', description: `مشکلی در حین ${bulkAction === 'move' ? 'انتقال' : 'کپی'} محصولات رخ داد.`});
+          toast({variant: 'destructive', title: 'خطا در عملیات', description: `مشکلی در حین ${'bulkAction' === 'move' ? 'انتقال' : 'کپی'} محصولات رخ داد.`});
       } finally {
           setIsProcessingBulk(false);
       }
@@ -703,7 +706,7 @@ export default function ProductsPage() {
                         <Card>
                             <CardContent className="py-16 text-center">
                             <p className="text-muted-foreground mb-4">
-                                {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
+                                {searchTerm ? `هیچ محصولی با عبارت «${'searchTerm'}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
                             </p>
                             </CardContent>
                         </Card>

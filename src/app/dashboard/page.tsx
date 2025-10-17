@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import type { Invoice } from '@/lib/definitions';
+import type { Invoice, Product } from '@/lib/definitions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DashboardTab } from '@/lib/definitions';
@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const activeTab = (searchParams.get('tab') as DashboardTab) || 'dashboard';
   
   const [draftInvoice, setDraftInvoice] = useState<Partial<Invoice> | null>(null);
+  const [initialProduct, setInitialProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     if (!searchParams.get('tab')) {
@@ -66,9 +67,14 @@ export default function DashboardPage() {
     window.scrollTo(0, 0);
   }, [activeTab]);
 
-  const handleNavigation = (tab: DashboardTab, data?: { invoice: Partial<Invoice>}) => {
+  const handleNavigation = (tab: DashboardTab, data?: { invoice?: Partial<Invoice>, product?: Product }) => {
     if (tab === 'invoices' && data?.invoice) {
         setDraftInvoice(data.invoice);
+    }
+    if (tab === 'products' && data?.product) {
+        setInitialProduct(data.product);
+    } else {
+        setInitialProduct(null);
     }
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
@@ -77,6 +83,7 @@ export default function DashboardPage() {
     onNavigate: handleNavigation,
     draftInvoice: draftInvoice,
     setDraftInvoice: setDraftInvoice,
+    initialProduct: initialProduct,
   };
 
   const ActiveComponent = componentMap[activeTab];

@@ -61,15 +61,18 @@ const animationProps = {
     transition: { duration: 0.3, ease: 'easeInOut' },
 };
 
+type CustomersPageProps = {
+  initialCustomer?: Customer;
+};
 
-export default function CustomersPage() {
+export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
   const { data, deleteDocuments } = useData();
   const { customers: customerList, invoices } = data;
   const { user } = useUser();
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
-  const [view, setView] = useState<View>({ type: 'list' });
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
+  const [view, setView] = useState<View>(initialCustomer ? { type: 'detail', customer: initialCustomer } : { type: 'list' });
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(initialCustomer);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('newest');

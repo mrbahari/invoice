@@ -5,12 +5,11 @@
 
 @layer base {
   :root {
-    --background-hsl: 0 0% 100%;
+    --background: linear-gradient(to right, hsl(0 0% 100%), hsl(220 100% 97%));
     --foreground-hsl: 222.2 84% 4.9%;
     --primary-hsl: 248 82% 50%;
     --ring-hsl: 217 90% 59%;
 
-    --background: hsl(var(--background-hsl));
     --foreground: hsl(var(--foreground-hsl));
 
     --card: 0 0% 100%;
@@ -57,12 +56,11 @@
   }
  
   .dark {
-    --background-hsl: 240 10% 3.9%;
+    --background: linear-gradient(to right, hsl(240 10% 3.9%), hsl(248 82% 10%));
     --foreground-hsl: 0 0% 98%;
     --primary-hsl: 248 82% 58%;
     --ring-hsl: 248 82% 58%;
     
-    --background: hsl(var(--background-hsl));
     --foreground: hsl(var(--foreground-hsl));
  
     --card: 240 3.7% 15.9%;
@@ -115,7 +113,8 @@
     font-size: 14px;
   }
   body {
-    @apply bg-background text-foreground;
+    background: var(--background);
+    @apply text-foreground;
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10+ */
     user-select: none; /* Standard syntax */

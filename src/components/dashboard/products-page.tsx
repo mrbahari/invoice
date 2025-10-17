@@ -64,6 +64,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { ProductForm } from './product-form';
 import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
+import { AnimatePresence, motion } from 'framer-motion';
 
 
 type AiMultipleProductsDialogProps = {
@@ -276,6 +277,13 @@ const CategoryProducts = ({ categoryId, categoryProducts, onEdit, onCopy, select
         </TableBody>
       </Table>
     );
+};
+
+const animationProps = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.3, ease: 'easeInOut' },
 };
 
 
@@ -526,201 +534,215 @@ export default function ProductsPage() {
     ));
   };
   
-  if (view === 'form') {
-    return <ProductForm product={editingProduct} onSave={handleFormSave} onCancel={handleFormCancel} isCopy={isCopyMode} />;
-  }
+  const renderContent = () => {
+    if (view === 'form') {
+      return (
+        <motion.div key="form" {...animationProps}>
+          <ProductForm product={editingProduct} onSave={handleFormSave} onCancel={handleFormCancel} isCopy={isCopyMode} />
+        </motion.div>
+      );
+    }
 
+    return (
+      <motion.div key="list" {...animationProps}>
+        <div className="grid gap-6">
+          <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-4">
+                  <div>
+                  <CardTitle>محصولات</CardTitle>
+                  <CardDescription>
+                      محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+                  </CardDescription>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                  <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
+                  <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                      <File className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
+                  </Button>
+                  <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
+                  </Button>
+                  </div>
+              </CardHeader>
+              <CardContent>
+                  <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v)}} className="w-full" dir="rtl">
+                  <TabsList className="h-auto bg-transparent p-0">
+                      <TabsTrigger value="all" asChild>
+                      <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
+                          <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
+                          <Store className="h-6 w-6" />
+                          <span className="text-xs">همه محصولات</span>
+                          </div>
+                      </div>
+                      </TabsTrigger>
+                      {stores?.map((store) => (
+                      <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
+                          <Image
+                          alt={store.name}
+                          className="object-cover"
+                          fill
+                          src={store.logoUrl || '/placeholder.svg'}
+                          unoptimized
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
+                          <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
+                          </div>
+                      </TabsTrigger>
+                      ))}
+                  </TabsList>
+                  </Tabs>
+              </CardContent>
+          </Card>
+          
+          {selectedProducts.length > 0 && (
+              <Card className="sticky top-[88px] z-10">
+                  <CardContent className="p-2">
+                  <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm text-muted-foreground">
+                      {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
+                      </span>
+                      <div className="flex items-center gap-2">
+                      <Dialog open={isBulkActionModalOpen} onOpenChange={setIsBulkActionModalOpen}>
+                          <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                  <Move className="ml-2 h-4 w-4" />
+                                  انتقال / کپی
+                              </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <DialogHeader>
+                                  <DialogTitle>انتقال یا کپی گروهی محصولات</DialogTitle>
+                                  <DialogDescription>
+                                      عملیات و مقصد مورد نظر را برای {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده مشخص کنید.
+                                  </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                  <RadioGroup defaultValue="move" value={bulkAction} onValueChange={(v) => setBulkAction(v as BulkAction)}>
+                                      <div className="flex items-center space-x-2 space-x-reverse">
+                                          <RadioGroupItem value="move" id="r1" />
+                                          <Label htmlFor="r1">انتقال (Move)</Label>
+                                      </div>
+                                      <div className="flex items-center space-x-2 space-x-reverse">
+                                          <RadioGroupItem value="copy" id="r2" />
+                                          <Label htmlFor="r2">کپی (Copy)</Label>
+                                      </div>
+                                  </RadioGroup>
+                                  <Separator />
+                                  <Select value={bulkTargetStore} onValueChange={setBulkTargetStore}>
+                                      <SelectTrigger><SelectValue placeholder="فروشگاه مقصد..." /></SelectTrigger>
+                                      <SelectContent>
+                                          {stores.map(store => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
+                                      </SelectContent>
+                                  </Select>
+                                  <Select value={bulkTargetCategory} onValueChange={setBulkTargetCategory} disabled={!bulkTargetStore}>
+                                      <SelectTrigger><SelectValue placeholder="دسته‌بندی مقصد..." /></SelectTrigger>
+                                      <SelectContent>
+                                          {bulkActionCategoryTree.length > 0 ? renderCategoryOptions(bulkActionCategoryTree) : <div className="p-4 text-center text-sm text-muted-foreground">دسته‌بندی‌ای یافت نشد.</div>}
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                              <DialogFooter className="grid grid-cols-2 gap-2">
+                                  <Button variant="destructive" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
+                                  <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore} className="bg-green-600 hover:bg-green-700">
+                                      {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                      تایید
+                                  </Button>
+                              </DialogFooter>
+                          </DialogContent>
+                      </Dialog>
+
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
+                              <Trash2 className="ml-2 h-4 w-4" />
+                              حذف
+                          </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                              <AlertDialogDescription>
+                              این عمل غیرقابل بازگشت است و {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده را برای همیشه حذف می‌کند.
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                              <AlertDialogCancel>انصراف</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
+                              {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                              حذف
+                              </AlertDialogAction>
+                          </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
+                      </div>
+                  </div>
+                  </CardContent>
+              </Card>
+          )}
+
+          {Object.keys(groupedProducts).length > 0 ? (
+              <Accordion type="single" collapsible value={openAccordionId ?? undefined} onValueChange={handleAccordionChange} className="w-full space-y-4">
+                  {categoryOrder.map(categoryId => {
+                      const categoryProducts = groupedProducts[categoryId];
+                      const firstProduct = categoryProducts[0];
+                      if (!firstProduct) return null;
+
+                      return (
+                          <AccordionItem value={categoryId} key={categoryId} ref={(node) => itemRefs.current.set(categoryId, node)}>
+                              <Card>
+                                  <AccordionTrigger className="w-full p-4 hover:no-underline">
+                                      <div className="flex items-center justify-between w-full">
+                                          <div className="flex items-center gap-4">
+                                              <Image
+                                                  alt={firstProduct.name}
+                                                  className="aspect-square rounded-md object-cover"
+                                                  height="64"
+                                                  src={firstProduct.imageUrl}
+                                                  width="64"
+                                                  data-ai-hint="product image"
+                                              />
+                                              <div className="text-right">
+                                                  <h3 className="font-semibold text-lg">{getCategoryName(categoryId)}</h3>
+                                                  <p className="text-sm text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
+                                              </div>
+                                          </div>
+                                          <ChevronDown className="h-6 w-6 shrink-0 transition-transform duration-200" />
+                                      </div>
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                      <CategoryProducts
+                                          categoryId={categoryId}
+                                          categoryProducts={categoryProducts}
+                                          onEdit={handleEdit}
+                                          onCopy={handleCopy}
+                                          selectedProducts={selectedProducts}
+                                          onSelectProduct={handleSelectProduct}
+                                      />
+                                  </AccordionContent>
+                              </Card>
+                          </AccordionItem>
+                      );
+                  })}
+              </Accordion>
+          ) : (
+              <Card>
+                  <CardContent className="py-16 text-center">
+                  <p className="text-muted-foreground mb-4">
+                      {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
+                  </p>
+                  </CardContent>
+              </Card>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+  
   return (
-    <div className="grid gap-6" data-main-page="true">
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
-                <div>
-                <CardTitle>محصولات</CardTitle>
-                <CardDescription>
-                    محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                </CardDescription>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
-                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                    <File className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
-                </Button>
-                <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
-                </Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v)}} className="w-full" dir="rtl">
-                <TabsList className="h-auto bg-transparent p-0">
-                    <TabsTrigger value="all" asChild>
-                    <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
-                        <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
-                        <Store className="h-6 w-6" />
-                        <span className="text-xs">همه محصولات</span>
-                        </div>
-                    </div>
-                    </TabsTrigger>
-                    {stores?.map((store) => (
-                    <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
-                        <Image
-                        alt={store.name}
-                        className="object-cover"
-                        fill
-                        src={store.logoUrl || '/placeholder.svg'}
-                        unoptimized
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
-                        <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
-                        </div>
-                    </TabsTrigger>
-                    ))}
-                </TabsList>
-                </Tabs>
-            </CardContent>
-        </Card>
-        
-        {selectedProducts.length > 0 && (
-            <Card className="sticky top-[88px] z-10">
-                <CardContent className="p-2">
-                <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm text-muted-foreground">
-                    {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
-                    </span>
-                    <div className="flex items-center gap-2">
-                    <Dialog open={isBulkActionModalOpen} onOpenChange={setIsBulkActionModalOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                                <Move className="ml-2 h-4 w-4" />
-                                انتقال / کپی
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>انتقال یا کپی گروهی محصولات</DialogTitle>
-                                <DialogDescription>
-                                    عملیات و مقصد مورد نظر را برای {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده مشخص کنید.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <RadioGroup defaultValue="move" value={bulkAction} onValueChange={(v) => setBulkAction(v as BulkAction)}>
-                                    <div className="flex items-center space-x-2 space-x-reverse">
-                                        <RadioGroupItem value="move" id="r1" />
-                                        <Label htmlFor="r1">انتقال (Move)</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 space-x-reverse">
-                                        <RadioGroupItem value="copy" id="r2" />
-                                        <Label htmlFor="r2">کپی (Copy)</Label>
-                                    </div>
-                                </RadioGroup>
-                                <Separator />
-                                <Select value={bulkTargetStore} onValueChange={setBulkTargetStore}>
-                                    <SelectTrigger><SelectValue placeholder="فروشگاه مقصد..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {stores.map(store => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <Select value={bulkTargetCategory} onValueChange={setBulkTargetCategory} disabled={!bulkTargetStore}>
-                                    <SelectTrigger><SelectValue placeholder="دسته‌بندی مقصد..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {bulkActionCategoryTree.length > 0 ? renderCategoryOptions(bulkActionCategoryTree) : <div className="p-4 text-center text-sm text-muted-foreground">دسته‌بندی‌ای یافت نشد.</div>}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <DialogFooter className="grid grid-cols-2 gap-2">
-                                <Button variant="destructive" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
-                                <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore} className="bg-green-600 hover:bg-green-700">
-                                    {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                                    تایید
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
-                            <Trash2 className="ml-2 h-4 w-4" />
-                            حذف
-                        </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                            <AlertDialogDescription>
-                            این عمل غیرقابل بازگشت است و {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده را برای همیشه حذف می‌کند.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                            <AlertDialogCancel>انصراف</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
-                            {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                            حذف
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    </div>
-                </div>
-                </CardContent>
-            </Card>
-        )}
-
-        {Object.keys(groupedProducts).length > 0 ? (
-            <Accordion type="single" collapsible value={openAccordionId ?? undefined} onValueChange={handleAccordionChange} className="w-full space-y-4">
-                {categoryOrder.map(categoryId => {
-                    const categoryProducts = groupedProducts[categoryId];
-                    const firstProduct = categoryProducts[0];
-                    if (!firstProduct) return null;
-
-                    return (
-                        <AccordionItem value={categoryId} key={categoryId} ref={(node) => itemRefs.current.set(categoryId, node)}>
-                            <Card>
-                                <AccordionTrigger className="w-full p-4 hover:no-underline">
-                                    <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center gap-4">
-                                            <Image
-                                                alt={firstProduct.name}
-                                                className="aspect-square rounded-md object-cover"
-                                                height="64"
-                                                src={firstProduct.imageUrl}
-                                                width="64"
-                                                data-ai-hint="product image"
-                                            />
-                                            <div className="text-right">
-                                                <h3 className="font-semibold text-lg">{getCategoryName(categoryId)}</h3>
-                                                <p className="text-sm text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
-                                            </div>
-                                        </div>
-                                        <ChevronDown className="h-6 w-6 shrink-0 transition-transform duration-200" />
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    <CategoryProducts
-                                        categoryId={categoryId}
-                                        categoryProducts={categoryProducts}
-                                        onEdit={handleEdit}
-                                        onCopy={handleCopy}
-                                        selectedProducts={selectedProducts}
-                                        onSelectProduct={handleSelectProduct}
-                                    />
-                                </AccordionContent>
-                            </Card>
-                        </AccordionItem>
-                    );
-                })}
-            </Accordion>
-        ) : (
-            <Card>
-                <CardContent className="py-16 text-center">
-                <p className="text-muted-foreground mb-4">
-                    {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
-                </p>
-                </CardContent>
-            </Card>
-        )}
+    <div data-main-page="true">
+      <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
     </div>
   );
 }

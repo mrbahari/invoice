@@ -32,6 +32,14 @@ import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '../ui/checkbox';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const animationProps = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.3, ease: 'easeInOut' },
+};
 
 
 export default function StoresPage() {
@@ -157,140 +165,154 @@ export default function StoresPage() {
   };
 
 
-  if (view === 'form') {
+  const renderContent = () => {
+    if (view === 'form') {
+      return (
+        <motion.div key="form" {...animationProps}>
+            <StoreForm
+            store={editingStore}
+            onSave={handleFormSuccess}
+            onCancel={handleFormCancel}
+            />
+        </motion.div>
+      );
+    }
+    
     return (
-      <StoreForm
-        store={editingStore}
-        onSave={handleFormSuccess}
-        onCancel={handleFormCancel}
-      />
-    );
+        <motion.div key="list" {...animationProps}>
+            <div className="grid gap-8">
+                <Card>
+                    <CardHeader>
+                    <div className="flex justify-between items-center gap-4">
+                        <div>
+                        <CardTitle>فروشگاه‌ها</CardTitle>
+                        <CardDescription>
+                            فروشگاه‌های خود را مدیریت کرده و برای هرکدام دسته‌بندی محصولات
+                            تعریف کنید.
+                        </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                            onClick={handleAddClick}
+                        >
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            افزودن فروشگاه
+                            </span>
+                        </Button>
+                        </div>
+                    </div>
+                    </CardHeader>
+                </Card>
+                
+                {selectedStores.length > 0 && (
+                    <Card className="sticky top-[88px] z-10 animate-in fade-in-50">
+                        <CardContent className="p-3">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm text-muted-foreground">
+                                    {selectedStores.length.toLocaleString('fa-IR')} مورد انتخاب شده
+                                </span>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
+                                            <Trash2 className="ml-2 h-4 w-4" />
+                                            حذف موارد انتخابی
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                این عمل غیرقابل بازگشت است و {selectedStores.length.toLocaleString('fa-IR')} فروشگاه را به همراه تمام محصولات و دسته‌بندی‌هایشان برای همیشه حذف می‌کند.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
+                                                {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                                حذف
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+                
+                {sortedAndFilteredStores.length > 0 ? (
+                    <div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                    {sortedAndFilteredStores.map((store) => (
+                        <Card
+                        key={store.id}
+                        onClick={() => handleEditClick(store)}
+                        className={cn(
+                            "flex flex-col cursor-pointer h-full transition-all",
+                            selectedStores.includes(store.id) && "ring-2 ring-primary border-primary"
+                        )}
+                        >
+                        <CardHeader>
+                            <div className="flex items-start justify-between">
+                                <CardTitle className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                                    {store.logoUrl ? (
+                                    <Image
+                                        src={store.logoUrl}
+                                        alt={store.name}
+                                        width={48}
+                                        height={48}
+                                        className="object-contain rounded-md"
+                                        unoptimized
+                                    />
+                                    ) : (
+                                    <StoreIcon className="w-6 h-6 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <span className="flex-1">{store.name}</span>
+                                </CardTitle>
+                                <Checkbox
+                                    checked={selectedStores.includes(store.id)}
+                                    onCheckedChange={(checked) => handleSelectStore(store.id, !!checked)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-5 w-5"
+                                />
+                            </div>
+                            <CardDescription>{store.address}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow"></CardContent>
+                        <CardFooter className="text-xs text-muted-foreground justify-between">
+                            <span>{getCategoryCount(store.id)} دسته‌بندی</span>
+                            <span>{getProductCount(store.id)} محصول</span>
+                        </CardFooter>
+                        </Card>
+                    ))}
+                    </div>
+                ) : (
+                    <Card>
+                    <CardContent className="py-16 text-center">
+                        <p className="text-muted-foreground mb-4">
+                        {searchTerm ? `هیچ فروشگاهی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ فروشگاهی تعریف نشده است.'}
+                        </p>
+                        <Button variant="link" onClick={handleAddClick}>
+                        یک فروشگاه جدید اضافه کنید.
+                        </Button>
+                    </CardContent>
+                    </Card>
+                )}
+            </div>
+        </motion.div>
+    )
   }
 
   return (
-    <div className="grid gap-8" data-main-page="true">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center gap-4">
-            <div>
-              <CardTitle>فروشگاه‌ها</CardTitle>
-              <CardDescription>
-                فروشگاه‌های خود را مدیریت کرده و برای هرکدام دسته‌بندی محصولات
-                تعریف کنید.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                onClick={handleAddClick}
-              >
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  افزودن فروشگاه
-                </span>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-      
-      {selectedStores.length > 0 && (
-          <Card className="sticky top-[88px] z-10 animate-in fade-in-50">
-              <CardContent className="p-3">
-                  <div className="flex items-center justify-between gap-4">
-                      <span className="text-sm text-muted-foreground">
-                          {selectedStores.length.toLocaleString('fa-IR')} مورد انتخاب شده
-                      </span>
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
-                                  <Trash2 className="ml-2 h-4 w-4" />
-                                  حذف موارد انتخابی
-                              </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                      این عمل غیرقابل بازگشت است و {selectedStores.length.toLocaleString('fa-IR')} فروشگاه را به همراه تمام محصولات و دسته‌بندی‌هایشان برای همیشه حذف می‌کند.
-                                  </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                  <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
-                                      {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                                      حذف
-                                  </AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
-                  </div>
-              </CardContent>
-          </Card>
-      )}
-      
-      {sortedAndFilteredStores.length > 0 ? (
-        <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {sortedAndFilteredStores.map((store) => (
-            <Card
-              key={store.id}
-              onClick={() => handleEditClick(store)}
-              className={cn(
-                "flex flex-col cursor-pointer h-full transition-all",
-                selectedStores.includes(store.id) && "ring-2 ring-primary border-primary"
-              )}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
-                        {store.logoUrl ? (
-                          <Image
-                            src={store.logoUrl}
-                            alt={store.name}
-                            width={48}
-                            height={48}
-                            className="object-contain rounded-md"
-                            unoptimized
-                          />
-                        ) : (
-                          <StoreIcon className="w-6 h-6 text-muted-foreground" />
-                        )}
-                      </div>
-                      <span className="flex-1">{store.name}</span>
-                    </CardTitle>
-                    <Checkbox
-                        checked={selectedStores.includes(store.id)}
-                        onCheckedChange={(checked) => handleSelectStore(store.id, !!checked)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-5 w-5"
-                    />
-                </div>
-                <CardDescription>{store.address}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow"></CardContent>
-              <CardFooter className="text-xs text-muted-foreground justify-between">
-                <span>{getCategoryCount(store.id)} دسته‌بندی</span>
-                <span>{getProductCount(store.id)} محصول</span>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground mb-4">
-              {searchTerm ? `هیچ فروشگاهی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ فروشگاهی تعریف نشده است.'}
-            </p>
-            <Button variant="link" onClick={handleAddClick}>
-              یک فروشگاه جدید اضافه کنید.
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+    <div data-main-page="true">
+        <AnimatePresence mode="wait">
+            {renderContent()}
+        </AnimatePresence>
     </div>
   );
 }

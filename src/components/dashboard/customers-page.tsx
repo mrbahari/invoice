@@ -304,7 +304,7 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
               )}
 
               {filteredCustomers.length > 0 ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredCustomers.map((customer, i) => {
                         const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                         const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
@@ -319,33 +319,38 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
                                 initial="hidden"
                                 animate="visible"
                                 transition={{ delay: i * 0.05, duration: 0.3 }}
-                                className={cn(
-                                    "group relative flex items-center gap-3 rounded-lg border-b py-3 px-2 transition-colors hover:bg-muted/50",
-                                    selectedCustomers.includes(customer.id) && "bg-primary/10"
-                                )}
-                                onClick={() => handleDetailClick(customer)}
                             >
-                                <Checkbox
-                                    checked={selectedCustomers.includes(customer.id)}
-                                    onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="h-5 w-5 bg-background/50 backdrop-blur-sm"
-                                />
-                                <div className="relative">
-                                    <Avatar className="h-12 w-12 border-2 border-muted group-hover:border-primary transition-colors">
-                                        <AvatarImage src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/80/80`} />
-                                        <AvatarFallback className="text-lg">{nameInitials}</AvatarFallback>
-                                    </Avatar>
-                                    {invoiceCount > 0 && (
-                                      <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-5 w-5 justify-center p-0 rounded-full border-2 border-background">
-                                        {invoiceCount.toLocaleString('fa-IR')}
-                                      </Badge>
+                                <Card
+                                    className={cn(
+                                        "group relative w-full h-full cursor-pointer transition-all",
+                                        selectedCustomers.includes(customer.id) && "ring-2 ring-primary"
                                     )}
-                                </div>
-                                <div className="grid gap-0.5 flex-1 overflow-hidden">
-                                    <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
-                                </div>
+                                    onClick={() => handleDetailClick(customer)}
+                                >
+                                    <CardContent className="p-3 flex items-center gap-3">
+                                        <Checkbox
+                                            checked={selectedCustomers.includes(customer.id)}
+                                            onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="h-5 w-5 bg-background/50 backdrop-blur-sm"
+                                        />
+                                        <div className="relative">
+                                            <Avatar className="h-12 w-12 border-2 border-muted group-hover:border-primary transition-colors">
+                                                <AvatarImage src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/80/80`} />
+                                                <AvatarFallback className="text-lg">{nameInitials}</AvatarFallback>
+                                            </Avatar>
+                                            {invoiceCount > 0 && (
+                                              <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-5 w-5 justify-center p-0 rounded-full border-2 border-background">
+                                                {invoiceCount.toLocaleString('fa-IR')}
+                                              </Badge>
+                                            )}
+                                        </div>
+                                        <div className="grid gap-0.5 flex-1 overflow-hidden">
+                                            <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </motion.div>
                         );
                     })}

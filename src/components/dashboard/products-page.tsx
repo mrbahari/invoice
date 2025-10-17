@@ -587,7 +587,7 @@ export default function ProductsPage() {
           )}
 
           {Object.keys(groupedProducts).length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                 {categoryOrder.map(categoryId => {
                   const categoryProducts = groupedProducts[categoryId];
                   const firstProduct = categoryProducts[0];

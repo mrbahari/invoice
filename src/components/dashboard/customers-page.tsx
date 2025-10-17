@@ -1,7 +1,7 @@
 
 'use client';
 
-import { File, PlusCircle } from 'lucide-react';
+import { File, PlusCircle, Trash2, Loader2, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,24 +19,34 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatCurrency, downloadCSV } from '@/lib/utils';
+import { downloadCSV } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Customer } from '@/lib/definitions';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import type { Customer, Invoice } from '@/lib/definitions';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from './customer-form';
-import CustomerDetailPage from './customer-detail-page';
 import { useData } from '@/context/data-context';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Checkbox } from '../ui/checkbox';
 
 
 type View =
   | { type: 'list' }
-  | { type: 'form'; customer?: Customer }
-  | { type: 'detail'; customerId: string };
+  | { type: 'form'; customer?: Customer };
 
 const animationProps = {
     initial: { opacity: 0, y: 20 },
@@ -47,14 +57,15 @@ const animationProps = {
 
 
 export default function CustomersPage() {
-  const { data } = useData();
+  const { data, deleteDocuments } = useData();
   const { customers: customerList, invoices } = data;
   const { user } = useUser();
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
-  const scrollPositionRef = useRef(0);
-  const { itemsToShow, sentinelRef } = useVirtualScroll();
+  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [isProcessingBulk, setIsProcessingBulk] = useState(false);
 
 
   useEffect(() => {
@@ -65,15 +76,10 @@ export default function CustomersPage() {
       setSearchVisible(false);
     }
   }, [view, setSearchVisible]);
-
+  
   useEffect(() => {
-    if (view.type === 'list' && scrollPositionRef.current > 0) {
-      setTimeout(() => {
-        window.scrollTo({ top: scrollPositionRef.current, behavior: 'smooth' });
-        scrollPositionRef.current = 0; // Reset after restoring
-      }, 0);
-    }
-  }, [view]);
+    setSelectedCustomers([]);
+  }, [searchTerm]);
 
   const handleAddClick = () => {
     if (!user) {
@@ -88,18 +94,38 @@ export default function CustomersPage() {
     setView({ type: 'form' });
   };
 
-  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
-
   const handleEditClick = (customer: Customer) => {
-    scrollPositionRef.current = window.scrollY;
     setEditingCustomer(customer);
     setView({ type: 'form', customer });
   };
-
-  const handleRowClick = (customer: Customer) => {
-    scrollPositionRef.current = window.scrollY;
-    setView({ type: 'detail', customerId: customer.id });
+  
+  const handleSelectCustomer = (customerId: string, checked: boolean) => {
+    setSelectedCustomers(prev => 
+      checked ? [...prev, customerId] : prev.filter(id => id !== customerId)
+    );
   };
+  
+  const handleDeleteSelected = async () => {
+    if (selectedCustomers.length === 0) return;
+    setIsProcessingBulk(true);
+    try {
+      // Find invoices associated with selected customers
+      const invoicesToDelete = invoices.filter(inv => selectedCustomers.includes(inv.customerId)).map(inv => inv.id);
+      
+      if (invoicesToDelete.length > 0) {
+        await deleteDocuments('invoices', invoicesToDelete);
+      }
+      await deleteDocuments('customers', selectedCustomers);
+
+      toast({ variant: 'success', title: 'مشتریان با موفقیت حذف شدند.' });
+      setSelectedCustomers([]);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'خطا در حذف مشتریان' });
+    } finally {
+      setIsProcessingBulk(false);
+    }
+  };
+
 
   const handleFormSuccess = () => {
     setView({ type: 'list' });
@@ -117,18 +143,13 @@ export default function CustomersPage() {
       (customer) =>
         customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.phone.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ).sort((a,b) => a.name.localeCompare(b.name, 'fa'));
   }, [customerList, searchTerm]);
 
-  const getCustomerStats = (customerId: string) => {
-    if (!invoices) return { totalSpent: 0, orderCount: 0 };
-    const customerInvoices = invoices.filter(
-      (inv) => inv.customerId === customerId
-    );
-    const totalSpent = customerInvoices.reduce((acc, inv) => acc + inv.total, 0);
-    const orderCount = customerInvoices.length;
-    return { totalSpent, orderCount };
-  };
+  const getCustomerInvoiceCount = useCallback((customerId: string) => {
+    if (!invoices) return 0;
+    return invoices.filter(inv => inv.customerId === customerId).length;
+  }, [invoices]);
 
   const handleExport = () => {
     const headers = {
@@ -152,154 +173,141 @@ export default function CustomersPage() {
             />
           </motion.div>
         );
-      case 'detail':
-        return (
-          <motion.div key="detail" {...animationProps}>
-            <CustomerDetailPage
-              customerId={view.customerId}
-              onBack={() => setView({ type: 'list' })}
-              onEdit={(customer) => handleEditClick(customer)}
-              onInvoiceClick={() => {
-                /* Not implemented, needs state lift to main dashboard page */
-              }}
-            />
-          </motion.div>
-        );
       case 'list':
       default:
         return (
           <motion.div key="list" {...animationProps}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <CardTitle>مشتریان</CardTitle>
-                    <CardDescription>
-                      مشتریان خود را مدیریت کرده و سابقه خرید آنها را مشاهده کنید.
-                    </CardDescription>
+            <div className="grid gap-6 pb-24" data-main-page="true">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <CardTitle>مشتریان</CardTitle>
+                      <CardDescription>
+                        مشتریان خود را مدیریت کرده و سابقه خرید آنها را مشاهده کنید.
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1"
+                        onClick={handleExport}
+                      >
+                        <File className="h-3.5 w-4" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          خروجی
+                        </span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                        onClick={handleAddClick}
+                      >
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          افزودن مشتری
+                        </span>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 gap-1"
-                      onClick={handleExport}
-                    >
-                      <File className="h-3.5 w-4" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        خروجی
-                      </span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                      onClick={handleAddClick}
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        افزودن مشتری
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>مشتری</TableHead>
-                      <TableHead className="hidden sm:table-cell text-center">
-                        سفارش‌ها
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell text-left">
-                        جمع مبلغ سفارشات
-                      </TableHead>
-                      <TableHead>
-                        <span className="sr-only">Actions</span>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCustomers.length > 0 ? (
-                      filteredCustomers.slice(0, itemsToShow).map((customer) => {
-                        const { totalSpent, orderCount } = getCustomerStats(customer.id);
-                        const hasValidName =
-                          customer.name && customer.name !== 'مشتری بدون نام';
-                        const nameInitials = (
-                          hasValidName ? customer.name : customer.phone
-                        )
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('');
+                </CardHeader>
+              </Card>
+
+              {selectedCustomers.length > 0 && (
+                  <Card className="sticky top-[88px] z-10 animate-in fade-in-50">
+                      <CardContent className="p-3">
+                          <div className="flex items-center justify-between gap-4">
+                              <span className="text-sm text-muted-foreground">
+                                  {selectedCustomers.length.toLocaleString('fa-IR')} مورد انتخاب شده
+                              </span>
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
+                                          <Trash2 className="ml-2 h-4 w-4" />
+                                          حذف موارد انتخابی
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                              این عمل غیرقابل بازگشت است و {selectedCustomers.length.toLocaleString('fa-IR')} مشتری را به همراه تمام فاکتورهایشان برای همیشه حذف می‌کند.
+                                          </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                          <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                          <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
+                                              {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                              حذف
+                                          </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          </div>
+                      </CardContent>
+                  </Card>
+              )}
+
+
+              {filteredCustomers.length > 0 ? (
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                  {filteredCustomers.map((customer) => {
+                        const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
+                        const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
+                        const invoiceCount = getCustomerInvoiceCount(customer.id);
                         return (
-                          <TableRow
+                          <Card
                             key={customer.id}
-                            onClick={() => handleRowClick(customer)}
-                            className="cursor-pointer"
+                            onClick={() => handleEditClick(customer)}
+                            className={cn(
+                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 text-center",
+                              selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"
+                            )}
                           >
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="flex h-9 w-9">
+                            <CardContent className="p-3">
+                              <div className="relative mx-auto w-20 h-20">
+                                <Avatar className="h-full w-full border-2 border-transparent group-hover:border-primary transition-all">
                                   <AvatarImage
-                                    src={`https://picsum.photos/seed/${customer.id}/36/36`}
+                                    src={`https://picsum.photos/seed/${customer.id}/80/80`}
                                     alt="آواتار"
                                     data-ai-hint="person avatar"
                                   />
                                   <AvatarFallback>{nameInitials}</AvatarFallback>
                                 </Avatar>
-                                <div>
-                                  <div className="font-medium">{customer.phone}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {hasValidName ? customer.name : 'بی نام'}
-                                  </div>
+                                {invoiceCount > 0 && (
+                                    <Badge className="absolute -top-1 -right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full">
+                                      {invoiceCount.toLocaleString('fa-IR')}
+                                    </Badge>
+                                )}
+                                <div className="absolute top-1 left-1">
+                                  <Checkbox
+                                      checked={selectedCustomers.includes(customer.id)}
+                                      onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="h-5 w-5 bg-background/50 backdrop-blur-sm"
+                                  />
                                 </div>
                               </div>
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell text-center">
-                              {orderCount.toLocaleString('fa-IR')}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell text-left">
-                              {formatCurrency(totalSpent)}
-                            </TableCell>
-                            <TableCell className="text-left">
-                              <Button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditClick(customer);
-                                }}
-                                variant="outline"
-                                size="sm"
-                              >
-                                ویرایش
-                              </Button>
-                            </TableCell>
-                          </TableRow>
+                              <div className="mt-2">
+                                <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
+                                <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
                         );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
-                          هیچ مشتری‌ای یافت نشد.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {filteredCustomers.length > itemsToShow && (
-                        <TableRow>
-                            <TableCell colSpan={4} className="p-0">
-                                <div ref={sentinelRef} className="h-1" />
-                            </TableCell>
-                        </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter>
-                <div className="text-xs text-muted-foreground">
-                  نمایش <strong>{Math.min(itemsToShow, filteredCustomers.length).toLocaleString('fa-IR')}</strong> از{' '}
-                  <strong>{(customerList?.length || 0).toLocaleString('fa-IR')}</strong> مشتریان
+                      })}
                 </div>
-              </CardFooter>
-            </Card>
+               ) : (
+                <Card>
+                  <CardContent className="py-16 text-center">
+                    <p className="text-muted-foreground mb-4">
+                       {searchTerm ? `هیچ مشتری‌ای با عبارت «${searchTerm}» یافت نشد.` : 'هیچ مشتری‌ای یافت نشد.'}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </motion.div>
         );
     }
@@ -307,3 +315,5 @@ export default function CustomersPage() {
 
   return <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>;
 }
+
+    

@@ -40,18 +40,9 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
-    domains: ['localhost'],
   },
   devIndicators: {
     allowedDevOrigins: ['**'],
-  },
-  webpack: (config, { isServer }) => {
-    // handlebars fix
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'handlebars': 'handlebars/dist/handlebars.js',
-    };
-    return config;
   },
 };
 

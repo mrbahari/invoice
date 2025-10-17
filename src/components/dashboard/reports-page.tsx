@@ -187,7 +187,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             name,
             phone: customerDetails?.phone || '',
             total,
-            avatar: customerDetails?.email || ''
+            avatarUrl: customerDetails?.avatarUrl || `https://picsum.photos/seed/${id}/36/36`,
         }
       })
       .sort((a, b) => b.total - a.total)
@@ -368,18 +368,16 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                     <div className="space-y-4">
                         {topCustomers.map(customer => {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
-                            const initials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
                             return (
                                 <div key={customer.id} className="flex items-center gap-4">
-                                    <Avatar className="hidden h-9 w-9 sm:flex">
-                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                        <AvatarFallback>{initials}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="grid gap-1 flex-1">
+                                    <div className="ml-auto font-medium text-left">{formatCurrency(customer.total)}</div>
+                                    <div className="grid gap-1 flex-1 text-right">
                                         <p className="text-sm font-medium leading-none">{customer.phone}</p>
                                         <p className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
                                     </div>
-                                    <div className="ml-auto font-medium">{formatCurrency(customer.total)}</div>
+                                    <div className="relative h-9 w-9">
+                                        <Image src={customer.avatarUrl} alt="آواتار" fill className="rounded-md object-cover" />
+                                    </div>
                                 </div>
                             )
                         })}

@@ -171,7 +171,6 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                     type="monotone"
                     fill={`url(#fill-${key})`}
                     stroke={chartConfig[key].color}
-                    stackId="1" // Use the same stackId to overlay areas
                     strokeWidth={2}
                     animationDuration={300}
                     animationEasing="ease-in-out"

@@ -73,6 +73,7 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
     phone: phone || 'شماره ثبت نشده',
     address: address || 'آدرس ثبت نشده',
     purchaseHistory: customer?.purchaseHistory || 'مشتری جدید',
+    createdAt: customer?.createdAt || new Date().toISOString(),
   });
 
 

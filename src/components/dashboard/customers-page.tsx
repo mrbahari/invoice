@@ -1,7 +1,7 @@
 
 'use client';
 
-import { File, PlusCircle, Trash2, Loader2, Move } from 'lucide-react';
+import { File, PlusCircle, Trash2, Loader2, Move, SortAsc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -42,11 +42,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Checkbox } from '../ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 type View =
   | { type: 'list' }
   | { type: 'form'; customer?: Customer };
+
+type SortOption = 'name' | 'newest' | 'invoiceCount';
 
 const animationProps = {
     initial: { opacity: 0, y: 20 },
@@ -66,6 +69,7 @@ export default function CustomersPage() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('newest');
 
 
   useEffect(() => {
@@ -79,7 +83,7 @@ export default function CustomersPage() {
   
   useEffect(() => {
     setSelectedCustomers([]);
-  }, [searchTerm]);
+  }, [searchTerm, sortOption]);
 
   const handleAddClick = () => {
     if (!user) {
@@ -137,19 +141,40 @@ export default function CustomersPage() {
     setEditingCustomer(undefined);
   };
 
-  const filteredCustomers = useMemo(() => {
-    if (!customerList) return [];
-    return customerList.filter(
-      (customer) =>
-        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone.toLowerCase().includes(searchTerm.toLowerCase())
-    ).sort((a,b) => a.name.localeCompare(b.name, 'fa'));
-  }, [customerList, searchTerm]);
-
   const getCustomerInvoiceCount = useCallback((customerId: string) => {
     if (!invoices) return 0;
     return invoices.filter(inv => inv.customerId === customerId).length;
   }, [invoices]);
+
+  const filteredCustomers = useMemo(() => {
+    if (!customerList) return [];
+
+    let filtered = customerList.filter(
+      (customer) =>
+        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.phone.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Sorting logic
+    switch (sortOption) {
+        case 'name':
+            filtered.sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+            break;
+        case 'invoiceCount':
+            filtered.sort((a, b) => getCustomerInvoiceCount(b.id) - getCustomerInvoiceCount(a.id));
+            break;
+        case 'newest':
+        default:
+            filtered.sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA;
+            });
+            break;
+    }
+
+    return filtered;
+  }, [customerList, searchTerm, sortOption, getCustomerInvoiceCount]);
 
   const handleExport = () => {
     const headers = {
@@ -188,17 +213,19 @@ export default function CustomersPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 gap-1"
-                        onClick={handleExport}
-                      >
-                        <File className="h-3.5 w-4" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          خروجی
-                        </span>
-                      </Button>
+                      <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                          <SelectTrigger className="w-[180px] h-8">
+                              <div className="flex items-center gap-2">
+                                  <SortAsc className="h-4 w-4" />
+                                  <SelectValue placeholder="مرتب‌سازی بر اساس..." />
+                              </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="newest">جدیدترین</SelectItem>
+                              <SelectItem value="name">نام</SelectItem>
+                              <SelectItem value="invoiceCount">تعداد فاکتور</SelectItem>
+                          </SelectContent>
+                      </Select>
                       <Button
                         size="sm"
                         className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
@@ -315,5 +342,3 @@ export default function CustomersPage() {
 
   return <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>;
 }
-
-    

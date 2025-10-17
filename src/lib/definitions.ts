@@ -7,6 +7,7 @@ export type Customer = {
   address: string;
   avatarUrl?: string;
   purchaseHistory: string; // Simplified for AI prompt
+  createdAt?: string; // ISO 8601 format
 };
 
 export type UserProfile = {
@@ -18,6 +19,7 @@ export type UserProfile = {
     avatarUrl?: string;
     purchaseHistory: string;
     stars: number;
+    createdAt?: string; // ISO 8601 format
 }
 
 export type Store = {

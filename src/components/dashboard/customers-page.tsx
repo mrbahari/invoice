@@ -26,6 +26,7 @@ import type { Customer, Invoice } from '@/lib/definitions';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSearch } from '@/components/dashboard/search-provider';
 import { CustomerForm } from './customer-form';
+import { CustomerDetailPage } from './customer-detail-page';
 import { useData } from '@/context/data-context';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -49,7 +50,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 type View =
   | { type: 'list' }
-  | { type: 'form'; customer?: Customer };
+  | { type: 'form'; customer?: Customer }
+  | { type: 'detail'; customer: Customer };
 
 type SortOption = 'name' | 'newest' | 'invoiceCount';
 
@@ -68,7 +70,7 @@ export default function CustomersPage() {
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
   const [view, setView] = useState<View>({ type: 'list' });
-  const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('newest');
@@ -96,14 +98,19 @@ export default function CustomersPage() {
       });
       return;
     }
-    setEditingCustomer(undefined);
+    setSelectedCustomer(undefined);
     setView({ type: 'form' });
   };
 
-  const handleEditClick = (customer: Customer) => {
-    setEditingCustomer(customer);
-    setView({ type: 'form', customer });
+  const handleDetailClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setView({ type: 'detail', customer });
   };
+  
+  const handleEditClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setView({ type: 'form', customer });
+  }
   
   const handleSelectCustomer = (customerId: string, checked: boolean) => {
     setSelectedCustomers(prev => 
@@ -135,12 +142,12 @@ export default function CustomersPage() {
 
   const handleFormSuccess = () => {
     setView({ type: 'list' });
-    setEditingCustomer(undefined);
+    setSelectedCustomer(undefined);
   };
 
-  const handleFormCancel = () => {
+  const handleBackToList = () => {
     setView({ type: 'list' });
-    setEditingCustomer(undefined);
+    setSelectedCustomer(undefined);
   };
 
   const getCustomerInvoiceCount = useCallback((customerId: string) => {
@@ -194,12 +201,22 @@ export default function CustomersPage() {
         return (
           <motion.div key="form" {...animationProps}>
             <CustomerForm
-              customer={editingCustomer}
+              customer={selectedCustomer}
               onSave={handleFormSuccess}
-              onCancel={handleFormCancel}
+              onCancel={handleBackToList}
             />
           </motion.div>
         );
+      case 'detail':
+        return (
+          <motion.div key="detail" {...animationProps}>
+            <CustomerDetailPage 
+              customer={selectedCustomer!} 
+              onBack={handleBackToList}
+              onEdit={handleEditClick}
+            />
+          </motion.div>
+        )
       case 'list':
       default:
         return (
@@ -288,7 +305,7 @@ export default function CustomersPage() {
                         return (
                           <Card
                             key={customer.id}
-                            onClick={() => handleEditClick(customer)}
+                            onClick={() => handleDetailClick(customer)}
                             className={cn(
                               "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1",
                               selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"

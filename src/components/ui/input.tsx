@@ -9,7 +9,7 @@ export interface InputProps
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, onFocus, ...props }, ref) => {
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      e.target.select();
+      // e.target.select(); // This line is removed to prevent auto-selection on every click.
       if (onFocus) {
         onFocus(e);
       }

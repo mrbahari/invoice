@@ -205,41 +205,41 @@ export default function CustomersPage() {
             <div className="grid gap-6 pb-24" data-main-page="true">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-4">
                     <div>
                       <CardTitle>مشتریان</CardTitle>
                       <CardDescription>
                         مشتریان خود را مدیریت کرده و سابقه خرید آنها را مشاهده کنید.
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
-                          <SelectTrigger className="w-[180px] h-8">
-                              <div className="flex items-center gap-2">
-                                  <SortAsc className="h-4 w-4" />
-                                  <SelectValue placeholder="مرتب‌سازی بر اساس..." />
-                              </div>
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="newest">جدیدترین</SelectItem>
-                              <SelectItem value="name">نام</SelectItem>
-                              <SelectItem value="invoiceCount">تعداد فاکتور</SelectItem>
-                          </SelectContent>
-                      </Select>
-                      <Button
-                        size="sm"
-                        className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                        onClick={handleAddClick}
-                      >
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          افزودن مشتری
-                        </span>
-                      </Button>
-                    </div>
-                  </div>
                 </CardHeader>
               </Card>
+
+                <div className="flex items-center justify-between gap-4">
+                    <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                        <SelectTrigger className="w-[180px] h-9">
+                            <div className="flex items-center gap-2">
+                                <SortAsc className="h-4 w-4" />
+                                <SelectValue placeholder="مرتب‌سازی بر اساس..." />
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="newest">جدیدترین</SelectItem>
+                            <SelectItem value="name">نام</SelectItem>
+                            <SelectItem value="invoiceCount">تعداد فاکتور</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button
+                    size="sm"
+                    className="h-9 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                    onClick={handleAddClick}
+                    >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        افزودن مشتری
+                    </span>
+                    </Button>
+                </div>
+
 
               {selectedCustomers.length > 0 && (
                   <Card className="sticky top-[88px] z-10 animate-in fade-in-50">

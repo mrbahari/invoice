@@ -5,6 +5,7 @@ import '@/app/globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import CanvasBackground from '@/components/canvas-background';
 
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
           <FirebaseClientProvider>
             <DataProvider>
                 <div className="max-w-7xl mx-auto w-full">
+                  <CanvasBackground />
                   <main className="relative z-10">
                     {children}
                   </main>

@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: linear-gradient(to right, hsl(0 0% 100%), hsl(220 100% 97%));
+    --background: 0 0% 100%;
     --foreground-hsl: 222.2 84% 4.9%;
     --primary-hsl: 248 82% 50%;
     --ring-hsl: 217 90% 59%;
@@ -56,7 +56,7 @@
   }
  
   .dark {
-    --background: linear-gradient(to right, hsl(240 10% 3.9%), hsl(248 82% 10%));
+    --background: 240 10% 3.9%;
     --foreground-hsl: 0 0% 98%;
     --primary-hsl: 248 82% 58%;
     --ring-hsl: 248 82% 58%;
@@ -113,7 +113,7 @@
     font-size: 14px;
   }
   body {
-    background: var(--background);
+    background-color: hsl(var(--background));
     @apply text-foreground;
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10+ */

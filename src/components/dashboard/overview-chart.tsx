@@ -2,10 +2,10 @@
 'use client';
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DailySales } from '@/lib/definitions';
-import { formatCurrency, formatNumber, toPersianDigits } from '@/lib/utils';
+import { formatCurrency, toPersianDigits } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Users, FileText } from 'lucide-react';
 

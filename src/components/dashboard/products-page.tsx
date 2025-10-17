@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2, Move, ChevronDown, Copy } from 'lucide-react';
+import { PlusCircle, File, Store, WandSparkles, SortAsc, Loader2, Trash2, Move, ChevronDown, Copy, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -508,6 +508,10 @@ export default function ProductsPage() {
                       {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
                       </span>
                       <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedProducts([])}>
+                        <X className="ml-2 h-4 w-4" />
+                        لغو
+                      </Button>
                       <Dialog open={isBulkActionModalOpen} onOpenChange={setIsBulkActionModalOpen}>
                           <DialogTrigger asChild>
                               <Button variant="outline" size="sm">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -12,7 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { DashboardTab } from '@/app/dashboard/page';
+import type { DashboardTab } from '@/lib/definitions';
 import { useUser as useAuthUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -53,52 +54,54 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm no-print w-full">
-      <div className="grid h-16 grid-cols-7 items-center justify-items-center">
-        {navItems.slice(0, 3).map((item) => (
-          <button
-            key={item.tab}
-            onClick={() => handleTabClick(item.tab)}
-            className="flex flex-col items-center gap-1 text-muted-foreground py-2"
-          >
-            <div className="relative">
-              <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
-              <span className={cn(
-                "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
-                activeTab === item.tab && "opacity-100"
-              )} />
-            </div>
-            <span className={cn("text-xs", activeTab === item.tab && "text-primary font-semibold")}>{item.label}</span>
-          </button>
-        ))}
-
-        {/* Central Action Button */}
-        <div className="flex h-full w-full items-center justify-center">
-            <button 
-              onClick={handleInvoiceClick}
-              className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid h-16 grid-cols-7 items-center justify-items-center">
+          {navItems.slice(0, 3).map((item) => (
+            <button
+              key={item.tab}
+              onClick={() => handleTabClick(item.tab)}
+              className="flex flex-col items-center gap-1 text-muted-foreground py-2"
             >
-              <FileText className="h-8 w-8" />
-              <span className="sr-only">ایجاد فاکتور</span>
+              <div className="relative">
+                <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
+                <span className={cn(
+                  "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
+                  activeTab === item.tab && "opacity-100"
+                )} />
+              </div>
+              <span className={cn("text-xs", activeTab === item.tab && "text-primary font-semibold")}>{item.label}</span>
             </button>
+          ))}
+
+          {/* Central Action Button */}
+          <div className="flex h-full w-full items-center justify-center">
+              <button 
+                onClick={handleInvoiceClick}
+                className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
+              >
+                <FileText className="h-8 w-8" />
+                <span className="sr-only">ایجاد فاکتور</span>
+              </button>
+          </div>
+
+
+          {navItems.slice(3, 6).map((item) => (
+            <button
+              key={item.tab}
+              onClick={() => handleTabClick(item.tab)}
+              className="flex flex-col items-center gap-1 text-muted-foreground py-2"
+            >
+              <div className="relative">
+                <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
+                <span className={cn(
+                  "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
+                  activeTab === item.tab && "opacity-100"
+                )} />
+              </div>
+              <span className={cn("text-xs", activeTab === item.tab && "text-primary font-semibold")}>{item.label}</span>
+            </button>
+          ))}
         </div>
-
-
-        {navItems.slice(3, 6).map((item) => (
-           <button
-            key={item.tab}
-            onClick={() => handleTabClick(item.tab)}
-            className="flex flex-col items-center gap-1 text-muted-foreground py-2"
-          >
-            <div className="relative">
-              <item.icon className={cn("h-6 w-6", activeTab === item.tab && "text-primary")} />
-               <span className={cn(
-                "absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary opacity-0",
-                activeTab === item.tab && "opacity-100"
-              )} />
-            </div>
-            <span className={cn("text-xs", activeTab === item.tab && "text-primary font-semibold")}>{item.label}</span>
-          </button>
-        ))}
       </div>
     </footer>
   );

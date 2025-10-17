@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import type { Product, Invoice, InvoiceStatus, Store, Category, PriceHistory } from '@/lib/definitions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Edit, Package, DollarSign, FileText, Store as StoreIcon, Copy } from 'lucide-react';
+import { ArrowRight, Edit, Package, DollarSign, FileText, Store as StoreIcon, Copy, Pencil } from 'lucide-react';
 import { useData } from '@/context/data-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -37,8 +37,14 @@ const statusStyles: Record<InvoiceStatus, string> = {
 };
 
 export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDetailPageProps) {
-  const { data } = useData();
+  const { data, updateDocument } = useData();
   const { invoices, stores, categories } = data;
+
+  const handleStatusChange = (e: React.MouseEvent, invoiceId: string, currentStatus: InvoiceStatus) => {
+    e.stopPropagation();
+    const newStatus = currentStatus === 'Paid' ? 'Pending' : 'Paid';
+    updateDocument('invoices', invoiceId, { status: newStatus });
+  };
 
   const productInvoices = useMemo(() => {
     return invoices
@@ -92,7 +98,11 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
 
     if (initialDate) {
         allEntries.push({ date: initialDate, price: product.price });
+    } else if (history.length === 0) {
+        // Only if there's no other data, use today for the single point
+        allEntries.push({date: new Date(), price: product.price})
     }
+
 
     if (allEntries.length === 0) {
         return [];
@@ -151,11 +161,11 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold text-white shadow-lg">{product.name}</h1>
-                                <p className='text-sm text-white/80 mt-1'>{product.description}</p>
+                                <p className='text-sm text-white/80 mt-1 truncate'>{product.description}</p>
                             </div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => onEdit(product)} className="bg-white/20 text-white backdrop-blur-sm border-white/50 hover:bg-white/30">
-                            <Edit className="ml-2 h-4 w-4" />
+                            <Pencil className="ml-2 h-4 w-4" />
                             ویرایش
                         </Button>
                     </div>
@@ -218,7 +228,7 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
             <CardDescription>نمودار تغییرات قیمت این محصول در طول زمان.</CardDescription>
           </CardHeader>
           <CardContent>
-              {priceHistoryData.length > 1 ? (
+              {priceHistoryData.length > 0 ? (
                 <ChartContainer config={{price: {label: 'قیمت', color: 'hsl(var(--chart-1))'}}} className="h-[250px] w-full">
                     <LineChart data={priceHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -274,7 +284,13 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
                             <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                             <TableCell>{new Date(invoice.date).toLocaleDateString('fa-IR')}</TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={statusStyles[invoice.status]}>{statusTranslation[invoice.status]}</Badge>
+                                 <Badge 
+                                    variant="outline" 
+                                    className={statusStyles[invoice.status] + " cursor-pointer"}
+                                    onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}
+                                >
+                                    {statusTranslation[invoice.status]}
+                                </Badge>
                             </TableCell>
                             <TableCell>{item?.quantity.toLocaleString('fa-IR')} {item?.unit}</TableCell>
                             <TableCell className="text-left font-mono">{formatCurrency(item?.totalPrice || 0)}</TableCell>

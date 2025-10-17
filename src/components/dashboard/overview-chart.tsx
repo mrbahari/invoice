@@ -56,7 +56,6 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
   };
 
   const yAxisFormatter = (value: number) => {
-    // This formatter is now more generic as multiple data types can be shown
     if (value >= 1000000) {
         return `${(value / 1000000).toLocaleString('fa-IR')} M`;
     }
@@ -94,8 +93,8 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                             key={key}
                             variant={isActive ? "secondary" : "ghost"}
                             size="sm"
-                            className={cn("flex-1 h-auto py-1.5 px-3 transition-colors duration-300", isActive && "shadow-sm")}
-                            style={isActive ? { backgroundColor: config.color, color: 'white' } : {}}
+                            className={cn("flex-1 h-auto py-1.5 px-3 transition-colors duration-300", isActive && "shadow-sm text-white")}
+                            style={isActive ? { backgroundColor: config.color } : {}}
                             onClick={() => handleChartToggle(chartKey)}
                         >
                             <Icon className={cn("ml-2 h-4 w-4", !isActive && 'text-muted-foreground')} />
@@ -128,10 +127,22 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
               tickMargin={8}
             />
              <YAxis
+                yAxisId="left"
+                orientation="left"
+                stroke={chartConfig.revenue.color}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={yAxisFormatter}
+            />
+            <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke={chartConfig.customers.color}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => toPersianDigits(value)}
             />
             <ChartTooltip
               cursor={true}
@@ -164,9 +175,12 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 />
               }
             />
-            {activeCharts.map(key => (
+            {activeCharts.map(key => {
+              const yAxisId = key === 'revenue' ? 'left' : 'right';
+              return (
                 <Area
                     key={key}
+                    yAxisId={yAxisId}
                     dataKey={key}
                     type="monotone"
                     fill={`url(#fill-${key})`}
@@ -175,7 +189,8 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                     animationDuration={300}
                     animationEasing="ease-in-out"
                 />
-            ))}
+              )
+            })}
           </AreaChart>
         </ChartContainer>
       </CardContent>

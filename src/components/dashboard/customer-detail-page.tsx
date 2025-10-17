@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { FloatingToolbar } from './floating-toolbar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import Image from 'next/image';
 
 type CustomerDetailPageProps = {
   customer: Customer;
@@ -62,21 +63,32 @@ export function CustomerDetailPage({ customer, onBack, onEdit }: CustomerDetailP
             </Tooltip>
         </FloatingToolbar>
 
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row items-center gap-6">
-            <Avatar className="w-24 h-24 border-2 border-primary">
-                <AvatarImage src={`https://picsum.photos/seed/${customer.id}/96/96`} />
-                <AvatarFallback>{nameInitials}</AvatarFallback>
-            </Avatar>
-            <div className="text-center sm:text-right">
-              <CardTitle className="text-3xl">{customer.name}</CardTitle>
-              <div className="flex flex-wrap justify-center sm:justify-start gap-x-6 gap-y-2 text-muted-foreground mt-2">
-                {customer.phone !== 'شماره ثبت نشده' && <div className="flex items-center gap-2"><Phone className="h-4 w-4" /><span>{customer.phone}</span></div>}
-                {customer.email !== 'ایمیل ثبت نشده' && <div className="flex items-center gap-2"><Mail className="h-4 w-4" /><span>{customer.email}</span></div>}
-                {customer.address !== 'آدرس ثبت نشده' && <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /><span>{customer.address}</span></div>}
-              </div>
+        <Card className="overflow-hidden">
+            <div className="relative h-48 w-full">
+                <Image 
+                    src={`https://picsum.photos/seed/${customer.id}/1200/400`}
+                    alt={`بنر مشتری ${customer.name}`}
+                    fill
+                    className="object-cover"
+                    data-ai-hint="abstract background"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-3xl font-bold text-white shadow-lg">{customer.name}</h1>
+                        <Button variant="outline" size="sm" onClick={() => onEdit(customer)} className="bg-white/20 text-white backdrop-blur-sm border-white/50 hover:bg-white/30">
+                            <Edit className="ml-2 h-4 w-4" />
+                            ویرایش
+                        </Button>
+                    </div>
+                </div>
             </div>
-          </CardHeader>
+            <CardContent className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted-foreground">
+                    {customer.phone !== 'شماره ثبت نشده' && <div className="flex items-center gap-3"><Phone className="h-5 w-5" /><span>{customer.phone}</span></div>}
+                    {customer.email !== 'ایمیل ثبت نشده' && <div className="flex items-center gap-3"><Mail className="h-5 w-5" /><span>{customer.email}</span></div>}
+                    {customer.address !== 'آدرس ثبت نشده' && <div className="flex items-center gap-3 sm:col-span-3"><MapPin className="h-5 w-5" /><span>{customer.address}</span></div>}
+                </div>
+            </CardContent>
         </Card>
 
         <div className="grid grid-cols-2 gap-6">

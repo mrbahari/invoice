@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -51,7 +50,7 @@ import { Badge } from '../ui/badge';
 type Period = 'all' | '30d' | '7d' | 'today';
 
 type ReportsPageProps = {
-  onNavigate: (tab: DashboardTab, data?: { customer: Customer }) => void;
+  onNavigate: (tab: DashboardTab, data?: { customer?: Customer }) => void;
 };
 
 
@@ -82,7 +81,9 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
       });
       return;
     }
-    onNavigate(tab, { customer });
+    if (onNavigate) {
+      onNavigate(tab, { customer });
+    }
   };
 
   const { 
@@ -164,7 +165,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     const chartData: DailySales[] = Object.keys(salesByDay).sort().map(dayString => {
       const dateObj = parseISO(dayString);
       return {
-        date: isValid(dateObj) ? format(dateObj, 'MM/dd') : 'تاریخ نامعتبر',
+        date: isValid(dateObj) ? format(dateObj, 'yyyy-MM-dd') : 'Invalid Date',
         revenue: salesByDay[dayString].revenue,
         customers: salesByDay[dayString].newCustomers,
         invoices: salesByDay[dayString].invoices,
@@ -371,7 +372,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                             const customerData = allCustomers.find(c => c.id === customer.id);
                             return (
-                                <button key={customer.id} onClick={() => customerData && onNavigate('customers', { customer: customerData })} className="w-full text-right">
+                                <button key={customer.id} onClick={() => customerData && handleNavigation('customers', customerData)} className="w-full text-right">
                                     <div className="flex items-center gap-4 hover:bg-muted/50 p-2 rounded-lg">
                                         <Image src={customer.avatarUrl} alt="آواتار" width={36} height={36} className="rounded-md object-cover" />
                                         <div className="grid gap-1 flex-1">

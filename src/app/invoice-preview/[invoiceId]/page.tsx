@@ -125,10 +125,17 @@ export default function PublicInvoicePreviewPage() {
     // Create a clone of the element to modify its style without affecting the screen
     const clone = element.cloneNode(true) as HTMLElement;
     clone.style.width = '1748px';
-    clone.style.height = '2480px';
+    clone.style.height = 'auto'; // Let height be determined by content
     clone.style.position = 'absolute';
     clone.style.top = '-9999px';
     clone.style.left = '0px';
+
+    const container = pageContainerRef.current;
+    if (!container) return;
+    
+    const originalContainerHeight = container.style.height;
+    container.style.height = '2480px'; // Set container height for capture
+
     document.body.appendChild(clone);
   
     html2canvas(clone, {
@@ -136,8 +143,9 @@ export default function PublicInvoicePreviewPage() {
       allowTaint: true,
       scale: 1, // Use scale 1 because we manually set the size
     }).then(canvas => {
-        // Clean up the cloned element
+        // Clean up the cloned element and restore container height
         document.body.removeChild(clone);
+        container.style.height = originalContainerHeight;
 
         const link = document.createElement('a');
         link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.jpg`;
@@ -279,5 +287,3 @@ export default function PublicInvoicePreviewPage() {
       </div>
   );
 }
-
-    

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -66,7 +65,7 @@ export function CustomerDetailPage({ customer, onBack, onEdit }: CustomerDetailP
         <Card className="overflow-hidden">
             <div className="relative h-48 w-full">
                 <Image 
-                    src={`https://picsum.photos/seed/${customer.id}/1200/400`}
+                    src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/1200/400`}
                     alt={`بنر مشتری ${customer.name}`}
                     fill
                     className="object-cover"

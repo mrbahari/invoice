@@ -1,7 +1,6 @@
-
 'use client';
 
-import { File, PlusCircle, Trash2, Loader2, Move, SortAsc } from 'lucide-react';
+import { File, PlusCircle, Trash2, Loader2, Move, SortAsc, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import {
@@ -43,7 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '../ui/alert-dialog';
 import { Checkbox } from '../ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
@@ -233,31 +232,31 @@ export default function CustomersPage() {
                 </CardHeader>
               </Card>
 
-                <div className="flex items-center justify-between gap-4">
-                    <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
-                        <SelectTrigger className="w-[180px] h-9">
-                            <div className="flex items-center gap-2">
-                                <SortAsc className="h-4 w-4" />
-                                <SelectValue placeholder="مرتب‌سازی بر اساس..." />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="newest">جدیدترین</SelectItem>
-                            <SelectItem value="name">نام</SelectItem>
-                            <SelectItem value="invoiceCount">تعداد فاکتور</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button
-                    size="sm"
-                    className="h-9 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
-                    onClick={handleAddClick}
-                    >
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        افزودن مشتری
-                    </span>
-                    </Button>
-                </div>
+              <div className="flex items-center justify-between gap-4">
+                  <Select value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                      <SelectTrigger className="w-[180px] h-9">
+                          <div className="flex items-center gap-2">
+                              <SortAsc className="h-4 w-4" />
+                              <SelectValue placeholder="مرتب‌سازی بر اساس..." />
+                          </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="newest">جدیدترین</SelectItem>
+                          <SelectItem value="name">نام</SelectItem>
+                          <SelectItem value="invoiceCount">تعداد فاکتور</SelectItem>
+                      </SelectContent>
+                  </Select>
+                  <Button
+                  size="sm"
+                  className="h-9 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black"
+                  onClick={handleAddClick}
+                  >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      افزودن مشتری
+                  </span>
+                  </Button>
+              </div>
 
 
               {selectedCustomers.length > 0 && (
@@ -267,29 +266,35 @@ export default function CustomersPage() {
                               <span className="text-sm text-muted-foreground">
                                   {selectedCustomers.length.toLocaleString('fa-IR')} مورد انتخاب شده
                               </span>
-                              <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
-                                          <Trash2 className="ml-2 h-4 w-4" />
-                                          حذف موارد انتخابی
-                                      </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                          <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                              این عمل غیرقابل بازگشت است و {selectedCustomers.length.toLocaleString('fa-IR')} مشتری را به همراه تمام فاکتورهایشان برای همیشه حذف می‌کند.
-                                          </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                                          <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                          <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
-                                              {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                                              حذف
-                                          </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
+                              <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedCustomers([])}>
+                                    <X className="ml-2 h-4 w-4" />
+                                    لغو
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
+                                            <Trash2 className="ml-2 h-4 w-4" />
+                                            حذف موارد انتخابی
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                این عمل غیرقابل بازگشت است و {selectedCustomers.length.toLocaleString('fa-IR')} مشتری را به همراه تمام فاکتورهایشان برای همیشه حذف می‌کند.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
+                                                {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                                حذف
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                           </div>
                       </CardContent>
                   </Card>
@@ -313,7 +318,7 @@ export default function CustomersPage() {
                           >
                            <CardHeader className="relative p-0 aspect-[4/3]">
                               <Image
-                                src={`https://picsum.photos/seed/${customer.id}/200/150`}
+                                src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/200/150`}
                                 alt="آواتار"
                                 fill
                                 className="object-cover rounded-t-lg"

@@ -96,7 +96,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
              </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pl-2">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
@@ -116,7 +116,6 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => toPersianDigits(value)}
             />
             <YAxis
                 yAxisId="left"
@@ -124,7 +123,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => formatCurrency(value, {notation: 'compact'})}
-                width={activeCharts.includes('revenue') ? undefined : 0}
+                width={activeCharts.includes('revenue') ? 60 : 0}
                 tick={activeCharts.includes('revenue')}
             />
              <YAxis
@@ -134,7 +133,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => toPersianDigits(value)}
-                width={activeCharts.some(c => c === 'customers' || c === 'invoices') ? undefined : 0}
+                width={activeCharts.some(c => c === 'customers' || c === 'invoices') ? 30 : 0}
                 tick={activeCharts.some(c => c === 'customers' || c === 'invoices')}
             />
             <ChartTooltip

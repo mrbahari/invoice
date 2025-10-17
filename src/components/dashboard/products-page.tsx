@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -617,7 +618,7 @@ export default function ProductsPage({ initialProduct }: ProductsPageProps) {
                                 <DialogTrigger asChild>
                                     <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
                                     <CardHeader className="p-0">
-                                        <div className="relative aspect-video">
+                                        <div className="relative aspect-square">
                                         <Image
                                             alt={firstProduct.name}
                                             className="object-cover transition-transform group-hover:scale-105"
@@ -631,7 +632,7 @@ export default function ProductsPage({ initialProduct }: ProductsPageProps) {
                                         </div>
                                     </CardHeader>
                                     <CardContent className="p-2 text-center">
-                                        <h3 className="text-sm font-semibold truncate">{getCategoryName(categoryId)}</h3>
+                                        <h3 className="text-xs font-semibold truncate">{getCategoryName(categoryId)}</h3>
                                     </CardContent>
                                     </Card>
                                 </DialogTrigger>

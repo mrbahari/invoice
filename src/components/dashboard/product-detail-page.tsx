@@ -228,7 +228,12 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
                             cursor={false}
                             content={
                                 <ChartTooltipContent 
-                                    labelFormatter={(value) => format(value as Date, 'eeee, d MMMM yyyy')}
+                                    labelFormatter={(value) => {
+                                        if (value instanceof Date && !isNaN(value.getTime())) {
+                                            return format(value, 'eeee, d MMMM yyyy');
+                                        }
+                                        return String(value);
+                                    }}
                                     formatter={(value) => [formatCurrency(value as number), 'قیمت']}
                                     indicator="dot"
                                 />

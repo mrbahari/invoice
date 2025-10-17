@@ -2,8 +2,8 @@
 'use client';
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { DailySales } from '@/lib/definitions';
 import { formatCurrency, toPersianDigits } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -34,6 +34,15 @@ const chartConfig = {
 export function OverviewChart({ data }: { data: DailySales[] }) {
   const [activeCharts, setActiveCharts] = React.useState<string[]>(["revenue"]);
 
+  const totals = React.useMemo(() => {
+    if (!data) return { revenue: 0, customers: 0, invoices: 0 };
+    return {
+        revenue: data.reduce((acc, curr) => acc + curr.revenue, 0),
+        customers: data.reduce((acc, curr) => acc + curr.customers, 0),
+        invoices: data.reduce((acc, curr) => acc + curr.invoices, 0),
+    };
+  }, [data]);
+
   if (!data || data.length === 0) {
     return (
       <Card className="h-[438px] flex items-center justify-center">
@@ -52,11 +61,6 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
     );
   };
   
-  const totals = React.useMemo(() => ({
-    revenue: data.reduce((acc, curr) => acc + curr.revenue, 0),
-    customers: data.reduce((acc, curr) => acc + curr.customers, 0),
-    invoices: data.reduce((acc, curr) => acc + curr.invoices, 0),
-  }), [data]);
 
   return (
     <Card>
@@ -131,7 +135,7 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
                 tickFormatter={(value) => toPersianDigits(value)}
                 hide={!activeCharts.some(c => c === 'customers' || c === 'invoices')}
             />
-            <Tooltip
+            <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent indicator="line" labelClassName="font-bold" />}
             />

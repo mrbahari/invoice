@@ -236,7 +236,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </Tabs>
        </div>
 
-      <div className="col-span-full grid grid-cols-2 gap-4 lg:grid-cols-4">
+       <div className="col-span-full grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { title: 'درآمد کل', value: formatCurrency(totalRevenue), icon: DollarSign, description: 'فقط از فاکتورهای پرداخت شده', tab: 'invoices' },
           { title: 'فاکتورهای پرداخت شده', value: `+${paidInvoiceCount.toLocaleString('fa-IR')}`, icon: CreditCard, description: 'تعداد فاکتورهای پرداخت شده', tab: 'invoices' },
@@ -261,53 +261,45 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
       </div>
 
       
-      <motion.div custom={4} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-2">
-          <Card>
-              <CardHeader>
-                  <CardTitle>نمای کلی فروش</CardTitle>
-                  <CardDescription>مقایسه درآمد پرداخت شده و پرداخت نشده در بازه زمانی انتخاب شده.</CardDescription>
-              </CardHeader>
-              <CardContent className="pr-2">
-                  <OverviewChart data={chartData} />
-              </CardContent>
-          </Card>
-      </motion.div>
-
-      <motion.div custom={5} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-1">
-          <Card>
-              <CardHeader>
-                  <CardTitle>مشتریان برتر</CardTitle>
-                  <CardDescription>مشتریانی با بیشترین میزان خرید در این دوره.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <div className="space-y-4">
-                      {topCustomers.map(customer => {
-                          const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
-                          const initials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
-                          return (
-                              <div key={customer.id} className="flex items-center gap-4">
-                                  <Avatar className="hidden h-9 w-9 sm:flex">
-                                      <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
-                                      <AvatarFallback>{initials}</AvatarFallback>
-                                  </Avatar>
-                                  <div className="grid gap-1 flex-1">
-                                      <p className="text-sm font-medium leading-none">{customer.phone}</p>
-                                      <p className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
-                                  </div>
-                                  <div className="ml-auto font-medium">{formatCurrency(customer.total)}</div>
-                              </div>
-                          )
-                      })}
-                      {topCustomers.length === 0 && (
-                          <div className="text-center text-muted-foreground py-8">
-                              هیچ مشتری در این بازه زمانی خریدی نداشته است.
-                          </div>
-                      )}
-                  </div>
-              </CardContent>
-          </Card>
-      </motion.div>
-      
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+        <motion.div custom={4} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-2">
+            <OverviewChart data={chartData} />
+        </motion.div>
+        <motion.div custom={5} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-1">
+            <Card>
+                <CardHeader>
+                    <CardTitle>مشتریان برتر</CardTitle>
+                    <CardDescription>مشتریانی با بیشترین میزان خرید در این دوره.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {topCustomers.map(customer => {
+                            const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
+                            const initials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
+                            return (
+                                <div key={customer.id} className="flex items-center gap-4">
+                                    <Avatar className="hidden h-9 w-9 sm:flex">
+                                        <AvatarImage src={`https://picsum.photos/seed/${customer.id}/36/36`} alt="آواتار" />
+                                        <AvatarFallback>{initials}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="grid gap-1 flex-1">
+                                        <p className="text-sm font-medium leading-none">{customer.phone}</p>
+                                        <p className="text-sm text-muted-foreground">{hasValidName ? customer.name : 'بی نام'}</p>
+                                    </div>
+                                    <div className="ml-auto font-medium">{formatCurrency(customer.total)}</div>
+                                </div>
+                            )
+                        })}
+                        {topCustomers.length === 0 && (
+                            <div className="text-center text-muted-foreground py-8">
+                                هیچ مشتری در این بازه زمانی خریدی نداشته است.
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
+      </div>
 
       <motion.div custom={6} initial="hidden" animate="visible" variants={animationVariants} className="lg:col-span-3">
         <Card>

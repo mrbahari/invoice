@@ -40,11 +40,11 @@
  
     --radius: 0.5rem;
 
-    --chart-1: 142 76% 36%; /* A vivid green for paid */
-    --chart-2: 25 95% 53%; /* A strong orange for unpaid */
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 248 82% 58%; /* blue */
+    --chart-2: 142 71% 45%; /* green */
+    --chart-3: 25 95% 53%; /* orange */
+    --chart-4: 340 82% 50%; /* rose */
+    --chart-5: 262 84% 58%; /* purple */
     
     --sidebar-background: 240 10% 3.9%;
     --sidebar-foreground: 0 0% 98%;
@@ -90,8 +90,11 @@
     --input: 240 3.7% 15.9%;
     --ring: hsl(var(--ring-hsl));
 
-    --chart-1: 142 71% 45%; /* A vivid green for paid in dark mode */
-    --chart-2: 25 95% 53%; /* A strong orange for unpaid in dark mode */
+    --chart-1: 248 82% 58%; /* blue */
+    --chart-2: 142 71% 45%; /* green */
+    --chart-3: 25 95% 53%; /* orange */
+    --chart-4: 340 82% 50%; /* rose */
+    --chart-5: 262 84% 58%; /* purple */
 
     --sidebar-background: 240 10% 3.9%;
     --sidebar-foreground: 0 0% 98%;

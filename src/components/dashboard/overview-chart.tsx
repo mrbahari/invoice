@@ -2,18 +2,21 @@
 'use client';
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { DailySales } from '@/lib/definitions';
 import { formatCurrency, toPersianDigits } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Users, FileText } from 'lucide-react';
+import { Users, FileText, DollarSign } from 'lucide-react';
+import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 
 const chartConfig = {
   revenue: {
     label: 'درآمد (ریال)',
     color: 'hsl(var(--chart-1))',
+    icon: DollarSign,
   },
   customers: {
     label: 'مشتریان جدید',
@@ -29,67 +32,79 @@ const chartConfig = {
 
 
 export function OverviewChart({ data }: { data: DailySales[] }) {
-  const [activeChart, setActiveChart] = React.useState<keyof typeof chartConfig>("revenue");
-
-  const total = data.reduce((acc, curr) => acc + curr[activeChart], 0)
+  const [activeCharts, setActiveCharts] = React.useState<string[]>(["revenue"]);
 
   if (!data || data.length === 0) {
     return (
-      <div style={{ height: '350px' }} className="flex items-center justify-center text-muted-foreground">
-        داده‌ای برای نمایش در این بازه زمانی وجود ندارد.
-      </div>
+      <Card className="h-[438px] flex items-center justify-center">
+         <CardContent>
+            <p className="text-muted-foreground">داده‌ای برای نمایش در این بازه زمانی وجود ندارد.</p>
+         </CardContent>
+      </Card>
     );
   }
 
+  const handleToggle = (chartKey: string) => {
+    setActiveCharts(prev => 
+      prev.includes(chartKey) 
+        ? prev.filter(c => c !== chartKey)
+        : [...prev, chartKey]
+    );
+  };
+  
+  const totals = React.useMemo(() => ({
+    revenue: data.reduce((acc, curr) => acc + curr.revenue, 0),
+    customers: data.reduce((acc, curr) => acc + curr.customers, 0),
+    invoices: data.reduce((acc, curr) => acc + curr.invoices, 0),
+  }), [data]);
+
   return (
     <Card>
-      <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-          <CardTitle>نمای کلی</CardTitle>
-          <CardDescription>
-            نمایش درآمد، مشتریان جدید و تعداد فاکتورها در طول زمان.
-          </CardDescription>
-        </div>
-        <div className="flex">
-          {Object.entries(chartConfig).map(([key, config]) => {
-            const isActive = activeChart === key
-            return (
-              <button
-                key={key}
-                data-active={isActive}
-                className="relative z-10 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:border-b-2 data-[active=true]:border-b-primary data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
-                onClick={() => setActiveChart(key as keyof typeof chartConfig)}
-              >
-                <span className="text-xs text-muted-foreground">
-                  {config.label}
-                </span>
-                <span className="text-lg font-bold leading-none sm:text-2xl">
-                  {key === 'revenue' ? formatCurrency(total) : total.toLocaleString('fa-IR')}
-                </span>
-              </button>
-            )
-          })}
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+             <div>
+                <CardTitle>نمای کلی فروش</CardTitle>
+                <CardDescription>مقایسه درآمد، مشتریان و فاکتورها در بازه زمانی انتخاب شده.</CardDescription>
+             </div>
+             <div className="flex items-center gap-2 rounded-lg bg-muted p-1">
+                {Object.entries(chartConfig).map(([key, config]) => {
+                    const isActive = activeCharts.includes(key);
+                    return (
+                        <Button
+                            key={key}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className="flex-1 h-auto py-1.5 px-3"
+                            onClick={() => handleToggle(key)}
+                        >
+                            <div className="flex items-center gap-2 text-right w-full">
+                                <config.icon className={cn("h-5 w-5", isActive ? `text-[${config.color}]` : 'text-muted-foreground')} style={{color: isActive ? config.color : ''}} />
+                                <div className="grid gap-0">
+                                    <span className="text-xs font-normal">{config.label}</span>
+                                    <span className="font-bold text-sm">
+                                        {key === 'revenue' ? formatCurrency(totals.revenue) : totals[key as keyof typeof totals].toLocaleString('fa-IR')}
+                                    </span>
+                                </div>
+                            </div>
+                        </Button>
+                    )
+                })}
+             </div>
         </div>
       </CardHeader>
-      <CardContent className="px-2 sm:p-6">
+      <CardContent className="pr-2">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
           <AreaChart data={data}>
             <defs>
-                <linearGradient id={`fill-${activeChart}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                    offset="5%"
-                    stopColor={`var(--color-${activeChart})`}
-                    stopOpacity={0.8}
-                    />
-                    <stop
-                    offset="95%"
-                    stopColor={`var(--color-${activeChart})`}
-                    stopOpacity={0.1}
-                    />
-                </linearGradient>
+                {Object.entries(chartConfig).map(([key, config]) => (
+                     <linearGradient key={`fill-${key}`} id={`fill-${key}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={config.color} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={config.color} stopOpacity={0.1} />
+                    </linearGradient>
+                ))}
             </defs>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -100,22 +115,57 @@ export function OverviewChart({ data }: { data: DailySales[] }) {
               tickFormatter={(value) => toPersianDigits(value)}
             />
             <YAxis
+                yAxisId="left"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => activeChart === 'revenue' ? toPersianDigits(formatCurrency(value).replace(/ریال/g, '')) : toPersianDigits(value) }
+                tickFormatter={(value) => formatCurrency(value, {notation: 'compact'})}
+                hide={!activeCharts.includes('revenue')}
             />
-            <ChartTooltip
+             <YAxis
+                yAxisId="right"
+                orientation="right"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => toPersianDigits(value)}
+                hide={!activeCharts.some(c => c === 'customers' || c === 'invoices')}
+            />
+            <Tooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
+                content={<ChartTooltipContent indicator="line" labelClassName="font-bold" />}
             />
-            <Area
-              dataKey={activeChart}
-              type="natural"
-              fill={`url(#fill-${activeChart})`}
-              stroke={`var(--color-${activeChart})`}
-              stackId="a"
-            />
+
+            {activeCharts.includes('revenue') && (
+                <Area
+                  yAxisId="left"
+                  dataKey="revenue"
+                  type="natural"
+                  fill="url(#fill-revenue)"
+                  stroke={chartConfig.revenue.color}
+                  stackId="a"
+                />
+            )}
+            {activeCharts.includes('customers') && (
+                <Area
+                  yAxisId="right"
+                  dataKey="customers"
+                  type="natural"
+                  fill="url(#fill-customers)"
+                  stroke={chartConfig.customers.color}
+                  stackId="b"
+                />
+            )}
+             {activeCharts.includes('invoices') && (
+                <Area
+                  yAxisId="right"
+                  dataKey="invoices"
+                  type="natural"
+                  fill="url(#fill-invoices)"
+                  stroke={chartConfig.invoices.color}
+                  stackId="c"
+                />
+            )}
           </AreaChart>
         </ChartContainer>
       </CardContent>

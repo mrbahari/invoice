@@ -210,7 +210,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
   };
 
   return (
-    <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3" data-main-page="true">
+    <div className="grid flex-1 items-start gap-4 md:gap-8" data-main-page="true">
        <div className="col-span-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">گزارشات</h1>
@@ -228,7 +228,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
             </Tabs>
        </div>
 
-      <div className="col-span-full grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="col-span-full grid grid-cols-2 gap-4 lg:grid-cols-3">
         {[
           { title: 'درآمد کل', value: formatCurrency(totalRevenue), icon: DollarSign, description: 'فقط از فاکتورهای پرداخت شده', tab: 'invoices' },
           { title: 'فاکتورهای پرداخت شده', value: `+${paidInvoiceCount.toLocaleString('fa-IR')}`, icon: CreditCard, description: 'تعداد فاکتورهای پرداخت شده', tab: 'invoices' },

@@ -3,6 +3,7 @@
 
 import { File, PlusCircle, Trash2, Loader2, Move, SortAsc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
   Card,
   CardContent,
@@ -288,38 +289,35 @@ export default function CustomersPage() {
                             key={customer.id}
                             onClick={() => handleEditClick(customer)}
                             className={cn(
-                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 text-center",
+                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1",
                               selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"
                             )}
                           >
-                            <CardContent className="p-3">
-                              <div className="relative mx-auto w-20 h-20">
-                                <Avatar className="h-full w-full border-2 border-transparent group-hover:border-primary transition-all">
-                                  <AvatarImage
-                                    src={`https://picsum.photos/seed/${customer.id}/80/80`}
-                                    alt="آواتار"
-                                    data-ai-hint="person avatar"
-                                  />
-                                  <AvatarFallback>{nameInitials}</AvatarFallback>
-                                </Avatar>
-                                {invoiceCount > 0 && (
-                                    <Badge className="absolute -top-1 -right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full">
-                                      {invoiceCount.toLocaleString('fa-IR')}
-                                    </Badge>
-                                )}
-                                <div className="absolute top-1 left-1">
-                                  <Checkbox
-                                      checked={selectedCustomers.includes(customer.id)}
-                                      onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="h-5 w-5 bg-background/50 backdrop-blur-sm"
-                                  />
-                                </div>
+                           <CardHeader className="relative p-0 aspect-[4/3]">
+                              <Image
+                                src={`https://picsum.photos/seed/${customer.id}/200/150`}
+                                alt="آواتار"
+                                fill
+                                className="object-cover rounded-t-lg"
+                                data-ai-hint="person avatar"
+                              />
+                               {invoiceCount > 0 && (
+                                  <Badge className="absolute top-2 right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full">
+                                    {invoiceCount.toLocaleString('fa-IR')}
+                                  </Badge>
+                              )}
+                              <div className="absolute top-2 left-2">
+                                <Checkbox
+                                    checked={selectedCustomers.includes(customer.id)}
+                                    onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-5 w-5 bg-background/50 backdrop-blur-sm"
+                                />
                               </div>
-                              <div className="mt-2">
+                           </CardHeader>
+                            <CardContent className="p-2 text-center">
                                 <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
                                 <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
-                              </div>
                             </CardContent>
                           </Card>
                         );

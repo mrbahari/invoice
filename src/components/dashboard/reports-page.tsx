@@ -30,6 +30,19 @@ import { useSearch } from './search-provider';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -46,6 +59,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
   const { toast } = useToast();
 
   const [period, setPeriod] = useState<Period>('all');
+  const [replacementProduct, setReplacementProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     setSearchVisible(false);
@@ -314,6 +328,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             <TableHead className="w-[80px]">تصویر</TableHead>
                             <TableHead>محصول</TableHead>
                             <TableHead className="text-center">تعداد فروش</TableHead>
+                            <TableHead className="text-left w-[120px]">اقدامات</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -324,11 +339,45 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             </TableCell>
                             <TableCell className="font-medium">{product.name}</TableCell>
                             <TableCell className="text-center font-mono font-bold text-lg">{product.quantity.toLocaleString('fa-IR')}</TableCell>
+                            <TableCell className="text-left">
+                                {product.name === 'محصول حذف شده' && (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                             <Button variant="outline" size="sm">جایگزینی</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent className="max-w-2xl">
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>جایگزینی محصول حذف شده</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    یک محصول از لیست زیر انتخاب کنید تا جایگزین این آیتم شود. این عمل در گزارشات اعمال خواهد شد.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <ScrollArea className="h-96">
+                                                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {allProducts.map(p => (
+                                                    <Card key={p.id} className="p-3 flex items-center gap-3 cursor-pointer hover:bg-muted" onClick={() => setReplacementProduct(p)}>
+                                                        <Image src={p.imageUrl} alt={p.name} width={48} height={48} className="rounded-md object-cover" />
+                                                        <div className="flex-1">
+                                                            <p className="font-semibold text-sm">{p.name}</p>
+                                                            <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
+                                                        </div>
+                                                    </Card>
+                                                ))}
+                                                </div>
+                                            </ScrollArea>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                                <AlertDialogAction>تایید</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+                            </TableCell>
                         </TableRow>
                     ))}
                     {topProducts.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground h-32">
+                            <TableCell colSpan={4} className="text-center text-muted-foreground h-32">
                                 هیچ محصولی در این بازه زمانی فروخته نشده است.
                             </TableCell>
                         </TableRow>

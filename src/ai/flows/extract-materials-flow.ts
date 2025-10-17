@@ -65,7 +65,7 @@ const extractMaterialsPrompt = ai.definePrompt({
     3.  **Intelligent Matching (within Brand context):**
         *   First, try to find an exact or very close match for each item in the 'existingProducts' list that fits the brand preference. Your matching must be very accurate.
         *   **Specific Rules for 'F47':** Any item like "سازه F47" or "پروفیل F47" or "اف ۴۷" or "سازه f47 ضخامت 5.5" MUST be matched to the product named "سازه F47".
-        *   **Synonym Matching:** Be aware of common synonyms. For example, "پیچ پنل" or "پیچ کناف" MUST be matched to the product named "پیچ پنل" (which is usually a 2.5cm screw), NOT any other screw type.
+        *   **Synonym Matching for Screws:** Be aware of common synonyms. Any item like "پیچ پنل", "پیچ کناف", or "پیچ ۲.۵" MUST be matched to the product named "پیچ پنل" (which is usually a 2.5cm screw), NOT any other screw type.
         *   **Contextual Deduction:** If no direct match is found, use your contextual knowledge. For example, if the project is a flat ceiling and you see an item like "پانل 12.5 درجه یک", you must recognize "پانل" as a variant of "پنل".
             *   Since a flat ceiling requires panels, you MUST match this to the default panel product that fits the brand preference.
             *   For 'k-plus' brand, the default is "پنل RG کی پلاس".

@@ -86,8 +86,8 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
  
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 240 3.7% 25%;
+    --input: 240 3.7% 25%;
     --ring: hsl(var(--ring-hsl));
 
     --chart-1: 248 82% 58%; /* blue */

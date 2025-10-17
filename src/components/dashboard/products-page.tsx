@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -57,6 +56,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { ProductForm } from './product-form';
+import { ProductDetailPage } from './product-detail-page';
 import { useVirtualScroll } from '@/hooks/use-virtual-scroll';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -219,8 +219,8 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const { searchTerm, setSearchVisible } = useSearch();
 
-  const [view, setView] = useState<'list' | 'form'>('list');
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const [view, setView] = useState<'list' | 'form' | 'detail'>('list');
+  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
   const [isCopyMode, setIsCopyMode] = useState(false);
   
   const [activeTab, setActiveTab] = useState('all');
@@ -232,32 +232,37 @@ export default function ProductsPage() {
 
   // Scroll to top when form opens
   useEffect(() => {
-    if (view === 'form') {
+    if (view === 'form' || view === 'detail') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [view]);
 
   const handleEdit = (product?: Product) => {
-    setEditingProduct(product);
+    setSelectedProduct(product);
     setIsCopyMode(false);
     setView('form');
   };
 
   const handleCopy = (product: Product) => {
-    setEditingProduct(product);
+    setSelectedProduct(product);
     setIsCopyMode(true);
     setView('form');
   }
 
+  const handleDetail = (product: Product) => {
+    setSelectedProduct(product);
+    setView('detail');
+  }
+
   const handleFormSave = () => {
     setView('list');
-    setEditingProduct(undefined);
+    setSelectedProduct(undefined);
     setIsCopyMode(false);
   };
   
   const handleFormCancel = () => {
     setView('list');
-    setEditingProduct(undefined);
+    setSelectedProduct(undefined);
     setIsCopyMode(false);
   };
 
@@ -439,267 +444,274 @@ export default function ProductsPage() {
   };
   
   const renderContent = () => {
-    if (view === 'form') {
-      return (
-        <motion.div key="form" {...animationProps}>
-          <ProductForm product={editingProduct} onSave={handleFormSave} onCancel={handleFormCancel} isCopy={isCopyMode} />
-        </motion.div>
-      );
-    }
-
-    return (
-      <motion.div key="list" {...animationProps}>
-        <div className="grid gap-6">
-          <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-4">
-                  <div>
-                  <CardTitle>محصولات</CardTitle>
-                  <CardDescription>
-                      محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
-                  </CardDescription>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                  <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
-                  <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
-                      <File className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
-                  </Button>
-                  <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
-                  </Button>
-                  </div>
-              </CardHeader>
-              <CardContent>
-                  <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v)}} className="w-full" dir="rtl">
-                  <TabsList className="h-auto bg-transparent p-0">
-                      <TabsTrigger value="all" asChild>
-                      <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
-                          <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
-                          <Store className="h-6 w-6" />
-                          <span className="text-xs">همه محصولات</span>
-                          </div>
-                      </div>
-                      </TabsTrigger>
-                      {stores?.map((store) => (
-                      <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
-                          <Image
-                          alt={store.name}
-                          className="object-cover"
-                          fill
-                          src={store.logoUrl || '/placeholder.svg'}
-                          unoptimized
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
-                          <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
-                          </div>
-                      </TabsTrigger>
-                      ))}
-                  </TabsList>
-                  </Tabs>
-              </CardContent>
-          </Card>
-          
-          {selectedProducts.length > 0 && (
-              <Card className="sticky top-[88px] z-10">
-                  <CardContent className="p-2">
-                  <div className="flex items-center justify-between gap-4">
-                      <span className="text-sm text-muted-foreground">
-                      {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
-                      </span>
-                      <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedProducts([])}>
-                        <X className="ml-2 h-4 w-4" />
-                        لغو
-                      </Button>
-                      <Dialog open={isBulkActionModalOpen} onOpenChange={setIsBulkActionModalOpen}>
-                          <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                  <Move className="ml-2 h-4 w-4" />
-                                  انتقال / کپی
-                              </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                              <DialogHeader>
-                                  <DialogTitle>انتقال یا کپی گروهی محصولات</DialogTitle>
-                                  <DialogDescription>
-                                      عملیات و مقصد مورد نظر را برای {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده مشخص کنید.
-                                  </DialogDescription>
-                              </DialogHeader>
-                              <div className="grid gap-4 py-4">
-                                  <RadioGroup defaultValue="move" value={bulkAction} onValueChange={(v) => setBulkAction(v as BulkAction)}>
-                                      <div className="flex items-center space-x-2 space-x-reverse">
-                                          <RadioGroupItem value="move" id="r1" />
-                                          <Label htmlFor="r1">انتقال (Move)</Label>
-                                      </div>
-                                      <div className="flex items-center space-x-2 space-x-reverse">
-                                          <RadioGroupItem value="copy" id="r2" />
-                                          <Label htmlFor="r2">کپی (Copy)</Label>
-                                      </div>
-                                  </RadioGroup>
-                                  <Separator />
-                                  <Select value={bulkTargetStore} onValueChange={setBulkTargetStore}>
-                                      <SelectTrigger><SelectValue placeholder="فروشگاه مقصد..." /></SelectTrigger>
-                                      <SelectContent>
-                                          {stores.map(store => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
-                                      </SelectContent>
-                                  </Select>
-                                  <Select value={bulkTargetCategory} onValueChange={setBulkTargetCategory} disabled={!bulkTargetStore}>
-                                      <SelectTrigger><SelectValue placeholder="دسته‌بندی مقصد..." /></SelectTrigger>
-                                      <SelectContent>
-                                          {bulkActionCategoryTree.length > 0 ? renderCategoryOptions(bulkActionCategoryTree) : <div className="p-4 text-center text-sm text-muted-foreground">دسته‌بندی‌ای یافت نشد.</div>}
-                                      </SelectContent>
-                                  </Select>
-                              </div>
-                              <DialogFooter className="grid grid-cols-2 gap-2">
-                                  <Button variant="destructive" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
-                                  <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore} className="bg-green-600 hover:bg-green-700">
-                                      {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                                      تایید
-                                  </Button>
-                              </DialogFooter>
-                          </DialogContent>
-                      </Dialog>
-
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
-                              <Trash2 className="ml-2 h-4 w-4" />
-                              حذف
-                          </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
-                              <AlertDialogDescription>
-                              این عمل غیرقابل بازگشت است و {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده را برای همیشه حذف می‌کند.
-                              </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="grid grid-cols-2 gap-2">
-                              <AlertDialogCancel>انصراف</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
-                              {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                              حذف
-                              </AlertDialogAction>
-                          </AlertDialogFooter>
-                          </AlertDialogContent>
-                      </AlertDialog>
-                      </div>
-                  </div>
-                  </CardContent>
-              </Card>
-          )}
-
-          {Object.keys(groupedProducts).length > 0 ? (
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-                {categoryOrder.map(categoryId => {
-                  const categoryProducts = groupedProducts[categoryId];
-                  const firstProduct = categoryProducts[0];
-                  if (!firstProduct) return null;
-
-                  return (
-                    <Dialog key={categoryId}>
-                      <DialogTrigger asChild>
-                        <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
-                          <CardHeader className="p-0">
-                            <div className="relative aspect-video">
-                              <Image
-                                alt={firstProduct.name}
-                                className="object-cover transition-transform group-hover:scale-105"
-                                fill
-                                src={firstProduct.imageUrl}
-                                data-ai-hint="product image"
-                              />
-                               <Badge className="absolute top-2 right-2 bg-green-600 text-white">
-                                {categoryProducts.length.toLocaleString('fa-IR')}
-                               </Badge>
+    switch (view) {
+        case 'form':
+            return (
+                <motion.div key="form" {...animationProps}>
+                    <ProductForm product={selectedProduct} onSave={handleFormSave} onCancel={handleFormCancel} isCopy={isCopyMode} />
+                </motion.div>
+            );
+        case 'detail':
+            if (!selectedProduct) return null; // Should not happen
+            return (
+                 <motion.div key="detail" {...animationProps}>
+                    <ProductDetailPage product={selectedProduct} onBack={handleFormCancel} onEdit={handleEdit} onCopy={handleCopy} />
+                </motion.div>
+            );
+        default: // 'list' view
+            return (
+                <motion.div key="list" {...animationProps}>
+                    <div className="grid gap-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between gap-4">
+                            <div>
+                            <CardTitle>محصولات</CardTitle>
+                            <CardDescription>
+                                محصولات خود را مدیریت کرده و عملکرد فروش آنها را مشاهده کنید.
+                            </CardDescription>
                             </div>
-                          </CardHeader>
-                          <CardContent className="p-2 text-center">
-                            <h3 className="text-sm font-semibold truncate">{getCategoryName(categoryId)}</h3>
-                          </CardContent>
-                        </Card>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl dark:bg-slate-900">
-                        <DialogHeader>
-                          <DialogTitle>{getCategoryName(categoryId)}</DialogTitle>
-                          <DialogDescription>
-                            لیست تمام محصولات موجود در این دسته‌بندی.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="max-h-[60vh] overflow-y-auto">
-                            <Table>
-                                <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[80px] text-center">
-                                    <Checkbox
-                                        checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
-                                        onCheckedChange={(checked) => {
-                                        const categoryProductIds = categoryProducts.map(p => p.id);
-                                        handleSelectProduct(categoryProductIds.join(','), !!checked);
-                                        }}
+                            <div className="flex shrink-0 items-center gap-2">
+                            <AiMultipleProductsDialog onProductsGenerated={handleProductsGenerated} />
+                            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleExport}>
+                                <File className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">خروجی</span>
+                            </Button>
+                            <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white dark:bg-white dark:text-black" onClick={handleAddClick}>
+                                <PlusCircle className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">افزودن محصول</span>
+                            </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <Tabs defaultValue="all" value={activeTab} onValueChange={(v) => {setActiveTab(v)}} className="w-full" dir="rtl">
+                            <TabsList className="h-auto bg-transparent p-0">
+                                <TabsTrigger value="all" asChild>
+                                <div className="relative group overflow-hidden rounded-lg cursor-pointer h-20 w-24 border-2 border-dashed data-[state=active]:border-solid data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary">
+                                    <div className="flex flex-col gap-1 items-center justify-center h-full w-full bg-muted/50">
+                                    <Store className="h-6 w-6" />
+                                    <span className="text-xs">همه محصولات</span>
+                                    </div>
+                                </div>
+                                </TabsTrigger>
+                                {stores?.map((store) => (
+                                <TabsTrigger key={store.id} value={store.id} className="relative p-0 h-20 w-24 rounded-lg overflow-hidden border-2 border-transparent data-[state=active]:border-primary data-[state=active]:ring-2 data-[state=active]:ring-primary transition-all">
+                                    <Image
+                                    alt={store.name}
+                                    className="object-cover"
+                                    fill
+                                    src={store.logoUrl || '/placeholder.svg'}
+                                    unoptimized
                                     />
-                                    </TableHead>
-                                    <TableHead>نام</TableHead>
-                                    <TableHead className="hidden md:table-cell">توضیحات</TableHead>
-                                    <TableHead className="text-left">قیمت</TableHead>
-                                    <TableHead><span className="sr-only">Actions</span></TableHead>
-                                </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                {categoryProducts.map((product) => (
-                                    <TableRow
-                                    key={product.id}
-                                    data-state={selectedProducts.includes(product.id) ? "selected" : ""}
-                                    className="cursor-pointer"
-                                    >
-                                    <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
-                                        <Checkbox
-                                        checked={selectedProducts.includes(product.id)}
-                                        onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
-                                        />
-                                    </TableCell>
-                                    <TableCell className="font-medium" onClick={() => handleEdit(product)}>
-                                        <div className="flex items-center gap-3">
-                                        <Image
-                                            alt={product.name}
-                                            className="aspect-square rounded-md object-cover"
-                                            height="40"
-                                            src={product.imageUrl}
-                                            width="40"
-                                        />
-                                        <span>{product.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => handleEdit(product)}>{product.description}</TableCell>
-                                    <TableCell className="text-left" onClick={() => handleEdit(product)}>{formatCurrency(product.price)}</TableCell>
-                                    <TableCell className="text-left">
-                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCopy(product) }}>
-                                        <Copy className="h-4 w-4" />
-                                        </Button>
-                                    </TableCell>
-                                    </TableRow>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center p-2">
+                                    <span className="text-xs font-semibold text-white truncate w-full text-center">{store.name}</span>
+                                    </div>
+                                </TabsTrigger>
                                 ))}
-                                </TableBody>
-                            </Table>
+                            </TabsList>
+                            </Tabs>
+                        </CardContent>
+                    </Card>
+                    
+                    {selectedProducts.length > 0 && (
+                        <Card className="sticky top-[88px] z-10">
+                            <CardContent className="p-2">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm text-muted-foreground">
+                                {selectedProducts.length.toLocaleString('fa-IR')} مورد انتخاب شده
+                                </span>
+                                <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedProducts([])}>
+                                    <X className="ml-2 h-4 w-4" />
+                                    لغو
+                                </Button>
+                                <Dialog open={isBulkActionModalOpen} onOpenChange={setIsBulkActionModalOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                            <Move className="ml-2 h-4 w-4" />
+                                            انتقال / کپی
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>انتقال یا کپی گروهی محصولات</DialogTitle>
+                                            <DialogDescription>
+                                                عملیات و مقصد مورد نظر را برای {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده مشخص کنید.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <RadioGroup defaultValue="move" value={bulkAction} onValueChange={(v) => setBulkAction(v as BulkAction)}>
+                                                <div className="flex items-center space-x-2 space-x-reverse">
+                                                    <RadioGroupItem value="move" id="r1" />
+                                                    <Label htmlFor="r1">انتقال (Move)</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2 space-x-reverse">
+                                                    <RadioGroupItem value="copy" id="r2" />
+                                                    <Label htmlFor="r2">کپی (Copy)</Label>
+                                                </div>
+                                            </RadioGroup>
+                                            <Separator />
+                                            <Select value={bulkTargetStore} onValueChange={setBulkTargetStore}>
+                                                <SelectTrigger><SelectValue placeholder="فروشگاه مقصد..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {stores.map(store => <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                            <Select value={bulkTargetCategory} onValueChange={setBulkTargetCategory} disabled={!bulkTargetStore}>
+                                                <SelectTrigger><SelectValue placeholder="دسته‌بندی مقصد..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {bulkActionCategoryTree.length > 0 ? renderCategoryOptions(bulkActionCategoryTree) : <div className="p-4 text-center text-sm text-muted-foreground">دسته‌بندی‌ای یافت نشد.</div>}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <DialogFooter className="grid grid-cols-2 gap-2">
+                                            <Button variant="destructive" onClick={() => setIsBulkActionModalOpen(false)}>انصراف</Button>
+                                            <Button onClick={handleBulkAction} disabled={isProcessingBulk || !bulkTargetCategory || !bulkTargetStore} className="bg-green-600 hover:bg-green-700">
+                                                {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                                تایید
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm" disabled={isProcessingBulk}>
+                                        <Trash2 className="ml-2 h-4 w-4" />
+                                        حذف
+                                    </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>آیا مطمئن هستید؟</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                        این عمل غیرقابل بازگشت است و {selectedProducts.length.toLocaleString('fa-IR')} محصول انتخاب شده را برای همیشه حذف می‌کند.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter className="grid grid-cols-2 gap-2">
+                                        <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive hover:bg-destructive/90" disabled={isProcessingBulk}>
+                                        {isProcessingBulk && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                        حذف
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                </div>
+                            </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {Object.keys(groupedProducts).length > 0 ? (
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                            {categoryOrder.map(categoryId => {
+                            const categoryProducts = groupedProducts[categoryId];
+                            const firstProduct = categoryProducts[0];
+                            if (!firstProduct) return null;
+
+                            return (
+                                <Dialog key={categoryId}>
+                                <DialogTrigger asChild>
+                                    <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
+                                    <CardHeader className="p-0">
+                                        <div className="relative aspect-video">
+                                        <Image
+                                            alt={firstProduct.name}
+                                            className="object-cover transition-transform group-hover:scale-105"
+                                            fill
+                                            src={firstProduct.imageUrl}
+                                            data-ai-hint="product image"
+                                        />
+                                        <Badge className="absolute top-2 right-2 bg-green-600 text-white">
+                                            {categoryProducts.length.toLocaleString('fa-IR')}
+                                        </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="p-2 text-center">
+                                        <h3 className="text-sm font-semibold truncate">{getCategoryName(categoryId)}</h3>
+                                    </CardContent>
+                                    </Card>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl dark:bg-slate-900">
+                                    <DialogHeader>
+                                    <DialogTitle>{getCategoryName(categoryId)}</DialogTitle>
+                                    <DialogDescription>
+                                        لیست تمام محصولات موجود در این دسته‌بندی.
+                                    </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="max-h-[60vh] overflow-y-auto">
+                                        <Table>
+                                            <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[80px] text-center">
+                                                <Checkbox
+                                                    checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
+                                                    onCheckedChange={(checked) => {
+                                                    const categoryProductIds = categoryProducts.map(p => p.id);
+                                                    handleSelectProduct(categoryProductIds.join(','), !!checked);
+                                                    }}
+                                                />
+                                                </TableHead>
+                                                <TableHead>نام</TableHead>
+                                                <TableHead className="hidden md:table-cell">توضیحات</TableHead>
+                                                <TableHead className="text-left">قیمت</TableHead>
+                                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                                            </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                            {categoryProducts.map((product) => (
+                                                <TableRow
+                                                key={product.id}
+                                                data-state={selectedProducts.includes(product.id) ? "selected" : ""}
+                                                >
+                                                <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
+                                                    <Checkbox
+                                                    checked={selectedProducts.includes(product.id)}
+                                                    onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="font-medium cursor-pointer" onClick={() => handleDetail(product)}>
+                                                    <div className="flex items-center gap-3">
+                                                    <Image
+                                                        alt={product.name}
+                                                        className="aspect-square rounded-md object-cover"
+                                                        height="40"
+                                                        src={product.imageUrl}
+                                                        width="40"
+                                                    />
+                                                    <span>{product.name}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="hidden md:table-cell max-w-xs truncate cursor-pointer" onClick={() => handleDetail(product)}>{product.description}</TableCell>
+                                                <TableCell className="text-left cursor-pointer" onClick={() => handleDetail(product)}>{formatCurrency(product.price)}</TableCell>
+                                                <TableCell className="text-left">
+                                                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCopy(product) }}>
+                                                    <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </DialogContent>
+                                </Dialog>
+                            )
+                            })}
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  )
-                })}
-            </div>
-          ) : (
-              <Card>
-                  <CardContent className="py-16 text-center">
-                  <p className="text-muted-foreground mb-4">
-                      {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
-                  </p>
-                  </CardContent>
-              </Card>
-          )}
-        </div>
-      </motion.div>
-    );
+                    ) : (
+                        <Card>
+                            <CardContent className="py-16 text-center">
+                            <p className="text-muted-foreground mb-4">
+                                {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
+                            </p>
+                            </CardContent>
+                        </Card>
+                    )}
+                    </div>
+                </motion.div>
+            )
+        }
   };
   
   return (

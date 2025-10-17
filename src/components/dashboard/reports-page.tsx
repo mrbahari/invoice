@@ -50,7 +50,7 @@ import { Badge } from '../ui/badge';
 type Period = 'all' | '30d' | '7d' | 'today';
 
 type ReportsPageProps = {
-  onNavigate: (tab: DashboardTab, data?: { customer?: Customer }) => void;
+  onNavigate: (tab: DashboardTab, data?: { customer?: Customer, product?: Product }) => void;
 };
 
 
@@ -72,7 +72,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     return () => setSearchVisible(true);
   }, [setSearchVisible]);
 
-  const handleNavigation = (tab: DashboardTab, customer?: Customer) => {
+  const handleNavigation = (tab: DashboardTab, navData?: { customer?: Customer, product?: Product }) => {
     if (!user) {
       toast({
         variant: 'destructive',
@@ -82,7 +82,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
       return;
     }
     if (onNavigate) {
-      onNavigate(tab, { customer });
+      onNavigate(tab, navData);
     }
   };
 
@@ -372,7 +372,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                             const customerData = allCustomers.find(c => c.id === customer.id);
                             return (
-                                <button key={customer.id} onClick={() => customerData && handleNavigation('customers', customerData)} className="w-full text-right">
+                                <button key={customer.id} onClick={() => customerData && handleNavigation('customers', { customer: customerData })} className="w-full text-right">
                                     <div className="flex items-center gap-4 hover:bg-muted/50 p-2 rounded-lg">
                                         <Image src={customer.avatarUrl} alt="آواتار" width={36} height={36} className="rounded-md object-cover" />
                                         <div className="grid gap-1 flex-1">
@@ -402,74 +402,82 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                 <CardContent>
                     {topProducts.length > 0 ? (
                         <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-4">
-                            {topProducts.map(product => (
+                            {topProducts.map(product => {
+                                const productData = allProducts.find(p => p.id === product.id);
+                                return (
                                 <Card key={product.id} className="group overflow-hidden">
-                                    <CardHeader className="p-0 relative aspect-square">
-                                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
-                                        <Badge className="absolute top-1 right-1 bg-green-600/90 text-white">
-                                            {product.quantity.toLocaleString('fa-IR')}
-                                        </Badge>
-                                        {product.name === 'محصول حذف شده' && (
-                                            <AlertDialog onOpenChange={(open) => !open && setReplacementProduct(null)}>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="icon"
-                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-9 w-9 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        onClick={() => setDeletedProductId(product.id)}
-                                                    >
-                                                        <Wrench className="h-5 w-5" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent className="max-w-2xl">
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>جایگزینی محصول حذف شده</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            یک محصول از لیست زیر انتخاب کنید تا در تمام فاکتورهای مربوطه جایگزین شود. این عمل غیرقابل بازگشت است.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <ScrollArea className="h-96 border rounded-md">
-                                                        <Accordion type="single" collapsible className="w-full">
-                                                            {Object.keys(groupedProductsForDialog).map(categoryId => {
-                                                                const category = allCategories.find(c => c.id === categoryId);
-                                                                const categoryName = category?.name || 'بدون دسته‌بندی';
-                                                                return (
-                                                                    <AccordionItem value={categoryId} key={categoryId}>
-                                                                        <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">{categoryName}</AccordionTrigger>
-                                                                        <AccordionContent>
-                                                                            <div className="p-2 space-y-2">
-                                                                                {groupedProductsForDialog[categoryId].map(p => (
-                                                                                    <Card key={p.id} className={`p-2 flex items-center gap-3 cursor-pointer hover:bg-muted ${replacementProduct?.id === p.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setReplacementProduct(p)}>
-                                                                                        <Image src={p.imageUrl} alt={p.name} width={40} height={40} className="rounded-md object-cover" />
-                                                                                        <div className="flex-1">
-                                                                                            <p className="font-semibold text-sm">{p.name}</p>
-                                                                                            <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
-                                                                                        </div>
-                                                                                    </Card>
-                                                                                ))}
-                                                                            </div>
-                                                                        </AccordionContent>
-                                                                    </AccordionItem>
-                                                                )
-                                                            })}
-                                                        </Accordion>
-                                                    </ScrollArea>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleConfirmReplacement} disabled={!replacementProduct || isReplacing}>
-                                                            {isReplacing && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                                                            تایید
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        )}
-                                    </CardHeader>
-                                    <CardContent className="p-2">
-                                        <h3 className="text-xs font-semibold truncate">{product.name}</h3>
-                                    </CardContent>
+                                     <button 
+                                        onClick={() => productData && handleNavigation('products', { product: productData })} 
+                                        className="w-full text-right block"
+                                        aria-label={`مشاهده جزئیات ${product.name}`}
+                                    >
+                                        <CardHeader className="p-0 relative aspect-square">
+                                            <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                                            <Badge className="absolute top-1 right-1 bg-green-600/90 text-white pointer-events-none">
+                                                {product.quantity.toLocaleString('fa-IR')}
+                                            </Badge>
+                                            {product.name === 'محصول حذف شده' && (
+                                                <AlertDialog onOpenChange={(open) => !open && setReplacementProduct(null)}>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="icon"
+                                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-9 w-9 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            onClick={(e) => { e.stopPropagation(); setDeletedProductId(product.id); }}
+                                                        >
+                                                            <Wrench className="h-5 w-5" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="max-w-2xl">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>جایگزینی محصول حذف شده</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                یک محصول از لیست زیر انتخاب کنید تا در تمام فاکتورهای مربوطه جایگزین شود. این عمل غیرقابل بازگشت است.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <ScrollArea className="h-96 border rounded-md">
+                                                            <Accordion type="single" collapsible className="w-full">
+                                                                {Object.keys(groupedProductsForDialog).map(categoryId => {
+                                                                    const category = allCategories.find(c => c.id === categoryId);
+                                                                    const categoryName = category?.name || 'بدون دسته‌بندی';
+                                                                    return (
+                                                                        <AccordionItem value={categoryId} key={categoryId}>
+                                                                            <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">{categoryName}</AccordionTrigger>
+                                                                            <AccordionContent>
+                                                                                <div className="p-2 space-y-2">
+                                                                                    {groupedProductsForDialog[categoryId].map(p => (
+                                                                                        <Card key={p.id} className={`p-2 flex items-center gap-3 cursor-pointer hover:bg-muted ${replacementProduct?.id === p.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setReplacementProduct(p)}>
+                                                                                            <Image src={p.imageUrl} alt={p.name} width={40} height={40} className="rounded-md object-cover" />
+                                                                                            <div className="flex-1">
+                                                                                                <p className="font-semibold text-sm">{p.name}</p>
+                                                                                                <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
+                                                                                            </div>
+                                                                                        </Card>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </AccordionContent>
+                                                                        </AccordionItem>
+                                                                    )
+                                                                })}
+                                                            </Accordion>
+                                                        </ScrollArea>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>انصراف</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={handleConfirmReplacement} disabled={!replacementProduct || isReplacing}>
+                                                                {isReplacing && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                                                تایید
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            )}
+                                        </CardHeader>
+                                        <CardContent className="p-2">
+                                            <h3 className="text-xs font-semibold truncate">{product.name}</h3>
+                                        </CardContent>
+                                    </button>
                                 </Card>
-                            ))}
+                            )})}
                         </div>
                     ) : (
                         <div className="text-center text-muted-foreground py-16">

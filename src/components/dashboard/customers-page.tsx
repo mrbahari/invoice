@@ -1,3 +1,4 @@
+
 'use client';
 
 import { File, PlusCircle, Trash2, Loader2, Move, SortAsc, X } from 'lucide-react';
@@ -304,7 +305,7 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
               )}
 
               {filteredCustomers.length > 0 ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredCustomers.map((customer, i) => {
                         const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                         const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');

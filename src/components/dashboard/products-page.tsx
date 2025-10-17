@@ -21,12 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { formatCurrency, downloadCSV } from '@/lib/utils';
 import type { Product, Category } from '@/lib/definitions';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
@@ -210,75 +204,6 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
 
 type BulkAction = 'move' | 'copy';
 
-const CategoryProducts = ({ categoryId, categoryProducts, onEdit, onCopy, selectedProducts, onSelectProduct }: { categoryId: string, categoryProducts: Product[], onEdit: (p: Product) => void, onCopy: (p: Product) => void, selectedProducts: string[], onSelectProduct: (id: string, checked: boolean) => void }) => {
-    const { itemsToShow, sentinelRef } = useVirtualScroll(10);
-    const visibleProducts = categoryProducts.slice(0, itemsToShow);
-  
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[80px] text-center">
-              <Checkbox
-                checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
-                onCheckedChange={(checked) => {
-                  const categoryProductIds = categoryProducts.map(p => p.id);
-                  onSelectProduct(categoryProductIds.join(','), !!checked);
-                }}
-              />
-            </TableHead>
-            <TableHead>نام</TableHead>
-            <TableHead className="hidden md:table-cell">توضیحات</TableHead>
-            <TableHead className="text-left">قیمت</TableHead>
-            <TableHead><span className="sr-only">Actions</span></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {visibleProducts.map((product) => (
-            <TableRow
-              key={product.id}
-              data-state={selectedProducts.includes(product.id) ? "selected" : ""}
-              className="cursor-pointer"
-            >
-              <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
-                <Checkbox
-                  checked={selectedProducts.includes(product.id)}
-                  onCheckedChange={(checked) => onSelectProduct(product.id, !!checked)}
-                />
-              </TableCell>
-              <TableCell className="font-medium" onClick={() => onEdit(product)}>
-                <div className="flex items-center gap-3">
-                  <Image
-                    alt={product.name}
-                    className="aspect-square rounded-md object-cover"
-                    height="40"
-                    src={product.imageUrl}
-                    width="40"
-                  />
-                  <span>{product.name}</span>
-                </div>
-              </TableCell>
-              <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => onEdit(product)}>{product.description}</TableCell>
-              <TableCell className="text-left" onClick={() => onEdit(product)}>{formatCurrency(product.price)}</TableCell>
-              <TableCell className="text-left">
-                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onCopy(product) }}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-          {categoryProducts.length > itemsToShow && (
-            <TableRow>
-              <TableCell colSpan={5} className="p-0">
-                <div ref={sentinelRef} className="h-1"></div>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
-};
-
 const animationProps = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -299,10 +224,7 @@ export default function ProductsPage() {
   const [isCopyMode, setIsCopyMode] = useState(false);
   
   const [activeTab, setActiveTab] = useState('all');
-  const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
-  const itemRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
-
-
+  
   useEffect(() => {
     // Show search only when in list view
     setSearchVisible(view === 'list');
@@ -338,24 +260,6 @@ export default function ProductsPage() {
     setEditingProduct(undefined);
     setIsCopyMode(false);
   };
-
-  const handleAccordionChange = useCallback((value: string) => {
-    const newOpenId = openAccordionId === value ? null : value;
-    setOpenAccordionId(newOpenId);
-    
-    // Smooth scroll to the item when it opens
-    if (newOpenId) {
-        setTimeout(() => {
-            const node = itemRefs.current.get(newOpenId);
-            if (node) {
-                node.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        }, 100);
-    }
-  }, [openAccordionId]);
 
   const handleAddClick = () => {
     if (!user) {
@@ -683,49 +587,101 @@ export default function ProductsPage() {
           )}
 
           {Object.keys(groupedProducts).length > 0 ? (
-              <Accordion type="single" collapsible value={openAccordionId ?? undefined} onValueChange={handleAccordionChange} className="w-full space-y-4">
-                  {categoryOrder.map(categoryId => {
-                      const categoryProducts = groupedProducts[categoryId];
-                      const firstProduct = categoryProducts[0];
-                      if (!firstProduct) return null;
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {categoryOrder.map(categoryId => {
+                  const categoryProducts = groupedProducts[categoryId];
+                  const firstProduct = categoryProducts[0];
+                  if (!firstProduct) return null;
 
-                      return (
-                          <AccordionItem value={categoryId} key={categoryId} ref={(node) => itemRefs.current.set(categoryId, node)}>
-                              <Card>
-                                  <AccordionTrigger className="w-full p-4 hover:no-underline">
-                                      <div className="flex items-center justify-between w-full">
-                                          <div className="flex items-center gap-4">
-                                              <Image
-                                                  alt={firstProduct.name}
-                                                  className="aspect-square rounded-md object-cover"
-                                                  height="64"
-                                                  src={firstProduct.imageUrl}
-                                                  width="64"
-                                                  data-ai-hint="product image"
-                                              />
-                                              <div className="text-right">
-                                                  <h3 className="font-semibold text-lg">{getCategoryName(categoryId)}</h3>
-                                                  <p className="text-sm text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
-                                              </div>
-                                          </div>
-                                          <ChevronDown className="h-6 w-6 shrink-0 transition-transform duration-200" />
-                                      </div>
-                                  </AccordionTrigger>
-                                  <AccordionContent>
-                                      <CategoryProducts
-                                          categoryId={categoryId}
-                                          categoryProducts={categoryProducts}
-                                          onEdit={handleEdit}
-                                          onCopy={handleCopy}
-                                          selectedProducts={selectedProducts}
-                                          onSelectProduct={handleSelectProduct}
-                                      />
-                                  </AccordionContent>
-                              </Card>
-                          </AccordionItem>
-                      );
-                  })}
-              </Accordion>
+                  return (
+                    <Dialog key={categoryId}>
+                      <DialogTrigger asChild>
+                        <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
+                          <CardHeader className="p-0">
+                            <div className="relative aspect-video">
+                              <Image
+                                alt={firstProduct.name}
+                                className="object-cover transition-transform group-hover:scale-105"
+                                fill
+                                src={firstProduct.imageUrl}
+                                data-ai-hint="product image"
+                              />
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold">{getCategoryName(categoryId)}</h3>
+                            <p className="text-sm text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
+                          </CardContent>
+                        </Card>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                          <DialogTitle>{getCategoryName(categoryId)}</DialogTitle>
+                          <DialogDescription>
+                            لیست تمام محصولات موجود در این دسته‌بندی.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="max-h-[60vh] overflow-y-auto">
+                            <Table>
+                                <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[80px] text-center">
+                                    <Checkbox
+                                        checked={categoryProducts.length > 0 && categoryProducts.every(p => selectedProducts.includes(p.id))}
+                                        onCheckedChange={(checked) => {
+                                        const categoryProductIds = categoryProducts.map(p => p.id);
+                                        handleSelectProduct(categoryProductIds.join(','), !!checked);
+                                        }}
+                                    />
+                                    </TableHead>
+                                    <TableHead>نام</TableHead>
+                                    <TableHead className="hidden md:table-cell">توضیحات</TableHead>
+                                    <TableHead className="text-left">قیمت</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                {categoryProducts.map((product) => (
+                                    <TableRow
+                                    key={product.id}
+                                    data-state={selectedProducts.includes(product.id) ? "selected" : ""}
+                                    className="cursor-pointer"
+                                    >
+                                    <TableCell onClick={(e) => e.stopPropagation()} className="w-[80px] text-center">
+                                        <Checkbox
+                                        checked={selectedProducts.includes(product.id)}
+                                        onCheckedChange={(checked) => handleSelectProduct(product.id, !!checked)}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-medium" onClick={() => handleEdit(product)}>
+                                        <div className="flex items-center gap-3">
+                                        <Image
+                                            alt={product.name}
+                                            className="aspect-square rounded-md object-cover"
+                                            height="40"
+                                            src={product.imageUrl}
+                                            width="40"
+                                        />
+                                        <span>{product.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell max-w-xs truncate" onClick={() => handleEdit(product)}>{product.description}</TableCell>
+                                    <TableCell className="text-left" onClick={() => handleEdit(product)}>{formatCurrency(product.price)}</TableCell>
+                                    <TableCell className="text-left">
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleCopy(product) }}>
+                                        <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                    </TableRow>
+                                ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )
+                })}
+            </div>
           ) : (
               <Card>
                   <CardContent className="py-16 text-center">

@@ -140,42 +140,29 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
 
   const handleDownloadImage = async () => {
     const element = document.getElementById('invoice-card');
-    const container = pageContainerRef.current;
-    if (!element || !container) return;
+    if (!element) return;
   
-    // Temporarily adjust styles for capture
-    const originalPadding = container.style.padding;
-    const originalWidth = element.style.width;
-    container.style.padding = '0';
-    element.style.width = '900px';
+    // Create a clone of the element to modify its style without affecting the screen
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.style.width = '1748px';
+    clone.style.height = '2480px';
+    clone.style.position = 'absolute';
+    clone.style.top = '-9999px';
+    clone.style.left = '0px';
+    document.body.appendChild(clone);
   
-    await new Promise(resolve => setTimeout(resolve, 100)); // Wait for styles to apply
-  
-    html2canvas(element, {
-      scale: 2,
+    html2canvas(clone, {
       useCORS: true,
       allowTaint: true,
+      scale: 1, // Use scale 1 because we manually set the size
     }).then(canvas => {
-      // Restore original styles
-      container.style.padding = originalPadding;
-      element.style.width = originalWidth;
+        // Clean up the cloned element
+        document.body.removeChild(clone);
 
-      const margin = 20;
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = canvas.width + margin * 2;
-      finalCanvas.height = canvas.height + margin * 2;
-      const ctx = finalCanvas.getContext('2d');
-  
-      if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-        ctx.drawImage(canvas, margin, margin);
-  
         const link = document.createElement('a');
-        link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.png`;
-        link.href = finalCanvas.toDataURL('image/png');
+        link.download = `invoice-${invoice?.invoiceNumber || 'preview'}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.8);
         link.click();
-      }
     });
   };
 
@@ -303,7 +290,7 @@ export default function InvoicePreviewPage({ invoiceId, onBack, onEdit }: Invoic
               <tbody>
                 {invoice.items.map((item, index) => {
                    const product = products.find(p => p.id === item.productId);
-                   const imageUrl = item.imageUrl || product?.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(item.productName)}/40/40`;
+                   const imageUrl = item.imageUrl || product?.imageUrl || `https://picsum.photos/seed/${'encodeURIComponent(item.productName)'}/40/40`;
                    return (
                   <tr key={index}>
                     <td className="border p-1 text-center">{toPersianDigits(index + 1)}</td>

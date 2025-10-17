@@ -53,7 +53,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm no-print w-full">
+    <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background no-print w-full">
       <div className="max-w-7xl mx-auto w-full">
         <div className="grid h-16 grid-cols-7 items-center justify-items-center">
           {navItems.slice(0, 3).map((item) => (
@@ -77,7 +77,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           <div className="flex h-full w-full items-center justify-center">
               <button 
                 onClick={handleInvoiceClick}
-                className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10 backdrop-blur-sm"
+                className="group flex h-16 w-16 -translate-y-4 items-center justify-center rounded-full border bg-card text-primary shadow-lg shadow-black/10"
               >
                 <FileText className="h-8 w-8" />
                 <span className="sr-only">ایجاد فاکتور</span>

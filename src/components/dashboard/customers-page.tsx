@@ -315,11 +315,11 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
                             key={customer.id}
                             onClick={() => handleDetailClick(customer)}
                             className={cn(
-                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 p-4",
+                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1",
                               selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"
                             )}
                           >
-                           <CardContent className="p-0 flex items-center gap-4 relative">
+                           <CardContent className="p-4 flex items-center gap-3 relative">
                               <Avatar className="h-12 w-12 border">
                                   <AvatarImage src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/48/48`} />
                                   <AvatarFallback>{nameInitials}</AvatarFallback>

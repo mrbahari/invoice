@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, Loader2, ListTree, Mic, MicOff, X, FileImage } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, ListTree, Mic, MicOff, X, FileImage, Settings } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { extractMaterialsFromFile } from '@/ai/flows/extract-materials-flow';
@@ -19,6 +19,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 type ExtractedProduct = {
@@ -28,6 +31,8 @@ type ExtractedProduct = {
     quantity: number;
     unit: string;
 };
+
+type BrandType = 'k-plus' | 'miscellaneous';
 
 type SmartOrderFormProps = {
   onAddToList: (description: string, results: MaterialResult[]) => void;
@@ -40,6 +45,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   const [textInput, setTextInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [extractedResults, setExtractedResults] = useState<ExtractedProduct[]>([]);
+  const [brandType, setBrandType] = useState<BrandType | undefined>(undefined);
   const { toast } = useToast();
   const { data: appData } = useData();
   const { products, categories, stores } = appData;
@@ -107,6 +113,7 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
     try {
       const result = await extractMaterialsFromFile({ 
           ...inputForAI,
+          brandType,
           existingProducts: products,
           existingCategories: categories,
       });
@@ -233,7 +240,39 @@ export function SmartOrderForm({ onAddToList, onBack }: SmartOrderFormProps) {
   }
 
   return (
-    <Card>
+    <Card className="relative">
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="absolute top-4 left-4 h-8 w-8 text-muted-foreground">
+                    <Settings className="h-5 w-5" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>تنظیمات هوش مصنوعی</DialogTitle>
+                    <DialogDescription>
+                        تنظیمات زیر به هوش مصنوعی کمک می‌کند تا محصولات شما را با دقت بیشتری تطبیق دهد.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <Label>فیلتر برند محصولات</Label>
+                    <RadioGroup value={brandType} onValueChange={(value) => setBrandType(value as BrandType)}>
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                            <RadioGroupItem value="k-plus" id="brand-kplus" />
+                            <Label htmlFor="brand-kplus">فقط محصولات برند کی پلاس (کناف)</Label>
+                        </div>
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                            <RadioGroupItem value="miscellaneous" id="brand-misc" />
+                            <Label htmlFor="brand-misc">فقط محصولات متفرقه (غیر از کی پلاس)</Label>
+                        </div>
+                    </RadioGroup>
+                    <Button variant="link" onClick={() => setBrandType(undefined)} className="justify-start p-0 h-auto">
+                        حذف فیلتر
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
       <CardHeader>
         <CardTitle>سفارش هوشمند با AI</CardTitle>
         <CardDescription>

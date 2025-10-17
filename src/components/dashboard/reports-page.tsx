@@ -328,7 +328,6 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                 </TabsList>
             </Tabs>
        </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { title: 'درآمد کل', value: formatCurrency(totalRevenue), icon: DollarSign, description: 'فقط از فاکتورهای پرداخت شده', tab: 'invoices' },
@@ -353,9 +352,11 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
         ))}
       </div>
       
-      <motion.div custom={4} initial="hidden" animate="visible" variants={animationVariants}>
-          <OverviewChart data={chartData} />
-      </motion.div>
+      <div className="grid gap-4 md:gap-8 grid-cols-1">
+        <motion.div custom={4} initial="hidden" animate="visible" variants={animationVariants}>
+            <OverviewChart data={chartData} />
+        </motion.div>
+      </div>
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <motion.div custom={5} initial="hidden" animate="visible" variants={animationVariants}>
@@ -399,7 +400,7 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                 </CardHeader>
                 <CardContent>
                     {topProducts.length > 0 ? (
-                        <div className="grid grid-cols-5 md:grid-cols-5 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-4">
                             {topProducts.map(product => (
                                 <Card key={product.id} className="group overflow-hidden">
                                     <CardHeader className="p-0 relative aspect-square">

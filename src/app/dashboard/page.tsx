@@ -1,27 +1,51 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import type { Invoice, Product } from '@/lib/definitions';
-import { ProductForm } from '@/components/dashboard/product-form';
-import { useData } from '@/context/data-context';
+import type { Invoice } from '@/lib/definitions';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import type { DashboardTab } from '@/lib/definitions';
 
+// Import all page components directly
+import ReportsPage from '@/components/dashboard/reports-page';
+import InvoicesPage from '@/components/dashboard/invoices-page';
+import ProductsPage from '@/components/dashboard/products-page';
+import CustomersPage from '@/components/dashboard/customers-page';
+import StoresPage from '@/components/dashboard/stores-page';
+import EstimatorsPage from '@/components/dashboard/estimators-page';
+import SettingsPage from '@/components/dashboard/settings-page';
+import ProfilePage from '@/components/dashboard/profile-page';
 
-// Define types for dynamic components and props
-export type DashboardTab = 'dashboard' | 'invoices' | 'products' | 'customers' | 'categories' | 'settings' | 'estimators' | 'profile';
 
 const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
-  dashboard: dynamic(() => import('@/components/dashboard/reports-page'), { loading: () => <LoadingSpinner />, ssr: false }),
-  invoices: dynamic(() => import('@/components/dashboard/invoices-page'), { loading: () => <LoadingSpinner /> }),
-  products: dynamic(() => import('@/components/dashboard/products-page'), { loading: () => <LoadingSpinner /> }),
-  customers: dynamic(() => import('@/components/dashboard/customers-page'), { loading: () => <LoadingSpinner /> }),
-  categories: dynamic(() => import('@/components/dashboard/stores-page'), { loading: () => <LoadingSpinner /> }),
-  estimators: dynamic(() => import('@/components/dashboard/estimators-page'), { loading: () => <LoadingSpinner /> }),
-  settings: dynamic(() => import('@/components/dashboard/settings-page'), { loading: () => <LoadingSpinner /> }),
-  profile: dynamic(() => import('@/components/dashboard/profile-page'), { loading: () => <LoadingSpinner /> }),
+  dashboard: ReportsPage,
+  invoices: InvoicesPage,
+  products: ProductsPage,
+  customers: CustomersPage,
+  categories: StoresPage,
+  estimators: EstimatorsPage,
+  settings: SettingsPage,
+  profile: ProfilePage,
 };
+
+const PageContainer = ({
+  isActive,
+  children,
+}: {
+  isActive: boolean;
+  children: React.ReactNode;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.3, ease: 'easeInOut' }}
+    className={cn(!isActive && 'hidden')}
+  >
+    {children}
+  </motion.div>
+);
 
 
 export default function DashboardPage() {
@@ -48,16 +72,20 @@ export default function DashboardPage() {
     }
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
-
-  // Get the component for the active tab
-  const ActiveComponent = componentMap[activeTab] || componentMap.dashboard;
-
-  // Prepare props for the active component
-  const componentProps: any = {
+  
+  const componentProps = {
     onNavigate: handleNavigation,
     draftInvoice: draftInvoice,
     setDraftInvoice: setDraftInvoice,
   };
 
-  return <ActiveComponent {...componentProps} />;
+  return (
+    <>
+      {Object.entries(componentMap).map(([tab, Component]) => (
+        <PageContainer key={tab} isActive={activeTab === tab}>
+          <Component {...componentProps} />
+        </PageContainer>
+      ))}
+    </>
+  );
 }

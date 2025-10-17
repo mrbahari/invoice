@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -12,8 +13,9 @@ import { formatCurrency } from '@/lib/utils';
 import { FloatingToolbar } from './floating-toolbar';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import Image from 'next/image';
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { format } from 'date-fns-jalali';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { format, parseISO } from 'date-fns-jalali';
 
 type ProductDetailPageProps = {
   product: Product;
@@ -74,16 +76,33 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
   
   const priceHistoryData = useMemo(() => {
     const history: PriceHistory[] = product.priceHistory || [];
-    const initialPriceEntry: PriceHistory = {
-        price: product.price, // Use current price as the fallback
-        date: new Date(0).toISOString(), // A very old date
-    };
-     const sortedHistory = [...history, initialPriceEntry].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    return sortedHistory.map(entry => ({
-        date: format(new Date(entry.date), 'yyyy/MM/dd'),
+    let allEntries: { date: Date; price: number }[] = history.map(entry => ({
+        date: parseISO(entry.date),
         price: entry.price,
     }));
-  }, [product.priceHistory, product.price]);
+
+    // Find a valid start date for the current price
+    let initialDate: Date | null = null;
+    if (product.createdAt) {
+        initialDate = parseISO(product.createdAt);
+    } else if (productInvoices.length > 0) {
+        // Use the oldest invoice date as a fallback
+        initialDate = parseISO(productInvoices[productInvoices.length - 1].date);
+    }
+
+    if (initialDate) {
+        allEntries.push({ date: initialDate, price: product.price });
+    }
+
+    if (allEntries.length === 0) {
+        return [];
+    }
+
+    // Remove duplicates and sort
+    const uniqueEntries = Array.from(new Map(allEntries.map(e => [e.date.getTime(), e])).values());
+    return uniqueEntries.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  }, [product.priceHistory, product.price, product.createdAt, productInvoices]);
 
   return (
     <TooltipProvider>
@@ -125,14 +144,14 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
                     data-ai-hint="abstract background"
                 />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className='flex items-center gap-4'>
-                            <div className='relative w-24 h-24 rounded-md border-2 border-white/50 overflow-hidden shadow-lg'>
+                    <div className="flex items-end justify-between gap-4">
+                        <div className='flex-1 flex items-center gap-4'>
+                            <div className='relative w-24 h-24 rounded-md border-2 border-white/50 overflow-hidden shadow-lg flex-shrink-0'>
                                 <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold text-white shadow-lg">{product.name}</h1>
-                                <p className='text-white/80 mt-1'>{product.description}</p>
+                                <p className='text-sm text-white/80 mt-1'>{product.description}</p>
                             </div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => onEdit(product)} className="bg-white/20 text-white backdrop-blur-sm border-white/50 hover:bg-white/30">
@@ -199,15 +218,30 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
             <CardDescription>نمودار تغییرات قیمت این محصول در طول زمان.</CardDescription>
           </CardHeader>
           <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={priceHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                    <RechartsTooltip contentStyle={{direction: 'rtl'}} formatter={(value) => [formatCurrency(value as number), 'قیمت']} />
-                    <Line type="monotone" dataKey="price" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                </LineChart>
-            </ResponsiveContainer>
+              {priceHistoryData.length > 1 ? (
+                <ChartContainer config={{price: {label: 'قیمت', color: 'hsl(var(--chart-1))'}}} className="h-[250px] w-full">
+                    <LineChart data={priceHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tickFormatter={(value) => format(value, 'd MMMM')} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                        <ChartTooltip
+                            cursor={false}
+                            content={
+                                <ChartTooltipContent 
+                                    labelFormatter={(value) => format(value as Date, 'eeee, d MMMM yyyy')}
+                                    formatter={(value) => [formatCurrency(value as number), 'قیمت']}
+                                    indicator="dot"
+                                />
+                            }
+                        />
+                        <Line type="monotone" dataKey="price" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                    </LineChart>
+                </ChartContainer>
+              ) : (
+                <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+                    <p>داده کافی برای نمایش نمودار تاریخچه قیمت وجود ندارد.</p>
+                </div>
+              )}
           </CardContent>
         </Card>
 

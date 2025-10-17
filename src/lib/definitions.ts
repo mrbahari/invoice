@@ -65,6 +65,7 @@ export type Product = {
   subUnitQuantity?: number;
   subUnitPrice?: number;
   priceHistory?: PriceHistory[];
+  createdAt?: string; // ISO 8601 format
 };
 
 export type InvoiceStatus = 'Paid' | 'Pending' | 'Overdue';

@@ -172,55 +172,53 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     }
 
     const invoiceItems: InvoiceItem[] = [];
-
-    const productMap: Record<string, { keywords: string[]; exact?: boolean }> = {
-        'پنل RG باتیس': { keywords: ['پنل', 'rg', 'باتیس'] },
-        'تایل پی وی سی': { keywords: ['تایل', 'pvc'] },
-        'سازه F47': { keywords: ['f47', 'سازه', 'پروفیل'], exact: true },
-        'سازه U36': { keywords: ['u36', 'سازه', 'پروفیل'] },
-        'نبشی L25': { keywords: ['l25', 'نبشی', 'کناف'] },
-        'نبشی L24': { keywords: ['l24', 'نبشی', 'سپری'] },
-        'سپری T360': { keywords: ['t360', '3.60', 'سپری', 'پروفیل'] },
-        'سپری T120': { keywords: ['t120', '1.20', 'سپری', 'پروفیل'] },
-        'سپری T60': { keywords: ['t60', '0.60', 'سپری', 'پروفیل'] },
-        'رانر': { keywords: ['رانر', 'runner', 'پروفیل'] },
-        'استاد': { keywords: ['استاد', 'stud', 'پروفیل'] },
-        'پیچ 2.5': { keywords: ['پیچ', '2.5', '۲.۵', 'tn25', 'پنل'] },
-        'پیچ سازه': { keywords: ['پیچ', 'سازه', 'ln9'] },
-        'آویز': { keywords: ['آویز', 'hanger'] },
-        'میخ و چاشنی': { keywords: ['میخ', 'چاشنی'] },
-        'پشم سنگ': { keywords: ['پشم', 'سنگ', 'rockwool'] },
-        'اتصال W': { keywords: ['w', 'اتصال', 'دبلیو', 'w-connector'] },
-        'کلیپس': { keywords: ['کلیپس', 'clip'] },
-        'براکت': { keywords: ['براکت', 'bracket'] },
+    const miscellaneousProducts = products.filter(p => !p.name.includes('کی پلاس'));
+    const specialKeywords: Record<string, number> = {
+        'f47': 5,
+        'u36': 5,
+        'l25': 5,
+        'باتیس': 4,
+        'پانل': 3,
+        'پنل': 3,
+        'پیچ': 2,
+    };
+    
+    const normalizeAndTokenize = (name: string): Set<string> => {
+        return new Set(name.toLowerCase().replace(/[-_]/g, ' ').split(/\s+/).filter(Boolean));
     };
 
     aggregatedResults.forEach(item => {
         let bestMatch: { product: Product, score: number } | null = null;
         
-        const materialKeywords = productMap[item.material]?.keywords || [item.material.toLowerCase()];
-        const isExactMatch = productMap[item.material]?.exact || false;
-
-        const miscellaneousProducts = products.filter(p => !p.name.includes('کی پلاس'));
+        const materialTokens = normalizeAndTokenize(item.material);
 
         for (const product of miscellaneousProducts) {
-            const productNameLower = product.name.toLowerCase();
+            if (product.name.toLowerCase() === item.material.toLowerCase()) {
+                bestMatch = { product, score: 1000 };
+                break; // Perfect match found
+            }
+
+            const productTokens = normalizeAndTokenize(product.name);
             let currentScore = 0;
             
-            if (isExactMatch && product.name === item.material) {
-                currentScore = 100; // High score for exact match
-            } else if (!isExactMatch) {
-                for (const keyword of materialKeywords) {
-                    if (productNameLower.includes(keyword.toLowerCase())) {
-                        currentScore++;
-                    }
+            const commonTokens = new Set([...materialTokens].filter(token => productTokens.has(token)));
+            
+            // Basic score for common words
+            currentScore += commonTokens.size * 2;
+            
+            // Add weighted score for special keywords
+            for (const token of commonTokens) {
+                if (specialKeywords[token]) {
+                    currentScore += specialKeywords[token];
                 }
             }
 
-            if (currentScore > 0) {
-                if (!bestMatch || currentScore > bestMatch.score) {
-                    bestMatch = { product, score: currentScore };
-                }
+            // Penalize for words in product name that are not in material name
+            const extraWords = [...productTokens].filter(token => !materialTokens.has(token));
+            currentScore -= extraWords.length;
+
+            if (currentScore > (bestMatch?.score || 0)) {
+                bestMatch = { product, score: currentScore };
             }
         }
         
@@ -259,7 +257,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
         }
     });
     
-    // Sort items logically
     const sortOrder = ['پنل', 'سازه', 'پروفیل', 'رانر', 'استاد', 'نبشی', 'سپری', 'پیچ', 'میخ', 'اتصال', 'کلیپس', 'براکت'];
     invoiceItems.sort((a, b) => {
         const aIndex = sortOrder.findIndex(keyword => a.productName.includes(keyword));
@@ -270,7 +267,6 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
 
         return finalAIndex - finalBIndex;
     });
-
 
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.totalPrice, 0);
     
@@ -504,4 +500,3 @@ export default function EstimatorsPage({ onNavigate }: EstimatorsPageProps) {
     </div>
   );
 }
-

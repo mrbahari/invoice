@@ -285,15 +285,25 @@ export function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) 
                             </div>
                         )}
                         {avatarUrl ? (
-                            <Image src={avatarUrl} alt="آواتار مشتری" fill className="object-cover" key={avatarUrl} />
+                            <Image src={avatarUrl} alt="آواتار مشتری" fill className="object-cover" key={avatarUrl} unoptimized/>
                         ) : (
                             !isUploading && <span className="text-sm text-muted-foreground">پیش‌نمایش</span>
                         )}
                     </div>
-                     <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick} disabled={isUploading}>
-                        <Upload className="ml-2 h-4 w-4" />
-                        آپلود تصویر
-                    </Button>
+                    <div className="grid gap-3">
+                        <Label htmlFor="avatar-url" className="text-xs">آدرس تصویر</Label>
+                        <Input id="avatar-url" value={avatarUrl || ''} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://example.com/img.png" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button type="button" variant="outline" className="w-full" onClick={handleUploadClick} disabled={isUploading}>
+                            <Upload className="ml-2 h-4 w-4" />
+                            آپلود
+                        </Button>
+                         <Button type="button" variant="destructive" className="w-full" onClick={() => setAvatarUrl(null)} disabled={isUploading || !avatarUrl}>
+                            <Trash2 className="ml-2 h-4 w-4" />
+                            حذف
+                        </Button>
+                    </div>
                     <input
                         type="file"
                         ref={fileInputRef}

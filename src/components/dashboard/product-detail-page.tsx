@@ -155,11 +155,11 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
                 />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
                     <div className="flex items-start justify-between gap-4">
-                        <div className='flex-1 flex items-center gap-4'>
+                        <div className='flex-1 flex items-start gap-4'>
                             <div className='relative w-24 h-24 rounded-md border-2 border-white/50 overflow-hidden shadow-lg flex-shrink-0'>
                                 <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <h1 className="text-3xl font-bold text-white shadow-lg">{product.name}</h1>
                                 <p className='text-sm text-white/80 mt-1'>{product.description}</p>
                             </div>
@@ -286,8 +286,7 @@ export function ProductDetailPage({ product, onBack, onEdit, onCopy }: ProductDe
                             <TableCell>
                                  <Badge 
                                     variant="outline" 
-                                    className={statusStyles[invoice.status] + " cursor-pointer"}
-                                    onClick={(e) => handleStatusChange(e, invoice.id, invoice.status)}
+                                    className={statusStyles[invoice.status]}
                                 >
                                     {statusTranslation[invoice.status]}
                                 </Badge>

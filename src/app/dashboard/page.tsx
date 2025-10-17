@@ -30,18 +30,18 @@ const componentMap: Record<DashboardTab, React.ComponentType<any>> = {
 };
 
 const PageContainer = ({
-  isActive,
   children,
+  className,
 }: {
-  isActive: boolean;
   children: React.ReactNode;
+  className?: string;
 }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
+    exit={{ opacity: 0, y: 10 }}
     transition={{ duration: 0.3, ease: 'easeInOut' }}
-    className={cn(!isActive && 'hidden')}
+    className={cn(className)}
   >
     {children}
   </motion.div>
@@ -79,13 +79,13 @@ export default function DashboardPage() {
     setDraftInvoice: setDraftInvoice,
   };
 
+  const ActiveComponent = componentMap[activeTab];
+
   return (
-    <>
-      {Object.entries(componentMap).map(([tab, Component]) => (
-        <PageContainer key={tab} isActive={activeTab === tab}>
-          <Component {...componentProps} />
-        </PageContainer>
-      ))}
-    </>
+    <AnimatePresence mode="wait">
+      <PageContainer key={activeTab}>
+        {ActiveComponent && <ActiveComponent {...componentProps} />}
+      </PageContainer>
+    </AnimatePresence>
   );
 }

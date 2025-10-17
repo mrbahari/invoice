@@ -303,50 +303,55 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
                   </Card>
               )}
 
-
               {filteredCustomers.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {filteredCustomers.map((customer) => {
+                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    {filteredCustomers.map((customer, i) => {
                         const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                         const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
                         const invoiceCount = getCustomerInvoiceCount(customer.id);
                         return (
-                          <Card
-                            key={customer.id}
-                            onClick={() => handleDetailClick(customer)}
-                            className={cn(
-                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1",
-                              selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"
-                            )}
-                          >
-                           <CardContent className="p-4 flex items-center gap-3 relative">
-                              <Avatar className="h-12 w-12 border">
-                                  <AvatarImage src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/48/48`} />
-                                  <AvatarFallback>{nameInitials}</AvatarFallback>
-                              </Avatar>
-                              <div className="grid gap-0.5 overflow-hidden">
-                                  <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
-                              </div>
-                               {invoiceCount > 0 && (
-                                  <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full">
-                                    {invoiceCount.toLocaleString('fa-IR')}
-                                  </Badge>
-                              )}
-                              <div className="absolute -top-2 -left-2">
-                                <Checkbox
-                                    checked={selectedCustomers.includes(customer.id)}
-                                    onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="h-5 w-5 bg-background/50 backdrop-blur-sm"
-                                />
-                              </div>
-                           </CardContent>
-                          </Card>
+                            <motion.div
+                                key={customer.id}
+                                variants={{
+                                    hidden: { opacity: 0, y: 20 },
+                                    visible: { opacity: 1, y: 0 },
+                                }}
+                                initial="hidden"
+                                animate="visible"
+                                transition={{ delay: i * 0.05, duration: 0.3 }}
+                            >
+                                <div
+                                    onClick={() => handleDetailClick(customer)}
+                                    className={cn(
+                                        "group relative flex flex-col items-center justify-center gap-2 rounded-lg border bg-card p-4 text-center transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer",
+                                        selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"
+                                    )}
+                                >
+                                    {invoiceCount > 0 && (
+                                      <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full border-2 border-background">
+                                        {invoiceCount.toLocaleString('fa-IR')}
+                                      </Badge>
+                                    )}
+                                    <Checkbox
+                                        checked={selectedCustomers.includes(customer.id)}
+                                        onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute top-2 left-2 h-5 w-5 bg-background/50 backdrop-blur-sm"
+                                    />
+                                    <Avatar className="h-20 w-20 border-2 border-muted group-hover:border-primary transition-colors">
+                                        <AvatarImage src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/80/80`} />
+                                        <AvatarFallback className="text-xl">{nameInitials}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="grid gap-0.5">
+                                        <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
+                                    </div>
+                                </div>
+                            </motion.div>
                         );
-                      })}
+                    })}
                 </div>
-               ) : (
+              ) : (
                 <Card>
                   <CardContent className="py-16 text-center">
                     <p className="text-muted-foreground mb-4">

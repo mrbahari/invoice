@@ -305,7 +305,7 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
 
 
               {filteredCustomers.length > 0 ? (
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {filteredCustomers.map((customer) => {
                         const hasValidName = customer.name && customer.name !== 'مشتری بدون نام';
                         const nameInitials = (hasValidName ? customer.name : customer.phone).split(' ').map(n => n[0]).join('');
@@ -315,24 +315,25 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
                             key={customer.id}
                             onClick={() => handleDetailClick(customer)}
                             className={cn(
-                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1",
+                              "group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 p-4",
                               selectedCustomers.includes(customer.id) && "ring-2 ring-primary border-primary"
                             )}
                           >
-                           <CardHeader className="relative p-0 aspect-[4/3]">
-                              <Image
-                                src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/200/150`}
-                                alt="آواتار"
-                                fill
-                                className="object-cover rounded-t-lg"
-                                data-ai-hint="person avatar"
-                              />
+                           <CardContent className="p-0 flex items-center gap-4 relative">
+                              <Avatar className="h-12 w-12 border">
+                                  <AvatarImage src={customer.avatarUrl || `https://picsum.photos/seed/${customer.id}/48/48`} />
+                                  <AvatarFallback>{nameInitials}</AvatarFallback>
+                              </Avatar>
+                              <div className="grid gap-0.5 overflow-hidden">
+                                  <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
+                              </div>
                                {invoiceCount > 0 && (
-                                  <Badge className="absolute top-2 right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full">
+                                  <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-6 w-6 justify-center p-0 rounded-full">
                                     {invoiceCount.toLocaleString('fa-IR')}
                                   </Badge>
                               )}
-                              <div className="absolute top-2 left-2">
+                              <div className="absolute -top-2 -left-2">
                                 <Checkbox
                                     checked={selectedCustomers.includes(customer.id)}
                                     onCheckedChange={(checked) => handleSelectCustomer(customer.id, !!checked)}
@@ -340,11 +341,7 @@ export default function CustomersPage({ initialCustomer }: CustomersPageProps) {
                                     className="h-5 w-5 bg-background/50 backdrop-blur-sm"
                                 />
                               </div>
-                           </CardHeader>
-                            <CardContent className="p-2 text-center">
-                                <p className="text-sm font-semibold truncate">{hasValidName ? customer.name : customer.phone}</p>
-                                <p className="text-xs text-muted-foreground truncate">{hasValidName ? customer.phone : ' '}</p>
-                            </CardContent>
+                           </CardContent>
                           </Card>
                         );
                       })}

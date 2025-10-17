@@ -124,7 +124,7 @@ function AiMultipleProductsDialog({ onProductsGenerated }: AiMultipleProductsDia
                 storeId: storeId,
                 subCategoryId: subCategoryId,
                 unit: 'عدد',
-                imageUrl: `https://picsum.photos/seed/${'\'\'\'' + encodeURIComponent(aiProduct.name) + '\'\'\''}/400/300`,
+                imageUrl: `https://picsum.photos/seed/${encodeURIComponent(aiProduct.name)}/400/300`,
                 subUnit: '',
                 subUnitQuantity: 0,
                 subUnitPrice: 0
@@ -312,7 +312,7 @@ export default function ProductsPage() {
     }));
 
     const headers = { name: 'نام محصول', description: 'توضیحات', price: 'قیمت', storeName: 'فروشگاه', categoryName: 'زیردسته' };
-    downloadCSV(dataToExport, `products-${'\'\'\'' + activeTab + '\'\'\''}.csv`, headers);
+    downloadCSV(dataToExport, `products-${activeTab}.csv`, headers);
   };
   
   const handleProductsGenerated = () => {
@@ -587,7 +587,7 @@ export default function ProductsPage() {
           )}
 
           {Object.keys(groupedProducts).length > 0 ? (
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
                 {categoryOrder.map(categoryId => {
                   const categoryProducts = groupedProducts[categoryId];
                   const firstProduct = categoryProducts[0];
@@ -613,7 +613,6 @@ export default function ProductsPage() {
                           </CardHeader>
                           <CardContent className="p-2 text-center">
                             <h3 className="text-sm font-semibold truncate">{getCategoryName(categoryId)}</h3>
-                            <p className="text-xs text-muted-foreground">{categoryProducts.length.toLocaleString('fa-IR')} محصول</p>
                           </CardContent>
                         </Card>
                       </DialogTrigger>
@@ -689,7 +688,7 @@ export default function ProductsPage() {
               <Card>
                   <CardContent className="py-16 text-center">
                   <p className="text-muted-foreground mb-4">
-                      {searchTerm ? `هیچ محصولی با عبارت «${'\'\'\'' + searchTerm + '\'\'\''}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
+                      {searchTerm ? `هیچ محصولی با عبارت «${searchTerm}» یافت نشد.` : 'هیچ محصولی برای نمایش وجود ندارد.'}
                   </p>
                   </CardContent>
               </Card>

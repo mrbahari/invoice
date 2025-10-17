@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { subDays, format, parseISO, isValid } from 'date-fns-jalali';
 import {
   Card,
@@ -20,14 +20,14 @@ import {
   } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OverviewChart } from '@/components/dashboard/overview-chart';
-import type { Invoice, Customer, Product, DailySales, DashboardTab } from '@/lib/definitions';
-import { DollarSign, CreditCard, Users, Hourglass } from 'lucide-react';
+import type { Invoice, Customer, Product, DailySales, DashboardTab, Category } from '@/lib/definitions';
+import { DollarSign, CreditCard, Users, Hourglass, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { useData } from '@/context/data-context';
 import { useSearch } from './search-provider';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import {
@@ -41,8 +41,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
+import { writeBatch, doc } from 'firebase/firestore';
+
 
 type Period = 'all' | '30d' | '7d' | 'today';
 
@@ -52,14 +55,17 @@ type ReportsPageProps = {
 
 
 export default function ReportsPage({ onNavigate }: ReportsPageProps) {
-  const { data } = useData();
-  const { invoices: allInvoices, customers: allCustomers, products: allProducts } = data;
+  const { data, updateDocuments } = useData();
+  const { invoices: allInvoices, customers: allCustomers, products: allProducts, categories: allCategories } = data;
   const { setSearchVisible } = useSearch();
   const { user } = useUser();
+  const firestore = useFirestore();
   const { toast } = useToast();
 
   const [period, setPeriod] = useState<Period>('all');
   const [replacementProduct, setReplacementProduct] = useState<Product | null>(null);
+  const [deletedProductId, setDeletedProductId] = useState<string | null>(null);
+  const [isReplacing, setIsReplacing] = useState(false);
 
   useEffect(() => {
     setSearchVisible(false);
@@ -218,6 +224,78 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
     };
   }, [allInvoices, allCustomers, allProducts, period]);
 
+    const handleConfirmReplacement = async () => {
+        if (!deletedProductId || !replacementProduct || !firestore || !user) return;
+        
+        setIsReplacing(true);
+        try {
+            const invoicesToUpdate = allInvoices.filter(inv => 
+                inv.items.some(item => item.productId === deletedProductId)
+            );
+            
+            if (invoicesToUpdate.length === 0) {
+                toast({ variant: "default", title: "موردی یافت نشد", description: "هیچ فاکتوری با این محصول حذف شده یافت نشد." });
+                return;
+            }
+
+            const batch = writeBatch(firestore);
+            
+            invoicesToUpdate.forEach(invoice => {
+                const invoiceRef = doc(firestore, 'users', user.uid, 'invoices', invoice.id);
+                const newItems = invoice.items.map(item => {
+                    if (item.productId === deletedProductId) {
+                        return {
+                            ...item,
+                            productId: replacementProduct.id,
+                            productName: replacementProduct.name,
+                            unitPrice: replacementProduct.price, // Update price as well
+                            totalPrice: item.quantity * replacementProduct.price,
+                            imageUrl: replacementProduct.imageUrl,
+                        };
+                    }
+                    return item;
+                });
+                 const newSubtotal = newItems.reduce((acc, item) => acc + item.totalPrice, 0);
+                 const newTotal = newSubtotal - invoice.discount + invoice.additions + invoice.tax;
+
+                batch.update(invoiceRef, { items: newItems, subtotal: newSubtotal, total: newTotal });
+            });
+            
+            await batch.commit();
+
+            toast({
+                variant: 'success',
+                title: 'جایگزینی موفق',
+                description: `محصول در ${invoicesToUpdate.length} فاکتور با موفقیت جایگزین شد.`,
+            });
+
+        } catch (error) {
+            console.error("Error replacing product in invoices:", error);
+            toast({
+                variant: 'destructive',
+                title: 'خطا در جایگزینی',
+                description: 'مشکلی در به‌روزرسانی فاکتورها رخ داد.',
+            });
+        } finally {
+            setIsReplacing(false);
+            setDeletedProductId(null);
+            setReplacementProduct(null);
+        }
+    };
+    
+    const groupedProductsForDialog = useMemo(() => {
+        if (!allProducts || !allCategories) return {};
+        
+        return allProducts.reduce((acc, product) => {
+            const categoryId = product.subCategoryId || 'uncategorized';
+            if (!acc[categoryId]) {
+                acc[categoryId] = [];
+            }
+            acc[categoryId].push(product);
+            return acc;
+        }, {} as Record<string, Product[]>);
+    }, [allProducts, allCategories]);
+
   const animationVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: (i: number) => ({
@@ -341,33 +419,49 @@ export default function ReportsPage({ onNavigate }: ReportsPageProps) {
                             <TableCell className="text-center font-mono font-bold text-lg">{product.quantity.toLocaleString('fa-IR')}</TableCell>
                             <TableCell className="text-left">
                                 {product.name === 'محصول حذف شده' && (
-                                    <AlertDialog>
+                                    <AlertDialog onOpenChange={(open) => !open && setReplacementProduct(null)}>
                                         <AlertDialogTrigger asChild>
-                                             <Button variant="outline" size="sm">جایگزینی</Button>
+                                             <Button variant="outline" size="sm" onClick={() => setDeletedProductId(product.id)}>جایگزینی</Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent className="max-w-2xl">
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>جایگزینی محصول حذف شده</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    یک محصول از لیست زیر انتخاب کنید تا جایگزین این آیتم شود. این عمل در گزارشات اعمال خواهد شد.
+                                                    یک محصول از لیست زیر انتخاب کنید تا در تمام فاکتورهای مربوطه جایگزین شود. این عمل غیرقابل بازگشت است.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
-                                            <ScrollArea className="h-96">
-                                                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {allProducts.map(p => (
-                                                    <Card key={p.id} className="p-3 flex items-center gap-3 cursor-pointer hover:bg-muted" onClick={() => setReplacementProduct(p)}>
-                                                        <Image src={p.imageUrl} alt={p.name} width={48} height={48} className="rounded-md object-cover" />
-                                                        <div className="flex-1">
-                                                            <p className="font-semibold text-sm">{p.name}</p>
-                                                            <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
-                                                        </div>
-                                                    </Card>
-                                                ))}
-                                                </div>
+                                            <ScrollArea className="h-96 border rounded-md">
+                                                <Accordion type="single" collapsible className="w-full">
+                                                    {Object.keys(groupedProductsForDialog).map(categoryId => {
+                                                        const category = allCategories.find(c => c.id === categoryId);
+                                                        const categoryName = category?.name || 'بدون دسته‌بندی';
+                                                        return (
+                                                            <AccordionItem value={categoryId} key={categoryId}>
+                                                                <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">{categoryName}</AccordionTrigger>
+                                                                <AccordionContent>
+                                                                    <div className="p-2 space-y-2">
+                                                                        {groupedProductsForDialog[categoryId].map(p => (
+                                                                            <Card key={p.id} className={`p-2 flex items-center gap-3 cursor-pointer hover:bg-muted ${replacementProduct?.id === p.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setReplacementProduct(p)}>
+                                                                                <Image src={p.imageUrl} alt={p.name} width={40} height={40} className="rounded-md object-cover" />
+                                                                                <div className="flex-1">
+                                                                                    <p className="font-semibold text-sm">{p.name}</p>
+                                                                                    <p className="text-xs text-muted-foreground">{formatCurrency(p.price)}</p>
+                                                                                </div>
+                                                                            </Card>
+                                                                        ))}
+                                                                    </div>
+                                                                </AccordionContent>
+                                                            </AccordionItem>
+                                                        )
+                                                    })}
+                                                </Accordion>
                                             </ScrollArea>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>انصراف</AlertDialogCancel>
-                                                <AlertDialogAction>تایید</AlertDialogAction>
+                                                <AlertDialogAction onClick={handleConfirmReplacement} disabled={!replacementProduct || isReplacing}>
+                                                    {isReplacing && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                                                    تایید
+                                                </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
